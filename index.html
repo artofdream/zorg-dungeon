@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zorg Dungeon</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #111827;
+      color: #f3f4f6;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin-top: 0;
+    }
+
+    .layout {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: minmax(280px, 1fr) minmax(260px, 320px);
+      align-items: start;
+    }
+
+    .panel {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(42px, 1fr));
+      gap: 6px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      border: 1px solid #4b5563;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: #0f172a;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .cell:disabled {
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+
+    .floor { background: #0f172a; }
+    .wall { background: #334155; }
+    .hero { background: #14532d; }
+    .monster { background: #7f1d1d; }
+    .shard { background: #1d4ed8; }
+    .exit { background: #5b21b6; }
+
+    .stats,
+    .controls,
+    .legend {
+      display: grid;
+      gap: 10px;
+    }
+
+    .stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      background: #111827;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-bottom: 6px;
+    }
+
+    .controls button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+    }
+
+    .controls button.secondary {
+      background: #374151;
+    }
+
+    .message {
+      min-height: 72px;
+      background: #111827;
+      border-radius: 12px;
+      padding: 12px;
+      line-height: 1.5;
+    }
+
+    ul {
+      margin-bottom: 0;
+      padding-left: 20px;
+    }
+
+    @media (max-width: 780px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Zorg Dungeon</h1>
+    <p>Collect the shards, outmaneuver the zorglings, and escape the dungeon.</p>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="stats">
+          <div class="stat"><strong>Health</strong><span id="health"></span></div>
+          <div class="stat"><strong>Actions</strong><span id="actions"></span></div>
+          <div class="stat"><strong>Shards</strong><span id="shards"></span></div>
+          <div class="stat"><strong>Threats</strong><span id="threats"></span></div>
+        </div>
+
+        <div id="board" class="board" aria-label="Zorg Dungeon board"></div>
+      </section>
+
+      <aside class="panel">
+        <h2>Controls</h2>
+        <div class="controls">
+          <button type="button" data-move="up">Move Up</button>
+          <button type="button" data-move="left">Move Left</button>
+          <button type="button" data-move="right">Move Right</button>
+          <button type="button" data-move="down">Move Down</button>
+          <button type="button" id="end-turn" class="secondary">End Turn</button>
+          <button type="button" id="restart" class="secondary">Restart</button>
+        </div>
+
+        <h2>Status</h2>
+        <div id="message" class="message" aria-live="polite"></div>
+
+        <div class="legend">
+          <h2>Rules</h2>
+          <ul>
+            <li>You have 2 actions per turn.</li>
+            <li>Click an adjacent square or use the move buttons.</li>
+            <li>Moving into a zorgling defeats it.</li>
+            <li>Collect every shard before reaching the exit.</li>
+            <li>At the end of your turn, zorglings advance and attack if adjacent.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const size = 6;
+    const walls = new Set(["1,1", "4,1", "1,3", "3,4", "4,4"]);
+    const exit = { x: 5, y: 5 };
+    const initialState = () => ({
+      hero: { x: 0, y: 0, health: 5 },
+      shards: [{ x: 2, y: 0 }, { x: 5, y: 2 }, { x: 0, y: 5 }],
+      monsters: [{ x: 3, y: 1 }, { x: 4, y: 3 }, { x: 2, y: 5 }],
+      actions: 2,
+      turn: 1,
+      over: false,
+      won: false,
+      message: "Enter the dungeon. Gather all three shards, then reach the exit.",
+    });
+
+    let state = initialState();
+
+    const board = document.getElementById("board");
+    const health = document.getElementById("health");
+    const actions = document.getElementById("actions");
+    const shards = document.getElementById("shards");
+    const threats = document.getElementById("threats");
+    const message = document.getElementById("message");
+
+    function keyFor(x, y) {
+      return `${x},${y}`;
+    }
+
+    function monsterAt(x, y) {
+      return state.monsters.find((monster) => monster.x === x && monster.y === y);
+    }
+
+    function shardAt(x, y) {
+      return state.shards.find((shard) => shard.x === x && shard.y === y);
+    }
+
+    function inBounds(x, y) {
+      return x >= 0 && y >= 0 && x < size && y < size;
+    }
+
+    function isAdjacent(x, y) {
+      return Math.abs(state.hero.x - x) + Math.abs(state.hero.y - y) === 1;
+    }
+
+    function setMessage(text) {
+      state.message = text;
+      message.textContent = text;
+    }
+
+    function render() {
+      health.textContent = `${state.hero.health}`;
+      actions.textContent = `${state.actions}`;
+      shards.textContent = `${3 - state.shards.length}/3`;
+      threats.textContent = `${state.monsters.length}`;
+      message.textContent = state.message;
+
+      board.replaceChildren();
+
+      for (let y = 0; y < size; y += 1) {
+        for (let x = 0; x < size; x += 1) {
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "cell floor";
+          cell.dataset.x = String(x);
+          cell.dataset.y = String(y);
+
+          let label = "Empty floor";
+          let symbol = "";
+
+          if (walls.has(keyFor(x, y))) {
+            cell.className = "cell wall";
+            label = "Wall";
+            symbol = "#";
+          } else if (state.hero.x === x && state.hero.y === y) {
+            cell.className = "cell hero";
+            label = "Delver";
+            symbol = "D";
+          } else if (monsterAt(x, y)) {
+            cell.className = "cell monster";
+            label = "Zorgling";
+            symbol = "Z";
+          } else if (shardAt(x, y)) {
+            cell.className = "cell shard";
+            label = "Shard";
+            symbol = "S";
+          } else if (exit.x === x && exit.y === y) {
+            cell.className = "cell exit";
+            label = "Exit";
+            symbol = "E";
+          }
+
+          cell.textContent = symbol;
+          cell.setAttribute("aria-label", `${label} at ${x + 1}, ${y + 1}`);
+          cell.disabled = state.over || !isAdjacent(x, y) || walls.has(keyFor(x, y));
+          cell.addEventListener("click", () => tryMove(x, y));
+          board.appendChild(cell);
+        }
+      }
+    }
+
+    function finishGame(won, text) {
+      state.over = true;
+      state.won = won;
+      setMessage(text);
+      render();
+    }
+
+    function collectShardIfPresent() {
+      const index = state.shards.findIndex((shard) => shard.x === state.hero.x && shard.y === state.hero.y);
+      if (index >= 0) {
+        state.shards.splice(index, 1);
+        setMessage(`You recovered a shard. ${state.shards.length} remaining.`);
+      }
+    }
+
+    function checkForWin() {
+      if (!state.shards.length && state.hero.x === exit.x && state.hero.y === exit.y) {
+        finishGame(true, "You escaped Zorg Dungeon with every shard. Victory!");
+        return true;
+      }
+      return false;
+    }
+
+    function spendAction() {
+      state.actions -= 1;
+      if (state.actions <= 0 && !state.over) {
+        enemyTurn();
+      } else {
+        render();
+      }
+    }
+
+    function attackIfAdjacent() {
+      let hits = 0;
+      for (const monster of state.monsters) {
+        if (Math.abs(monster.x - state.hero.x) + Math.abs(monster.y - state.hero.y) === 1) {
+          hits += 1;
+        }
+      }
+
+      if (hits > 0) {
+        state.hero.health -= hits;
+        if (state.hero.health <= 0) {
+          finishGame(false, `The zorglings overwhelmed you for ${hits} damage. Defeat.`);
+          return true;
+        }
+        setMessage(`The zorglings strike for ${hits} damage. Hold the line.`);
+      }
+
+      return false;
+    }
+
+    function stepMonster(monster) {
+      const options = [
+        { x: monster.x + 1, y: monster.y },
+        { x: monster.x - 1, y: monster.y },
+        { x: monster.x, y: monster.y + 1 },
+        { x: monster.x, y: monster.y - 1 },
+      ].filter((candidate) => {
+        if (!inBounds(candidate.x, candidate.y)) {
+          return false;
+        }
+
+        if (walls.has(keyFor(candidate.x, candidate.y))) {
+          return false;
+        }
+
+        if (candidate.x === state.hero.x && candidate.y === state.hero.y) {
+          return false;
+        }
+
+        return !state.monsters.some((other) => other !== monster && other.x === candidate.x && other.y === candidate.y);
+      });
+
+      options.sort((a, b) => {
+        const aDistance = Math.abs(a.x - state.hero.x) + Math.abs(a.y - state.hero.y);
+        const bDistance = Math.abs(b.x - state.hero.x) + Math.abs(b.y - state.hero.y);
+        return aDistance - bDistance;
+      });
+
+      const currentDistance = Math.abs(monster.x - state.hero.x) + Math.abs(monster.y - state.hero.y);
+      const next = options.find((candidate) => Math.abs(candidate.x - state.hero.x) + Math.abs(candidate.y - state.hero.y) < currentDistance);
+
+      if (next) {
+        monster.x = next.x;
+        monster.y = next.y;
+      }
+    }
+
+    function enemyTurn() {
+      for (const monster of state.monsters) {
+        if (Math.abs(monster.x - state.hero.x) + Math.abs(monster.y - state.hero.y) > 1) {
+          stepMonster(monster);
+        }
+      }
+
+      if (!attackIfAdjacent()) {
+        state.actions = 2;
+        state.turn += 1;
+        if (!state.over && !state.message.includes("shard")) {
+          setMessage(`Turn ${state.turn}. The dungeon shifts around you.`);
+        }
+      }
+
+      render();
+    }
+
+    function tryMove(x, y) {
+      if (state.over || state.actions <= 0 || !isAdjacent(x, y) || walls.has(keyFor(x, y))) {
+        return;
+      }
+
+      const targetMonster = monsterAt(x, y);
+      if (targetMonster) {
+        state.monsters = state.monsters.filter((monster) => monster !== targetMonster);
+        setMessage("You cut down a zorgling.");
+        spendAction();
+        return;
+      }
+
+      state.hero.x = x;
+      state.hero.y = y;
+      setMessage(`You advance to ${x + 1}, ${y + 1}.`);
+      collectShardIfPresent();
+
+      if (checkForWin()) {
+        return;
+      }
+
+      if (!state.shards.length && state.hero.x === exit.x && state.hero.y === exit.y) {
+        setMessage("The exit is active, but you must survive the next enemy turn.");
+      }
+
+      spendAction();
+    }
+
+    function moveBy(direction) {
+      const deltas = {
+        up: { x: 0, y: -1 },
+        down: { x: 0, y: 1 },
+        left: { x: -1, y: 0 },
+        right: { x: 1, y: 0 },
+      };
+      const delta = deltas[direction];
+      if (!delta) {
+        return;
+      }
+      tryMove(state.hero.x + delta.x, state.hero.y + delta.y);
+    }
+
+    document.querySelectorAll("[data-move]").forEach((button) => {
+      button.addEventListener("click", () => moveBy(button.dataset.move));
+    });
+
+    document.getElementById("end-turn").addEventListener("click", () => {
+      if (!state.over) {
+        setMessage("You brace for the zorglings' response.");
+        enemyTurn();
+      }
+    });
+
+    document.getElementById("restart").addEventListener("click", () => {
+      state = initialState();
+      render();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      const map = {
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right",
+        w: "up",
+        s: "down",
+        a: "left",
+        d: "right",
+      };
+      const direction = map[event.key];
+      if (direction) {
+        event.preventDefault();
+        moveBy(direction);
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
