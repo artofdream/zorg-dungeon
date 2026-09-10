@@ -1,0 +1,24 @@
+name: governance
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# The AEA-derived gates (AGENTS.md §2-4): honesty ledger, antifragility
+# findings ledger, requirements traceability graph, docs wikilink graph.
+# Pure Node scripts, no dependencies to install — fast on purpose so nobody
+# is tempted to skip them.
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # findings-ledger needs history to diff against the PR base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/check-requirements-trace.mjs
+      - run: node scripts/check-honesty-ledger.mjs
+      - run: node scripts/check-findings-ledger.mjs
+      - run: node scripts/check-docs-graph.mjs

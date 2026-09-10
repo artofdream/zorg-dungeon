@@ -1,0 +1,5 @@
+# Cursor: read AGENTS.md
+
+This repo's agent instructions live in AGENTS.md, not here,
+so that every AI collaborator works from one single source of truth.
+Read AGENTS.md before making changes or analyzing code in this repo.

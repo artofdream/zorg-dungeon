@@ -1,0 +1,9 @@
+# Enforce consistent LF line endings across platforms and AI agents
+* text=auto eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary

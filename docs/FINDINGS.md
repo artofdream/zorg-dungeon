@@ -1,0 +1,42 @@
+# Findings ledger (antifragility)
+
+> "The same miss twice is a missing sensor or gate, not a missing paragraph."
+> — AEA's antifragility principle (architecture.artof.link/schema.html).
+
+A **Coherence Finding (CF-NNN)** is any discrepancy between what the docs
+claim and what the system actually does — a bug, a spec/code mismatch, a
+broken promise in `STATUS_LEDGER.md`, anything a reviewer or a user catches.
+
+Discipline: **1 finding → 1 issue → 1 branch**, until resolved. File one here
+before opening the GitHub issue (use the `coherence_finding` issue template,
+which links back to the CF-NNN ID).
+
+The rule that makes this antifragile rather than just a bug tracker:
+**once a finding's `Recurrence` reaches 2, the PR that resolves it must also
+add or change something in `.github/workflows/**` or a `*.test.*` file** —
+a sensor or a gate, not just a fix. `scripts/check-findings-ledger.mjs`
+enforces this on the closing PR's diff.
+
+## Format
+
+```
+## CF-NNN: <short title>
+- Status: Open | Resolved
+- Recurrence: <how many times this exact class of miss has happened>
+- Linked: <issue/PR link>
+- Sensor added: <path touched to prevent recurrence> (required once Recurrence >= 2)
+```
+
+## Ledger
+
+## CF-001: Example — seed the format
+- Status: Resolved
+- Recurrence: 1
+- Linked: (none — this is a seed entry demonstrating the format, not a real finding)
+- Sensor added:
+
+## CF-002: Unix placeholder commands in package scripts fail on Windows
+- Status: Resolved
+- Recurrence: 1
+- Linked: (none — resolved in CI/CD stabilization)
+- Sensor added:
