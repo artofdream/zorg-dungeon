@@ -1,0 +1,6 @@
+Niveau 17 : “Cereal Killer”
+Salles : A, Z, D(1), 2*E(eau), 2*O(1), T(2, eau)
+Héros : Artilleur(1, 7)
+Variante : Remplacer Artilleur(1, 7) par Artilleur(1, 8)
+
+Difficulté : 3

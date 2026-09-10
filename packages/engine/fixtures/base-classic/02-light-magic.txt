@@ -1,0 +1,7 @@
+Niveau 2 : “Light Magic”
+Salles : A, Z, D(1), E(feu), E(eau)
+Héros : Elfe(5, {eau})
+Sortilège : Attaque(1)
+Variante : Remplacer Elfe par Guerrier(5)
+
+Difficulté : 1

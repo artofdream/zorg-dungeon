@@ -305,6 +305,55 @@ describe("NFR-9 & NFR-2: Authoring Ergonomics, Validation & Canonical Serializat
     expect(validation.errors).toContain("Level must contain at least one Zorg room ('Z').");
   });
 
+  it("parses French base-classic keywords, braces, and multiplicities", () => {
+    expect(parseHero("Guerrier(5)")).toEqual({ type: "Warrior", hp: 5 });
+    expect(parseHero("Elfe(5, {eau})")).toEqual({
+      type: "Elf",
+      hp: 5,
+      immunities: ["water"],
+    });
+    expect(parseHero("Artilleur(6, 1)")).toEqual({
+      type: "Gunner",
+      hp: 6,
+      shots: 1,
+      duration: undefined,
+    });
+    expect(parseHero("Mécanicien(2, {D:5, E:10})")).toEqual({
+      type: "Mechanic",
+      hp: 2,
+      powerSteps: { D: 5, E: 10 },
+    });
+    expect(parseHero("Princesse(4, {Z:1}, 2)")).toEqual({
+      type: "Princess",
+      hp: 4,
+      weights: { Z: 1 },
+      pull: 2,
+    });
+    expect(parseSpell("Attaque(1)")).toEqual({ type: "Attack", damage: 1 });
+    expect(parseSpell("Téléportation(1)")).toEqual({ type: "Teleport", steps: 1 });
+    expect(parseSpell("Échange")).toEqual({ type: "Swap" });
+    expect(parseSpell("Déplacement")).toEqual({ type: "Move" });
+    expect(parseSpell("Somnolence")).toEqual({ type: "Sleep" });
+    expect(parseSpell("Réveil")).toEqual({ type: "Wake" });
+    expect(parseSpell("Banalité")).toEqual({ type: "Banality" });
+    expect(parseRoom("E(feu)")).toEqual({ type: "E", element: "fire" });
+    expect(parseRoom("E(glace)")).toEqual({ type: "E", element: "ice" });
+    expect(parseRooms("2xD(1), 2*E(feu)")).toEqual([
+      { count: 2, room: { type: "D", damage: 1 } },
+      { count: 2, room: { type: "E", element: "fire" } },
+    ]);
+  });
+
+  it("parse-accepts opaque C args and Gunner third arg without inventing rules", () => {
+    expect(parseRoom("C(∞, 2)")).toEqual({ type: "C", args: ["∞", 2] });
+    expect(parseHero("Artilleur(1, 3, 2)")).toEqual({
+      type: "Gunner",
+      hp: 1,
+      shots: 3,
+      duration: 2,
+    });
+  });
+
   it("round-trips level DSL serialization without data loss", () => {
     const originalDsl = `id: roundtrip-1
 Level: Roundtrip Fortress

@@ -1,0 +1,7 @@
+Niveau 10 : “Checkerline”
+Salles : A, Z, D(1), E(feu), P(1, 1)
+Héros : Guerrier(13)
+Sortilèges : Échange, Déplacement
+Contrainte supplémentaire : Avant l'arrivée des héros, le donjon doit vérifier la contrainte suivante : Soient F = {A, Z} et G = Π\F. ∀(r, s) ∈ FxG, dist(r, s) ≡ 1[2].
+
+Difficulté : 3

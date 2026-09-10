@@ -1,0 +1,5 @@
+Niveau 1 : “Foundations”
+Salles : A, Z, D(2), E(feu)
+Héros : Guerrier(5)
+
+Difficulté : 1

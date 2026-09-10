@@ -1,0 +1,6 @@
+Niveau 18 : “Math Bath”
+Salles : 3*A, Z, choix(3, {D(1), D(2), D(3), D(4), D(5)})
+Héros : Guerrier(3), Guerrier(4), Guerrier(choix(1, {1,3,5}), Guerrier(2)
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Difficulté : 2

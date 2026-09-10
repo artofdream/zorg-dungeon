@@ -70,3 +70,18 @@ admin enablement.
 Do not mark the knowledge site `Live & Probed` from this finding. A green
 deploy job is not a production content probe.
 
+## CF-005: Base-classic N11 Dream Trap and N18 Math Bath are not green-corpus targets
+- Status: Open
+- Recurrence: 1
+- Linked: (PR for Phase 0 base-classic corpus — fill after open)
+- Sensor added:
+
+Sponsor resolution S5: Base N11 “Dream Trap” is author-flagged in the source
+(`euh y a un problème dans celui-ci à mon grand regret`). Base N18 “Math Bath”
+has a malformed heroes line (`Guerrier(choix(1, {1,3,5}), Guerrier(2)` —
+unbalanced `choix`). Deluxe 10.7 `Artilleur(_)` is noted for when/if that pack
+is imported. Both N11 and N18 live under
+`packages/engine/fixtures/base-classic/quarantine/` and are `describe.skip`’d
+so they cannot fail the green corpus suite. This is Recurrence 1 — quarantine
++ skip is documentation, not a second-miss gate.
+

@@ -1,0 +1,6 @@
+Niveau 11 : “Dream Trap”
+Salles : A, Z, E(choix(1, {éléments})), D(1)
+Héros : Guerrier(1)
+Sortilèges : Somnolence, choix(2, {Téléportation(1), Échange, Déplacement})
+
+Difficulté : 2 (euh y a un problème dans celui-ci à mon grand regret)

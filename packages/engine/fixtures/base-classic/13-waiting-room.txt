@@ -1,0 +1,6 @@
+Niveau 13 : “Waiting Room”
+Salles : A, Z, D(1)
+Héros : Guerrier(2), Mécanicien(2, {D:5})
+Sortilège : Attaque(1)
+
+Difficulté : 2

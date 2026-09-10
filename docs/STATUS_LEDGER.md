@@ -77,12 +77,12 @@ writing a table row, is not proof.
 | FR-45 | Unknown | |
 | FR-46 | Unknown | |
 | NFR-1 | Unknown | |
-| NFR-2 | Unknown | |
+| NFR-2 | Simulated | packages/engine/src/base-classic-corpus.test.ts |
 | NFR-3 | Unknown | |
 | NFR-4 | Unknown | |
 | NFR-5 | Unknown | |
 | NFR-6 | Unknown | |
 | NFR-7 | Unknown | |
 | NFR-8 | Unknown | |
-| NFR-9 | Unknown | |
+| NFR-9 | Simulated | packages/engine/src/base-classic-corpus.test.ts |
 | NFR-10 | Unknown | |
