@@ -144,12 +144,12 @@ A spell can be cast the instant a hero finishes an action (a move, a spawn) but 
 
 ## 4. Open questions in the source
 
-- **Undefined room (blocks FR-18).** Room type `C` is used in the Artillery contract (`C(1)`, `C(2)`, `C(∞,2)`) but no chapter defines what it does.
-- **Drifting signature (affects FR-22).** The manual defines Gunner as `Gunner(x, c)`, but Artillery-contract levels use a third argument (e.g. `Gunner(1, 3, 2)`, `Gunner(2, ∞, ∞)`) that reads as a shot-duration limit — never formally specified.
-- **Author-flagged bug (affects base Level 11).** "Dream Trap" is marked in the source as having a known problem, with no fix given.
-- **Unwritten contracts (affects FR-4 scope).** Contracts 11–15 (Inventory, Celebrity, Fortune, Necromancy, Awareness) are placeholders with no level content.
-- **Malformed level data (affects level import).** A few entries are incomplete as written — e.g. base Level 18's room list has an unbalanced `choix(...)` expression, and Deluxe 10.7 lists a literal placeholder hero, `Gunner(_)`.
-- **Unspecified progression gate (affects FR-4).** Contracts carry a point cost, but the source never states how points are earned or what "spending" them to unlock a contract means mechanically.
+- **Undefined room (blocks FR-18).** Room type `C` is used in the Artillery contract (`C(1)`, `C(2)`, `C(∞,2)`) but no chapter defines what it does. **S2 (2026-09-10): DEFER.** The rooms chapter has no C rules. Loader keeps opaque `args`. Do not invent behavior.
+- **Drifting signature (affects FR-22).** The manual defines Gunner as `Gunner(x, c)` / `Artilleur(x, c)`, but Artillery-contract levels use a third argument (e.g. `Gunner(1, 3, 2)`, `Gunner(2, ∞, ∞)`) that reads as a shot-duration limit — never formally specified. **S3 (2026-09-10): parse-accept the third argument; semantics DEFERRED.** Do not encode duration behavior yet.
+- **Author-flagged bug (affects base Level 11).** "Dream Trap" is marked in the source as having a known problem, with no fix given. **S5 (2026-09-10): quarantine** — not part of the green base-classic corpus suite.
+- **Unwritten contracts (affects FR-4 scope).** Contracts 11–15 (Inventory, Celebrity, Fortune, Necromancy, Awareness) are placeholders with no level content. **S4 (2026-09-10): DEFER** — source is literally Blabla.
+- **Malformed level data (affects level import).** A few entries are incomplete as written — e.g. base Level 18's heroes line has an unbalanced `choix(...)` (`Guerrier(choix(1, {1,3,5}), Guerrier(2)`), and Deluxe 10.7 lists a literal placeholder hero, `Gunner(_)` / `Artilleur(_)`. **S5 (2026-09-10): quarantine** Base N18 (and Deluxe 10.7 when/if imported).
+- **Unspecified progression gate (affects FR-4).** Contracts carry a point cost, but the source never states how points are earned or what "spending" them to unlock a contract means mechanically. **S6 (2026-09-10): STILL OPEN.** Leave [[FR-4]] Unknown.
 
 ## 5. Build plan
 

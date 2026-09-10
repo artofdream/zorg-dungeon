@@ -18,9 +18,35 @@ export type RoomDef =
   | { type: "T"; cost: number | string; element: ElementType | string }
   | { type: "C"; args: (number | string)[] };
 
+/** Inline `choix(n, E)` at a room / hero / spell slot (FR-2). Not a room type. */
+export interface ChoixDef<T = unknown> {
+  type: "Choix";
+  n: number | string;
+  options: T[];
+}
+
+export function isChoixDef<T>(value: unknown): value is ChoixDef<T> {
+  return typeof value === "object" && value !== null && (value as ChoixDef).type === "Choix";
+}
+
+/** `λ*Somnolence` — variable or numeric repeat of a spell. Not a spell type. */
+export interface SpellRepeat {
+  type: "Repeat";
+  count: number | string;
+  spell: SpellDef;
+}
+
+export function isSpellRepeat(value: unknown): value is SpellRepeat {
+  return typeof value === "object" && value !== null && (value as SpellRepeat).type === "Repeat";
+}
+
+export type RoomSlot = RoomDef | ChoixDef<RoomSlot>;
+export type HeroSlot = HeroDef | ChoixDef<HeroSlot>;
+export type SpellSlot = SpellDef | ChoixDef<SpellSlot> | SpellRepeat;
+
 export interface RoomMultiplicity {
   count: number;
-  room: RoomDef;
+  room: RoomSlot;
 }
 
 export type HeroType = "Warrior" | "Elf" | "Gunner" | "Mechanic" | "Princess";
@@ -95,11 +121,15 @@ export interface LevelDef {
   name: string;
   contractId?: string;
   rooms: RoomMultiplicity[];
-  heroes: HeroDef[];
-  spells?: SpellDef[];
+  heroes: HeroSlot[];
+  spells?: SpellSlot[];
   variables?: ChoixVariableDef[];
   constraints?: ConstraintDef[];
   bonuses?: BonusDef[];
+  /** Optional extra win conditions from source `Variante` lines (not bonuses). */
+  variants?: BonusDef[];
+  /** Source `Difficulté` line; stored, not interpreted. */
+  difficulty?: number | string;
   mirrorWorlds?: LevelDef[];
 }
 
@@ -107,6 +137,9 @@ export interface LevelDef {
 export function flattenRooms(multiplicities: RoomMultiplicity[]): RoomDef[] {
   const result: RoomDef[] = [];
   for (const m of multiplicities) {
+    if (isChoixDef(m.room)) {
+      throw new Error("Cannot flatten unresolved choix rooms (player has not chosen yet).");
+    }
     for (let i = 0; i < m.count; i++) {
       result.push(JSON.parse(JSON.stringify(m.room)));
     }

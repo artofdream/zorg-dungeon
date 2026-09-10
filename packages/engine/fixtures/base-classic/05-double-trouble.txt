@@ -1,0 +1,7 @@
+Niveau 5 : “Double Trouble”
+Salles : A, Z, D(3), E(feu)
+Héros : Guerrier(3), Elfe(3, {feu})
+Sortilège : Attaque(3)
+Contrainte supplémentaire : Le donjon doit être carré.
+
+Difficulté : 1

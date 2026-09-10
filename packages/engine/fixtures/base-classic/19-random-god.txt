@@ -1,0 +1,7 @@
+Niveau 19 : “Random God”
+Salles : A, 3*Z, D(3), E(choix(1, {éléments})), P(1, 1)
+Héros : Guerrier(42)
+Sortilèges : Téléportation(1), Échange, Déplacement
+Contrainte supplémentaire : Le donjon, lors de sa création, doit pouvoir être contenu dans un donjon carré de 3x3.
+
+Difficulté : 3

@@ -1,0 +1,6 @@
+Niveau 3 : “Cross with the Constraint”
+Salles : A, Z, 2xD(1), E(feu), E(glace)
+Héros : Guerrier(4)
+Contrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.
+
+Difficulté : 2

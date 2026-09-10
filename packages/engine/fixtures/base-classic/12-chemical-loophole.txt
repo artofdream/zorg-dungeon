@@ -1,0 +1,8 @@
+Niveau 12 : “Chemical Loophole”
+Salles : A, Z, D(1), E(poison), P(1, 5)
+Héros : choix(1, {Guerrier(1), Elfe(1, {}), Artilleur(1, 1)})
+Contrainte supplémentaire : dist(A, Z) = 1.
+Variante : On doit également avoir 
+dist(A, P) = dist(A, E) + 2
+
+Difficulté : 2

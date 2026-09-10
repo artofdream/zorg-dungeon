@@ -9,19 +9,158 @@ import {
   ChoixVariableDef,
   ConstraintDef,
   ElementType,
-  HeroDef,
+  HeroSlot,
   HeroType,
+  isChoixDef,
+  isSpellRepeat,
   LevelDef,
-  RoomDef,
   RoomMultiplicity,
+  RoomSlot,
   RoomType,
   SpellDef,
+  SpellSlot,
   SpellType,
 } from "./level.js";
 
-/** FR-1: Parse a room token, e.g. "A", "Z", "D(5)", "E(fire)", "P(3, i->i)", "O(10)", "T(5, ice)", "C(1)". */
-export function parseRoom(token: string): RoomDef {
+/** Split on separators only at brace/paren depth 0. */
+export function splitTopLevel(text: string, separator = ","): string[] {
+  const tokens: string[] = [];
+  let current = "";
+  let depth = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i] ?? "";
+    if (char === "(" || char === "[" || char === "{") depth++;
+    else if (char === ")" || char === "]" || char === "}") depth--;
+    else if (char === separator && depth === 0) {
+      if (current.trim()) tokens.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+  if (current.trim()) tokens.push(current.trim());
+  return tokens;
+}
+
+function foldKey(s: string): string {
+  return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
+const ELEMENT_ALIASES: Record<string, ElementType> = {
+  fire: "fire",
+  feu: "fire",
+  water: "water",
+  eau: "water",
+  ice: "ice",
+  glace: "ice",
+  poison: "poison",
+};
+
+function canonicalizeElement(raw: string): ElementType | string {
+  const key = foldKey(raw.trim());
+  return ELEMENT_ALIASES[key] ?? raw.trim();
+}
+
+const HERO_ALIASES: Record<string, HeroType> = {
+  warrior: "Warrior",
+  guerrier: "Warrior",
+  elf: "Elf",
+  elfe: "Elf",
+  gunner: "Gunner",
+  artilleur: "Gunner",
+  mechanic: "Mechanic",
+  mecanicien: "Mechanic",
+  princess: "Princess",
+  princesse: "Princess",
+};
+
+function canonicalizeHeroType(raw: string): HeroType | string {
+  return HERO_ALIASES[foldKey(raw)] ?? raw;
+}
+
+const SPELL_ALIASES: Record<string, SpellType> = {
+  attack: "Attack",
+  attaque: "Attack",
+  teleport: "Teleport",
+  teleportation: "Teleport",
+  move: "Move",
+  deplacement: "Move",
+  swap: "Swap",
+  echange: "Swap",
+  selection: "Selection",
+  sleep: "Sleep",
+  somnolence: "Sleep",
+  wake: "Wake",
+  reveil: "Wake",
+  banality: "Banality",
+  banalite: "Banality",
+};
+
+function canonicalizeSpellType(raw: string): SpellType | string {
+  return SPELL_ALIASES[foldKey(raw)] ?? raw;
+}
+
+function isChoixToken(token: string): boolean {
+  return /^choix\s*\(/i.test(token.trim());
+}
+
+function parseChoixRaw(token: string): { n: number | string; items: string[] } {
   const trimmed = token.trim();
+  const match = trimmed.match(/^choix\s*\(\s*(.+)\)$/is);
+  if (!match?.[1]) {
+    throw new Error(`Invalid choix expression: "${trimmed}"`);
+  }
+  const parts = splitTopLevel(match[1]);
+  const nRaw = parts[0] ?? "1";
+  const n = Number.isNaN(Number(nRaw)) ? nRaw : Number(nRaw);
+  const domainPart = parts[1] ?? "";
+  let items: string[];
+  if (
+    (domainPart.startsWith("{") && domainPart.endsWith("}")) ||
+    (domainPart.startsWith("[") && domainPart.endsWith("]"))
+  ) {
+    items = splitTopLevel(domainPart.slice(1, -1));
+  } else {
+    items = domainPart ? [domainPart] : [];
+  }
+  return { n, items };
+}
+
+function parseDict(raw: string): Record<string, number | string> {
+  const out: Record<string, number | string> = {};
+  const trimmed = raw.trim();
+  try {
+    Object.assign(out, JSON.parse(trimmed));
+    return out;
+  } catch {
+    try {
+      const jsonLike = trimmed.replace(/([a-zA-Z0-9_]+):/g, '"$1":');
+      Object.assign(out, JSON.parse(jsonLike));
+      return out;
+    } catch {
+      const pairs = trimmed.replace(/[{}]/g, "").split(",");
+      for (const pair of pairs) {
+        const [k, v] = pair.split(":").map((s) => s.trim());
+        if (k && v) out[k] = Number.isNaN(Number(v)) ? v : Number(v);
+      }
+      return out;
+    }
+  }
+}
+
+function unquoteTitle(raw: string): string {
+  const t = raw.trim();
+  if (/^[“"«].+[”"»]$/.test(t)) return t.slice(1, -1);
+  return t;
+}
+
+/** FR-1: Parse a room token, e.g. "A", "Z", "D(5)", "E(fire)", "P(3, i->i)", "O(10)", "T(5, ice)", "C(1)". */
+export function parseRoom(token: string): RoomSlot {
+  const trimmed = token.trim();
+  if (isChoixToken(trimmed)) {
+    const { n, items } = parseChoixRaw(trimmed);
+    return { type: "Choix", n, options: items.map((item) => parseRoom(item)) };
+  }
   if (trimmed === "A") return { type: "A" };
   if (trimmed === "Z") return { type: "Z" };
 
@@ -32,10 +171,7 @@ export function parseRoom(token: string): RoomDef {
 
   const typeChar = match[1];
   const rawArgs = match[2] ?? "";
-  const args = rawArgs
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  const args = splitTopLevel(rawArgs);
 
   switch (typeChar as RoomType) {
     case "D": {
@@ -43,7 +179,7 @@ export function parseRoom(token: string): RoomDef {
       return { type: "D", damage: Number.isNaN(dmg) ? (args[0] ?? 0) : dmg };
     }
     case "E": {
-      return { type: "E", element: (args[0] ?? "fire") as ElementType };
+      return { type: "E", element: canonicalizeElement(args[0] ?? "fire") };
     }
     case "P": {
       const entries = Number(args[0]);
@@ -60,7 +196,7 @@ export function parseRoom(token: string): RoomDef {
     }
     case "T": {
       const cost = Number(args[0]);
-      const element = (args[1] ?? "fire") as ElementType;
+      const element = canonicalizeElement(args[1] ?? "fire");
       return {
         type: "T",
         cost: Number.isNaN(cost) ? (args[0] ?? 0) : cost,
@@ -68,6 +204,7 @@ export function parseRoom(token: string): RoomDef {
       };
     }
     case "C": {
+      // S2 / NFR-8: C is undefined in the rooms chapter. Keep args opaque.
       return {
         type: "C",
         args: args.map((a) => (Number.isNaN(Number(a)) ? a : Number(a))),
@@ -114,19 +251,20 @@ export function parseRooms(text: string): RoomMultiplicity[] {
 }
 
 /** FR-1: Parse a hero definition, e.g. "Warrior(10)", "Elf(8, [fire, water])", "Gunner(6, 3)" */
-export function parseHero(token: string): HeroDef {
+export function parseHero(token: string): HeroSlot {
   const trimmed = token.trim();
-  const match = trimmed.match(/^([A-Za-z]+)\((.*)\)$/s);
+  if (isChoixToken(trimmed)) {
+    const { n, items } = parseChoixRaw(trimmed);
+    return { type: "Choix", n, options: items.map((item) => parseHero(item)) };
+  }
+  const match = trimmed.match(/^(\p{L}[\p{L}\p{M}\d]*)\((.*)\)$/su);
   if (!match || !match[1]) {
     throw new Error(`Invalid hero specification: "${trimmed}"`);
   }
 
-  const heroName = match[1];
+  const heroName = canonicalizeHeroType(match[1]);
   const rawArgs = match[2] ?? "";
-  const args = rawArgs
-    .split(/,(?![^\[\{]*[\]\}])/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  const args = splitTopLevel(rawArgs);
 
   const hp = Number.isNaN(Number(args[0])) ? (args[0] ?? 1) : Number(args[0]);
 
@@ -136,15 +274,16 @@ export function parseHero(token: string): HeroDef {
     case "Elf": {
       let immunities: (ElementType | string)[] = [];
       if (args[1]) {
-        const raw = args[1].replace(/[\[\]]/g, "");
+        const raw = args[1].replace(/[\[\]{}]/g, "");
         immunities = raw
           .split(/[,+]/)
-          .map((s) => s.trim() as ElementType)
+          .map((s) => canonicalizeElement(s.trim()))
           .filter(Boolean);
       }
       return { type: "Elf", hp, immunities };
     }
     case "Gunner": {
+      // S3 / NFR-8: accept optional 3rd arg; do not encode duration semantics.
       let shots: number | string;
       if (args[1] === "inf" || args[1] === "∞") {
         shots = "inf";
@@ -163,82 +302,38 @@ export function parseHero(token: string): HeroDef {
       return { type: "Gunner", hp, shots, duration };
     }
     case "Mechanic": {
-      const powerSteps: Record<string, number | string> = {};
-      if (args[1]) {
-        try {
-          const jsonLike = args[1].replace(/([a-zA-Z0-9_]+):/g, '"$1":');
-          Object.assign(powerSteps, JSON.parse(jsonLike));
-        } catch {
-          // fallback dictionary parsing
-          const pairs = args[1].replace(/[\{\}]/g, "").split(",");
-          for (const pair of pairs) {
-            const [k, v] = pair.split(":").map((s) => s.trim());
-            if (k && v) powerSteps[k] = Number.isNaN(Number(v)) ? v : Number(v);
-          }
-        }
-      }
+      const powerSteps = args[1] ? parseDict(args[1]) : {};
       return { type: "Mechanic", hp, powerSteps };
     }
     case "Princess": {
       const weights: Record<string, number | string> = { Z: 1 };
-      if (args[1]) {
-        try {
-          const jsonLike = args[1].replace(/([a-zA-Z0-9_]+):/g, '"$1":');
-          Object.assign(weights, JSON.parse(jsonLike));
-        } catch {
-          const pairs = args[1].replace(/[\{\}]/g, "").split(",");
-          for (const pair of pairs) {
-            const [k, v] = pair.split(":").map((s) => s.trim());
-            if (k && v) weights[k] = Number.isNaN(Number(v)) ? v : Number(v);
-          }
-        }
-      }
+      if (args[1]) Object.assign(weights, parseDict(args[1]));
       const pull = args[2] ? (Number.isNaN(Number(args[2])) ? args[2] : Number(args[2])) : 1;
       return { type: "Princess", hp, weights, pull };
     }
     default:
-      throw new Error(`Unknown hero type: "${heroName}"`);
+      throw new Error(`Unknown hero type: "${match[1]}"`);
   }
 }
 
 /** FR-1: Parse an ordered hero spawn list. */
-export function parseHeroes(text: string): HeroDef[] {
+export function parseHeroes(text: string): HeroSlot[] {
   if (!text.trim()) return [];
-
-  const tokens: string[] = [];
-  let current = "";
-  let depth = 0;
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (char === "(" || char === "[" || char === "{") depth++;
-    else if (char === ")" || char === "]" || char === "}") depth--;
-    else if ((char === "," || char === "\n") && depth === 0) {
-      if (current.trim()) tokens.push(current.trim());
-      current = "";
-      continue;
-    }
-    current += char;
-  }
-  if (current.trim()) tokens.push(current.trim());
-
+  const tokens = splitTopLevel(text.replace(/\n/g, ","));
   return tokens.map((tok) => parseHero(tok));
 }
 
 /** FR-1: Parse a spell definition, e.g. "Attack(3)", "Teleport(2)", "Move", "Selection(false)". */
 export function parseSpell(token: string): SpellDef {
   const trimmed = token.trim();
-  const match = trimmed.match(/^([A-Za-z]+)(?:\((.*)\))?$/s);
+  const match = trimmed.match(/^(\p{L}[\p{L}\p{M}\d]*)(?:\((.*)\))?$/su);
   if (!match || !match[1]) {
     throw new Error(`Invalid spell specification: "${trimmed}"`);
   }
 
-  const spellName = match[1];
+  const spellName = canonicalizeSpellType(match[1]);
   const rawArgs = match[2] ?? "";
-  const args = rawArgs
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  const args = splitTopLevel(rawArgs);
 
   switch (spellName as SpellType) {
     case "Attack":
@@ -267,32 +362,35 @@ export function parseSpell(token: string): SpellDef {
     case "Banality":
       return { type: "Banality" };
     default:
-      throw new Error(`Unknown spell type: "${spellName}"`);
+      throw new Error(`Unknown spell type: "${match[1]}"`);
   }
 }
 
-/** FR-1: Parse a one-time spell list. */
-export function parseSpells(text: string): SpellDef[] {
-  if (!text.trim()) return [];
-
-  const tokens: string[] = [];
-  let current = "";
-  let depth = 0;
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (char === "(" || char === "[" || char === "{") depth++;
-    else if (char === ")" || char === "]" || char === "}") depth--;
-    else if ((char === "," || char === "\n") && depth === 0) {
-      if (current.trim()) tokens.push(current.trim());
-      current = "";
-      continue;
-    }
-    current += char;
+/** Parse a spell list item, including `choix(...)` and `λ*Somnolence` repeats. */
+export function parseSpellEntry(token: string): SpellSlot {
+  const trimmed = token.trim();
+  if (isChoixToken(trimmed)) {
+    const { n, items } = parseChoixRaw(trimmed);
+    return { type: "Choix", n, options: items.map((item) => parseSpellEntry(item)) };
   }
-  if (current.trim()) tokens.push(current.trim());
+  const repeat = trimmed.match(/^([^\s*x]+)\s*[*x]\s*(\p{L}.*)$/iu);
+  if (repeat?.[1] && repeat[2] && !/^[A-Za-z]/u.test(repeat[1])) {
+    const countRaw = repeat[1];
+    const count = Number.isNaN(Number(countRaw)) ? countRaw : Number(countRaw);
+    const inner = parseSpellEntry(repeat[2]);
+    if (inner.type === "Choix" || inner.type === "Repeat") {
+      throw new Error(`Nested spell multiplicity is not supported: "${trimmed}"`);
+    }
+    return { type: "Repeat", count, spell: inner };
+  }
+  return parseSpell(trimmed);
+}
 
-  return tokens.map((tok) => parseSpell(tok));
+/** FR-1: Parse a one-time spell list. */
+export function parseSpells(text: string): SpellSlot[] {
+  if (!text.trim()) return [];
+  const tokens = splitTopLevel(text.replace(/\n/g, ","));
+  return tokens.map((tok) => parseSpellEntry(tok));
 }
 
 /**
@@ -384,22 +482,39 @@ export function parseVariable(line: string): ChoixVariableDef {
   };
 }
 
-/** FR-2: Parse a multi-line variables block. */
+/** FR-2: Parse a multi-line variables block (also `λ = choix(...), μ = choix(...)`). */
 export function parseVariables(text: string): ChoixVariableDef[] {
   const lines = text
     .split("\n")
     .map((l) => l.trim())
     .filter((l) => l.length > 0 && !l.startsWith("#"));
 
-  return lines.map((l) => parseVariable(l));
+  const defs = splitTopLevel(lines.join(", "));
+  return defs.map((l) => parseVariable(l));
 }
 
-/** FR-1: Parse a multi-line level definition DSL. */
+function appendListed(
+  list: { id: string; expression: string }[],
+  prefix: string,
+  line: string,
+): void {
+  const cleaned = line.replace(/^-\s*/, "").trim();
+  if (!cleaned) return;
+  const last = list[list.length - 1];
+  if (last && !/^-/.test(line.trim())) {
+    last.expression = `${last.expression}\n${cleaned}`;
+    return;
+  }
+  list.push({ id: `${prefix}-${list.length + 1}`, expression: cleaned });
+}
+
+/** FR-1: Parse a multi-line level definition DSL (English or base-classic French). */
 export function parseLevel(dsl: string): LevelDef {
   const lines = dsl.split("\n");
   let id = "level-0";
   let name = "Untitled Level";
   let contractId: string | undefined = undefined;
+  let difficulty: number | string | undefined = undefined;
 
   let roomsText = "";
   let heroesText = "";
@@ -407,13 +522,29 @@ export function parseLevel(dsl: string): LevelDef {
   let variablesText = "";
   const constraints: ConstraintDef[] = [];
   const bonuses: BonusDef[] = [];
+  const variants: BonusDef[] = [];
 
-  let currentSection: "none" | "rooms" | "heroes" | "spells" | "variables" | "constraints" | "bonuses" =
-    "none";
+  let currentSection:
+    | "none"
+    | "rooms"
+    | "heroes"
+    | "spells"
+    | "variables"
+    | "constraints"
+    | "bonuses"
+    | "variants" = "none";
 
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const niveauMatch = trimmed.match(/^Niveau\s+(\d+)\s*:\s*(.+)$/i);
+    if (niveauMatch?.[1] && niveauMatch[2]) {
+      id = `base-classic-${niveauMatch[1]}`;
+      name = unquoteTitle(niveauMatch[2]);
+      currentSection = "none";
+      continue;
+    }
 
     // Header checks
     const idMatch = trimmed.match(/^id:\s*(.+)$/i);
@@ -432,51 +563,61 @@ export function parseLevel(dsl: string): LevelDef {
       continue;
     }
 
-    // Section headers
-    if (/^(?:rooms|pi|Π):\s*(.*)$/i.test(trimmed)) {
+    const difficultyMatch = trimmed.match(/^(?:difficult[eé]|difficulty)\s*:\s*(.*)$/i);
+    if (difficultyMatch) {
+      const raw = (difficultyMatch[1] ?? "").trim();
+      if (raw) {
+        const num = Number(raw);
+        difficulty = !Number.isNaN(num) && String(num) === raw ? num : raw;
+      }
+      currentSection = "none";
+      continue;
+    }
+
+    // Section headers (English + French manual keywords)
+    if (/^(?:salles|rooms|pi|Π)\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "rooms";
-      const inline = trimmed.replace(/^(?:rooms|pi|Π):\s*/i, "");
+      const inline = trimmed.replace(/^(?:salles|rooms|pi|Π)\s*:\s*/i, "");
       if (inline) roomsText += (roomsText ? ", " : "") + inline;
       continue;
     }
-    if (/^(?:heroes|gamma|Γ):\s*(.*)$/i.test(trimmed)) {
+    if (/^(?:h[eé]ros|heroes|gamma|Γ)\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "heroes";
-      const inline = trimmed.replace(/^(?:heroes|gamma|Γ):\s*/i, "");
+      const inline = trimmed.replace(/^(?:h[eé]ros|heroes|gamma|Γ)\s*:\s*/i, "");
       if (inline) heroesText += (heroesText ? ", " : "") + inline;
       continue;
     }
-    if (/^(?:spells|phi|Φ):\s*(.*)$/i.test(trimmed)) {
+    if (/^(?:sortil[eè]ges?|spells|phi|Φ)\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "spells";
-      const inline = trimmed.replace(/^(?:spells|phi|Φ):\s*/i, "");
+      const inline = trimmed.replace(/^(?:sortil[eè]ges?|spells|phi|Φ)\s*:\s*/i, "");
       if (inline) spellsText += (spellsText ? ", " : "") + inline;
       continue;
     }
-    if (/^variables:\s*(.*)$/i.test(trimmed)) {
+    if (/^variables?\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "variables";
-      const inline = trimmed.replace(/^variables:\s*/i, "");
+      const inline = trimmed.replace(/^variables?\s*:\s*/i, "");
       if (inline) variablesText += "\n" + inline;
       continue;
     }
-    if (/^constraints:\s*(.*)$/i.test(trimmed)) {
+    if (/^(?:contrainte suppl[eé]mentaire|contraintes?|constraints?)\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "constraints";
-      const inline = trimmed.replace(/^constraints:\s*/i, "");
-      if (inline) {
-        constraints.push({
-          id: `c-${constraints.length + 1}`,
-          expression: inline.replace(/^-\s*/, "").trim(),
-        });
-      }
+      const inline = trimmed.replace(
+        /^(?:contrainte suppl[eé]mentaire|contraintes?|constraints?)\s*:\s*/i,
+        "",
+      );
+      if (inline) appendListed(constraints, "c", inline);
       continue;
     }
-    if (/^bonuses:\s*(.*)$/i.test(trimmed)) {
+    if (/^(?:variantes?|variants?)\s*:\s*(.*)$/i.test(trimmed)) {
+      currentSection = "variants";
+      const inline = trimmed.replace(/^(?:variantes?|variants?)\s*:\s*/i, "");
+      if (inline) appendListed(variants, "v", inline);
+      continue;
+    }
+    if (/^bonuses?\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "bonuses";
-      const inline = trimmed.replace(/^bonuses:\s*/i, "");
-      if (inline) {
-        bonuses.push({
-          id: `b-${bonuses.length + 1}`,
-          expression: inline.replace(/^-\s*/, "").trim(),
-        });
-      }
+      const inline = trimmed.replace(/^bonuses?\s*:\s*/i, "");
+      if (inline) appendListed(bonuses, "b", inline);
       continue;
     }
 
@@ -495,16 +636,13 @@ export function parseLevel(dsl: string): LevelDef {
         variablesText += "\n" + trimmed;
         break;
       case "constraints":
-        constraints.push({
-          id: `c-${constraints.length + 1}`,
-          expression: trimmed.replace(/^-\s*/, "").trim(),
-        });
+        appendListed(constraints, "c", trimmed);
         break;
       case "bonuses":
-        bonuses.push({
-          id: `b-${bonuses.length + 1}`,
-          expression: trimmed.replace(/^-\s*/, "").trim(),
-        });
+        appendListed(bonuses, "b", trimmed);
+        break;
+      case "variants":
+        appendListed(variants, "v", trimmed);
         break;
     }
   }
@@ -524,7 +662,27 @@ export function parseLevel(dsl: string): LevelDef {
     variables,
     constraints: constraints.length ? constraints : undefined,
     bonuses: bonuses.length ? bonuses : undefined,
+    variants: variants.length ? variants : undefined,
+    difficulty,
   };
+}
+
+function roomSlotHasType(room: RoomSlot, type: RoomType): boolean {
+  if (isChoixDef(room)) return room.options.some((opt) => roomSlotHasType(opt, type));
+  return room.type === type;
+}
+
+function validateHeroSlot(hero: HeroSlot, label: string, errors: string[]): void {
+  if (isChoixDef(hero)) {
+    if (typeof hero.n === "number" && hero.n <= 0) {
+      errors.push(`${label} choix must have n > 0, got ${hero.n}`);
+    }
+    hero.options.forEach((opt, i) => validateHeroSlot(opt, `${label} option ${i}`, errors));
+    return;
+  }
+  if (typeof hero.hp === "number" && hero.hp <= 0) {
+    errors.push(`${label} (${hero.type}) must have HP > 0, got ${hero.hp}`);
+  }
 }
 
 /** NFR-9: Validate a level structure and return any ergonomic or logical errors. */
@@ -532,8 +690,8 @@ export function validateLevel(level: LevelDef): { valid: boolean; errors: string
   const errors: string[] = [];
 
   // FR-1: Level must have at least one A room and one Z room
-  const hasA = level.rooms.some((r) => r.room.type === "A" && r.count > 0);
-  const hasZ = level.rooms.some((r) => r.room.type === "Z" && r.count > 0);
+  const hasA = level.rooms.some((r) => r.count > 0 && roomSlotHasType(r.room, "A"));
+  const hasZ = level.rooms.some((r) => r.count > 0 && roomSlotHasType(r.room, "Z"));
   if (!hasA) errors.push("Level must contain at least one spawn room ('A').");
   if (!hasZ) errors.push("Level must contain at least one Zorg room ('Z').");
 
@@ -546,9 +704,7 @@ export function validateLevel(level: LevelDef): { valid: boolean; errors: string
 
   // Heroes must have positive HP if numeric
   for (const [idx, h] of level.heroes.entries()) {
-    if (typeof h.hp === "number" && h.hp <= 0) {
-      errors.push(`Hero at index ${idx} (${h.type}) must have HP > 0, got ${h.hp}`);
-    }
+    validateHeroSlot(h, `Hero at index ${idx}`, errors);
   }
 
   // Variables validation
@@ -621,10 +777,26 @@ export function serializeLevel(level: LevelDef): string {
     }
   }
 
+  if (level.variants && level.variants.length > 0) {
+    lines.push("Variants:");
+    for (const v of level.variants) {
+      lines.push(`  - ${v.expression}`);
+    }
+  }
+
+  if (level.difficulty !== undefined) {
+    lines.push(`Difficulty: ${level.difficulty}`);
+  }
+
   return lines.join("\n");
 }
 
-function serializeRoom(room: RoomDef): string {
+function serializeChoix<T>(n: number | string, options: T[], serializeItem: (item: T) => string): string {
+  return `choix(${n}, {${options.map(serializeItem).join(", ")}})`;
+}
+
+function serializeRoom(room: RoomSlot): string {
+  if (isChoixDef(room)) return serializeChoix(room.n, room.options, serializeRoom);
   switch (room.type) {
     case "A":
     case "Z":
@@ -644,7 +816,8 @@ function serializeRoom(room: RoomDef): string {
   }
 }
 
-function serializeHero(hero: HeroDef): string {
+function serializeHero(hero: HeroSlot): string {
+  if (isChoixDef(hero)) return serializeChoix(hero.n, hero.options, serializeHero);
   switch (hero.type) {
     case "Warrior":
       return `Warrior(${hero.hp})`;
@@ -661,7 +834,9 @@ function serializeHero(hero: HeroDef): string {
   }
 }
 
-function serializeSpell(spell: SpellDef): string {
+function serializeSpell(spell: SpellSlot): string {
+  if (isChoixDef(spell)) return serializeChoix(spell.n, spell.options, serializeSpell);
+  if (isSpellRepeat(spell)) return `${spell.count}*${serializeSpell(spell.spell)}`;
   switch (spell.type) {
     case "Attack":
       return `Attack(${spell.damage})`;
