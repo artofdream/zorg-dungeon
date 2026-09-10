@@ -217,7 +217,8 @@ Constraints:
     const substituted = substituteVariables(level, choices);
     const roomD = substituted.rooms[2]?.room;
     expect(roomD?.type === "D" ? roomD.damage : null).toBe(6);
-    expect(substituted.heroes[0]?.hp).toBe(20);
+    const hero0 = substituted.heroes[0];
+    expect(hero0 && hero0.type !== "Choix" ? hero0.hp : null).toBe(20);
     const spellAtk = substituted.spells?.[0];
     expect(spellAtk?.type === "Attack" ? spellAtk.damage : null).toBe(5);
     expect(substituted.constraints?.[0]?.expression).toBe("dist(A, Z) >= 6");

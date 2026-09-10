@@ -73,7 +73,7 @@ deploy job is not a production content probe.
 ## CF-005: Base-classic N11 Dream Trap and N18 Math Bath are not green-corpus targets
 - Status: Open
 - Recurrence: 1
-- Linked: (PR for Phase 0 base-classic corpus — fill after open)
+- Linked: https://github.com/artofdream/zorg-dungeon/pull/5
 - Sensor added:
 
 Sponsor resolution S5: Base N11 “Dream Trap” is author-flagged in the source
