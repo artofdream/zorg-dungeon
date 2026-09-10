@@ -236,9 +236,16 @@ export function substituteVariables(
         substitutedStr = substitutedStr.replace(quotedPattern, JSON.stringify(single));
       }
     } else {
-      // Multiple items selected
+      // Multiple items selected — whole JSON token and inline $name/{name} (FR-2)
+      const serialized = JSON.stringify(choice.selected);
       const quotedPattern = new RegExp(`"\\$${varName}"`, "g");
-      substitutedStr = substitutedStr.replace(quotedPattern, JSON.stringify(choice.selected));
+      substitutedStr = substitutedStr.replace(quotedPattern, serialized);
+
+      // Remaining tokens are inside strings (constraints, bonuses, formulas).
+      // Escape so string-valued picks do not break the JSON document.
+      const inlinePattern = new RegExp(`\\$${varName}\\b|\\{${varName}\\}`, "g");
+      const inlineReplacement = JSON.stringify(serialized).slice(1, -1);
+      substitutedStr = substitutedStr.replace(inlinePattern, inlineReplacement);
     }
   }
 

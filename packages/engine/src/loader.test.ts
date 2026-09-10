@@ -85,6 +85,18 @@ describe("FR-1: Level Data Model & Flattening", () => {
       shots: 2,
       duration: "inf",
     });
+    expect(parseHero("Gunner(2, ∞, ∞)")).toEqual({
+      type: "Gunner",
+      hp: 2,
+      shots: "inf",
+      duration: "inf",
+    });
+    expect(parseHero("Gunner(2, inf, inf)")).toEqual({
+      type: "Gunner",
+      hp: 2,
+      shots: "inf",
+      duration: "inf",
+    });
     expect(parseHero("Mechanic(12, {Z: 2})")).toEqual({
       type: "Mechanic",
       hp: 12,
@@ -209,6 +221,34 @@ Constraints:
     const spellAtk = substituted.spells?.[0];
     expect(spellAtk?.type === "Attack" ? spellAtk.damage : null).toBe(5);
     expect(substituted.constraints?.[0]?.expression).toBe("dist(A, Z) >= 6");
+  });
+
+  it("substitutes multi-pick variables as whole tokens and inline in expressions", () => {
+    const dsl = `
+id: multi-pick
+Level: Multi Pick
+Rooms: 1 A, 1 Z
+Heroes: Warrior(10)
+Variables:
+  ITEMS = choix(2, [fire, water, ice])
+Constraints:
+  - ordered($ITEMS)
+Bonuses:
+  - includes({ITEMS})
+`;
+    const level = parseLevel(dsl);
+    // Whole-token field: a room argument stored as "$ITEMS"
+    level.rooms.push({ count: 1, room: { type: "C", args: ["$ITEMS"] } });
+
+    const choices: Record<string, PlayerChoice> = {
+      ITEMS: { variableName: "ITEMS", selected: ["fire", "water"] },
+    };
+
+    const substituted = substituteVariables(level, choices);
+    expect(substituted.constraints?.[0]?.expression).toBe('ordered(["fire","water"])');
+    expect(substituted.bonuses?.[0]?.expression).toBe('includes(["fire","water"])');
+    const roomC = substituted.rooms[2]?.room;
+    expect(roomC?.type === "C" ? roomC.args : null).toEqual([["fire", "water"]]);
   });
 });
 

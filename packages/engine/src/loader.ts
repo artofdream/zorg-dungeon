@@ -145,7 +145,12 @@ export function parseHero(token: string): HeroDef {
       return { type: "Elf", hp, immunities };
     }
     case "Gunner": {
-      const shots = Number.isNaN(Number(args[1])) ? (args[1] ?? 1) : Number(args[1]);
+      let shots: number | string;
+      if (args[1] === "inf" || args[1] === "∞") {
+        shots = "inf";
+      } else {
+        shots = Number.isNaN(Number(args[1])) ? (args[1] ?? 1) : Number(args[1]);
+      }
       let duration: number | string | "inf" | undefined = undefined;
       if (args[2]) {
         if (args[2] === "inf" || args[2] === "∞") {
