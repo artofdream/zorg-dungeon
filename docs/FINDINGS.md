@@ -40,3 +40,10 @@ enforces this on the closing PR's diff.
 - Recurrence: 1
 - Linked: (none — resolved in CI/CD stabilization)
 - Sensor added:
+
+## CF-003: pnpm/action-setup duplicate version specification in CI workflow
+- Status: Resolved
+- Recurrence: 1
+- Linked: #2
+- Sensor added: .github/workflows/ci.yml
+
