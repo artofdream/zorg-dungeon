@@ -1,0 +1,31 @@
+{
+  "Comment": "DNS records for Zorg implementation (Lightsail) and knowledge site (GitHub Pages)",
+  "Changes": [
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "zorg.artof.link.",
+        "Type": "A",
+        "TTL": 60,
+        "ResourceRecords": [
+          {
+            "Value": "54.152.172.19"
+          }
+        ]
+      }
+    },
+    {
+      "Action": "UPSERT",
+      "ResourceRecordSet": {
+        "Name": "knowledge.zorg.artof.link.",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "artofdream.github.io."
+          }
+        ]
+      }
+    }
+  ]
+}

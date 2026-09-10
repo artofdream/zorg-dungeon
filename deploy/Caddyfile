@@ -1,0 +1,34 @@
+# Caddy configuration for zorg.artof.link
+{
+    admin :2019
+    email claude.tsarafidy@gmail.com
+}
+
+# Production domain
+zorg.artof.link {
+    # Observability: Grafana under /grafana/
+    handle_path /grafana/* {
+        reverse_proxy grafana:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Application: Web app
+    handle /* {
+        reverse_proxy web:80
+    }
+}
+
+# Local / fallback entrypoint
+:80 {
+    handle_path /grafana/* {
+        reverse_proxy grafana:3000
+    }
+
+    handle /* {
+        reverse_proxy web:80
+    }
+}
