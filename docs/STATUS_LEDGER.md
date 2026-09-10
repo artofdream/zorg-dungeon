@@ -30,9 +30,9 @@ writing a table row, is not proof.
 
 | ID | Status | Evidence |
 |---|---|---|
-| FR-1 | Unknown | |
-| FR-2 | Unknown | |
-| FR-3 | Unknown | |
+| FR-1 | Simulated | packages/engine/src/loader.test.ts |
+| FR-2 | Simulated | packages/engine/src/loader.test.ts |
+| FR-3 | Simulated | packages/engine/src/loader.test.ts |
 | FR-4 | Unknown | |
 | FR-5 | Unknown | |
 | FR-6 | Unknown | |
