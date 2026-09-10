@@ -47,3 +47,26 @@ enforces this on the closing PR's diff.
 - Linked: #2
 - Sensor added: .github/workflows/ci.yml
 
+## CF-004: GitHub Pages site missing / configure-pages Not Found
+- Status: Resolved
+- Recurrence: 1
+- Linked: this PR (number filled after open)
+- Sensor added: .github/workflows/knowledge.yml
+
+`deploy-knowledge` failed on `main` after PR #2: `actions/configure-pages@v5`
+returned Get Pages site failed / Not Found because `GET /repos/.../pages`
+404'd — the Pages site had never been created. DNS already pointed
+`knowledge.zorg.artof.link` at `artofdream.github.io`.
+
+Resolution: a repo admin enabled Pages via the GitHub API with
+`build_type=workflow` (site `https://artofdream.github.io/zorg-dungeon/`,
+custom domain set to match the journal). `deploy-knowledge` was re-triggered
+on `main` and completed success (Actions run 34530132314). This PR hardens
+Setup Pages with `enablement: true` and records the sensor rule: **the repo
+Pages site must exist with `build_type=workflow`**. Default `GITHUB_TOKEN`
+cannot create a Pages site; `enablement: true` is not a substitute for that
+admin enablement.
+
+Do not mark the knowledge site `Live & Probed` from this finding. A green
+deploy job is not a production content probe.
+
