@@ -54,7 +54,11 @@ header {
 }
 
 .brand-badge {
-  font-size: 1.5rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: block;
+  flex-shrink: 0;
 }
 
 .brand .eyebrow {
