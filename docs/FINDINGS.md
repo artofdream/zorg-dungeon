@@ -50,7 +50,7 @@ enforces this on the closing PR's diff.
 ## CF-004: GitHub Pages site missing / configure-pages Not Found
 - Status: Resolved
 - Recurrence: 1
-- Linked: this PR (number filled after open)
+- Linked: #4
 - Sensor added: .github/workflows/knowledge.yml
 
 `deploy-knowledge` failed on `main` after PR #2: `actions/configure-pages@v5`
