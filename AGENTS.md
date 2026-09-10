@@ -65,6 +65,7 @@ diverse AI assistants and human contributors, including:
 - **xAI Grok** (entrypoint: `GROK.md`)
 - **GitHub Copilot** (entrypoint: `.github/copilot-instructions.md`)
 - **Moonshot Kimi** (entrypoint: `KIMI.md`)
+- **DeepSeek** (entrypoint: `DEEPSEEK.md`)
 - **Cursor** (entrypoint: `.cursorrules`)
 
 All tool-specific entrypoints are minimal pointers that redirect to this file.

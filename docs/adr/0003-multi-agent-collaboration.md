@@ -1,11 +1,11 @@
-# ADR-0003: Multi-agent collaboration across OpenAI, Claude, Grok, AGY, Copilot, and Kimi
+# ADR-0003: Multi-agent collaboration across OpenAI, Claude, Grok, AGY, Copilot, Kimi, and DeepSeek
 
 - Status: Accepted
 - Date: 2026-09-10
 
 ## Context
 
-Development on this repository involves multiple autonomous AI agents and coding assistants across distinct providers and frameworks — including Anthropic Claude, OpenAI/Codex, xAI Grok, Google Antigravity / Gemini (AGY), GitHub Copilot, and Moonshot Kimi.
+Development on this repository involves multiple autonomous AI agents and coding assistants across distinct providers and frameworks — including Anthropic Claude, OpenAI/Codex, xAI Grok, Google Antigravity / Gemini (AGY), GitHub Copilot, Moonshot Kimi, and DeepSeek.
 
 Without strict architectural constraints:
 1. Each tool introduces proprietary configuration formats or instructions that drift out of sync.
@@ -15,7 +15,7 @@ Without strict architectural constraints:
 
 ## Decision
 
-1. **Single Source of Truth (`AGENTS.md`):** All agent guidelines reside exclusively in `AGENTS.md`. Tool-specific entrypoints (`CLAUDE.md`, `GEMINI.md`, `CODEX.md`, `OPENAI.md`, `GROK.md`, `KIMI.md`, `.github/copilot-instructions.md`, `.cursorrules`) are strict, minimal pointers that redirect directly to `AGENTS.md`. No tool-specific instructions may diverge.
+1. **Single Source of Truth (`AGENTS.md`):** All agent guidelines reside exclusively in `AGENTS.md`. Tool-specific entrypoints (`CLAUDE.md`, `GEMINI.md`, `CODEX.md`, `OPENAI.md`, `GROK.md`, `KIMI.md`, `DEEPSEEK.md`, `.github/copilot-instructions.md`, `.cursorrules`) are strict, minimal pointers that redirect directly to `AGENTS.md`. No tool-specific instructions may diverge.
 2. **Shared Memory Discipline:** Chat history is not shared memory. The default branch, PR branches, and committed docs (`GAME_SPEC.md`, `docs/STATUS_LEDGER.md`, `docs/FINDINGS.md`, `docs/journal/`) are the sole shared memory between agents.
 3. **Isolated Workspaces & Branch Convention:** Agents work on separate topic branches named `agent/<agent-family>/<task-slug>` or `copilot/<task-slug>`. Agents must never rebase over another in-flight branch.
 4. **Peer Review & Verification:** A producer agent does not self-approve or merge its own changes. Pull requests must pass automated CI checks (`pnpm test`) and governance checks (`pnpm governance`) before review and merge by another agent or human.
