@@ -34,33 +34,33 @@ writing a table row, is not proof.
 | FR-2 | Simulated | packages/engine/src/loader.test.ts |
 | FR-3 | Simulated | packages/engine/src/loader.test.ts |
 | FR-4 | Unknown | |
-| FR-5 | Unknown | |
-| FR-6 | Unknown | |
-| FR-7 | Unknown | |
-| FR-8 | Unknown | |
+| FR-5 | Simulated | packages/engine/src/placement.test.ts |
+| FR-6 | Simulated | packages/engine/src/placement.test.ts |
+| FR-7 | Simulated | packages/engine/src/placement.test.ts |
+| FR-8 | Simulated | packages/engine/src/placement.test.ts |
 | FR-9 | Unknown | |
 | FR-10 | Simulated | packages/engine/src/geometry.test.ts |
-| FR-11 | Unknown | |
-| FR-12 | Unknown | |
-| FR-13 | Unknown | |
+| FR-11 | Simulated | packages/engine/src/rooms.test.ts |
+| FR-12 | Simulated | packages/engine/src/rooms.test.ts |
+| FR-13 | Simulated | packages/engine/src/rooms.test.ts |
 | FR-14 | Unknown | |
 | FR-15 | Unknown | |
 | FR-16 | Unknown | |
 | FR-17 | Unknown | |
 | FR-18 | Unknown | |
 | FR-19 | Unknown | |
-| FR-20 | Unknown | |
+| FR-20 | Simulated | packages/engine/src/warrior.test.ts |
 | FR-21 | Unknown | |
 | FR-22 | Unknown | |
 | FR-23 | Unknown | |
 | FR-24 | Unknown | |
 | FR-25 | Unknown | |
-| FR-26 | Unknown | |
-| FR-27 | Unknown | |
-| FR-28 | Unknown | |
-| FR-29 | Unknown | |
-| FR-30 | Unknown | |
-| FR-31 | Unknown | |
+| FR-26 | Simulated | packages/engine/src/scheduler.test.ts |
+| FR-27 | Simulated | packages/engine/src/scheduler.test.ts |
+| FR-28 | Simulated | packages/engine/src/scheduler.test.ts |
+| FR-29 | Simulated | packages/engine/src/scheduler.test.ts |
+| FR-30 | Simulated | packages/engine/src/scheduler.test.ts |
+| FR-31 | Simulated | packages/engine/src/warrior.test.ts |
 | FR-32 | Unknown | |
 | FR-33 | Unknown | |
 | FR-34 | Unknown | |

@@ -1,3 +1,7 @@
 export * from "./geometry.js";
 export * from "./level.js";
 export * from "./loader.js";
+export * from "./pathing.js";
+export * from "./placement.js";
+export * from "./simulation.js";
+export * from "./tiles.js";
