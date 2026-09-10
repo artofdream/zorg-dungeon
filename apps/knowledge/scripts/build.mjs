@@ -175,6 +175,7 @@ function pageShell({ title, current, content }) {
     { id: "journal", label: "Dev Journal", href: "journal.html" },
     { id: "architecture", label: "Architecture", href: "architecture.html" },
     { id: "observability", label: "Observability", href: "observability.html" },
+    { id: "aea", label: "AEA Harness", href: "aea.html" },
   ];
 
   return `<!DOCTYPE html>
@@ -253,6 +254,11 @@ const homeContent = `
     <h3>📊 Observability</h3>
     <p>Live metrics and monitoring stack based on Prometheus, Grafana, and Node Exporter on <a href="https://zorg.artof.link/grafana/">zorg.artof.link/grafana/</a>.</p>
     <a href="observability.html">Observability Architecture →</a>
+  </div>
+  <div class="card">
+    <h3>⚙️ AEA Harness Engineering</h3>
+    <p>The core philosophy: 5 concentric floors, 6 layers of the Outer Harness, and 4 clean memory vaults that keep AI systems honest.</p>
+    <a href="aea.html">Explore AEA Framework →</a>
   </div>
 </div>
 `;
@@ -337,10 +343,147 @@ const obsContent = `
 `;
 writeFileSync(join(distDir, "observability.html"), pageShell({ title: "Observability", current: "observability", content: obsContent }));
 
-// 9. CNAME for GitHub Pages
+// 9. AEA Harness Page
+const aeaContent = `
+<h1>Adaptive Experience Architecture (AEA)</h1>
+<p class="lead">The Plain-English Visual Guide to Harness Engineering applied to Zorg's Dungeon Maker. Canonical Reference: <a href="https://aea.artof.link" target="_blank">aea.artof.link</a>.</p>
+
+<div class="alert alert-tip">
+  <div class="alert-title">Core Philosophy</div>
+  <p>"The engineers who thrive in the AI era are not the ones who write the most code. They are the ones who build the best environments for AI agents and human teams to stay honest."</p>
+</div>
+
+<h2>1. The Core Formula in Everyday Terms</h2>
+<div class="card" style="margin: 1.5rem 0; border-color: var(--accent);">
+  <p style="font-size: 1.25rem; font-weight: 700; color: var(--accent-light); text-align: center; margin: 0.5rem 0;">
+    Adaptive Experience = Shared Understanding + Domain Services + Outer Harness
+  </p>
+</div>
+
+<pre><code>
+┌────────────────────────────────────────────────────────────────────────┐
+│ 1. THE CUSTOMER / PLAYER INTERACTS                                     │
+│    Player lays out dungeon rooms, casts spells, inspects solvability   │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ 2. THE AI INTERPRETER & LIVE NOTEPAD (Shared Understanding)            │
+│    • Multi-Agent Team (Claude, Gemini, OpenAI, Grok, Copilot, Kimi)    │
+│    • Shared Memory: Committed docs, GAME_SPEC.md, Status Ledger        │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ 3. THE REAL-WORLD SERVICES (The Source of Truth)                       │
+│    • Simulation Engine (@zorg/engine): Pure TS rules, 100% deterministic│
+│    • Geometry & Border Validation: Side-adjacency, wall-hatch alignment│
+│    • Turn Scheduler & Pathfinding: Fail-closed verification            │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ 4. THE OUTER HARNESS (The Factory & Quality Inspectors)                │
+│    • Automated Governance Gates: Trace, Ledger, Findings, Docs-Graph   │
+│    • Independent Gatekeeper: No self-approval, required peer review    │
+└────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<h3>The Three Golden Rules</h3>
+<ul>
+  <li><strong>AI Interprets, Domain Services Decide:</strong> AI agents suggest room placements and spell tactics, but only <code>@zorg/engine</code>'s deterministic rules engine decides path validity, damage, and victory conditions.</li>
+  <li><strong>Fail-Closed Availability:</strong> If solvability or layout verification cannot be proven, the engine reports unverified (<code>Unknown</code>) rather than claiming success. It is far better to fail closed than to promise an invalid dungeon.</li>
+  <li><strong>No Self-Approval:</strong> The agent or human that writes code is never the one who signs off on pushing it to production. Every PR requires passing <code>ci</code> + <code>governance</code> checks and an independent review.</li>
+</ul>
+
+<h2>2. The 5 Concentric Floors (Why AI Apps Break)</h2>
+<pre><code>
+┌────────────────────────────────────────────────────────────────────────┐
+│ 🏢 FLOOR 05: THE AGENT TEAM & GOVERNANCE (Graph Engineering)           │
+│    Specialized human/agent roles + Independent Reviewer (AGENTS.md §5) │
+│ ┌──────────────────────────────────────────────────────────────────┐   │
+│ │ 🔄 FLOOR 04: THE GOAL RUN & RETRIES (Loop Engineering)            │   │
+│ │    1 Issue → 1 Branch → 1 Pull Request with clean budgets        │   │
+│ │ ┌────────────────────────────────────────────────────────────┐   │   │
+│ │ │ ⚙️ FLOOR 03: THE MACHINE & TESTS (Harness Engineering)       │   │   │
+│ │ │    Real tools (Vitest, pnpm) + automated quality guards     │   │   │
+│ │ │ ┌──────────────────────────────────────────────────────┐   │   │   │
+│ │ │ │ 🧠 FLOOR 02: THE MEMORY CURATOR (Context Engineering)  │   │   │   │
+│ │ │ │    Filters noise, preserves lessons in 4 clean vaults│   │   │   │
+│ │ │ │ ┌────────────────────────────────────────────────┐   │   │   │   │
+│ │ │ │ │ 💬 FLOOR 01: THE MESSAGE (Prompt Engineering)   │   │   │   │   │
+│ │ │ │ │    Single objective, strict pointers to AGENTS.md│   │   │   │   │
+│ │ │ │ └────────────────────────────────────────────────┘   │   │   │   │
+│ │ │ └──────────────────────────────────────────────────────┘   │   │   │
+│ │ └────────────────────────────────────────────────────────────┘   │   │
+│ └──────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼ Built On Real Infrastructure
+┌────────────────────────────────────────────────────────────────────────┐
+│ 🏛️ SOLID FOUNDATION: AWS Lightsail, Route 53, Docker, Prometheus & Grafana│
+└────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+
+<ul>
+  <li><strong>The Dependency Law:</strong> If your multi-agent team keeps failing, don't blame the agents—check your memory filter. Bad input on Floor 2 ruins everything above it.</li>
+  <li><strong>The Economic Law:</strong> Swapping the AI model (switching between Claude, Gemini, DeepSeek, or OpenAI) takes 1 afternoon. Rebuilding your 5-floor operational harness takes 3 months. The harness is your real intellectual property.</li>
+</ul>
+
+<h2>3. The "Second Brain": 4 Clean Memory Vaults</h2>
+<div class="grid-cards">
+  <div class="card">
+    <h3>📖 1. Procedure Memory (Skills)</h3>
+    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands.</p>
+  </div>
+  <div class="card">
+    <h3>🚫 2. Correction Memory (Constraints)</h3>
+    <p>Hard rules learned from past mistakes: <code>docs/FINDINGS.md</code> logs every miss (CF-NNN). Upon recurrence &ge; 2, an automated sensor in CI or tests is mandatory.</p>
+  </div>
+  <div class="card">
+    <h3>🕸️ 3. Relationship Memory (Graph)</h3>
+    <p>Bidirectional traceability linking <code>GAME_SPEC.md</code> requirement IDs (FR-xx) to engine code, Vitest suites, and <code>docs/STATUS_LEDGER.md</code> via <code>[[wikilinks]]</code>.</p>
+  </div>
+  <div class="card">
+    <h3>📅 4. Daily Brief (Handoff)</h3>
+    <p>A clean 1-page summary of exactly where the team left off: <code>docs/journal/YYYY-MM-DD.md</code> records shipped changes, probes, and pending decisions.</p>
+  </div>
+</div>
+
+<h2>4. The Six Layers of the Outer Harness in Practice</h2>
+<div class="grid-cards">
+  <div class="card">
+    <h3>1. Guides (The Rulebook)</h3>
+    <p><code>AGENTS.md</code> and <code>GAME_SPEC.md</code> loaded before any agent writes code.</p>
+  </div>
+  <div class="card">
+    <h3>2. Sensors (The Smoke Alarms)</h3>
+    <p>Automated Vitest suites and 4 governance scripts catching regressions before production.</p>
+  </div>
+  <div class="card">
+    <h3>3. The Loop (The Factory Line)</h3>
+    <p>Disciplined workflow: 1 task → <code>agent/&lt;family&gt;/&lt;slug&gt;</code> branch → PR template.</p>
+  </div>
+  <div class="card">
+    <h3>4. Memory (The Vault)</h3>
+    <p>Honesty ledger, findings ledger, ADRs, and dev journal preserving institutional knowledge.</p>
+  </div>
+  <div class="card">
+    <h3>5. Permissions (The Keycard)</h3>
+    <p>Branch protection on <code>main</code>, IAM scoped credentials, and fail-closed checks.</p>
+  </div>
+  <div class="card">
+    <h3>6. Observability (The Dashboard)</h3>
+    <p>Real-time Prometheus + Grafana telemetry proving the entire system is healthy at <a href="https://zorg.artof.link/grafana/">zorg.artof.link/grafana/</a>.</p>
+  </div>
+</div>
+`;
+writeFileSync(join(distDir, "aea.html"), pageShell({ title: "AEA Harness", current: "aea", content: aeaContent }));
+
+// 10. CNAME for GitHub Pages
 writeFileSync(join(distDir, "CNAME"), "knowledge.zorg.artof.link\n");
 
-// 10. Copy stylesheet
+// 11. Copy stylesheet
 copyFileSync(join(__dirname, "../style.css"), join(distDir, "style.css"));
 
 console.log("✓ Knowledge website built successfully in apps/knowledge/dist/");
