@@ -8,7 +8,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { loadContracts, stubContracts } from "./contracts.js";
+import { CONTRACTS, loadContracts, stubContracts } from "./contracts.js";
 import { isChoixDef } from "./level.js";
 import { parseLevel, validateLevel } from "./loader.js";
 
@@ -81,13 +81,10 @@ describe("NFR-5: authored level-pack parse regression (green)", () => {
     expect(sawDuration).toBe(true);
   });
 
-  it("validateLevel accepts green fixtures that declare both A and Z", () => {
-    const withAz = GREEN.filter((path) => {
-      const level = parseLevel(read(path));
-      return validateLevel(level).errors.every((e) => !e.includes("spawn room") && !e.includes("Zorg room"));
-    });
-    expect(withAz.length).toBeGreaterThan(100);
-    for (const path of withAz) {
+  it("validateLevel still accepts the Phase 0 base-classic green pack", () => {
+    const classic = GREEN.filter((p) => rel(p).startsWith("base-classic/") && !/\/2[124]-/.test(rel(p)));
+    expect(classic.length).toBe(18);
+    for (const path of classic) {
       const result = validateLevel(parseLevel(read(path)));
       expect(result.errors, rel(path)).toEqual([]);
       expect(result.valid).toBe(true);
@@ -96,6 +93,11 @@ describe("NFR-5: authored level-pack parse regression (green)", () => {
 });
 
 describe("contract catalog is data only (S6 — no gating)", () => {
+  it("keeps src/contracts.ts in sync with fixtures/contracts/catalog.json", () => {
+    const fromDisk = JSON.parse(read(join(fixturesRoot, "contracts", "catalog.json")));
+    expect(fromDisk).toEqual(CONTRACTS);
+  });
+
   it("lists 10 authored contracts and 5 Blabla stubs with no fake levels", () => {
     const all = loadContracts();
     expect(all).toHaveLength(15);

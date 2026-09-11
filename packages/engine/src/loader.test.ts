@@ -389,6 +389,22 @@ Bonus 1 : (M’) n’est pas solvable.
     expect(level.bonuses?.[0]?.expression).toContain("n’est pas solvable");
   });
 
+  it("keeps '(M’) est solvable' constraint prose out of the mirror hero list", () => {
+    const level = parseLevel(`
+id: deluxe-3.7
+Niveau 3.7 : Elemental Temple
+Salles : A, Z, 2*D(1), E(feu).
+Héros : Elfe(2, {eau}).
+(M’) Salles : A, Z, 2*D(1), E(glace).
+(M’) Héros : Elfe(2, {eau}).
+Contraintes supplémentaires :
+(M’) est solvable.
+`);
+    expect(level.heroes).toEqual([{ type: "Elf", hp: 2, immunities: ["water"] }]);
+    expect(level.mirrorWorlds?.[0]?.heroes).toEqual([{ type: "Elf", hp: 2, immunities: ["water"] }]);
+    expect(level.constraints?.[0]?.expression).toContain("est solvable");
+  });
+
   it("keeps non-choix assignments opaque and accepts parenthesized choix lists", () => {
     const opaque = parseAssignment("λ = #{r ∈ Π : r et A sont reliées}");
     expect(opaque).toEqual({

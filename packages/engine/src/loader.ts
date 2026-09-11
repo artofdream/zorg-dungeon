@@ -45,10 +45,15 @@ function splitMultiplicity(tok: string): { count: number | string; body: string 
     const char = tok[i] ?? "";
     if (char === "(" || char === "[" || char === "{") depth++;
     else if (char === ")" || char === "]" || char === "}") depth--;
-    else if (depth === 0 && (char === "*" || char === "×" || char === "x" || char === "X")) {
+    else if (depth === 0) {
       const left = tok.slice(0, i).trim();
       const right = tok.slice(i + 1).trim();
-      if (left && right) return { count: parseCount(left), body: right };
+      if (!left || !right) continue;
+      if (char === "*" || char === "×") return { count: parseCount(left), body: right };
+      // `2x E` only — do not treat the `x` in `choix(...)` as a multiplier.
+      if ((char === "x" || char === "X") && /^\d+$/.test(left)) {
+        return { count: Number(left), body: right };
+      }
     }
   }
   const space = tok.match(/^(\d+)\s+(.+)$/);
@@ -452,7 +457,7 @@ export function parseVariable(line: string): ChoixVariableDef {
   }
 
   const name = trimmed.slice(0, eqIndex).trim();
-  const rest = trimmed.slice(eqIndex + 1).trim();
+  const rest = stripTrailingJunk(trimmed.slice(eqIndex + 1).trim());
 
   const choixMatch = rest.match(/^choix\s*\(\s*(\d+)\s*,\s*(.+)\)$/s);
   if (!choixMatch || !choixMatch[1] || !choixMatch[2]) {
@@ -559,8 +564,9 @@ export function parseAssignment(line: string): ChoixVariableDef | OpaqueAssignme
   if (eqIndex === -1) {
     throw new Error(`Variable definition missing '=' in: "${trimmed}"`);
   }
-  const rest = trimmed.slice(eqIndex + 1).trim();
-  if (/^choix\s*\(/i.test(rest)) return parseVariable(trimmed);
+  const rest = stripTrailingJunk(trimmed.slice(eqIndex + 1).trim());
+  const cleaned = `${trimmed.slice(0, eqIndex + 1)} ${rest}`;
+  if (/^choix\s*\(/i.test(rest)) return parseVariable(cleaned);
   return { name: trimmed.slice(0, eqIndex).trim(), expression: rest };
 }
 
@@ -593,9 +599,19 @@ function mirrorHeaderLabel(trimmed: string): string | null {
 
 /** Deluxe source prefixes each mirror line: `(M’) Salles : …`. */
 function inlineMirrorPrefix(trimmed: string): { label: string; rest: string } | null {
-  const match = trimmed.match(/^\((M(?:[′'ʼʹ″‴‛]+|\(\d+\)))\)\s*(.*)$/u);
+  const match = trimmed.match(/^\((M(?:\([^)]+\)|[′'’ʼʹ″‴‛]+))\)\s*(.*)$/u);
   if (!match?.[1]) return null;
-  return { label: match[1], rest: (match[2] ?? "").trim() };
+  const rest = (match[2] ?? "").trim();
+  // Constraint prose such as "(M’) est solvable." is not a mirror block.
+  if (
+    rest &&
+    !/^(?:salles|rooms|h[eé]ros|heroes|sortil[eè]ges?|spells|variables?|pi|Π|gamma|Γ|phi|Φ)\s*:/i.test(
+      rest,
+    )
+  ) {
+    return null;
+  }
+  return { label: match[1], rest };
 }
 
 function extractMirrorBlocks(dsl: string): { head: string; mirrors: { label: string; body: string }[] } {
@@ -746,10 +762,10 @@ function parseLevelBody(dsl: string): LevelDef {
       if (inline) variablesText += "\n" + inline;
       continue;
     }
-    if (/^(?:contrainte suppl[eé]mentaire|contraintes?|constraints?)\s*:\s*(.*)$/i.test(trimmed)) {
+    if (/^(?:contraintes? suppl[eé]mentaires?|contraintes?|constraints?)\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "constraints";
       const inline = trimmed.replace(
-        /^(?:contrainte suppl[eé]mentaire|contraintes?|constraints?)\s*:\s*/i,
+        /^(?:contraintes? suppl[eé]mentaires?|contraintes?|constraints?)\s*:\s*/i,
         "",
       );
       if (inline) appendListed(constraints, "c", inline);
@@ -842,8 +858,12 @@ export function validateLevel(level: LevelDef): { valid: boolean; errors: string
   const errors: string[] = [];
 
   // FR-1: Level must have at least one A room and one Z room
-  const hasA = level.rooms.some((r) => r.count > 0 && roomSlotHasType(r.room, "A"));
-  const hasZ = level.rooms.some((r) => r.count > 0 && roomSlotHasType(r.room, "Z"));
+  const hasA = level.rooms.some(
+    (r) => (typeof r.count !== "number" || r.count > 0) && roomSlotHasType(r.room, "A"),
+  );
+  const hasZ = level.rooms.some(
+    (r) => (typeof r.count !== "number" || r.count > 0) && roomSlotHasType(r.room, "Z"),
+  );
   if (!hasA) errors.push("Level must contain at least one spawn room ('A').");
   if (!hasZ) errors.push("Level must contain at least one Zorg room ('Z').");
 

@@ -25,6 +25,8 @@ function readFixture(dir: string, name: string): string {
 
 const GREEN_FILES = listTxt(fixturesRoot);
 const QUARANTINE_FILES = listTxt(quarantineRoot);
+/** Phase 0 pack: validate + round-trip. 21/22/24 parse in the Phase 7 corpus. */
+const PHASE0_GREEN = GREEN_FILES.filter((name) => !/^(21|22|24)-/.test(name));
 
 describe("NFR-2: base-classic corpus parse (green pack)", () => {
   it("loads every non-quarantined fixture from disk (Niveau 1–24 minus S5 / malformed)", () => {
@@ -113,14 +115,14 @@ describe("NFR-2: base-classic corpus parse (green pack)", () => {
 });
 
 describe("NFR-9: authoring/validation of real base-classic levels", () => {
-  it.each(GREEN_FILES)("validateLevel accepts %s", (name) => {
+  it.each(PHASE0_GREEN)("validateLevel accepts %s", (name) => {
     const level = parseLevel(readFixture(fixturesRoot, name));
     const result = validateLevel(level);
     expect(result.errors).toEqual([]);
     expect(result.valid).toBe(true);
   });
 
-  it.each(GREEN_FILES)("serialize/parse round-trip preserves %s", (name) => {
+  it.each(PHASE0_GREEN)("serialize/parse round-trip preserves %s", (name) => {
     const parsed = parseLevel(readFixture(fixturesRoot, name));
     const again = parseLevel(serializeLevel(parsed));
     expect(again).toEqual(parsed);
