@@ -126,3 +126,20 @@ those files (CD and manual redeploy). Remote command now uses
 `sudo docker compose`. Recurrence stays 1 — same sensor, privilege
 alignment, not a second-miss gate.
 
+## CF-007: Player guide still said only Warrior/Elf were encoded
+- Status: Resolved
+- Recurrence: 1
+- Linked: (this PR — knowledge companion refresh)
+- Sensor added: apps/knowledge/scripts/build.mjs
+
+After phases 4–7 and the Difficulté campaign landed, `docs/PLAYER_GUIDE.md`
+still said only Warrior and Elf had rules encoded, and that the spellbook
+was “when Phase 4 starts.” The companion was stale vs `@zorg/engine` and
+the Maker at zorg.artof.link.
+
+This PR rewrites the guide as a companion (cite IDs; spec wins; no invented
+`C` / Gunner duration / FR-4 gating) and adds a knowledge-build check that
+the guide cites FR-22–25 / FR-32–33 / NFR-5 and does not claim “two types
+have rules encoded.” Recurrence 1 — first sensor, not a second-miss gate.
+Do not promote ledger rows from companion prose.
+

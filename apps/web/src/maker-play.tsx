@@ -240,14 +240,13 @@ export function MakerPlay({ entry, onBack }: Props) {
         {entry.contractName
           ? ` · ${entry.contractName} (cost ${entry.contractCost ?? "—"} flavour only)`
           : ""}
-        . Place every supplied room, then start extermination with this level's
+        . Place every supplied room, then start the fight with this level's
         heroes and spells.
       </p>
       <p className="honesty">
-        Status: Simulated engine, not Live & Probed. Win/loss here is the
-        scheduler outcome (heroes dead / Z reached / stalemate) — extra
-        constraints, bonuses, and mirror worlds are not evaluated in this
-        slice. See docs/STATUS_LEDGER.md.
+        Simulated engine, not Live. The outcome here is heroes dead, Z reached,
+        or stalemate. Extra constraints, bonuses, and mirror worlds are not
+        scored in this view.
       </p>
 
       {entry.needsChoix ? (

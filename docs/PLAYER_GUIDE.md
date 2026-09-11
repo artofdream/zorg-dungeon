@@ -5,6 +5,37 @@ This page is a **plain-English companion** to [[GAME_SPEC]]. It is not the legal
 > [!IMPORTANT]
 > If this English or a diagram disagrees with [[GAME_SPEC]], the spec wins. Do not invent room `C`, Gunner shot-duration, or contract gating ([[FR-18]], [[FR-22]], [[FR-4]]).
 
+Play the authored campaign in the Maker: [https://zorg.artof.link](https://zorg.artof.link).
+
+## How to play the campaign
+
+The public Maker is a **campaign browser**, not a random generator. You pick an authored level, place its rooms, then watch the fight.
+
+1. Open the Maker at [https://zorg.artof.link](https://zorg.artof.link).
+2. Pick a **Difficulté** band (the author's difficulty number). Deluxe contract levels with no Difficulté line sit in a **No Difficulté** band; you can also filter by contract name.
+3. Open a **playable** level. Place every room that level supplies on the grid so they form one legal dungeon ([[FR-5]]–[[FR-8]]).
+4. Start **extermination**. Heroes walk by their own fixed rules. You may spend leftover one-time spells between finished actions ([[FR-32]], [[FR-33]]).
+
+```mermaid
+flowchart TD
+  open[Open Maker at zorg.artof.link] --> pick[Pick Difficulté]
+  pick --> level{"Level playable?"}
+  level -->|Yes| place[Place every supplied room]
+  place --> gate{"FR-5 to FR-7 hold? FR-8 opens the gate"}
+  gate -->|No| place
+  gate -->|Yes| fight[Start extermination]
+  fight --> spells[Optional one-time spells between actions FR-33]
+  spells --> outcome[Scheduler outcome: heroes dead / Z reached / stalemate]
+  level -->|No: C / Gunner duration / unresolved| listed[Listed as unavailable — no invented rules]
+```
+
+**Honest limits of this slice** (see [[STATUS_LEDGER]]):
+
+- Engine proof is **Simulated** (automated tests). It is **not** Live & Probed.
+- Win/loss in the Maker is the scheduler result: every hero dead, a hero reached `Z`, or nothing further changes. Extra constraints, bonuses, and mirror-world scoring are **not** evaluated here ([[FR-43]], [[FR-44]] stay Unknown).
+- Contract point costs are flavour text. [[FR-4]] gating (earn / spend points to unlock contracts) is **not** built.
+- **Unavailable** levels stay listed but not selectable: opaque `C` rooms ([[FR-18]]), Gunner with a third duration argument (parsed, not played — [[NFR-8]]), or unresolved authored tokens. Quarantine fixtures (including N11 Dream Trap and N18 Math Bath) and Blabla contracts 11–15 are omitted from the list entirely ([[FINDINGS]] CF-005).
+
 ## Two phases: Construction, then Extermination
 
 Every level is two jobs in a fixed order ([[FR-5]], [[FR-8]], [[FR-43]]).
@@ -31,11 +62,11 @@ What the gate actually checks before Extermination ([[FR-8]] wrapping [[FR-5]]�
 - Neighboring rooms share a **full side**, wall meeting wall and open cell meeting open cell ([[FR-6]]).
 - Every room shares one orientation, taken from the `A` rooms' common hatch direction ([[FR-7]], [[NFR-6]]).
 
-Win/loss is not “the last hero died” alone. Extra constraints and bonuses can sit on top ([[FR-43]], [[FR-44]]). Mirror worlds share the constructed room graph and swap rooms 1:1 by declaration order ([[FR-9]]). Worlds resolve normal → M′ → M″ and retire when idle or when that world's Z is reached ([[FR-45]]). Whether a world is solvable is a bounded engine search ([[FR-46]], [[NFR-4]]). If this paragraph and [[GAME_SPEC]] disagree, the spec wins.
+Win/loss is not “the last hero died” alone. Extra constraints and bonuses can sit on top ([[FR-43]], [[FR-44]]). Mirror worlds share the constructed room graph and swap rooms 1:1 by declaration order ([[FR-9]]). Worlds resolve normal → M′ → M″ and retire when idle or when that world's Z is reached ([[FR-45]]). Whether a world is solvable is a bounded engine search ([[FR-46]], [[NFR-4]]). The public campaign slice does **not** score those extras — only the scheduler outcome. If this paragraph and [[GAME_SPEC]] disagree, the spec wins.
 
 ## Rooms A / Z / D / E / P / O / T
 
-A room is a 5×5 tile. The letters below are the types the spec defines. Cite the ID, not this paraphrase, when something looks off.
+A room is a 5×5 tile. The letters below are the types the spec defines. Cite the ID, not this paraphrase, when something looks off. Portals, gold, and tolls ([[FR-15]]–[[FR-17]]) are in the engine today.
 
 | Letter | Plain name | What it does in one sentence | Spec |
 |---|---|---|---|
@@ -46,7 +77,7 @@ A room is a 5×5 tile. The letters below are the types the spec defines. Cite th
 | `P(n, f)` | Portal | On the i-th entry (while `i ≤ n`), jump to the first cell of the hero's `f(i)`-th-most-recent room visit. If history is too short, back to the waiting room and respawn. | [[FR-15]] |
 | `O(x)` | Gold | First hero in takes the pile. If that hero dies, the gold sticks to the death room (that room becomes an `O` too). Pickup runs before other entry effects. | [[FR-16]] |
 | `T(x, elem)` | Tax | Dark cells behave like `E(elem)`. Light cells charge the oldest `x` gold the hero is carrying (refunded to the source rooms). A hero who cannot pay cannot step there; a shove onto an unpaid light cell is instant death. | [[FR-17]] |
-| `C(…)` | Undefined | Used in the Artillery contract in the source manual. **No chapter defines it.** The loader may keep opaque arguments. Do not invent behavior. | [[FR-18]], [[NFR-8]] |
+| `C(…)` | Undefined | Used in the Artillery contract in the source manual. **No chapter defines it.** The loader may keep opaque arguments. Do not invent behavior. Campaign levels that contain `C` stay unavailable. | [[FR-18]], [[NFR-8]] |
 
 Element detail (still [[FR-14]], not new rules): fire deals 1 damage per entry; water is impassable and kills a non-immune hero who ends up on it; ice slides the hero until a wall stops them; poison is +1 HP on a cell's first visit and −3 HP every visit after.
 
@@ -80,16 +111,39 @@ flowchart TB
 
 `dist(r, s)` is Manhattan distance between placed rooms ([[FR-10]]). Levels can hang extra win conditions on those distances ([[FR-44]]).
 
-## Heroes so far
+## Heroes in the engine
 
 Heroes are scripted, not players. They always see the dungeon (except other heroes, leftover spells, and what death would do) and they never roll dice ([[FR-19]], [[FR-29]], [[NFR-1]]).
 
-**In the engine today, two types have rules encoded and tests:**
+**These types have rules encoded and tests.** This page does not invent deferred Gunner duration.
 
-- **Warrior (`Warrior(x)`)** — `x` HP. Walks the shortest path to `Z`, ignoring how much HP that path would cost. Ties break right, then up, then left, then down ([[FR-20]], [[FR-31]]).
-- **Elf (`Elf(x, elems)`)** — `x` HP, immune to the listed elements. Walks the shortest path to `Z` that keeps the most HP. Same tie order as the Warrior ([[FR-21]], [[FR-31]], [[FR-14]]).
+| Type | Plain read | Spec |
+|---|---|---|
+| Warrior (`Warrior(x)`) | `x` HP. Shortest path to `Z`, ignoring how much HP that path would cost. Ties break right, then up, then left, then down. | [[FR-20]], [[FR-31]] |
+| Elf (`Elf(x, elems)`) | `x` HP, immune to the listed elements. Shortest path to `Z` that keeps the most HP. Same tie order as the Warrior. | [[FR-21]], [[FR-31]], [[FR-14]] |
+| Mechanic (`Mechanic(x, dict)`) | Shortest path to its weight target (usually `Z`), ignoring HP, using shove power; then fewest unjustified shoves. From a listed room it can shove that room one adjacent empty cell. | [[FR-24]] |
+| Gunner (`Gunner(x, c)`) | Fire a useful Shell soonest, then HP-preserving path factoring shots, up to `c` shots (`inf` = no cap). Same tie order as the Warrior. | [[FR-22]] |
+| Shell | Instant cardinal projectile. Stops at a wall or the dungeon edge. Clears elemental cells and live `D` monsters; 2 damage to heroes it crosses. Other action pauses for the shot. | [[FR-23]] |
+| Princess (`Princess(x, dict, b)`) | Rooms get a perceived weight; every hero is pulled. Then HP-preserving shortest path to the highest-weight reachable room. | [[FR-25]] |
 
-**Later types exist in the spec only — this page does not invent their play.** When their phases land, read [[GAME_SPEC]] for Gunner + Shell ([[FR-22]], [[FR-23]]), Mechanic ([[FR-24]]), and Princess ([[FR-25]]). Gunner's optional third argument (shot duration) is still deferred ([[NFR-8]]).
+**Still deferred — do not invent play for these:**
+
+- Gunner's optional third argument (shot duration) is parse-accepted and stored. It is **never read**. Levels that author that third argument stay unavailable ([[FR-22]], [[NFR-8]]).
+- Shell clearing `Z` as a “monster” is **not** encoded. Entering `Z` is still an instant loss ([[FR-12]]).
+
+```mermaid
+flowchart TB
+  subgraph encoded [Hero types in the engine]
+    W["Warrior FR-20"]
+    Elf["Elf FR-21"]
+    Mech["Mechanic FR-24"]
+    Gun["Gunner 2-arg fire FR-22"]
+    Sh["Shell FR-23"]
+    Pr["Princess FR-25"]
+  end
+  Gun --> Sh
+  dur["Gunner 3rd-arg duration deferred NFR-8"] -.-> Gun
+```
 
 Shared combat rules that already apply to every hero type ([[FR-26]]–[[FR-31]], [[FR-28]]):
 
@@ -112,7 +166,36 @@ flowchart TD
   later --> gate
 ```
 
-Spells are all single-use and only legal between completed actions, never mid-teleport or mid-slide ([[FR-32]], [[FR-33]]). This guide does not walk the eight spell cards; see [[GAME_SPEC]] [[FR-32]]–[[FR-42]] when Phase 4 starts.
+## Spells (one-time, between actions)
+
+All eight spell cards are encoded ([[FR-32]]–[[FR-42]]). Each is single-use. You may cast only between **completed** hero actions — never mid-teleport, mid-slide, or mid-Shell ([[FR-33]]). Casting a hero-targeted spell with no active hero is illegal. Cite the spec for exact targeting; this table is a companion.
+
+| Spell | Plain read | Spec |
+|---|---|---|
+| `Attack(x)` | `x` damage to every living hero, or a Selection subset. | [[FR-34]] |
+| `Teleport(n)` | Move the active (or selected) hero to the first cell of their `n`-th-most-recent room visit. History too short → waiting room. | [[FR-35]] |
+| `Move()` | Relocate the active hero's room onto an empty cell. Contents travel. Seams are re-checked. | [[FR-36]], [[FR-38]] |
+| `Swap()` | Swap the active hero's room with another. Contents travel. Seams are re-checked. | [[FR-37]], [[FR-38]] |
+| `Selection(allow_corpses)` | Pick heroes plus one other unused spell and apply that spell to all of them. Only the four spells that have a documented variant. | [[FR-39]] |
+| `Sleep()` | Chosen awake hero cannot act until woken or its HP changes. | [[FR-40]] |
+| `Wake()` | Chosen sleeping hero wakes. | [[FR-41]] |
+| `Banality` | Chosen hero becomes a Warrior, keeping current HP. | [[FR-42]] |
+
+A successful cast **spends** that card forever ([[FR-32]]). A rejected cast (illegal target, mid-action, broken seams after Move/Swap) spends nothing.
+
+```mermaid
+flowchart TD
+  idle[No action in flight] --> first{"Has a hero finished at least one action?"}
+  first -->|No| closed[Cast window closed]
+  first -->|Yes| mid{"Mid-action? portal / ice / Shell FR-33"}
+  mid -->|Yes| closed
+  mid -->|No| open[Cast window open]
+  open --> pick[Pick one unused spell]
+  pick --> ok{"Preconditions hold?"}
+  ok -->|No| keep[Spell stays unused]
+  ok -->|Yes| spend[Cast resolves; FR-32 spends the spell]
+  spend --> idle
+```
 
 ## How honesty works
 
@@ -145,11 +228,11 @@ One shared model, two surfaces: a UI-free simulation library (`packages/engine`)
 | 6 | Mirror worlds and solvability search | [[FR-9]], [[FR-45]], [[FR-46]], [[NFR-4]] |
 | 7 | Content pack as fixtures; contract grouping as data (gating still open) | [[FR-4]], [[NFR-5]] |
 
-Phase 4+ engine detail is in [[GAME_SPEC]] / [[STATUS_LEDGER]]. Gunner shot-duration ([[FR-22]] third arg) stays deferred ([[NFR-8]]). Phase 7 imported the authored pack as fixtures ([[NFR-5]]). [[FR-4]] point-gating is still open.
+Engine work for phases 0–7 has landed on `main`. The authored pack is imported as fixtures; parse-regression covers the green corpus ([[NFR-5]]). The Maker campaigns those fixtures by Difficulté. [[FR-4]] point-gating, room `C`, and Gunner shot-duration stay open ([[NFR-8]]). Companion prose is not proof — the ledger is.
 
 ## Repo layout
 
-The monorepo matches [[0002-typescript-monorepo-2d-to-3d]]: rules live in a pure TypeScript engine; the Maker is a 2D canvas app that must not grow its own game logic.
+The monorepo matches [[0002-typescript-monorepo-2d-to-3d]]: rules live in a pure TypeScript engine; the Maker is a 2D canvas app that must not grow its own game logic. The knowledge site explains; it does not decide.
 
 ```mermaid
 flowchart TB

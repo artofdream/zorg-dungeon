@@ -266,49 +266,54 @@ function pageShell({ title, current, content }) {
 
 // 1. Home Page
 const homeContent = `
-<h1>Zorg's Dungeon Maker — Knowledge Base</h1>
-<p class="lead">The single source of truth for game rules, deterministic simulation logic, requirements traceability, architecture decisions, and antifragility findings.</p>
+<h1>Zorg's Dungeon Maker</h1>
+<p class="lead">You place the rooms a level gives you. Scripted heroes then try to reach Zorg. This site is the plain-English guide, the formal rules, and the honesty ledger — not a claim that every rule is proven live.</p>
 
 <div class="grid-cards">
   <div class="card">
-    <h3>🧭 Player &amp; builder guide</h3>
-    <p>Plain-English walkthrough of the two phases, rooms, heroes so far, honesty words, and the 0–7 build plan — with diagrams. Formal IDs stay in the spec; if they disagree, the spec wins.</p>
+    <h3>🧭 Guide</h3>
+    <p>How to play: pick Difficulté, place rooms, start the fight. Rooms, heroes, spells, and what is still unavailable — with diagrams. If English disagrees with the spec, the spec wins.</p>
     <a href="guide.html">Open the guide →</a>
   </div>
   <div class="card">
-    <h3>📜 Rules & Specification</h3>
-    <p>Complete translated and restructured rules from the original design manual: room mechanics, hero AI priority layers, single-use spells, and win/loss conditions.</p>
-    <a href="spec.html">Explore Game Spec →</a>
+    <h3>▶️ Play Maker</h3>
+    <p>Open the campaign on the live Maker. Filter authored levels by Difficulté, place the rooms, then run extermination.</p>
+    <a href="https://zorg.artof.link" target="_blank" rel="noreferrer">Play at zorg.artof.link ↗</a>
   </div>
   <div class="card">
-    <h3>⚖️ Honesty Ledger</h3>
-    <p>56 requirements (FR-1–46, NFR-1–10) strictly tracked against automated tests with zero unproven claims. Current verified proof: <strong>FR-10</strong> (Manhattan distance).</p>
-    <a href="honesty.html">View Honesty Ledger →</a>
+    <h3>📜 Spec</h3>
+    <p>The formal rulebook: FR-1–46 and NFR-1–10. This is the legal voice. A companion sentence never overrides it.</p>
+    <a href="spec.html">Read the game spec →</a>
   </div>
   <div class="card">
-    <h3>🛡️ Antifragility & Findings</h3>
-    <p>Discrepancies and miss tracking (CF-NNN). Enforces mandatory CI sensors and test additions upon recurrence.</p>
-    <a href="findings.html">Read Findings Ledger →</a>
+    <h3>⚖️ Honesty</h3>
+    <p>One row per requirement. Only five status words. Simulated means a test exists — not a live probe. A page is not proof.</p>
+    <a href="honesty.html">Open the ledger →</a>
   </div>
   <div class="card">
-    <h3>🏛️ Architecture & ADRs</h3>
-    <p>Permanent decisions: pure TypeScript engine, 2D-to-3D renderer split, multi-agent collaboration framework, and AWS deployment.</p>
+    <h3>🛡️ Findings</h3>
+    <p>Misses between docs and code (CF-NNN). The second time the same miss happens, CI or a test must change.</p>
+    <a href="findings.html">Read findings →</a>
+  </div>
+  <div class="card">
+    <h3>🏛️ Decisions</h3>
+    <p>Why the engine is UI-free TypeScript, why the Maker is 2D first, and how agents share memory on the default branch.</p>
     <a href="adr.html">Read ADRs →</a>
   </div>
   <div class="card">
-    <h3>🤖 Multi-Agent Collaboration</h3>
-    <p>Collaboration model across Anthropic Claude, OpenAI/Codex, xAI Grok, Google Antigravity (AGY), GitHub Copilot, Moonshot Kimi, and DeepSeek.</p>
-    <a href="architecture.html">View Agent Architecture →</a>
+    <h3>🏗️ Architecture</h3>
+    <p>Monorepo split: engine vs Maker vs this knowledge site. Agent rules live in one file.</p>
+    <a href="architecture.html">View architecture →</a>
   </div>
   <div class="card">
     <h3>📊 Observability</h3>
-    <p>Live metrics and monitoring stack based on Prometheus, Grafana, and Node Exporter on <a href="https://zorg.artof.link/grafana/">zorg.artof.link/grafana/</a>.</p>
-    <a href="observability.html">Observability Architecture →</a>
+    <p>Host metrics on Prometheus and Grafana. A green dashboard is not a game-rule probe.</p>
+    <a href="observability.html">Observability →</a>
   </div>
   <div class="card">
-    <h3>⚙️ AEA Harness Engineering</h3>
-    <p>The core philosophy: 5 concentric floors, 6 layers of the Outer Harness, and 4 clean memory vaults that keep AI systems honest.</p>
-    <a href="aea.html">Explore AEA Framework →</a>
+    <h3>⚙️ AEA harness</h3>
+    <p>Shared memory, fail-closed honesty, and no self-merge — the same rules this repo uses.</p>
+    <a href="aea.html">Explore AEA →</a>
   </div>
 </div>
 `;
@@ -319,15 +324,33 @@ const guideMd = readDoc("docs/PLAYER_GUIDE.md");
 if (!guideMd.trim()) {
   throw new Error("knowledge build: missing docs/PLAYER_GUIDE.md");
 }
+if (/two types have rules encoded/i.test(guideMd)) {
+  throw new Error("knowledge build: PLAYER_GUIDE.md still claims only two hero types");
+}
+for (const id of ["FR-22", "FR-23", "FR-24", "FR-25", "FR-32", "FR-33", "NFR-5"]) {
+  if (!guideMd.includes(`[[${id}]]`)) {
+    throw new Error(`knowledge build: PLAYER_GUIDE.md must cite [[${id}]] so the companion tracks the engine`);
+  }
+}
 const guideHtml = markdownToHtml(guideMd);
 if (!guideHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: PLAYER_GUIDE.md produced no mermaid diagrams");
 }
 writeFileSync(join(distDir, "guide.html"), pageShell({ title: "Player & builder guide", current: "guide", content: guideHtml }));
 
-// 2. Spec Page
+// 2. Spec Page — companion banner only; GAME_SPEC.md body is not rewritten
+const specBanner = `
+<div class="alert alert-note spec-companion-banner">
+  <div class="alert-title">Formal rules</div>
+  <p>This page is the legal voice (FR / NFR). For plain English and diagrams, see the <a href="guide.html">Player &amp; builder guide</a>. If they disagree, this spec wins.</p>
+</div>
+`;
 const specMd = readDoc("GAME_SPEC.md");
-writeFileSync(join(distDir, "spec.html"), pageShell({ title: "Rules & Specification", current: "spec", content: markdownToHtml(specMd) }));
+const specHtml = specBanner + markdownToHtml(specMd);
+if (!specHtml.includes("spec-companion-banner") || !specHtml.includes("guide.html")) {
+  throw new Error("knowledge build: spec.html must inject the companion banner (do not rewrite GAME_SPEC.md)");
+}
+writeFileSync(join(distDir, "spec.html"), pageShell({ title: "Rules & Specification", current: "spec", content: specHtml }));
 
 // 3. Honesty Ledger Page
 const ledgerMd = readDoc("docs/STATUS_LEDGER.md");
@@ -357,9 +380,33 @@ for (const file of readdirSync(journalDir).sort().reverse()) {
 }
 writeFileSync(join(distDir, "journal.html"), pageShell({ title: "Dev Journal", current: "journal", content: markdownToHtml(journalCombined) }));
 
-// 7. Architecture Page
+// 7. Architecture Page — visual split first; AGENTS.md body is not rewritten
+const architectureOverviewMd = `
+# Architecture & Agent Framework
+
+## Knowledge vs Maker
+
+Plain English: the spec is the rulebook. The engine is the referee ([[NFR-1]], [[NFR-10]]). The Maker is the table you play on. This knowledge site is the companion booklet. See [[0002-typescript-monorepo-2d-to-3d]].
+
+\`\`\`mermaid
+flowchart TB
+  spec["GAME_SPEC.md — formal rules"]
+  engine["packages/engine — simulation NFR-1 / NFR-10"]
+  maker["apps/web — Maker on zorg.artof.link"]
+  knowledge["apps/knowledge — this site"]
+  docs["docs/ — guide, ledger, ADRs, journal"]
+  spec --> engine
+  spec --> knowledge
+  docs --> knowledge
+  engine --> maker
+\`\`\`
+`;
 const agentsMd = readDoc("AGENTS.md");
-writeFileSync(join(distDir, "architecture.html"), pageShell({ title: "Architecture & Agent Framework", current: "architecture", content: markdownToHtml(agentsMd) }));
+const architectureHtml = markdownToHtml(architectureOverviewMd) + markdownToHtml(agentsMd);
+if (!architectureHtml.includes('class="mermaid"')) {
+  throw new Error("knowledge build: architecture page produced no mermaid diagram");
+}
+writeFileSync(join(distDir, "architecture.html"), pageShell({ title: "Architecture & Agent Framework", current: "architecture", content: architectureHtml }));
 
 // 8. Observability Page
 const obsContent = `
@@ -408,6 +455,17 @@ writeFileSync(join(distDir, "observability.html"), pageShell({ title: "Observabi
 const aeaContent = `
 <h1>Adaptive Experience Architecture (AEA)</h1>
 <p class="lead">The Plain-English Visual Guide to Harness Engineering applied to Zorg's Dungeon Maker. Canonical Reference: <a href="https://aea.artof.link" target="_blank">aea.artof.link</a>.</p>
+
+<p>Same split as the architecture page: spec and docs are shared memory; <code>packages/engine</code> decides outcomes ([[NFR-1]]); <code>apps/web</code> is the Maker; this site explains.</p>
+<div class="mermaid-wrap"><pre class="mermaid">flowchart LR
+  spec["GAME_SPEC + docs"]
+  engine["packages/engine"]
+  maker["apps/web Maker"]
+  site["apps/knowledge"]
+  spec --> engine
+  spec --> site
+  engine --> maker
+</pre></div>
 
 <div class="alert alert-tip">
   <div class="alert-title">Core Philosophy</div>
@@ -539,6 +597,9 @@ const aeaContent = `
   </div>
 </div>
 `;
+if (!aeaContent.includes('class="mermaid"')) {
+  throw new Error("knowledge build: AEA page produced no mermaid diagram");
+}
 writeFileSync(join(distDir, "aea.html"), pageShell({ title: "AEA Harness", current: "aea", content: aeaContent }));
 
 // 10. CNAME for GitHub Pages
