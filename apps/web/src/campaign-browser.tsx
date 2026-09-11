@@ -34,14 +34,13 @@ export function CampaignBrowser({ catalog, onPick }: Props) {
     <main className="app">
       <h1>Zorg's Dungeon Maker</h1>
       <p className="lede">
-        Authored campaign slice: pick a <strong>Difficulté</strong> band, open a
-        fixture level, place its rooms (FR-5–FR-8), then run extermination.
-        This is the fixture pack, not a procedural generator.
+        Pick a <strong>Difficulté</strong>, open a level, place its rooms, then
+        start the fight. These are the authored levels — not a random generator.
       </p>
       <p className="honesty">
-        Status: Simulated engine (Vitest). Not Probed, not Live. Contract costs
-        are flavour only — FR-4 gating is not implemented. C rooms and Gunner
-        duration stay unavailable (FR-18 / S3 deferred). See docs/STATUS_LEDGER.md.
+        Simulated engine tests — not a live production probe. Contract costs are
+        labels only (FR-4 gating is not built). Levels with C rooms or Gunner
+        duration stay unavailable. See the honesty ledger.
       </p>
 
       <p className="hint">
@@ -89,8 +88,8 @@ export function CampaignBrowser({ catalog, onPick }: Props) {
       </div>
 
       <p className="hint">
-        Contract points are catalogue flavour (S6). Every listed playable level
-        is selectable.
+        Contract points are labels only. Every playable level in this list is
+        open.
       </p>
       <label className="hint" style={{ display: "inline-flex", gap: "0.4rem", alignItems: "center" }}>
         <input
