@@ -119,6 +119,16 @@ Héros : Artilleur(1, 1, ∞)
     expect(play.reasons).toContain("gunner_duration");
   });
 
+  it("marks a flattenable level with no Z as unavailable", () => {
+    const level = parseLevel(`id: no-z
+Salles : A, D(1)
+Héros : Guerrier(5)
+`);
+    const play = classifyCampaignPlayability(level);
+    expect(play.playable).toBe(false);
+    expect(play.reasons).toContain("unresolved");
+  });
+
   it("keeps 2-arg Gunner playable", () => {
     const level = parseLevel(`id: gunner-2
 Salles : A, Z, D(1)

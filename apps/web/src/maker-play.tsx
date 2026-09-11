@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   canCastNow,
   canStartExtermination,
@@ -59,7 +59,7 @@ export function MakerPlay({ entry, onBack }: Props) {
 
   const [orientation, setOrientation] = useState<Orientation>(0);
   const [rooms, setRooms] = useState<PlacedRoom[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(supplied[0]?.id ?? null);
   const [run, setRun] = useState<SimulationState | null>(null);
   const [spellPick, setSpellPick] = useState<number | null>(null);
   const [castError, setCastError] = useState<string | null>(null);
@@ -72,6 +72,12 @@ export function MakerPlay({ entry, onBack }: Props) {
   const placedIds = new Set(rooms.map((r) => r.id));
   const gateOpen = canStartExtermination(level, layout);
   const playing = run !== null;
+
+  useEffect(() => {
+    if (!playing && selectedId === null && supplied[0]) {
+      setSelectedId(supplied[0].id);
+    }
+  }, [playing, selectedId, supplied]);
 
   function resetBoard() {
     setRooms([]);
@@ -107,8 +113,13 @@ export function MakerPlay({ entry, onBack }: Props) {
 
   function placeInALine() {
     if (playing) return;
+    const ordered = [
+      ...supplied.filter((spec) => spec.def.type === "A"),
+      ...supplied.filter((spec) => spec.def.type !== "A" && spec.def.type !== "Z"),
+      ...supplied.filter((spec) => spec.def.type === "Z"),
+    ];
     setRooms(
-      supplied.map((spec, i) => ({
+      ordered.map((spec, i) => ({
         id: spec.id,
         def: spec.def,
         position: { x: i, y: 1 },

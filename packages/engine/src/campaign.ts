@@ -6,6 +6,7 @@
 import { authoredContracts, CONTRACTS, type ContractRecord } from "./contracts.js";
 import {
   ELEMENT_TYPES,
+  flattenRooms,
   isChoixDef,
   isElementType,
   isSpellRepeat,
@@ -219,6 +220,19 @@ export function classifyCampaignPlayability(level: LevelDef): CampaignPlayabilit
   const names = namedChoixNames(level);
   for (const token of tokens) {
     if (!names.has(token)) flags.add("unresolved");
+  }
+  const canFlatten =
+    !level.rooms.some((m) => isChoixDef(m.room)) &&
+    level.rooms.every((m) => typeof m.count === "number");
+  if (canFlatten) {
+    try {
+      const flat = flattenRooms(level.rooms);
+      if (!flat.some((r) => r.type === "A") || !flat.some((r) => r.type === "Z")) {
+        flags.add("unresolved");
+      }
+    } catch {
+      flags.add("unresolved");
+    }
   }
   const needsChoix = (level.variables?.length ?? 0) > 0 || hasInlineChoix(level);
   const reasons = [...flags];
