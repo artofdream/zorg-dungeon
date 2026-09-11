@@ -184,12 +184,15 @@ function pageShell({ title, current, content }) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${title} — Zorg's Dungeon Knowledge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="is-wide page-${current}">
   <header>
     <div class="brand">
-      <div class="brand-badge">⚔️</div>
+      <img class="brand-badge" src="/favicon.svg" width="36" height="36" alt="Zorg Knowledge">
       <div>
         <p class="eyebrow">Zorg's Dungeon Maker</p>
         <p class="sub">Knowledge Base & Traceability Graph</p>
@@ -483,7 +486,15 @@ writeFileSync(join(distDir, "aea.html"), pageShell({ title: "AEA Harness", curre
 // 10. CNAME for GitHub Pages
 writeFileSync(join(distDir, "CNAME"), "knowledge.zorg.artof.link\n");
 
-// 11. Copy stylesheet
-copyFileSync(join(__dirname, "../style.css"), join(distDir, "style.css"));
+// 11. Copy stylesheet and sibling favicons
+const knowledgeRoot = join(__dirname, "..");
+copyFileSync(join(knowledgeRoot, "style.css"), join(distDir, "style.css"));
+for (const asset of ["favicon.svg", "favicon-32x32.png", "apple-touch-icon.png"]) {
+  const src = join(knowledgeRoot, asset);
+  if (!existsSync(src)) {
+    throw new Error(`knowledge build: missing ${asset} at ${src}`);
+  }
+  copyFileSync(src, join(distDir, asset));
+}
 
 console.log("✓ Knowledge website built successfully in apps/knowledge/dist/");

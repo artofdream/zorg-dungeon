@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Zorg Knowledge">
+  <rect width="32" height="32" rx="6" fill="#0d1117"/>
+  <path fill="#6e40c9" d="M7 6h18v5H14.5L25 21v5H7v-5h10.5L7 11V6z"/>
+  <path fill="none" stroke="#d29922" stroke-width="1.5" stroke-linejoin="round"
+        d="M7 6h18v5H14.5L25 21v5H7v-5h10.5L7 11V6z"/>
+  <path fill="#d29922" d="M11 20.5c2.2-1.4 4-1.4 5 0v5.2c-1.2-1-3-1-5 0V20.5zm5 0c1-1.4 2.8-1.4 5 0v5.2c-2-1-3.8-1-5 0V20.5z"/>
+  <path fill="#0d1117" d="M16 20.8v4.6" stroke="#0d1117" stroke-width="1"/>
+  <rect x="7" y="6" width="2.2" height="2.2" fill="#d29922"/>
+  <rect x="22.8" y="6" width="2.2" height="2.2" fill="#d29922"/>
+  <rect x="7" y="23.8" width="2.2" height="2.2" fill="#d29922"/>
+  <rect x="22.8" y="23.8" width="2.2" height="2.2" fill="#d29922"/>
+</svg>
