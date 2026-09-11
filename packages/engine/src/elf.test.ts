@@ -3,8 +3,9 @@
 import { describe, expect, it } from "vitest";
 import { aezLine, hpSquare } from "./phase2-fixtures.js";
 import { twoDLevel, placeAll } from "./phase1-fixtures.js";
+import { makeLevel } from "./phase3-fixtures.js";
 import { simulate } from "./simulation.js";
-import { DEFAULT_ELEMENTAL_TILE } from "./tiles.js";
+import { DEFAULT_ELEMENTAL_TILE, makeEwCorridorTile, paintGreen, paintLight } from "./tiles.js";
 
 function enteredRooms(events: { type: string; roomId?: string }[]): string[] {
   return events.filter((e) => e.type === "enter").map((e) => e.roomId ?? "");
@@ -37,6 +38,40 @@ describe("FR-21 Elf prefers the path that preserves the most HP", () => {
     expect(enteredRooms(state.events)).toContain("E:0");
     expect(state.outcome).toBe("win");
     expect(state.heroes[0]?.dead).toBe(true);
+  });
+
+  it("plans through a forced unpaid light slide when that is the only route to Z", () => {
+    const corridor = makeEwCorridorTile();
+    const level = makeLevel(
+      [
+        { type: "A" },
+        { type: "Z" },
+        { type: "E", element: "ice" },
+        { type: "T", cost: 1, element: "fire" },
+      ],
+      [{ type: "Elf", hp: 5, immunities: [] }],
+    );
+    const layout = placeAll(
+      level,
+      {
+        "A:0": { x: 0, y: 0 },
+        "E:0": { x: 1, y: 0 },
+        "T:0": { x: 2, y: 0 },
+        "Z:0": { x: 3, y: 0 },
+      },
+      0,
+      {
+        "A:0": corridor,
+        "E:0": paintGreen(corridor, [{ x: 3, y: 2 }]),
+        "T:0": paintLight(corridor, [{ x: 2, y: 2 }]),
+        "Z:0": corridor,
+      },
+    );
+    const state = simulate(level, layout);
+    expect(state.heroes[0]?.dead).toBe(true);
+    expect(state.outcome).toBe("win");
+    expect(state.events.some((e) => e.type === "loss")).toBe(false);
+    expect(state.events.some((e) => e.type === "wait")).toBe(false);
   });
 });
 

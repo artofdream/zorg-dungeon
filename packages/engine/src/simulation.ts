@@ -332,14 +332,23 @@ function applyPortal(
     throw new SimulationError("FR-15: portal teleport chain exceeded 8 hops.");
   }
 
+  // Nested applyEntry on another still-active P already applied landing
+  // effects on the final cell. Do not tick fire / poison / toll twice.
+  let nestedTeleport = false;
   if (dest.roomId !== roomId) {
     const nextPrior = hero.visits.slice();
     hero.visits.push({ roomId: dest.roomId, firstCell: { ...dest.firstCell } });
     hero.roomId = dest.roomId;
-    applyEntry(state, hero, dest.roomId, events, nextPrior, teleportDepth + 1);
+    nestedTeleport = applyEntry(state, hero, dest.roomId, events, nextPrior, teleportDepth + 1);
   }
 
-  if (state.outcome === "in_progress" && hero.spawned && !hero.dead && hero.cell) {
+  if (
+    !nestedTeleport &&
+    state.outcome === "in_progress" &&
+    hero.spawned &&
+    !hero.dead &&
+    hero.cell
+  ) {
     const grid = gridOf(state);
     applyElementalCell(state, hero, hero.cell, grid, events);
     if (state.outcome === "in_progress" && !hero.dead) {
@@ -508,7 +517,15 @@ export function stepRun(state: SimulationState): StepResult {
   }
 
   const immunities = heroImmunities(hero.def);
-  const path = resolveStep(grid, hero.cell, dir, immunities, state.layout, hero.gold.length);
+  const path = resolveStep(
+    grid,
+    hero.cell,
+    dir,
+    immunities,
+    state.layout,
+    hero.gold.length,
+    state.roomGold,
+  );
   if (!path?.length) {
     hero.stuck = true;
     events.push({ type: "wait", heroId: hero.id });

@@ -5,6 +5,7 @@
 // Planning ignores death (FR-28): HP may go ≤0 along a hypothetical path;
 // the Elf still scores that path's HP at Z. Water is terrain (impassable),
 // not a planned-through death, unless an ice slide forces a landing.
+// Unpaid light on a forced slide is the same kind of planned-through death.
 
 import { elementalTick } from "./elements.js";
 import { clonePiles, pilesKey, type PathEconomy } from "./gold.js";
@@ -122,19 +123,10 @@ function applyPlannedCell(
   }
 
   const walk = grid.cells.get(cellKey(cell));
-  if (walk?.toll !== undefined) {
-    // Unpaid light on a planned slide is not a route the Elf chooses.
-    if (nextGold < walk.toll) {
-      return {
-        hp: nextHp,
-        roomId: nextRoomId,
-        poison: nextPoison,
-        gold: nextGold,
-        piles: nextPiles,
-        reachedZ,
-        invalid: true,
-      };
-    }
+  if (walk?.toll !== undefined && nextGold >= walk.toll) {
+    // FR-28: unpaid light on a forced slide is planned through (same as
+    // water slides / lethal D). Voluntary unpaid steps are already
+    // rejected by resolveStep.
     nextGold -= walk.toll;
   }
 
@@ -197,7 +189,15 @@ export function chooseElfStep(input: ElfStepInput): Cardinal | undefined {
     if (known && better(known, cur)) continue;
 
     for (const dir of dirs) {
-      const path = resolveStep(grid, cur.cell, dir, immunities, layout, cur.gold);
+      const path = resolveStep(
+        grid,
+        cur.cell,
+        dir,
+        immunities,
+        layout,
+        cur.gold,
+        parsePilesKey(cur.piles),
+      );
       if (!path?.length) continue;
 
       let hpNow = cur.hp;

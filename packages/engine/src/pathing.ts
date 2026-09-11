@@ -4,6 +4,8 @@
 // FR-14: water is impassable (unless immune); ice slides until a wall.
 // FR-17: unpaid light cells are impassable as a chosen step (like water);
 // gold pickups along a path can open later tolls (Warrior sees map gold).
+// FR-16: a pile on the destination room is available before that room's
+// hatch toll (pickup pre-empts other entry effects).
 
 import { ignoresElement } from "./elements.js";
 import { clonePiles, pilesKey, type PathEconomy } from "./gold.js";
@@ -95,12 +97,19 @@ export function isPassable(
   pos: CellPos,
   immunities: readonly ElementType[] = [],
   gold = 0,
+  piles?: ReadonlyMap<string, number>,
+  fromRoomId?: string,
 ): boolean {
   const cell = getWalkCell(grid, pos);
   if (!cell || cell.kind === "wall") return false;
   if (cell.element === "water" && !ignoresElement(immunities, "water")) return false;
+  // FR-16 / FR-17: pickup on room entry is available before the hatch toll.
+  const available =
+    piles && fromRoomId !== undefined && cell.roomId !== fromRoomId
+      ? gold + (piles.get(cell.roomId) ?? 0)
+      : gold;
   // FR-17: unpaid light is not a voluntary step (forced landing dies later).
-  if (cell.toll !== undefined && gold < cell.toll) return false;
+  if (cell.toll !== undefined && available < cell.toll) return false;
   return true;
 }
 
@@ -143,11 +152,13 @@ export function resolveStep(
   immunities: readonly ElementType[] = [],
   layout?: DungeonLayout,
   gold = 0,
+  piles?: ReadonlyMap<string, number>,
 ): CellPos[] | undefined {
   const first = stepCell(from, dir);
   // Water / unpaid light are impassable as a chosen step (FR-14 / FR-17).
   // Forced landings happen only mid-slide, inside continueSlide.
-  if (!isPassable(grid, first, immunities, gold)) return undefined;
+  // FR-16: a pile on the entered room counts toward that first-step toll.
+  if (!isPassable(grid, first, immunities, gold, piles, roomIdAt(grid, from))) return undefined;
   return continueSlide(grid, [first], dir, immunities, layout);
 }
 
@@ -291,7 +302,7 @@ export function chooseWarriorStep(
   const gold = economy?.gold ?? 0;
 
   for (const dir of orientedTieBreak(orientation)) {
-    const path = resolveStep(grid, from, dir, immunities, layout, gold);
+    const path = resolveStep(grid, from, dir, immunities, layout, gold, economy?.piles);
     if (!path?.length) continue;
     const land = landingForDistance(grid, path, layout);
     const nDist = dist.get(cellKey(land));
@@ -351,7 +362,15 @@ function chooseWarriorEconomy(
     if (!cur || cur.length >= maxLength) continue;
 
     for (const dir of dirs) {
-      const path = resolveStep(grid, cur.cell, dir, immunities, layout, cur.gold);
+      const path = resolveStep(
+        grid,
+        cur.cell,
+        dir,
+        immunities,
+        layout,
+        cur.gold,
+        parsePiles(cur.piles),
+      );
       if (!path?.length) continue;
 
       let goldNow = cur.gold;

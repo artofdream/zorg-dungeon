@@ -6,7 +6,13 @@ import { aotzLevel, corridorLine, makeLevel, oneLightCorridor, placeAll } from "
 import { buildWalkGrid, localToWorld, resolveStep } from "./pathing.js";
 import { simulate } from "./simulation.js";
 import { validateLayout } from "./placement.js";
-import { DEFAULT_TOLL_TILE, makeEwCorridorTile, paintDark, paintGreen, paintLight } from "./tiles.js";
+import {
+  DEFAULT_TOLL_TILE,
+  makeEwCorridorTile,
+  paintDark,
+  paintGreen,
+  paintLight,
+} from "./tiles.js";
 
 describe("FR-17 light cells: FIFO toll, block, forced death", () => {
   it("lets a warrior pay one gold to cross, refunding the coin to its source O", () => {
@@ -55,6 +61,61 @@ describe("FR-17 light cells: FIFO toll, block, forced death", () => {
     const state = simulate(level, layout);
     expect(state.outcome).toBe("stalemate");
     expect(state.events.some((e) => e.type === "enter" && e.roomType === "Z")).toBe(false);
+  });
+
+  it("counts a destination-room pile toward a voluntary light hatch (FR-16)", () => {
+    const level = makeLevel(
+      [
+        { type: "A" },
+        { type: "Z" },
+        { type: "T", cost: 1, element: "ice" },
+      ],
+      [{ type: "Warrior", hp: 5 }],
+    );
+    const layout = corridorLine(level, ["A:0", "T:0", "Z:0"], {
+      "T:0": paintLight(makeEwCorridorTile(), [{ x: 0, y: 2 }]),
+    });
+    const grid = buildWalkGrid(layout);
+    const a = layout.rooms.find((r) => r.id === "A:0");
+    const t = layout.rooms.find((r) => r.id === "T:0");
+    if (!a || !t) throw new Error("missing rooms");
+    const from = localToWorld(a, { x: 4, y: 2 });
+    expect(resolveStep(grid, from, "right", [], layout, 0)).toBeUndefined();
+    expect(resolveStep(grid, from, "right", [], layout, 0, new Map([["T:0", 1]]))?.[0]).toEqual(
+      localToWorld(t, { x: 0, y: 2 }),
+    );
+  });
+
+  it("lets a later hero pick up a T death pile before paying the light hatch", () => {
+    const level = makeLevel(
+      [
+        { type: "A" },
+        { type: "Z" },
+        { type: "O", gold: 2 },
+        { type: "T", cost: 1, element: "fire" },
+      ],
+      [
+        { type: "Warrior", hp: 1 },
+        { type: "Warrior", hp: 1 },
+      ],
+    );
+    const layout = corridorLine(level, ["A:0", "O:0", "T:0", "Z:0"], {
+      "T:0": DEFAULT_TOLL_TILE,
+    });
+    expect(validateLayout(level, layout).ok).toBe(true);
+
+    const state = simulate(level, layout);
+    expect(state.events).toContainEqual(
+      expect.objectContaining({ type: "gold_drop", heroId: 0, roomId: "T:0", amount: 1 }),
+    );
+    expect(state.events).toContainEqual(
+      expect.objectContaining({ type: "pickup", heroId: 1, roomId: "T:0", amount: 1 }),
+    );
+    expect(state.events).toContainEqual(
+      expect.objectContaining({ type: "toll", heroId: 1, amount: 1 }),
+    );
+    expect(state.heroes[1]?.dead).toBe(true);
+    expect(state.outcome).toBe("win");
   });
 
   it("kills a hero shoved onto an unpayable light cell (ice slide)", () => {

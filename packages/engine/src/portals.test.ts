@@ -3,9 +3,11 @@
 // src/simulation.ts.
 import { describe, expect, it } from "vitest";
 import { evalPortalIndex, lookupVisit } from "./portals.js";
-import { apzLevel, corridorLine } from "./phase3-fixtures.js";
+import { apzLevel, corridorLine, makeLevel, placeAll } from "./phase3-fixtures.js";
+import { localToWorld } from "./pathing.js";
 import { createRun, simulate, stepRun } from "./simulation.js";
 import { validateLayout } from "./placement.js";
+import { makeEwCorridorTile, paintGreen } from "./tiles.js";
 
 describe("FR-15 portal formula f(i)", () => {
   it("evaluates constants, identity, and linear maps used in the corpus", () => {
@@ -72,5 +74,71 @@ describe("FR-15 P(n, f) teleport on entry", () => {
     const state = simulate(level, layout);
     expect(state.events.filter((e) => e.type === "teleport")).toHaveLength(1);
     expect(state.events.filter((e) => e.type === "wait_room")).toHaveLength(0);
+  });
+
+  it("applies fire once when a P→P chain lands on an E cell", () => {
+    const corridor = makeEwCorridorTile();
+    const level = makeLevel(
+      [
+        { type: "A" },
+        { type: "Z" },
+        { type: "P", entries: 1, formula: "1" },
+        { type: "P", entries: 2, formula: "3" },
+        { type: "E", element: "fire" },
+      ],
+      [{ type: "Warrior", hp: 10 }],
+    );
+    const layout = placeAll(
+      level,
+      {
+        "A:0": { x: 0, y: 0 },
+        "P:0": { x: 1, y: 0 },
+        "P:1": { x: 2, y: 0 },
+        "E:0": { x: 3, y: 0 },
+        "Z:0": { x: 4, y: 0 },
+      },
+      0,
+      {
+        "A:0": corridor,
+        "P:0": corridor,
+        "P:1": corridor,
+        "E:0": paintGreen(corridor, [{ x: 2, y: 2 }]),
+        "Z:0": corridor,
+      },
+    );
+    expect(validateLayout(level, layout).ok).toBe(true);
+
+    const state = createRun(level, layout);
+    stepRun(state);
+    const hero = state.heroes[0];
+    const eRoom = layout.rooms.find((r) => r.id === "E:0");
+    const pInner = layout.rooms.find((r) => r.id === "P:1");
+    if (!hero?.cell || !eRoom || !pInner) throw new Error("missing hero or rooms");
+    const landing = localToWorld(eRoom, { x: 2, y: 2 });
+    hero.visits = [
+      { roomId: "A:0", firstCell: { ...hero.cell } },
+      { roomId: "E:0", firstCell: landing },
+      { roomId: "P:1", firstCell: localToWorld(pInner, { x: 2, y: 2 }) },
+    ];
+    hero.portalEntries = new Map([["P:1", 1]]);
+
+    let guard = 0;
+    while (
+      state.outcome === "in_progress" &&
+      !state.events.some((e) => e.type === "teleport") &&
+      guard++ < 20
+    ) {
+      stepRun(state);
+    }
+    const teleports = state.events.filter((e) => e.type === "teleport");
+    expect(teleports).toEqual([
+      expect.objectContaining({ type: "teleport", fromRoomId: "P:0", toRoomId: "P:1" }),
+      expect.objectContaining({ type: "teleport", fromRoomId: "P:1", toRoomId: "E:0" }),
+    ]);
+    const afterChain = state.events.filter((e) => e.type === "damage");
+    expect(afterChain).toEqual([
+      expect.objectContaining({ type: "damage", amount: 1, hp: 9 }),
+    ]);
+    expect(hero.cell).toEqual(landing);
   });
 });
