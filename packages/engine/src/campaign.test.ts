@@ -17,6 +17,7 @@ import {
   parseDifficultyFromText,
   prepareCampaignLevel,
   resolveInlineChoix,
+  tryPrepareCampaignLevel,
   unavailableReasonLabel,
   UNSPECIFIED_DIFFICULTY,
 } from "./campaign.js";
@@ -154,6 +155,33 @@ Héros : Guerrier(5)
     expect(play.needsChoix).toBe(true);
     const bound = bindNamedChoix(level, defaultNamedChoices(level));
     expect(bound.spells?.[0]).toMatchObject({ type: "Repeat", count: 1 });
+  });
+
+  it("marks nested Princess weight choix unavailable (no invented Π picker)", () => {
+    const level = parseLevel(
+      readFileSync(join(fixturesRoot, "base-classic/21-getting-distracted.txt"), "utf8"),
+    );
+    const play = classifyCampaignPlayability(level);
+    expect(play.playable).toBe(false);
+    expect(play.reasons).toContain("unresolved");
+    expect(play.needsChoix).toBe(false);
+  });
+
+  it("marks opaque ℕ* domaines unavailable instead of binding the domain string as HP", () => {
+    const level = parseLevel(readFileSync(join(fixturesRoot, "contracts/7.8-golden-snap.txt"), "utf8"));
+    const play = classifyCampaignPlayability(level);
+    expect(play.playable).toBe(false);
+    expect(play.reasons).toContain("unresolved");
+    const prepared = tryPrepareCampaignLevel(level);
+    expect(prepared.ok).toBe(false);
+  });
+
+  it("keeps multi-pick inline choix playable with default first-n options", () => {
+    const level = parseLevel(readFileSync(join(fixturesRoot, "contracts/10.4-the-even-squad.txt"), "utf8"));
+    expect(classifyCampaignPlayability(level)).toMatchObject({ playable: true, needsChoix: true });
+    const prepared = prepareCampaignLevel(level);
+    expect(prepared.heroes).toHaveLength(3);
+    expect(prepared.heroes.every((h) => !isChoixDef(h) && h.type === "Warrior")).toBe(true);
   });
 
   it("resolves inline hero choix without inventing a new hero type", () => {

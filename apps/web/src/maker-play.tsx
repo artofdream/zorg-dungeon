@@ -10,7 +10,7 @@ import {
   hatchDirection,
   listInlineChoixSlots,
   parseLevel,
-  prepareCampaignLevel,
+  tryPrepareCampaignLevel,
   selectActiveHero,
   stepRun,
   validateLayout,
@@ -52,8 +52,16 @@ export function MakerPlay({ entry, onBack }: Props) {
   const [named, setNamed] = useState(() => defaultNamedChoices(authored));
   const [inline, setInline] = useState<InlineChoixPicks>(() => defaultInlinePicks(authored));
 
-  const level = useMemo(() => prepareCampaignLevel(authored, named, inline), [authored, named, inline]);
-  const supplied = useMemo(() => enumerateSuppliedRooms(level), [level]);
+  const prepared = useMemo(
+    () => tryPrepareCampaignLevel(authored, named, inline),
+    [authored, named, inline],
+  );
+  const level = prepared.ok ? prepared.level : authored;
+  const prepareError = prepared.ok ? null : prepared.error;
+  const supplied = useMemo(
+    () => (prepared.ok ? enumerateSuppliedRooms(prepared.level) : []),
+    [prepared],
+  );
   const extent = useMemo(() => gridExtent(supplied.length), [supplied.length]);
   const inlineSlots = useMemo(() => listInlineChoixSlots(authored), [authored]);
 
@@ -70,7 +78,7 @@ export function MakerPlay({ entry, onBack }: Props) {
   );
   const report = useMemo(() => validateLayout(level, layout), [level, layout]);
   const placedIds = new Set(rooms.map((r) => r.id));
-  const gateOpen = canStartExtermination(level, layout);
+  const gateOpen = prepared.ok && canStartExtermination(level, layout);
   const playing = run !== null;
 
   useEffect(() => {
@@ -130,10 +138,14 @@ export function MakerPlay({ entry, onBack }: Props) {
   }
 
   function startRun() {
-    if (!gateOpen) return;
+    if (!gateOpen || !prepared.ok) return;
     setSpellPick(null);
     setCastError(null);
-    setRun(createRun(level, layout));
+    try {
+      setRun(createRun(prepared.level, layout));
+    } catch (err) {
+      setCastError(err instanceof Error ? err.message : String(err));
+    }
   }
 
   function stepPlayback() {
@@ -206,21 +218,24 @@ export function MakerPlay({ entry, onBack }: Props) {
     resetBoard();
   }
 
-  function updateInline(kind: "rooms" | "heroes" | "spells", index: number, pickIndex: number, slotN: number) {
+  function updateInlinePick(
+    kind: "rooms" | "heroes" | "spells",
+    slotIndex: number,
+    pickSlot: number,
+    optionIndex: number,
+    slotN: number,
+  ) {
     setInline((current) => {
       const copy: InlineChoixPicks = {
         rooms: current.rooms.map((row) => [...row]),
         heroes: current.heroes.map((row) => [...row]),
         spells: current.spells.map((row) => [...row]),
       };
-      const row = [...(copy[kind][index] ?? [])];
-      if (slotN <= 1) copy[kind][index] = [pickIndex];
-      else {
-        const pos = row.indexOf(pickIndex);
-        if (pos >= 0) row.splice(pos, 1);
-        else if (row.length < slotN) row.push(pickIndex);
-        copy[kind][index] = row;
-      }
+      const fallback = Array.from({ length: slotN }, (_, i) => i);
+      const row = [...(copy[kind][slotIndex] ?? fallback)];
+      while (row.length < slotN) row.push(row.length);
+      row[pickSlot] = optionIndex;
+      copy[kind][slotIndex] = row.slice(0, slotN);
       return copy;
     });
     resetBoard();
@@ -265,9 +280,15 @@ export function MakerPlay({ entry, onBack }: Props) {
                     type="number"
                     min={0}
                     max={20}
+                    step={variable.domain === "N" ? 1 : "any"}
                     disabled={playing}
                     value={typeof current === "number" ? current : 1}
-                    onChange={(ev) => updateNamed(variable.name, [Number(ev.target.value)])}
+                    onChange={(ev) => {
+                      const num = Number(ev.target.value);
+                      if (Number.isNaN(num) || num < 0) return;
+                      if (variable.domain === "N" && !Number.isInteger(num)) return;
+                      updateNamed(variable.name, [num]);
+                    }}
                   />
                 </label>
               );
@@ -297,17 +318,18 @@ export function MakerPlay({ entry, onBack }: Props) {
                 : slot.kind === "hero"
                   ? inline.heroes[slot.index]
                   : inline.spells[slot.index];
-            const selected = picks?.[0] ?? 0;
             const labeler =
               slot.kind === "room" ? roomSlotLabel : slot.kind === "hero" ? heroSlotLabel : spellSlotLabel;
             const kindKey = slot.kind === "room" ? "rooms" : slot.kind === "hero" ? "heroes" : "spells";
-            return (
-              <label key={`${slot.kind}-${slot.index}`}>
-                {slot.kind} choix
+            return Array.from({ length: slot.n }, (_, pickSlot) => (
+              <label key={`${slot.kind}-${slot.index}-${pickSlot}`}>
+                {slot.kind} choix {slot.n > 1 ? `${pickSlot + 1}/${slot.n}` : ""}
                 <select
                   disabled={playing}
-                  value={selected}
-                  onChange={(ev) => updateInline(kindKey, slot.index, Number(ev.target.value), slot.n)}
+                  value={picks?.[pickSlot] ?? pickSlot}
+                  onChange={(ev) =>
+                    updateInlinePick(kindKey, slot.index, pickSlot, Number(ev.target.value), slot.n)
+                  }
                 >
                   {slot.options.map((opt, i) => (
                     <option key={i} value={i}>
@@ -316,7 +338,7 @@ export function MakerPlay({ entry, onBack }: Props) {
                   ))}
                 </select>
               </label>
-            );
+            ));
           })}
         </section>
       ) : null}
@@ -411,6 +433,7 @@ export function MakerPlay({ entry, onBack }: Props) {
 
         <section className="panel">
           <h2>Validation</h2>
+          {prepareError ? <p className="issues"><span>{prepareError}</span></p> : null}
           {report.ok ? (
             <p className="ok">FR-5–FR-7 hold. Extermination is allowed (FR-8).</p>
           ) : (

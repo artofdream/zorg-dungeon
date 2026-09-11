@@ -3,7 +3,7 @@
 // Does not implement FR-4 gating. C rooms (FR-18 / S2) and Gunner duration
 // (S3) stay unavailable — we do not invent those rules (NFR-8).
 
-import { authoredContracts, CONTRACTS, type ContractRecord } from "./contracts.js";
+import { CONTRACTS, type ContractRecord } from "./contracts.js";
 import {
   ELEMENT_TYPES,
   flattenRooms,
@@ -18,8 +18,11 @@ import {
   type PlayerChoice,
   type RoomSlot,
   type SpellSlot,
+  type VariableDomain,
 } from "./level.js";
 import { parseLevel } from "./loader.js";
+import { expandSpells } from "./spells.js";
+import { enumerateSuppliedRooms } from "./placement.js";
 
 export const UNSPECIFIED_DIFFICULTY = "unspecified";
 
@@ -123,8 +126,26 @@ export function authoredCampaignContracts(
   return contracts.filter((c) => !c.stub && c.levelIds.length > 0);
 }
 
+/** Domains this slice can actually pick — not source shorthands like ℕ* / éléments / Π. */
+const OPAQUE_DOMAIN = /^(ℕ\*|N\*|éléments|elements|Π|pi)$/iu;
+const ROOM_KEY = /^[AZDEPOTC](\(.*\))?$/;
+
+export function isBindableDomain(domain: VariableDomain): boolean {
+  if (domain === "N" || domain === "R") return true;
+  if (!Array.isArray(domain) || domain.length === 0) return false;
+  return domain.every((item) => {
+    if (typeof item === "number") return Number.isFinite(item);
+    if (typeof item === "boolean") return true;
+    if (item && typeof item === "object") return true;
+    if (typeof item !== "string") return false;
+    if (OPAQUE_DOMAIN.test(item)) return false;
+    if (/choix\s*\(/i.test(item)) return false;
+    return true;
+  });
+}
+
 function namedChoixNames(level: LevelDef): Set<string> {
-  return new Set((level.variables ?? []).map((v) => v.name));
+  return new Set((level.variables ?? []).filter((v) => isBindableDomain(v.domain)).map((v) => v.name));
 }
 
 function addToken(tokens: Set<string>, value: number | string | undefined): void {
@@ -167,11 +188,17 @@ function walkHeroSlot(hero: HeroSlot, tokens: Set<string>, flags: Set<Unavailabl
     if (hero.duration !== undefined) flags.add("gunner_duration");
   }
   if (hero.type === "Mechanic") {
-    for (const value of Object.values(hero.powerSteps)) addToken(tokens, value);
+    for (const [key, value] of Object.entries(hero.powerSteps)) {
+      if (!ROOM_KEY.test(key)) addToken(tokens, key);
+      addToken(tokens, value);
+    }
   }
   if (hero.type === "Princess") {
     addToken(tokens, hero.pull);
-    for (const value of Object.values(hero.weights)) addToken(tokens, value);
+    for (const [key, value] of Object.entries(hero.weights)) {
+      if (!ROOM_KEY.test(key)) addToken(tokens, key);
+      addToken(tokens, value);
+    }
   }
 }
 
@@ -234,7 +261,12 @@ export function classifyCampaignPlayability(level: LevelDef): CampaignPlayabilit
       flags.add("unresolved");
     }
   }
-  const needsChoix = (level.variables?.length ?? 0) > 0 || hasInlineChoix(level);
+  const needsChoix =
+    (level.variables ?? []).some((v) => isBindableDomain(v.domain)) || hasInlineChoix(level);
+  if (flags.size === 0) {
+    const prepared = tryPrepareCampaignLevel(level);
+    if (!prepared.ok) flags.add("unresolved");
+  }
   const reasons = [...flags];
   return { playable: reasons.length === 0, reasons, needsChoix };
 }
@@ -335,6 +367,7 @@ export function resolveInlineChoix(level: LevelDef, picks: InlineChoixPicks): Le
 export function defaultNamedChoices(level: LevelDef): Record<string, PlayerChoice> {
   const out: Record<string, PlayerChoice> = {};
   for (const variable of level.variables ?? []) {
+    if (!isBindableDomain(variable.domain)) continue;
     out[variable.name] = defaultChoiceFor(variable);
   }
   return out;
@@ -381,6 +414,31 @@ export function prepareCampaignLevel(
   inline: InlineChoixPicks = defaultInlinePicks(level),
 ): LevelDef {
   return resolveInlineChoix(bindNamedChoix(level, named), inline);
+}
+
+export function tryPrepareCampaignLevel(
+  level: LevelDef,
+  named: Record<string, PlayerChoice> = defaultNamedChoices(level),
+  inline: InlineChoixPicks = defaultInlinePicks(level),
+): { ok: true; level: LevelDef } | { ok: false; error: string } {
+  try {
+    const prepared = prepareCampaignLevel(level, named, inline);
+    enumerateSuppliedRooms(prepared);
+    for (const hero of prepared.heroes) {
+      if (isChoixDef(hero)) throw new Error("Unresolved hero choix.");
+      if (typeof hero.hp !== "number") throw new Error(`Unresolved HP "${hero.hp}".`);
+      if (hero.type === "Gunner" && hero.duration !== undefined) {
+        throw new Error("Gunner duration is deferred (S3).");
+      }
+    }
+    expandSpells(prepared.spells);
+    if (prepared.rooms.some((m) => !isChoixDef(m.room) && m.room.type === "C")) {
+      throw new Error("C room (FR-18 deferred).");
+    }
+    return { ok: true, level: prepared };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 function headerId(text: string): string | undefined {
