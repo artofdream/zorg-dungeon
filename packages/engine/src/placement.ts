@@ -15,6 +15,7 @@ import {
   CARDINAL_TO_SIDE,
   DEFAULT_ELEMENTAL_TILE,
   DEFAULT_ROOM_TILE,
+  DEFAULT_TOLL_TILE,
   edgeProfile,
   edgesMatch,
   hatchDirection,
@@ -89,9 +90,12 @@ export function enumerateSuppliedRooms(level: LevelDef): SuppliedRoom[] {
 }
 
 export function defaultTileFor(def: RoomDef): Tile {
-  // FR-14: E rooms default to interior green cells. Other types stay the
-  // Phase 1 4-hatch cross (no invented art for A/Z/D).
-  return def.type === "E" ? DEFAULT_ELEMENTAL_TILE : DEFAULT_ROOM_TILE;
+  // FR-14: E rooms default to interior green cells. FR-17: T rooms default
+  // to interior dark + hatch lights. Other types stay the Phase 1 4-hatch
+  // cross (no invented art for A/Z/D/P/O).
+  if (def.type === "E") return DEFAULT_ELEMENTAL_TILE;
+  if (def.type === "T") return DEFAULT_TOLL_TILE;
+  return DEFAULT_ROOM_TILE;
 }
 
 export function resolvedTile(room: PlacedRoom): Tile {

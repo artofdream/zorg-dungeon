@@ -44,9 +44,9 @@ writing a table row, is not proof.
 | FR-12 | Simulated | packages/engine/src/rooms.test.ts |
 | FR-13 | Simulated | packages/engine/src/rooms.test.ts |
 | FR-14 | Simulated | packages/engine/src/elements.test.ts |
-| FR-15 | Unknown | |
-| FR-16 | Unknown | |
-| FR-17 | Unknown | |
+| FR-15 | Simulated | packages/engine/src/portals.test.ts |
+| FR-16 | Simulated | packages/engine/src/gold.test.ts |
+| FR-17 | Simulated | packages/engine/src/tolls.test.ts |
 | FR-18 | Unknown | |
 | FR-19 | Unknown | |
 | FR-20 | Simulated | packages/engine/src/warrior.test.ts |
