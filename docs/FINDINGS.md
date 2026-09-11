@@ -100,3 +100,10 @@ touch the web/engine/deploy paths (or `workflow_dispatch`) SSH and rebuild
 the `web` service. Recurrence 1 — the workflow is the first sensor, not a
 second-miss gate. Do not mark game FRs `Live & Probed` from a redeploy.
 
+First CD run failed with `permission denied while trying to connect to the
+Docker daemon socket`. `git fetch` / `git reset` succeeded without sudo;
+`ubuntu` is not in an effective docker group for that SSH session.
+`deploy/setup-host.sh` already uses `sudo docker compose`. The remote
+command now matches: `sudo docker compose -f deploy/compose.prod.yaml
+up -d --build web`.
+
