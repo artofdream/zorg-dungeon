@@ -119,3 +119,10 @@ would skip CD and leave prod stale again. Follow-up adds those paths
 to the sensor. Recurrence stays 1 — this is tightening the first
 sensor, not a second miss.
 
+Docker builds leave `/opt/zorg` files (especially fixtures) root-owned.
+Non-sudo `git reset --hard` then fails with `Permission denied` unlinking
+those files (CD and manual redeploy). Remote command now uses
+`sudo git fetch` and `sudo git reset --hard origin/main` before
+`sudo docker compose`. Recurrence stays 1 — same sensor, privilege
+alignment, not a second-miss gate.
+

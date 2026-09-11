@@ -59,4 +59,4 @@ jobs:
             -o ConnectTimeout=20 \
             -o StrictHostKeyChecking=accept-new \
             "${SSH_USER}@${SSH_HOST}" \
-            'cd /opt/zorg && git fetch && git reset --hard origin/main && sudo docker compose -f deploy/compose.prod.yaml up -d --build web'
+            'cd /opt/zorg && sudo git fetch && sudo git reset --hard origin/main && sudo docker compose -f deploy/compose.prod.yaml up -d --build web'
