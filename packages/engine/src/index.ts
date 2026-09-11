@@ -8,4 +8,5 @@ export * from "./pathing.js";
 export * from "./placement.js";
 export * from "./portals.js";
 export * from "./simulation.js";
+export * from "./spells.js";
 export * from "./tiles.js";

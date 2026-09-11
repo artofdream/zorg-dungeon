@@ -61,17 +61,17 @@ writing a table row, is not proof.
 | FR-29 | Simulated | packages/engine/src/scheduler.test.ts |
 | FR-30 | Simulated | packages/engine/src/scheduler.test.ts |
 | FR-31 | Simulated | packages/engine/src/warrior.test.ts |
-| FR-32 | Unknown | |
-| FR-33 | Unknown | |
-| FR-34 | Unknown | |
-| FR-35 | Unknown | |
-| FR-36 | Unknown | |
-| FR-37 | Unknown | |
-| FR-38 | Unknown | |
-| FR-39 | Unknown | |
-| FR-40 | Unknown | |
-| FR-41 | Unknown | |
-| FR-42 | Unknown | |
+| FR-32 | Simulated | packages/engine/src/spells.test.ts |
+| FR-33 | Simulated | packages/engine/src/spells.test.ts |
+| FR-34 | Simulated | packages/engine/src/spells.test.ts |
+| FR-35 | Simulated | packages/engine/src/spells.test.ts |
+| FR-36 | Simulated | packages/engine/src/spells.test.ts |
+| FR-37 | Simulated | packages/engine/src/spells.test.ts |
+| FR-38 | Simulated | packages/engine/src/spells.test.ts |
+| FR-39 | Simulated | packages/engine/src/spells.test.ts |
+| FR-40 | Simulated | packages/engine/src/spells.test.ts |
+| FR-41 | Simulated | packages/engine/src/spells.test.ts |
+| FR-42 | Simulated | packages/engine/src/spells.test.ts |
 | FR-43 | Unknown | |
 | FR-44 | Unknown | |
 | FR-45 | Unknown | |

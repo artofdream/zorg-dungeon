@@ -1,6 +1,7 @@
-// Phase 3 extermination: rooms A / Z / D / E / P / O / T (FR-11–FR-17) and
-// Warrior + Elf scheduling (FR-20, FR-21, FR-26–FR-31). Spells, Mechanic /
-// Gunner / Princess, mirrors, and FR-43 extra constraints are out of scope.
+// Phase 4 extermination: rooms A / Z / D / E / P / O / T (FR-11–FR-17),
+// Warrior + Elf scheduling (FR-20, FR-21, FR-26–FR-31), and the spellbook
+// (FR-32–FR-42). Mechanic / Gunner / Princess, mirrors, and FR-43 extra
+// constraints stay out of scope.
 
 import { chooseElfStep } from "./elf.js";
 import { elementalTick, heroImmunities } from "./elements.js";
@@ -19,6 +20,7 @@ import {
   type LevelDef,
   type Orientation,
   type RoomDef,
+  type SpellType,
 } from "./level.js";
 import {
   evalPortalIndex,
@@ -44,7 +46,27 @@ import {
   type CellPos,
   type WalkGrid,
 } from "./pathing.js";
+import {
+  applyRelocations,
+  assertFr6AfterMove,
+  cloneLayout,
+  consumeSpell,
+  distinctRoomsInOrder,
+  initialSpells,
+  numericSpellArg,
+  plannedMove,
+  plannedSwap,
+  requireUnused,
+  selectionInnerAllowed,
+  teleportDestination,
+  SpellCastError,
+  type CastRequest,
+  type SpellRuntime,
+} from "./spells.js";
 import type { Cardinal } from "./tiles.js";
+
+export type { CastRequest, SpellRuntime } from "./spells.js";
+export { SpellCastError } from "./spells.js";
 
 export type RunOutcome = "in_progress" | "win" | "loss" | "stalemate";
 
@@ -63,6 +85,8 @@ export interface HeroRuntime {
   visits: RoomVisit[];
   /** FR-15: per-portal-room entry counts (1-based next index lives in apply). */
   portalEntries: Map<string, number>;
+  /** FR-40: asleep until Wake or an HP change. */
+  sleeping: boolean;
 }
 
 export type SimEvent =
@@ -77,6 +101,11 @@ export type SimEvent =
   | { type: "wait_room"; heroId: number }
   | { type: "death"; heroId: number }
   | { type: "wait"; heroId: number }
+  | { type: "cast"; spellId: number; spellType: SpellType; heroIds?: number[]; innerSpellId?: number }
+  | { type: "sleep"; heroId: number }
+  | { type: "wake"; heroId: number; cause: "spell" | "hp" }
+  | { type: "banality"; heroId: number }
+  | { type: "room_move"; roomId: string; from: { x: number; y: number }; to: { x: number; y: number } }
   | { type: "loss"; heroId: number }
   | { type: "win" }
   | { type: "stalemate" };
@@ -94,6 +123,10 @@ export interface SimulationState {
   poisonVisits: Set<string>;
   /** FR-16 / FR-17: remaining gold piles (authored O plus death/refund). */
   roomGold: Map<string, number>;
+  /** FR-32: Φ — one-time spells; consumed stays consumed. */
+  spells: SpellRuntime[];
+  /** FR-33: true while stepRun is resolving a single hero action. */
+  midAction: boolean;
 }
 
 export interface StepResult {
@@ -112,11 +145,11 @@ function resolvedHeroes(level: LevelDef): HeroDef[] {
   const heroes: HeroDef[] = [];
   for (const [i, slot] of level.heroes.entries()) {
     if (isChoixDef(slot)) {
-      throw new SimulationError(`Hero slot ${i} is unresolved choix — not a Phase 3 input.`);
+      throw new SimulationError(`Hero slot ${i} is unresolved choix — not a Phase 4 input.`);
     }
     if (slot.type !== "Warrior" && slot.type !== "Elf") {
       throw new SimulationError(
-        `Phase 3 simulates Warrior and Elf (FR-20, FR-21); hero ${i} is ${slot.type}.`,
+        `Phase 4 simulates Warrior and Elf (FR-20, FR-21); hero ${i} is ${slot.type}.`,
       );
     }
     if (typeof slot.hp !== "number") {
@@ -152,9 +185,10 @@ export function createRun(level: LevelDef, layout: DungeonLayout): SimulationSta
     throw new SimulationError("FR-11: no main A room designated or placed.");
   }
 
+  const runLayout = cloneLayout(layout);
   return {
     level,
-    layout,
+    layout: runLayout,
     heroes: defs.map((def, id) => ({
       id,
       def,
@@ -167,14 +201,17 @@ export function createRun(level: LevelDef, layout: DungeonLayout): SimulationSta
       gold: [],
       visits: [],
       portalEntries: new Map(),
+      sleeping: false,
     })),
     mainAId,
-    orientation: dungeonOrientation(layout),
+    orientation: dungeonOrientation(runLayout),
     outcome: "in_progress",
     events: [],
     stepCount: 0,
     poisonVisits: new Set(),
-    roomGold: initialRoomGold(layout.rooms),
+    roomGold: initialRoomGold(runLayout.rooms),
+    spells: initialSpells(level.spells),
+    midAction: false,
   };
 }
 
@@ -199,8 +236,15 @@ function roomDef(state: SimulationState, roomId: string): RoomDef {
   return room.def;
 }
 
+function wakeFromHp(hero: HeroRuntime, events: SimEvent[]): void {
+  if (!hero.sleeping) return;
+  hero.sleeping = false;
+  events.push({ type: "wake", heroId: hero.id, cause: "hp" });
+}
+
 function applyDamage(hero: HeroRuntime, amount: number, events: SimEvent[]): void {
   hero.hp -= amount;
+  if (amount !== 0) wakeFromHp(hero, events);
   events.push({ type: "damage", heroId: hero.id, amount, hp: hero.hp });
 }
 
@@ -222,6 +266,7 @@ function checkDeath(state: SimulationState, hero: HeroRuntime, events: SimEvent[
   if (hero.hp <= 0 && !hero.dead) {
     hero.dead = true;
     hero.stuck = false;
+    hero.sleeping = false;
     if (hero.roomId && hero.gold.length > 0) {
       const amount = dropGold(state.roomGold, hero.gold, hero.roomId);
       events.push({ type: "gold_drop", heroId: hero.id, roomId: hero.roomId, amount });
@@ -372,6 +417,7 @@ function applyElementalCell(
     applyDamage(hero, -tick.hpDelta, events);
   }
   if (tick.die) {
+    if (hero.hp !== 0) wakeFromHp(hero, events);
     hero.hp = 0;
     checkDeath(state, hero, events);
     return;
@@ -405,6 +451,7 @@ function applyTollCell(
   }
 
   if (forced) {
+    if (hero.hp !== 0) wakeFromHp(hero, events);
     hero.hp = 0;
     checkDeath(state, hero, events);
   }
@@ -471,7 +518,23 @@ export function stepRun(state: SimulationState): StepResult {
     return { state, events };
   }
 
+  // FR-40: a sleeping hero cannot act. They stay the active hero (not stuck),
+  // so later heroes remain blocked until Wake or an HP change.
+  if (hero.sleeping) {
+    return { state, events: [] };
+  }
+
   const grid = gridOf(state);
+  state.midAction = true;
+  try {
+    return finishHeroAction(state, hero, grid);
+  } finally {
+    state.midAction = false;
+  }
+}
+
+function finishHeroAction(state: SimulationState, hero: HeroRuntime, grid: WalkGrid): StepResult {
+  const events: SimEvent[] = [];
   state.stepCount += 1;
 
   if (!hero.spawned) {
@@ -546,19 +609,343 @@ export function stepRun(state: SimulationState): StepResult {
 export function simulate(
   level: LevelDef,
   layout: DungeonLayout,
-  options?: { maxSteps?: number },
+  options?: {
+    maxSteps?: number;
+    /** FR-32–FR-42: casts applied after the named completed action count. */
+    castScript?: ReadonlyArray<{ afterSteps: number; cast: CastRequest }>;
+  },
 ): SimulationState {
   const state = createRun(level, layout);
   const maxSteps = options?.maxSteps ?? 10_000;
+  const script = options?.castScript ?? [];
   while (state.outcome === "in_progress" && state.stepCount < maxSteps) {
+    const before = state.stepCount;
     const { events } = stepRun(state);
+    const due = script.filter((row) => row.afterSteps === state.stepCount && state.stepCount > before);
+    for (const row of due) {
+      castSpell(state, row.cast);
+    }
+    if (due.length > 0) continue;
     if (events.length === 0) break;
   }
   if (state.outcome === "in_progress") {
+    const active = selectActiveHero(state.heroes);
+    if (active?.sleeping) {
+      return state;
+    }
     state.outcome = "stalemate";
     state.events.push({ type: "stalemate" });
   }
   return state;
+}
+
+/** FR-33: a cast is legal only between completed actions, with an active hero. */
+export function canCastNow(state: SimulationState): boolean {
+  return (
+    state.outcome === "in_progress" &&
+    !state.midAction &&
+    state.stepCount > 0 &&
+    Boolean(selectActiveHero(state.heroes))
+  );
+}
+
+function assertCastWindow(state: SimulationState): void {
+  if (state.outcome !== "in_progress") {
+    throw new SpellCastError(`FR-33: cannot cast after the run is ${state.outcome}.`);
+  }
+  if (state.midAction) {
+    throw new SpellCastError("FR-33: cannot cast mid-action.");
+  }
+  if (state.stepCount <= 0) {
+    throw new SpellCastError("FR-33: cannot cast before a hero action has completed.");
+  }
+  if (!selectActiveHero(state.heroes)) {
+    throw new SpellCastError("FR-33: casting a hero-targeted spell with no active hero is illegal.");
+  }
+}
+
+function requireHero(state: SimulationState, heroId: number | undefined, label: string): HeroRuntime {
+  if (heroId === undefined) {
+    throw new SpellCastError(`${label} requires a target hero.`);
+  }
+  const hero = state.heroes.find((h) => h.id === heroId);
+  if (!hero) {
+    throw new SpellCastError(`${label}: no hero ${heroId}.`);
+  }
+  return hero;
+}
+
+function resolveTargets(
+  state: SimulationState,
+  heroIds: number[] | undefined,
+  allowCorpses: boolean,
+): HeroRuntime[] {
+  if (!heroIds?.length) {
+    throw new SpellCastError("FR-39: Selection requires at least one chosen hero.");
+  }
+  const seen = new Set<number>();
+  const targets: HeroRuntime[] = [];
+  for (const id of heroIds) {
+    if (seen.has(id)) {
+      throw new SpellCastError(`FR-39: hero ${id} is selected twice.`);
+    }
+    seen.add(id);
+    const hero = requireHero(state, id, "FR-39");
+    if (hero.dead && !allowCorpses) {
+      throw new SpellCastError("FR-39: Selection(false) cannot target corpses.");
+    }
+    targets.push(hero);
+  }
+  return targets;
+}
+
+function applySpellTeleport(state: SimulationState, hero: HeroRuntime, n: number, events: SimEvent[]): void {
+  const fromRoomId = hero.roomId ?? "";
+  const dest = teleportDestination(hero.visits, n);
+  if (!dest) {
+    hero.spawned = false;
+    hero.stuck = false;
+    hero.cell = null;
+    hero.roomId = null;
+    events.push({ type: "wait_room", heroId: hero.id });
+    return;
+  }
+  hero.spawned = true;
+  hero.stuck = false;
+  hero.cell = { ...dest.firstCell };
+  hero.roomId = dest.roomId;
+  if (roomDef(state, dest.roomId).type === "A") {
+    state.mainAId = dest.roomId;
+  }
+  events.push({
+    type: "teleport",
+    heroId: hero.id,
+    fromRoomId,
+    toRoomId: dest.roomId,
+    to: hero.cell,
+  });
+}
+
+function emitRelocations(relocations: ReturnType<typeof plannedSwap>, events: SimEvent[]): void {
+  for (const reloc of relocations) {
+    events.push({
+      type: "room_move",
+      roomId: reloc.roomId,
+      from: reloc.from,
+      to: reloc.to,
+    });
+  }
+}
+
+function commitRelocations(state: SimulationState, relocations: ReturnType<typeof plannedSwap>, events: SimEvent[]): void {
+  assertFr6AfterMove(state.level, state.layout, relocations);
+  applyRelocations(state.layout, relocations, state.heroes, state.heroes, state.poisonVisits);
+  emitRelocations(relocations, events);
+}
+
+function applyAttackTo(
+  state: SimulationState,
+  heroes: HeroRuntime[],
+  damage: number,
+  events: SimEvent[],
+): void {
+  for (const hero of heroes) {
+    if (hero.dead) continue;
+    applyDamage(hero, damage, events);
+    checkDeath(state, hero, events);
+    if (state.outcome !== "in_progress") return;
+  }
+}
+
+function applyInnerSpell(
+  state: SimulationState,
+  inner: SpellRuntime,
+  request: CastRequest,
+  allowCorpses: boolean,
+  events: SimEvent[],
+): void {
+  const targets = resolveTargets(state, request.heroIds, allowCorpses);
+  switch (inner.def.type) {
+    case "Attack": {
+      const damage = numericSpellArg(inner.def.damage, "Attack damage");
+      applyAttackTo(state, targets, damage, events);
+      return;
+    }
+    case "Teleport": {
+      const n = numericSpellArg(inner.def.steps, "Teleport n");
+      for (const hero of targets) {
+        applySpellTeleport(state, hero, n, events);
+      }
+      return;
+    }
+    case "Move": {
+      const rooms = distinctRoomsInOrder(targets.map((h) => h.roomId));
+      if (rooms.length === 0) {
+        throw new SpellCastError("FR-36: Selection Move needs at least one hero in a room.");
+      }
+      if (!request.dests || request.dests.length !== rooms.length) {
+        throw new SpellCastError("FR-36: Selection Move needs one empty cell per distinct room.");
+      }
+      const destKeys = new Set<string>();
+      const relocations = rooms.map((roomId, i) => {
+        const dest = request.dests?.[i];
+        if (!dest) {
+          throw new SpellCastError("FR-36: Selection Move is missing a destination.");
+        }
+        const key = `${dest.x},${dest.y}`;
+        if (destKeys.has(key)) {
+          throw new SpellCastError("FR-36: Selection Move destinations must be distinct.");
+        }
+        destKeys.add(key);
+        return plannedMove(state.layout, roomId, dest);
+      });
+      commitRelocations(state, relocations, events);
+      return;
+    }
+    case "Swap": {
+      const rooms = distinctRoomsInOrder(targets.map((h) => h.roomId));
+      if (!request.otherRoomId) {
+        throw new SpellCastError("FR-37: Selection Swap needs one extra room.");
+      }
+      if (rooms.includes(request.otherRoomId)) {
+        throw new SpellCastError("FR-37: the extra room must not already be in the cycle.");
+      }
+      commitRelocations(state, plannedSwap(state.layout, [...rooms, request.otherRoomId]), events);
+      return;
+    }
+    default:
+      throw new SpellCastError(`FR-39: ${inner.def.type} has no Selection variant.`);
+  }
+}
+
+/**
+ * FR-32–FR-42: resolve one unused spell. Consumes only on success.
+ */
+export function castSpell(state: SimulationState, request: CastRequest): StepResult {
+  assertCastWindow(state);
+  const spell = requireUnused(state.spells, request.spellId);
+  const events: SimEvent[] = [];
+
+  switch (spell.def.type) {
+    case "Attack": {
+      const damage = numericSpellArg(spell.def.damage, "Attack damage");
+      const living = state.heroes.filter((h) => !h.dead);
+      events.push({
+        type: "cast",
+        spellId: spell.id,
+        spellType: "Attack",
+        heroIds: living.map((h) => h.id),
+      });
+      applyAttackTo(state, living, damage, events);
+      consumeSpell(spell);
+      break;
+    }
+    case "Teleport": {
+      const n = numericSpellArg(spell.def.steps, "Teleport n");
+      const hero = selectActiveHero(state.heroes);
+      if (!hero) {
+        throw new SpellCastError("FR-33: casting a hero-targeted spell with no active hero is illegal.");
+      }
+      events.push({ type: "cast", spellId: spell.id, spellType: "Teleport", heroIds: [hero.id] });
+      applySpellTeleport(state, hero, n, events);
+      consumeSpell(spell);
+      break;
+    }
+    case "Move": {
+      const hero = selectActiveHero(state.heroes);
+      if (!hero?.roomId) {
+        throw new SpellCastError("FR-36: Move needs the active hero to occupy a room.");
+      }
+      if (!request.dest) {
+        throw new SpellCastError("FR-36: Move needs an empty grid cell.");
+      }
+      const relocation = plannedMove(state.layout, hero.roomId, request.dest);
+      events.push({ type: "cast", spellId: spell.id, spellType: "Move", heroIds: [hero.id] });
+      commitRelocations(state, [relocation], events);
+      consumeSpell(spell);
+      break;
+    }
+    case "Swap": {
+      const hero = selectActiveHero(state.heroes);
+      if (!hero?.roomId) {
+        throw new SpellCastError("FR-37: Swap needs the active hero to occupy a room.");
+      }
+      if (!request.otherRoomId) {
+        throw new SpellCastError("FR-37: Swap needs one other room.");
+      }
+      if (request.otherRoomId === hero.roomId) {
+        throw new SpellCastError("FR-37: cannot swap a room with itself.");
+      }
+      events.push({ type: "cast", spellId: spell.id, spellType: "Swap", heroIds: [hero.id] });
+      commitRelocations(state, plannedSwap(state.layout, [hero.roomId, request.otherRoomId]), events);
+      consumeSpell(spell);
+      break;
+    }
+    case "Selection": {
+      if (request.innerSpellId === undefined) {
+        throw new SpellCastError("FR-39: Selection needs one other unused spell.");
+      }
+      const inner = requireUnused(state.spells, request.innerSpellId);
+      if (inner.id === spell.id) {
+        throw new SpellCastError("FR-39: Selection cannot apply itself.");
+      }
+      if (!selectionInnerAllowed(inner.def.type)) {
+        throw new SpellCastError(`FR-39: ${inner.def.type} has no Selection variant.`);
+      }
+      const targets = resolveTargets(state, request.heroIds, spell.def.allowCorpses);
+      events.push({
+        type: "cast",
+        spellId: spell.id,
+        spellType: "Selection",
+        heroIds: targets.map((h) => h.id),
+        innerSpellId: inner.id,
+      });
+      applyInnerSpell(state, inner, request, spell.def.allowCorpses, events);
+      consumeSpell(spell);
+      consumeSpell(inner);
+      break;
+    }
+    case "Sleep": {
+      const hero = requireHero(state, request.heroId, "FR-40");
+      if (hero.dead) {
+        throw new SpellCastError("FR-40: Sleep targets a living hero.");
+      }
+      if (hero.sleeping) {
+        throw new SpellCastError("FR-40: Sleep targets an awake hero.");
+      }
+      hero.sleeping = true;
+      events.push({ type: "cast", spellId: spell.id, spellType: "Sleep", heroIds: [hero.id] });
+      events.push({ type: "sleep", heroId: hero.id });
+      consumeSpell(spell);
+      break;
+    }
+    case "Wake": {
+      const hero = requireHero(state, request.heroId, "FR-41");
+      if (!hero.sleeping) {
+        throw new SpellCastError("FR-41: Wake targets a sleeping hero.");
+      }
+      hero.sleeping = false;
+      events.push({ type: "cast", spellId: spell.id, spellType: "Wake", heroIds: [hero.id] });
+      events.push({ type: "wake", heroId: hero.id, cause: "spell" });
+      consumeSpell(spell);
+      break;
+    }
+    case "Banality": {
+      const hero = requireHero(state, request.heroId, "FR-42");
+      if (hero.dead) {
+        throw new SpellCastError("FR-42: Banality targets a living hero.");
+      }
+      hero.def = { type: "Warrior", hp: hero.def.hp };
+      events.push({ type: "cast", spellId: spell.id, spellType: "Banality", heroIds: [hero.id] });
+      events.push({ type: "banality", heroId: hero.id });
+      consumeSpell(spell);
+      break;
+    }
+  }
+
+  maybeSettle(state, events);
+  state.events.push(...events);
+  return { state, events };
 }
 
 export function phase1DemoLevel(): LevelDef {
@@ -598,5 +985,19 @@ export function phase3DemoLevel(): LevelDef {
       { count: 1, room: { type: "T", cost: 1, element: "fire" } },
     ],
     heroes: [{ type: "Warrior", hp: 5 }],
+  };
+}
+
+export function phase4DemoLevel(): LevelDef {
+  return {
+    id: "phase-4-demo",
+    name: "Phase 4 Spellbook",
+    rooms: [
+      { count: 1, room: { type: "A" } },
+      { count: 1, room: { type: "Z" } },
+      { count: 1, room: { type: "D", damage: 2 } },
+    ],
+    heroes: [{ type: "Warrior", hp: 5 }],
+    spells: [{ type: "Attack", damage: 3 }],
   };
 }

@@ -1,17 +1,22 @@
 import { useMemo, useState } from "react";
 import {
+  canCastNow,
   canStartExtermination,
+  castSpell,
   createRun,
   enumerateSuppliedRooms,
   hatchDirection,
-  phase1DemoLevel,
+  phase4DemoLevel,
+  selectActiveHero,
   stepRun,
   validateLayout,
   type DungeonLayout,
   type Orientation,
   type PlacedRoom,
   type RoomDef,
+  type CastRequest,
   type SimulationState,
+  type SpellDef,
 } from "@zorg/engine";
 
 const ORIENTATIONS: Orientation[] = [0, 90, 180, 270];
@@ -23,6 +28,19 @@ const HATCH_GLYPH: Record<string, string> = {
   left: "←",
   down: "↓",
 };
+
+function spellLabel(def: SpellDef): string {
+  switch (def.type) {
+    case "Attack":
+      return `Attack(${def.damage})`;
+    case "Teleport":
+      return `Teleport(${def.steps})`;
+    case "Selection":
+      return `Selection(${def.allowCorpses})`;
+    default:
+      return `${def.type}()`;
+  }
+}
 
 function roomLabel(def: RoomDef): string {
   switch (def.type) {
@@ -57,12 +75,14 @@ function xs(): number[] {
 }
 
 export function App() {
-  const level = useMemo(() => phase1DemoLevel(), []);
+  const level = useMemo(() => phase4DemoLevel(), []);
   const supplied = useMemo(() => enumerateSuppliedRooms(level), [level]);
   const [orientation, setOrientation] = useState<Orientation>(0);
   const [rooms, setRooms] = useState<PlacedRoom[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(supplied[0]?.id ?? null);
   const [run, setRun] = useState<SimulationState | null>(null);
+  const [spellPick, setSpellPick] = useState<number | null>(null);
+  const [castError, setCastError] = useState<string | null>(null);
 
   const layout: DungeonLayout = useMemo(
     () => ({ rooms: rooms.map((r) => ({ ...r, orientation })) }),
@@ -114,13 +134,15 @@ export function App() {
 
   function startRun() {
     if (!gateOpen) return;
+    setSpellPick(null);
+    setCastError(null);
     setRun(createRun(level, layout));
   }
 
   function stepPlayback() {
     if (!run || run.outcome !== "in_progress") return;
     const { state } = stepRun(run);
-    setRun({ ...state, heroes: state.heroes.map((h) => ({ ...h })) });
+    setRun(snapshot(state));
   }
 
   function runAll() {
@@ -131,19 +153,65 @@ export function App() {
       current = state;
       if (events.length === 0) break;
     }
-    setRun({ ...current, heroes: current.heroes.map((h) => ({ ...h })) });
+    setRun(snapshot(current));
   }
 
+  const boardLayout = run?.layout ?? layout;
   const heroRoomId = run?.heroes.find((h) => h.spawned && !h.dead)?.roomId ?? null;
   const hatch = hatchDirection(orientation);
+  const active = run ? selectActiveHero(run.heroes) : undefined;
+  const pickedSpell = run && spellPick !== null ? run.spells[spellPick] : undefined;
+
+  function snapshot(state: SimulationState) {
+    return { ...state, heroes: state.heroes.map((h) => ({ ...h })) };
+  }
+
+  function applyCast(extra: Omit<CastRequest, "spellId">) {
+    if (!run || spellPick === null) return;
+    try {
+      const { state } = castSpell(run, { spellId: spellPick, ...extra });
+      setRun(snapshot(state));
+      setCastError(null);
+      setSpellPick(null);
+    } catch (err) {
+      setCastError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  function onCellClick(x: number, y: number) {
+    if (!playing) {
+      placeAt(x, y);
+      return;
+    }
+    if (!run || !pickedSpell || pickedSpell.consumed || !canCastNow(run)) return;
+    const occupant = boardLayout.rooms.find((r) => r.position.x === x && r.position.y === y);
+    if (pickedSpell.def.type === "Move" && !occupant) {
+      applyCast({ dest: { x, y } });
+      return;
+    }
+    if (pickedSpell.def.type === "Swap" && occupant && occupant.id !== active?.roomId) {
+      applyCast({ otherRoomId: occupant.id });
+    }
+  }
+
+  function castPicked() {
+    if (!run || !pickedSpell || !canCastNow(run)) return;
+    if (pickedSpell.def.type === "Attack" || pickedSpell.def.type === "Teleport") {
+      applyCast({});
+      return;
+    }
+    if (pickedSpell.def.type === "Sleep" || pickedSpell.def.type === "Wake" || pickedSpell.def.type === "Banality") {
+      if (active) applyCast({ heroId: active.id });
+    }
+  }
 
   return (
     <main className="app">
       <h1>Zorg's Dungeon Maker</h1>
       <p className="lede">
-        Phase 3 engine: A / Z / D / E / P / O / T and Warrior + Elf. This Maker
-        demo still places A / Z / D and plays a Warrior — logic lives in{" "}
-        <code>@zorg/engine</code>.
+        Phase 4 engine: A / Z / D / E / P / O / T, Warrior + Elf, and the
+        spellbook. This Maker demo places A / Z / D and plays a Warrior with{" "}
+        <code>Attack(3)</code> — logic lives in <code>@zorg/engine</code>.
       </p>
       <p className="honesty">
         Status: engine-simulated (Vitest). Not Probed, not Live. See docs/STATUS_LEDGER.md.
@@ -152,7 +220,7 @@ export function App() {
       <div className="layout">
         <section className="panel">
           <h2>Rooms</h2>
-          <p className="hint">Demo level: {level.name}. Warrior(2) vs D(2).</p>
+          <p className="hint">Demo level: {level.name}. Warrior(5) vs D(2), Attack(3).</p>
           <div className="tray">
             {supplied.map((spec) => (
               <button
@@ -195,14 +263,14 @@ export function App() {
             >
               {ys().flatMap((y) =>
                 xs().map((x) => {
-                  const room = layout.rooms.find((r) => r.position.x === x && r.position.y === y);
+                  const room = boardLayout.rooms.find((r) => r.position.x === x && r.position.y === y);
                   const isHero = Boolean(room && heroRoomId === room.id);
                   return (
                     <button
                       key={`${x},${y}`}
                       type="button"
                       className={`cell${room ? " filled" : ""}${isHero ? " hero" : ""}`}
-                      onClick={() => placeAt(x, y)}
+                      onClick={() => onCellClick(x, y)}
                       aria-label={room ? `${roomLabel(room.def)} at ${x},${y}` : `Empty ${x},${y}`}
                     >
                       {room ? (
@@ -254,13 +322,57 @@ export function App() {
             <button
               type="button"
               disabled={!run}
-              onClick={() => setRun(null)}
+              onClick={() => {
+                setRun(null);
+                setSpellPick(null);
+                setCastError(null);
+              }}
             >
               Back to Maker
             </button>
           </div>
           {run ? (
             <>
+              <h2 style={{ marginTop: "1rem" }}>Spells (Φ)</h2>
+              <p className="hint">
+                {canCastNow(run)
+                  ? pickedSpell?.def.type === "Move"
+                    ? "Click an empty cell to Move the active hero's room."
+                    : pickedSpell?.def.type === "Swap"
+                      ? "Click another room to Swap with the active hero's room."
+                      : "Cast is legal between completed actions."
+                  : "Step at least once before casting. Never mid-action."}
+              </p>
+              <div className="tray">
+                {run.spells.map((spell) => (
+                  <button
+                    key={spell.id}
+                    type="button"
+                    className={spellPick === spell.id ? "selected" : ""}
+                    disabled={spell.consumed || !canCastNow(run)}
+                    onClick={() => setSpellPick(spell.id)}
+                  >
+                    {spellLabel(spell.def)} {spell.consumed ? "· spent" : "· ready"}
+                  </button>
+                ))}
+              </div>
+              <div className="controls">
+                <button
+                  type="button"
+                  disabled={
+                    !pickedSpell ||
+                    pickedSpell.consumed ||
+                    !canCastNow(run) ||
+                    pickedSpell.def.type === "Move" ||
+                    pickedSpell.def.type === "Swap" ||
+                    pickedSpell.def.type === "Selection"
+                  }
+                  onClick={castPicked}
+                >
+                  Cast {pickedSpell ? spellLabel(pickedSpell.def) : "spell"}
+                </button>
+              </div>
+              {castError ? <p className="issues"><span>{castError}</span></p> : null}
               <p className="hp">
                 Outcome: <strong>{run.outcome}</strong>
                 {run.heroes.map((h) => (
@@ -268,7 +380,7 @@ export function App() {
                     {" "}
                     · {h.def.type} {h.id} HP {h.hp}
                     {h.gold?.length ? ` gold ${h.gold.length}` : ""}
-                    {h.dead ? " (dead)" : h.spawned ? "" : " (waiting)"}
+                    {h.dead ? " (dead)" : h.sleeping ? " (asleep)" : h.spawned ? "" : " (waiting)"}
                     {h.cell ? ` @ ${h.cell.x},${h.cell.y}` : ""}
                   </span>
                 ))}
