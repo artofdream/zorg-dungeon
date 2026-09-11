@@ -1,0 +1,1462 @@
+﻿Manuel
+Zorg’s Dungeon Maker - Manuel
+
+
+
+Créez un donjon pour empêcher les héros de vous mettre une raclée !
+Ancienne version - voir la version deluxe pour une version à jour.
+Règles du jeu
+
+Chaque niveau se découpe en deux étapes : la construction d’un donjon, et l’extermination des héros entrant dans ce donjon. Le niveau est validé quand ces deux étapes ont été réalisées avec succès.
+
+Construction du donjon
+
+Il s’agit de créer un labyrinthe utilisant toutes les salles décrites dans le niveau.
+
+Si r et s sont deux salles directement connectées dans ce labyrinthe, alors elles le sont sur toute la longueur d’un de leurs côtés, et doivent être reliées correctement : les murs de l’une sont en contact avec les murs de l’autre, les cases vides de l’une avec les cases vides de l’autre, etc.
+
+Le sens des hachures sur les murs doit être le même sur toutes les salles du donjon.
+
+Voir la page “Salles” pour comprendre les caractéristiques des salles.
+
+Extermination des héros
+
+Les héros peuvent apparaître, un à un et dans l’ordre indiqué, à partir du moment où le donjon a été entièrement construit. Il s’agit de les empêcher d’arriver à votre salle, sans quoi ils vous tueraient invariablement et le niveau serait perdu (voir l’explication des salles Z).
+
+Un héros est dit vaincu lorsque son nombre de points de vie devient inférieur ou égal à zéro : il disparaît alors du niveau.
+
+Si d’aventure il n'existe pas de meilleur chemin à emprunter pour un héros, alors il attend sans bouger jusqu’à ce que l’occasion se présente.
+
+Un héros ne peut apparaître ou bouger que lorsque tous les précédents ont été vaincus ou sont incapables de bouger : en effet, il ne peut y avoir qu’un seul héros actif dans le donjon à la fois. Par conséquent, si un héros précédemment incapable de bouger est libéré de cette contrainte, il empêche de bouger tous les héros qui sont apparus après lui.
+
+Les héros n’ont aucune collision entre eux et agissent comme s’ils étaient seuls dans le labyrinthe ; voir la page “Héros” pour comprendre leurs caractéristiques.
+
+Si un héros ne sait pas du tout quel chemin choisir même avec ses priorités, il préférera le haut, puis la droite, puis le bas, puis la gauche, relativement au sens de la salle (indiqué par l'écriture dans son dos)
+
+Pendant cette phase, vous pouvez aussi conjurer à tout instant les sortilèges (à usage unique) disponibles dans le niveau ; voir la page “Sortilèges” pour comprendre leurs caractéristiques.
+
+La phase d’extermination s’achève quand tous les héros ont été vaincus, et que tous les sortilèges ont été utilisés.
+
+Terminologie
+
+Une salle désigne une tuile positionnable sur le plateau.
+
+Un héros est un PNJ qui essaye selon ses propres règles détaillées ci-dessous d'atteindre la salle du boss, Zorg (vous).
+
+Un labyrinthe/donjon est une disposition de salles sur le plateau, qui fait intervenir toutes les salles à disposition.
+
+L'orientation du donjon désigne l'orientation commune de toutes les salles A présentes dans le donjon. La direction “haut” se réfère alors au vecteur allant du bas du A au haut du A, et de même pour le bas, la gauche et la droite.
+
+Π désigne l’ensemble des salles du niveau.
+
+La distance entre deux salles r et s, que l'on note d(r, s), désigne la somme de la différence en ordonnée de ces salles et de leur différence en abscisse.
+
+Le terme choix(n, ens) désigne la possibilité pour le joueur de choisir n éléments distincts dans ens pendant la phase de construction du donjon. 
+
+Salles
+
+A : Salle d'Apparition
+Tout héros qui apparaît le fait depuis la salle A actuelle.
+Si plusieurs salles A sont en jeu, le joueur en choisit une principale d'où les héros apparaissent par défaut ; toute salle A visitée par un héros actif remplace immédiatement la salle A principale.
+Pour que le donjon soit convenablement orienté, toutes les salles A doivent être orientées de la même manière.
+
+Z : Salle de Zorg
+Un niveau est immédiatement perdu si un héros entre dans une salle Z.
+
+D(x) : Salle de Dégâts 
+À chaque fois qu'un héros entre dans une salle D(x), il subit x dégâts
+
+E(elem) : Salle Élémentaire
+Les cases marquées en vert sont des cases élémentaires déterminées en fonction du paramètre elem :
+Si elem = feu, chaque entrée d'un héros non immunisé dans une case élémentaires inflige 1 dégât.
+Si elem = eau, tout héros non immunisé ne peut franchir une case élémentaire. Il n’est pas autorisé de réaliser une action résultant en une case d’eau occupée par un héros non autorisé.
+Si elem = glace, tout héros non immunisé ne peut changer de direction sur une case élémentaire, sauf si un mur l’arrête dans sa course.
+Si elem = poison, alors un héros non immunisé gagne 1 point de vie lors de la première visite d'une case élémentaire de la salle, mais perd 3 points de vie pour chaque visite ultérieure de cette case.
+
+P(n, f) : Salle du Portail
+Quand un héros rentre dans une salle P pour la i-ième fois, où 1≤i≤n, il est téléporté dans la f(i)-ième dernière salle où il est passé (en comptant les répétitions), sur la première case qu'il a visitée lors dudit passage dans la salle.
+Si f(i) est trop grand, le héros revient là où il se trouvait avant d'apparaître (dans une salle d'attente fictive), puis réapparaît.
+
+O(x) : Salle de l'Or
+Le premier héros qui rentre dans une salle O reçoit immédiatement l'entièreté de son contenu x en or. Si ce héros meurt , tout l'or y qu'il a récupéré devient associé à la salle où il se trouve / où il est décédé, qui se comporte alors également comme une salle O(y), en plus de sa fonction première.
+
+T(x, elem) : Salle des Taxes
+Les cases vert foncé, élémentaires, se comportent comme dans une salle E(elem).
+Si un héros désire passer dans la zone vert clair en revanche, il doit débourser les x premières pièces d'or qu'il a récupérées, qui retournent automatiquement à leur salle de départ. S'il ne peut payer ce coût, le héros ne peut emprunter ce passage. Il est interdit de réaliser une action résultant en la présence d’un héros non autorisé sur une case élémentaire ou une zone de taxe.
+
+Héros
+
+Guerrier(x)
+
+Possède x points de vie.
+
+Téméraire : Le guerrier choisit le trajet le plus court pour arriver à une salle Z, sans aucune considération pour sa santé.
+
+Droitier : Si, à un moment quelconque du niveau, le guerrier a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.
+
+Elfe(x, elems)
+
+Possède x points de vie.
+
+Prudent : L'elfe choisit le trajet le plus court parmi ceux lui laissant le plus de points de vie pour arriver à une salle Z.
+
+Écolo : L'elfe est immunisé à tous les éléments de elems.
+
+Droitier : Si, à un moment quelconque du niveau, l'elfe a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.
+
+Artilleur(x, c)
+
+Possède x points de vie.
+
+Capacité spéciale - destructeur : Au plus c fois, l’artilleur peut tirer un obus dans l’une des 4 directions cardinales, i.e. invoquer un héros “obus” sur une case adjacente, ce qui lui est possible si le tir n'a pas une durée infinie. 
+
+Prudent : L'artilleur choisit le trajet le plus court parmi ceux lui laissant le plus de points de vie pour arriver à une salle Z - ou pour arriver à tirer sur une salle Z - en prenant en compte ses pouvoirs.
+
+Vantard : L'artilleur préfère les chemins qui lui permettent de tirer un obus le plus tôt possible, ce qui est prioritaire par rapport à la longueur du chemin.
+
+Droitier : Si, à un moment quelconque du niveau, l'artilleur a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.
+
+Obus
+
+Projectile invoqué par un artilleur.
+
+Avance en ligne droite dans la direction choisie par l’artilleur jusqu'à ce qu'il rencontre un mur ou sorte définitivement du donjon. 
+
+Se déplace instantanément : jusqu'à sa destruction, ni le joueur ni les autres héros ne peuvent effectuer un action.
+
+Détruit toutes les cases élémentaires et les monstres - qui peuplent les salles D et Z - qu'il rencontre. Inflige 2 dégâts à tout héros qu'il croise.
+
+
+Mécanicien(x, dico)
+
+Possède x points de vie.
+
+Capacité spéciale - technopathe : Soit s ∈ dico.keys(). Si le mécanicien est situé dans la salle s, il peut la déplacer vers une case vide adjacente de la grille des salles, instantanément, mais en utilisant dico[s] pas.
+
+Téméraire : Le mécanicien choisit le trajet le plus court pour arriver à une salle Z, sans aucune considération pour sa santé, en prenant en compte ses pouvoirs.
+
+Modeste : Le mécanicien préfère les chemins qui consomment le moins de pas à l'utilisation infondée de son pouvoir. Il l'utilisera cependant en cas d'égalité avec un chemin de même valeur.
+
+Gaucher : Si, à un moment quelconque du niveau, le mécanicien a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus en haut, puis à droite, puis en bas, puis à gauche.
+
+
+Princesse(x, dico, b)
+
+Possède x points de vie.
+
+Obstinée : La princesse cherche à aller dans l'une des salles ayant le coefficient le plus élevé. Par défaut, toutes les salles (dont les salles Z) ont un coefficient de 0 ; un couple (s, v) dans dico signifie que la salle s a un coefficient v. La princesse ne peut considérer un chemin passant par une case de coefficient négatif valide que si la salle qu'elle cherche à atteindre a un coefficient strictement supérieur.
+
+Prudente : La princesse choisit le trajet le plus court parmi ceux lui laissant le plus de points de vie pour arriver à une salle de plus haut coefficient.
+
+Attractive : Soit h un héros présent dans le donjon. h est en temps normal soumis à des attractions données par les coefficients par défaut des salles ({Z:1} en général, mais h.dico si h est une princesse). Le coefficient perçu par h d'une salle s∈Π est la moyenne du coefficient par défaut de s (spécifique à h) et de l'attractivité b de chaque princesse autre que h présente dans s. h se comporte alors comme un Obstiné vis-à-vis de ces coefficients.
+
+Droitière : Si, à un moment quelconque du niveau, la princesse a le choix entre plusieurs options de trajet jugées de même valeur, elle préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.
+
+
+
+Sortilèges
+
+Attaque(x)
+Inflige x dégâts à tous les héros actuellement présents dans le dongeon.
+
+Téléportation(n)
+Le héros de votre choix est téléporté dans la f(n)-ième dernière salle où il est passé (en comptant les répétitions), sur la première case qu'il a visitée lors dudit passage dans la salle.
+Si f(n) est trop grand, le héros revient là où il se trouvait avant d'apparaître (dans une salle d'attente fictive), puis réapparaît dès qu'il le peut.
+
+Banalité
+Choisissez un héros présent dans le donjon, qui devient un Guerrier et conserve son nombre actuel de points de vie.
+
+Echange
+Échange instantanément la position de la salle qui contient le héros actif et d’une autre salle distincte (une salle mouvante entraîne avec elle tous les héros qu’elle contient). Les bordures des salles en contact après l'échange doivent toujours correspondre.
+
+Déplacement
+Déplace instantanément la salle qui contient le héros actif vers une position anciennement vide (une salle mouvante entraîne avec elle tous les héros qu’elle contient). Les bordures des salles en contact après le déplacement doivent toujours correspondre.
+
+Somnolence
+Endort le héros éveillé choisi, qui ne peut plus bouger jusqu'à ce qu'il soit réveillé (par un sortilège de réveil ou parce que son nombre de points de vie varie strictement).
+
+Réveil
+Réveille le héros endormi choisi.
+
+Niveaux
+Zorg’s Dungeon Maker - Niveaux
+
+
+
+Ancienne version - voir la version deluxe pour une version à jour.
+
+
+Niveau 1 : “Foundations”
+Salles : A, Z, D(2), E(feu)
+Héros : Guerrier(5)
+
+Difficulté : 1
+
+
+Niveau 2 : “Light Magic”
+Salles : A, Z, D(1), E(feu), E(eau)
+Héros : Elfe(5, {eau})
+Sortilège : Attaque(1)
+Variante : Remplacer Elfe par Guerrier(5)
+
+Difficulté : 1
+
+
+Niveau 3 : “Cross with the Constraint”
+Salles : A, Z, 2xD(1), E(feu), E(glace)
+Héros : Guerrier(4)
+Contrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.
+
+Difficulté : 2
+
+
+Niveau 4 : “Teleportation” Station”
+Salles : A, Z, D(1), E(feu), P(1, 1)
+Héros : Guerrier(11)
+Sortilège : Téléportation(1)
+
+Difficulté : 1
+
+
+Niveau 5 : “Double Trouble”
+Salles : A, Z, D(3), E(feu)
+Héros : Guerrier(3), Elfe(3, {feu})
+Sortilège : Attaque(3)
+Contrainte supplémentaire : Le donjon doit être carré.
+
+Difficulté : 1
+
+
+Niveau 6 : “Gold Rush”
+Salles : A, Z, D(2), E(feu), O(1), T(1, eau)
+Héros : Guerrier(9), Guerrier(4)
+Sortilège : Attaque(1)
+Variante : Chaque héros doit posséder de l'or au moment de sa mort.
+
+Difficulté : 2 
+
+
+Niveau 7 : “Nothing Burger”
+Salles : A, Z, 2xD(1), E(feu), E(eau)
+Héros : Elfe(6, {feu, eau})
+Sortilège : Banalité
+
+Difficulté : 2
+
+
+Niveau 8 : “The Human Beast”
+Salles : A, Z, 2*E(feu), 2*P(1, 1)
+Héros : Guerrier(1), Artilleur(6, 1)
+
+Difficulté : 2
+
+
+Niveau 9 : “Dimensional Settings”
+Salles : A, Z, E(feu), P(2, x↦7x-6), O(1), T(1, eau)
+Héros : Guerrier(21)
+Sortilège : Téléportation(4)
+
+Difficulté : 2
+
+
+Niveau 10 : “Checkerline”
+Salles : A, Z, D(1), E(feu), P(1, 1)
+Héros : Guerrier(13)
+Sortilèges : Échange, Déplacement
+Contrainte supplémentaire : Avant l'arrivée des héros, le donjon doit vérifier la contrainte suivante : Soient F = {A, Z} et G = Π\F. ∀(r, s) ∈ FxG, dist(r, s) ≡ 1[2].
+
+Difficulté : 3
+
+
+Niveau 11 : “Dream Trap”
+Salles : A, Z, E(choix(1, {éléments})), D(1)
+Héros : Guerrier(1)
+Sortilèges : Somnolence, choix(2, {Téléportation(1), Échange, Déplacement})
+
+Difficulté : 2 (euh y a un problème dans celui-ci à mon grand regret)
+
+
+Niveau 12 : “Chemical Loophole”
+Salles : A, Z, D(1), E(poison), P(1, 5)
+Héros : choix(1, {Guerrier(1), Elfe(1, {}), Artilleur(1, 1)})
+Contrainte supplémentaire : dist(A, Z) = 1.
+Variante : On doit également avoir 
+dist(A, P) = dist(A, E) + 2
+
+Difficulté : 2
+
+
+Niveau 13 : “Waiting Room”
+Salles : A, Z, D(1)
+Héros : Guerrier(2), Mécanicien(2, {D:5})
+Sortilège : Attaque(1)
+
+Difficulté : 2
+
+
+Niveau 14 : “Sleep Cycle”
+Variable : λ = choix(1, ℕ)
+Salles : A, Z, D(1), D(15), E(glace), O(1), 2*T(1, feu)
+Héros : Elfe(14, {}), Elfe(12, {glace})
+Sortilèges : λ*Somnolence, λ*Réveil
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Difficulté : 3
+
+
+Niveau 15 : “A Lesson On Inflation”
+Variables : λ = choix(1, ℕ), μ = choix(1, ℕ)
+Salles : A, Z, O(λ), O(μ), T(λ, feu), T(μ, glace)
+Héros : Guerrier(9)
+
+Difficulté : 2
+
+
+
+Niveau 16 : “Sliding Puzzle”
+Salles : A, Z, D(1), 2*E(eau)
+Héros : Mécanicien(2, {D:5, E:10})
+
+Difficulté : 3
+
+
+
+Niveau 17 : “Cereal Killer”
+Salles : A, Z, D(1), 2*E(eau), 2*O(1), T(2, eau)
+Héros : Artilleur(1, 7)
+Variante : Remplacer Artilleur(1, 7) par Artilleur(1, 8)
+
+Difficulté : 3
+
+
+Niveau 18 : “Math Bath”
+Salles : 3*A, Z, choix(3, {D(1), D(2), D(3), D(4), D(5)})
+Héros : Guerrier(3), Guerrier(4), Guerrier(choix(1, {1,3,5}), Guerrier(2)
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Difficulté : 2
+
+
+Niveau 19 : “Random God”
+Salles : A, 3*Z, D(3), E(choix(1, {éléments})), P(1, 1)
+Héros : Guerrier(42)
+Sortilèges : Téléportation(1), Échange, Déplacement
+Contrainte supplémentaire : Le donjon, lors de sa création, doit pouvoir être contenu dans un donjon carré de 3x3.
+
+Difficulté : 3
+
+
+Niveau 20 : “Stupidity Award”
+Salles : 3*A, Z, D(1), E(eau), 2*O(1), T(1, feu)
+Héros : Elfe(10, {glace}), Artilleur(8, 1)
+Sortilèges : Attaque(3), Banalité, Déplacement
+
+Difficulté : 4
+
+
+Niveau 21 : “Getting Distracted”
+Salles : A, Z, D(2), D(3), E(glace)
+Héros : Princesse(7, {choix(1, Π):1}, 4), Guerrier(6)
+Sortilège : Banalité
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Difficulté : 2
+
+
+Niveau 22 : “Why Displacing A Population Is Inappropriate”
+Variable : λ = choix(1, {1, 2})
+Salles : λ*A, (3-λ)*Z, 3*D(1)
+Héros : 3*Guerrier(3)
+Sortilèges : Échange, 3*Déplacement
+Contrainte supplémentaire : Au moins deux salles D différentes doivent être bougées par Déplacement.
+
+Difficulté : 3
+
+
+Niveau 23 : “Equilibrium Atrium”
+Salles : A, Z, 2*D(1), E(feu), E(glace), P(1, 5)
+Héros : choix(1, {Guerrier(14), Elfe(14, {}), Artilleur(14, 1), Mécanicien(14, {D:5}), Princesse(14, {D:5}), 2)})
+Sortilèges : Échange
+Contrainte supplémentaire : ∀s∈Π\{A}, ∃r∈Π\{s}, dist(A, s) = dist(A, r)
+
+Difficulté : 3
+
+
+Niveau 24 : “Mutual Destruction”
+Salles : A, D(1), E(feu), P(1, 100)
+Héros : Princesse(13, {P:1}, 2), Mécanicien(10, {D:100, E:10})
+Sortilège : Attaque(1), Déplacement
+
+Difficulté : 3
+
+
+
+Niveaux supplémentaires - filler intéressant
+
+Niveau 3.5 : “Mirror Maze”
+Salles : A, Z, 3*D(1), 4*E(glace)
+Héros : Guerrier(3)
+Contrainte supplémentaire : Le donjon doit être carré.
+Variante 1 : ∃(s, r) ∈ {D}x{D}, dist(s, r) = 3.
+Variante 2 : ∃(s, r) ∈ {D}x{D}, dist(s, r) = 4.
+
+Difficulté : 2
+
+
+Niveau 6.25 : “”
+Salles : A, Z, D(1), D(2), D(3), O(1)
+Héros : Guerrier(5), Guerrier(9), Guerrier(2)
+Sortilège : Téléportation(1)
+Contrainte supplémentaire : Chaque héros doit posséder de l'or au moment de sa mort.
+
+Difficulté : 1
+
+
+Niveau 6.5 : “”
+Salles : A, Z, O(1), T(1, feu), T(1, poison)
+Héros : Guerrier(9)
+
+Niveau 6.75 : “”
+Salles : A, Z, D(1), D(2), E(feu), E(glace), 2*O(1)
+Héros : Guerrier(5), Elfe(3, {glace})
+Contrainte supplémentaire : Chaque héros doit posséder 1 en or au moment de sa mort.
+Variante 1 : Le donjon construit n'est plus une solution si l'Elfe perd son immunité.
+Variante 2 : Le donjon construit est toujours une solution si l'Elfe perd son immunité.
+
+
+Niveau 9.2 : “”
+Salles : A, Z, D(11), E(poison)
+Héros : Guerrier(20)
+Sortilèges : 2*Téléportation(2)
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+Variante : Chaque héros doit être téléporté 2 fois dans la salle d'attente.
+
+Difficulté : 1
+
+
+Niveau 9.4 : “Polynomial Portal”
+Salles : A, Z, D(1), E(feu), P(2, x↦x)
+Héros : Guerrier(9), Elfe(3, {feu})
+
+Difficulté : 1
+
+
+Niveau 9.6 : “”
+Salles : A, Z, D(1), E(feu), E(poison), P(2, x↦5-2x)
+Héros : Elfe(15, {poison}), Elfe(17, {feu})
+Sortilèges : 2*Téléportation(1)
+Variante : Le pouvoir de la salle P doit être utilisé 4 fois.
+
+
+Niveau 9.8 : “”
+Salles : A, Z, D(1), P(100, 1), P(10, x↦1+2*⌊1/x⌋)
+Héros : Guerrier(2)
+
+Difficulté : 2
+
+
+Niveau 10.3 : “Exchange - Beginner Course”
+Salles : A, Z, D(1), O(1)
+Héros : Guerrier(2)
+Sortilège : Échange
+
+Difficulté : 1
+
+
+Niveau 10.6 : “Displacement - Beginner Course”
+Salles : A, Z, D(1), 2*O(1)
+Héros : Guerrier(2)
+Sortilège : Déplacement
+
+Difficulté : 1
+Manuel - Deluxe
+Zorg’s Dungeon Maker
+Manuel - Deluxe Edition
+
+
+Chapitre 1 : Généralités
+
+Principe
+
+Créez un donjon pour empêcher les héros de vous mettre une raclée !
+
+Chaque niveau se découpe en deux étapes : la construction d’un donjon, et l’extermination des héros entrant dans ce donjon. Le niveau est gagné quand, à l’issue de la seconde phase, tous les héros ont été éliminés, et toutes les contraintes supplémentaires ont été satisfaites ; il est perdu si un héros pénètre dans la salle Z.
+
+Construction du donjon
+
+Il s’agit de créer un labyrinthe utilisant toutes les salles décrites dans le niveau.
+
+Les salles du donjon doivent se positionner sur une grille : pas de salles en diagonale, se chevauchant, ou pas correctement alignées ! Plus précisément, si deux salles sont connectées, alors elles le sont sur toute la longueur d’un de leur côté.
+
+De plus, le sens des hachures sur les murs doit être le même sur toutes les salles du donjon.
+
+Chaque salle a des caractéristiques propres : voir le chapitre “Salles” pour plus de détails.
+
+Extermination des héros
+
+Concernant les héros : 
+
+Les héros peuvent apparaître, un à un et dans l’ordre indiqué, dès que le donjon a été entièrement construit. On rappelle que le niveau n’est pas gagné avant qu’ils ne soient tous morts ; au moment où le dernier héros meurt, le niveau s’arrête.
+
+Par défaut, chaque héros cherche à atteindre la salle Z : il choisit pour ce faire le chemin qui satisfait le plus à ses priorités individuelles - voir le chapitre “Héros” pour plus de détails. S’il ne peut pas choisir de meilleur chemin, par exemple si la salle Z lui est inaccessible, alors il ne bouge pas et attend qu’un chemin apparaisse.
+
+On précise au cas où qu’on n’a encore jamais vu de héros traverser les murs ou marcher sur du vide.
+
+Si le nombre de points de vie d’un héros est à un moment ou à un autre négatif ou nul, alors il décède instantanément et devient un cadavre, qui ne peut plus faire quoi que ce soit. Important : les héros ne se rendent pas compte qu’ils peuvent mourir, et planifient leurs chemins sous l’hypothèse qu’ils pourront toujours bouger, peu importe leur nombre de points de vie !
+
+Les héros ont ainsi accès à toutes les informations sur le donjon en permanence (ils ont une minimap!), ce qui leur permet de modifier leurs décisions à tout moment si nécessaire, à l’exception des données suivantes : 1) les autres héros du niveau ; 2) les sortilèges utilisables ; 3) les conséquence de la mort.
+
+Un héros ne peut apparaître ou bouger que lorsque tous les précédents ont été vaincus ou sont immobiles : on parle alors de héros actif. Il ne peut y avoir qu’un seul héros actif dans le donjon à la fois. Par conséquent, si un héros précédemment incapable de bouger est libéré de cette contrainte, il empêche de bouger tous les héros qui sont apparus après lui. Les héros n’ont aucune collision entre eux et agissent comme s’ils étaient seuls dans le labyrinthe.
+
+Concernant les sortilèges : 
+
+C’est pendant la phase d’extermination des héros que peuvent être utilisés les sortilèges.
+
+Chaque sortilège est à usage unique, et peut être utilisé dès qu’un héros a fini une action : par exemple, quand un héros s’est déplacé d’une case, ou bien quand il est apparu dans la salle A, mais pas avant qu’il ne soit téléporté par l’action d’une salle P car l’action entamée par le héros ne s’est pas terminée.
+
+On précise qu’un sortilège n’est applicable que lorsque sa description est compatible avec la situation : notamment, un sortilège s’appliquant au héros actif ne peut être conjuré s’il n’y a pas de héros actif.
+
+Chaque sortilège a des caractéristiques propres : voir le chapitre “Sortilèges” pour plus de détails.
+
+Sur les contraintes supplémentaires
+
+Dans un niveau peuvent être mentionnées une ou plusieurs contraintes supplémentaires. Dans ce cas, le niveau est gagné dès que tous les héros sont morts et que toutes les contraintes supplémentaires ont été satisfaites.
+
+Un bonus est une contrainte supplémentaire optionnelle qui vient s’ajouter à toutes celles déjà présentes dans le niveau. Finir un niveau avec un bonus rapporte surtout de la satisfaction personnelle. Si un niveau comporte plusieurs bonus, il n’est pas obligatoire de les satisfaire en même temps pour les acquérir.
+
+Mondes miroirs
+
+Dans certains niveaux, l’énoncé peut présenter des (M’), (M’’) ou encore (M(n)) dans la marge de certaines sections. Il s’agit de mondes miroirs.
+
+Les mondes miroirs sont reliés au monde normal par leurs salles : pour passer d’un monde normal à un monde miroir, la donjon créé reste le même, à ceci près que la première salle (dans l’ordre des salles de l’énoncé) du monde normal se transforme en la première salle du monde miroir (toujours selon l’ordre de l’énoncé), la deuxième salle du monde normal se transforme en la deuxième salle du monde miroir, etc.
+
+Les contraintes supplémentaires et variables sont communes au monde normal et à tous les mondes miroirs ; les héros et sortilèges sont eux propres à chaque monde.
+
+Lors de la phase d’exécution des héros, les mondes se résolvent en partant du monde normal, puis en allant vers le bas dans l’ordre des mondes. On passe au monde suivant lorsque plus rien ne se passe dans le monde précédent, ou lorsque la salle Z a été atteinte ; quand cela se produit, le monde devient inaccessible et ne peut plus être réactivé.
+
+Par défaut, aucune contrainte ne s’applique sur les différents mondes, si ce n’est que le monde normal doit être solvable (ie tous les héros doivent mourir avant d’avoir atteint la salle Z). C’est au travers des contraintes supplémentaires que s'ajoutent des contraintes sur les mondes miroirs.
+
+Notamment, la contrainte de solvabilité sur un monde impose l’existence d’une séquence de sortilèges telle que le donjon créé puisse permettre l’extermination des héros de ce monde avant que la salle Z ne soit atteinte ; la contrainte de non-solvabilité, au contraire, demande l’impossibilité de l’existence d’une telle séquence de sortilèges. 
+
+Variables et choix
+
+Certains niveaux utilisent la notion de choix, notamment au travers des variables.
+
+Concernant les variables : 
+
+Une variable est une donnée quelconque stockée dans le niveau et intervenant le plus souvent comme paramètre dans certaines composantes du niveau. Elle peut potentiellement varier au cours du niveau !
+
+Concernant le choix : 
+
+ Le texte “choix(n, E)” désigne pour le joueur la possibilité de choisir au début de la phase de création du donjon n éléments “distincts” parmi ceux de l’ensemble/liste E (la différence étant qu’une liste, entourée de parenthèses, peut au contraire de l’ensemble entouré d’accolades contenir des doublons qui peuvent être choisis indépendamment).
+
+En même temps que le choix des données de E, le joueur choisit dans quel sens il les prend, ce qui peut avoir son intérêt dans certains niveaux.
+
+Exemples : dans “choix(2, (D(1), D(1), D(3)))” on peut choisir (D(1), D(1)) ou (D(1), D(3)) mais pas (D(3), D(3)) ; dans “choix(2, ℝ)”, on peut choisir (5, 8) mais pas (6, 6).
+
+Terminologie
+
+Une salle désigne une tuile positionnable sur le plateau, composée de 25 cases.
+
+Un héros est un algorithme qui essaye selon ses propres règles détaillées ci-dessous d'atteindre la salle du boss, Zorg (vous).
+
+Un labyrinthe/donjon est une disposition de salles sur le plateau, qui fait intervenir toutes les salles à disposition.
+
+L'orientation du donjon désigne l'orientation commune de toutes les salles A présentes dans le donjon. La direction “haut”, aussi appelée “nord”, se réfère alors au vecteur allant du bas du A au haut du A, et de même pour le bas (le sud), la gauche (l’ouest) et la droite (l’est).
+
+Π désigne l’ensemble des salles du niveau, Γ l’ensemble des héros (pas encore morts) du niveau, et Φ l’ensemble des sortilèges pas encore utilisés du niveau. Si nécessaire, on notera Π(M(n)) pour désigner l’ensemble des salles du monde M(n), et de même pour les héros et les sortilèges.
+
+La salle d’attente désigne une zone virtuelle où se trouvent les héros avant d’apparaître - un peu comme une page de chargement. Un héros dans la salle d’attente peut apparaître dès que tous les héros présents avant lui dans la liste des héros sont apparus et rendus inactifs.
+
+La distance entre deux salles r et s, que l'on note dist(r, s), désigne la somme de la différence en ordonnée de ces salles et de leur différence en abscisse (pour les plus puants d’entre vous, il s’agit de la distance Manhattan).
+
+Chapitre 2 : Salles
+
+Ce chapitre propose une liste exhaustive de toutes les salles du jeu.
+
+A : Salle d'Apparition
+
+Tout héros qui apparaît le fait depuis la salle A actuelle, sur la case marquée d’un A.
+
+Si plusieurs salles A sont en jeu, le joueur en choisit une principale d'où les héros apparaissent par défaut; toute salle A visitée par un héros actif remplace immédiatement la salle A principale.
+
+Pour que le donjon soit convenablement orienté, toutes les salles A doivent être orientées de la même manière.
+
+Z : Salle de Zorg
+
+Un niveau est immédiatement perdu si un héros entre dans une salle Z.
+
+D(x) : Salle de Dégâts 
+
+À chaque fois qu'un héros entre dans une salle D(x), il subit x dégâts.
+
+E(elem) : Salle Élémentaire
+
+Les cases marquées en vert sont des cases élémentaires déterminées en fonction du paramètre elem : les cases élémentaires deviennent ainsi des cases de feu (resp. d’eau, resp. de glace, resp. de poison) si elem vaut feu (resp. eau, resp. glace, resp. poison). Ces cases élémentaire se comportent comme suit : 
+
+Chaque fois qu’un héros non immunisé rentre dans une case de feu, il subit 1 dégât.
+
+Un héros non immunisé ne peut entrer dans une case d’eau qui agit comme un mur. Si un héros non immunisé se retrouve dans une case d’eau, il meurt instantanément.
+
+Un héros non immunisé ne peut faire que glisser dans la même direction que celle par laquelle il est rentrée tant qu’il se trouve sur une case de glace ou qu’il n’est pas arrêté par un mur.
+
+La première fois qu’un héros non immunisé visite une case de poison donnée, il gagne 1 point de vie, mais chaque visite ultérieure de cette case lui fait perdre 3 points de vie.
+
+Un héros immunisé à un élément donné est donc complètement insensible à tout effet lié à la traversée d’une case de cet élément , et agit en fait comme si ces cases n’existaient pas.
+
+P(n, f) : Salle du Portail
+
+Quand un héros rentre dans une salle P pour la i-ième fois, où 1≤i≤n, il est téléporté dans la f(i)-ième dernière salle où il est passé (en comptant les répétitions), sur la première case qu'il a visitée lors dudit passage dans la salle.
+
+Si f(i) est trop grand, le héros revient là où il se trouvait avant d'apparaître (dans une salle d'attente fictive), puis réapparaît.
+
+O(x) : Salle de l'Or
+
+Le premier héros qui rentre dans une salle O reçoit immédiatement l'entièreté de son contenu x en or. Si ce héros meurt , tout l'or y qu'il a récupéré devient associé à la salle où il se trouve / où il est décédé, qui se comporte alors également comme une salle O(y), en plus de sa fonction première.
+
+La récupération de l’or a priorité sur toute autre conséquence d’un déplacement dans une salle (comme la mort ou la téléportation, entre autres).
+
+T(x, elem) : Salle des Taxes
+
+Les cases vert foncé, élémentaires, se comportent comme dans une salle E(elem).
+
+Si un héros désire passer dans la zone vert clair en revanche, il doit débourser les x premières pièces d'or qu'il a récupérées, qui retournent automatiquement à leur salle de départ (sa bourse se comporte comme une file). S'il ne peut payer ce coût, le héros ne peut emprunter ce passage.
+
+Un héros qui se retrouverait par malchance sur une salle des taxes trop chère pour lui se verrait immédiatement ôter la vie.
+
+Chapitre 3 : Héros
+
+Ce chapitre propose une liste exhaustive de tous les héros du jeu.
+
+Guerrier(x)
+
+Apparaît initialement avec x points de vie.
+
+Téméraire : Le guerrier choisit le trajet le plus court pour arriver à une salle Z, sans aucune considération pour sa santé.
+
+Droitier : Si, à un moment quelconque du niveau, le guerrier a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.
+
+Elfe(x, elems)
+
+Apparaît initialement avec x points de vie.
+
+Prudent : L'elfe choisit le trajet le plus court parmi ceux lui laissant le plus de points de vie pour arriver à une salle Z.
+
+Écolo : L'elfe est immunisé à tous les éléments de elems.
+
+Droitier : Si, à un moment quelconque du niveau, l'elfe a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.
+
+Mécanicien(x, dico)
+
+Apparaît initialement avec x points de vie.
+
+Capacité spéciale - technopathe : Soit s ∈ dico.keys(). Si le mécanicien est situé dans la salle s, alors il peut la déplacer vers une case vide adjacente de la grille des salles, instantanément, mais en consommant dico[s] pas.
+
+Téméraire : Le mécanicien choisit le trajet le plus court pour arriver à une salle Z, sans aucune considération pour sa santé, en prenant en compte ses pouvoirs.
+
+Pragmatique : Le mécanicien préfère les chemins qui consomment le moins de pas à l'utilisation infondée de son pouvoir. Il préférera cependant utiliser son pouvoir le plus tôt possible, par rapport à un chemin aussi rapide qui ne l’utiliserait pas, ou trop tard.
+
+Gaucher : Si, à un moment quelconque du niveau, le mécanicien a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus en haut, puis à droite, puis en bas, puis à gauche.
+
+Artilleur(x, c) (incoming)
+
+Apparaît initialement avec x points de vie.
+
+Capacité spéciale - destructeur : Au plus c fois, l’artilleur peut tirer un obus dans l’une des 4 directions cardinales, i.e. invoquer un héros “obus” sur une case adjacente, ce qui lui est possible si le tir n'a pas une durée infinie. 
+
+Prudent : L'artilleur choisit le trajet le plus court parmi ceux lui laissant le plus de points de vie pour arriver à une salle Z - ou pour arriver à tirer sur une salle Z - en prenant en compte ses pouvoirs.
+
+Vantard : L'artilleur préfère les chemins qui lui permettent de tirer un obus le plus tôt possible, ce qui est prioritaire par rapport à la longueur du chemin.
+
+Droitier : Si, à un moment quelconque du niveau, l'artilleur a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.
+
+Obus (incoming)
+
+Projectile invoqué par un artilleur.
+
+Avance en ligne droite dans la direction choisie par l’artilleur jusqu'à ce qu'il rencontre un mur ou sorte définitivement du donjon. 
+
+Se déplace instantanément : jusqu'à sa destruction, ni le joueur ni les autres héros ne peuvent effectuer un action.
+
+Détruit toutes les cases élémentaires et les monstres - qui peuplent les salles D et Z - qu'il rencontre. Inflige 2 dégâts à tout héros qu'il croise.
+
+Princesse(x, dico, b) (incoming)
+
+Apparaît initialement avec x points de vie.
+
+Obstinée : La princesse cherche à aller dans l'une des salles ayant le coefficient le plus élevé. Par défaut, toutes les salles (dont les salles Z) ont un coefficient de 0 ; un couple (s, v) dans dico signifie que la salle s a un coefficient v. La princesse ne peut considérer un chemin passant par une case de coefficient négatif valide que si la salle qu'elle cherche à atteindre a un coefficient strictement supérieur.
+
+Prudente : La princesse choisit le trajet le plus court parmi ceux lui laissant le plus de points de vie pour arriver à une salle de plus haut coefficient.
+
+Attractive : Soit h un héros présent dans le donjon. h est en temps normal soumis à des attractions données par les coefficients par défaut des salles ({Z:1} en général, mais h.dico si h est une princesse). Le coefficient perçu par h d'une salle s∈Π est la moyenne du coefficient par défaut de s (spécifique à h) et de l'attractivité b de chaque princesse autre que h présente dans s. h se comporte alors comme un Obstiné vis-à-vis de ces coefficients.
+
+Droitière : Si, à un moment quelconque du niveau, la princesse a le choix entre plusieurs options de trajet jugées de même valeur, elle préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.
+
+
+
+Chapitre 4 : Sortilèges
+
+Ce chapitre propose une liste exhaustive de tous les sortilèges du jeu.
+
+Attaque(x)
+
+Inflige x dégâts à tous les héros (vivants) actuellement présents dans le donjon.
+
+Sous sélection : Inflige x dégâts à tous les héros sélectionnés.
+
+Téléportation(n)
+
+Le héros actif est téléporté dans la n-ième dernière salle où il est passé (en comptant les répétitions), sur la première case qu'il a visitée lors dudit passage dans la salle.
+Si f(n) est trop grand, le héros retourne dans la salle d’attente, puis réapparaît dès qu'il le peut.
+
+Sous sélection : Chacun des héros sélectionnés revient dans la n-ième dernière salles qu’il a visitée (comptée avec multiplicité), sur la première case visitée lors de ce passage, ou dans la salle d’attente si nécessaire.
+
+Déplacement()
+
+Déplace instantanément la salle qui contient le héros actif vers une position anciennement vide (une salle mouvante entraîne avec elle tout son contenu).
+
+Sous sélection : Soient s1, …, sn les salles deux à deux distinctes contenant les héros sélectionnés, et r1, …, rn des positions libres deux à deux distinctes de la grille des salles. Alors, en notant “u↦v” l’opération “la salle u bouge instantanément (elle et son contenu)sur la position v”, on a  s1 ↦ r1, …, sn ↦ rn.
+
+Echange()
+
+Échange instantanément la position de la salle qui contient le héros actif et d’une autre salle distincte (une salle mouvante entraîne avec elle tout ce qu’elle contient : héros, argent, etc.).
+
+Sous sélection : Soient s1, …, sn les salles deux à deux distinctes contenant les héros sélectionnés, et r ∈ Π \ {s1, …, sn}. Alors, en notant “u↦v” l’opération “la salle u bouge instantanément (elle et son contenu)sur la salle v”, on a  s1 ↦ s2 ↦ s3 ↦ … ↦ sn-1 ↦ sn ↦ r ↦ s1.
+
+Sélection(cad)
+
+Quand le joueur conjure le sortilège de sélection, il sélectionne k ≥ 1 héros présents dans le donjon et un sortilège φ ∈ Φ\{Sélection}, puis applique φ en même temps à tous les héros sélectionnés ; les modalités de cette application sont spécifiques à chaque sortilège, et sont donc précisées dans le manuel (option “Sous sélection”).
+
+Le booléen cad, si mis à vrai, permet parmi les héros sélectionnés de choisir des cadavres.
+
+Somnolence (incoming)
+Endort le héros éveillé choisi, qui ne peut plus bouger jusqu'à ce qu'il soit réveillé (par un sortilège de réveil ou parce que son nombre de points de vie varie strictement).
+
+Réveil (incoming)
+Réveille le héros endormi choisi.
+
+Banalité (incoming)
+Choisissez un héros présent dans le donjon, qui devient un Guerrier et conserve son nombre actuel de points de vie.
+Niveaux - Deluxe
+Zorg’s Dungeon Maker
+Deluxe Edition
+
+Contrat n°1 : The Basics [9]
+
+Coût : 0 point.
+
+Niveau 1.1 : Foundations
+Salles : A, Z, D(2), E(feu).
+Héros : Guerrier(5).
+
+Niveau 1.2 : Contractual Obligation
+Salles : A, Z, D(1), D(2), D(3).
+Héros : Guerrier(6).
+Contrainte supplémentaire : dist(D(1), D(3)) = 2.
+
+Niveau 1.3 : Around The Bush
+Salles : A, Z, 2*D(1), E(feu).
+Héros : Guerrier(5).
+Contrainte supplémentaire : dist(A, Z) = 2.
+
+Niveau 1.4 : Low Blow
+Salles : A, Z, D(2).
+Héros : Guerrier(4).
+Sortilèges : Attaque(3).
+
+Niveau 1.5 : Magical Foundations
+Salles : A, Z, D(2), E(feu).
+Héros : Guerrier(7).
+Sortilèges : Attaque(1), Attaque(2).
+Contrainte supplémentaire : Le héros ne peut atteindre un nombre de points de vie strictement négatif.
+Bonus : Tous les sortilèges doivent être utilisés.
+
+Niveau 1.6 : Heavy Paperwork
+Salles : A, Z, D(2), E(feu).
+Héros : Guerrier(6).
+Sortilèges : Attaque(1), Attaque(2).
+Contraintes supplémentaires : 
+dist(A, D) = dist(Z, D).
+Le héros ne peut pas subir deux sortilèges différents dans une même salle.
+
+Niveau 1.7 : Double Trouble
+Salles : A, Z, D(3).
+Héros : Guerrier(4), Guerrier(6).
+Sortilèges : Attaque(2), Attaque(4).
+Bonus : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Niveau 1.8 : The Odd Squad
+Salles : A, Z, 2*D(3), E(feu).
+Héros : Guerrier(3), Guerrier(5), Guerrier(7), Guerrier(9).
+Sortilège : Attaque(1).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Niveau 1.9 : Warrior Countdown
+Salles : A, Z, D(3), 2*E(feu).
+Héros : Guerrier(4), Guerrier(3), Guerrier(2), Guerrier(1).
+Sortilège : Attaque(1).
+Contrainte supplémentaire : Chaque héros doit mourir dans une salle différente.
+
+
+
+Contrat n°2 : Elements [10]
+
+Coût : 5 points. (à modifier : au moins 7)
+
+Niveau 2.1 : Fire Immunity
+Salles : A, Z, E(feu).
+Héros : Elfe(1, {feu}), Guerrier(1).
+Sortilège : Attaque(1).
+
+Niveau 2.2 : Elemental Sanctuary
+Salles : A, Z, E(feu), E(eau), E(glace).
+Héros : Elfe(3, {eau}), Elfe(3, {glace}).
+Contrainte supplémentaire : dist(A, Z) != 2.
+
+Niveau 2.3 : Behavior Test
+Salles : A, Z, D(3), E(feu).
+Héros : Guerrier(3), Elfe(3, {feu}).
+Sortilège : Attaque(3).
+Contrainte supplémentaire : Le donjon créé doit être carré.
+
+Niveau 2.4 : Cross With the Constraint - Watered Down
+Salles : A, Z, 2*D(1), E(feu), E(eau).
+Héros : Guerrier(4).
+Contrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.
+
+Niveau 2.5 : Cross With the Constraint
+Salles : A, Z, 2*D(1), E(feu), E(glace).
+Héros : Guerrier(4).
+Contrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.
+
+Niveau 2.6 : Ice Palace
+Salles : A, Z, 3*D(1), 4*E(glace).
+Héros : Guerrier(3).
+Contrainte supplémentaire : Le donjon doit être carré.
+Bonus 1 : ∃(s, r) ∈ {D}², dist(s, r) = 3.
+Bonus 2 : ∃(s, r) ∈ {D}², dist(s, r) = 4.
+
+Niveau 2.7 : Curse Removal
+Salles : A, Z, D(2), D(4), E(feu).
+Héros : Guerrier(6), Elfe(6, {}), Elfe(5, {feu}).
+Sortilèges : Attaque(1), Attaque(2), Attaque(3), Attaque(4).
+Contraintes supplémentaires : 
+Tous les sortilèges doivent être utilisés.
+Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+Bonus : Une unique salle n'est pas visitée.
+
+Niveau 2.8 : Elfic Countdown
+Salles : A, Z, D(1), 2*E(feu), E(eau), E(glace).
+Héros : Elfe(3, {glace}), Elfe(3, {eau}), Elfe(3, {}).
+Contrainte supplémentaire : Chaque héros doit mourir dans une salle différente.
+
+Niveau 2.9 : Cobblestone Generator
+Salles : A, Z, E(feu), E(eau).
+Héros : Guerrier(6), Elfe(9, {eau}).
+Sortilège : Attaque(6).
+
+Niveau 2.10 : Health Generator
+Salles : A, Z, D(3), D(-1), E(eau).
+Héros : Elfe(6, {}), Guerrier(9).
+Sortilège : Attaque(6).
+Bonus : dist(E, D(-1)) < dist(A, D(-1)).
+
+
+
+Contrat n°3 : Parallelism [9]
+
+Coût : 10 points.
+
+Niveau 3.1 : Unfair Rivalry
+Salles : A, Z, E(feu).
+Héros : Guerrier(3).
+Sortilège : Attaque(1).
+(M’) Salles : A, Z, E(feu).
+(M’) Héros : Guerrier(3).
+Contrainte supplémentaire : (M’) n’est pas solvable.
+
+Niveau 3.2 : Emmental Sanctuary
+Salles : A, Z, 2*E(feu), E(glace).
+Héros : Elfe(3, {glace}).
+(M’) Salles : A, Z, 2*E(feu), E(glace).
+(M’) Héros : Elfe(3, {eau}).
+Contrainte supplémentaire : Il existe une salle visitée dans (M) mais pas dans (M').
+Bonus : Il existe une unique salle visitée dans (M) mais pas dans (M’).
+
+Niveau 3.3 : Pivotal Issue
+Salles : A, Z, D(1), D(1), E(feu).
+Héros : Guerrier(5).
+(M’) Salles : A, Z, D(1), E(feu), D(1).
+(M’) Héros : Guerrier(4).
+Contrainte supplémentaire : (M’) n’est pas solvable.
+
+Niveau 3.4 : Amazing Mirror
+Salles : A, Z, D(1), D(2), D(3).
+Héros : Guerrier(4).
+(M’) Salles : D(2), D(3), D(1), A, Z.
+(M’) Héros : Guerrier(3).
+Contrainte supplémentaire : (M’) est solvable.
+
+Niveau 3.5 : One Way Zone
+Salles : A, Z, D(3), E(feu).
+Héros : Guerrier(3).
+(M’) Salles : Z, A, D(3), E(feu).
+(M’) Héros : Guerrier(3).
+Contrainte supplémentaire : (M’) n’est pas solvable.
+
+Niveau 3.6 : Into the Multiverse
+Salles : A, Z, D(1), D(1), D(1), E(eau), E(eau), E(eau), E(eau).
+Héros : Guerrier(3).
+(M’) Salles : A, Z, E(eau), E(eau), D(1), D(1),  D(1), E(eau), E(eau).
+(M’) Héros : Guerrier(3).
+(M’’) Salles : A, Z, E(eau), E(eau), E(eau), E(eau), D(1), D(1), D(1).
+(M’’) Héros : Guerrier(3).
+Contrainte supplémentaire : (M’) et (M’’) sont solvables.
+
+Niveau 3.7 : Elemental Temple
+Salles : A, Z, 2*D(1), E(feu).
+Héros : Elfe(2, {eau}).
+(M’) Salles : A, Z, 2*D(1), E(glace).
+(M’) Héros : Elfe(2, {eau}).
+(M’’) Salles : A, Z, 2*D(1), E(eau).
+(M’’) Héros : Elfe(2, {eau}).
+Contraintes supplémentaires : 
+(M’) est solvable.
+(M’’) n’est pas solvable.
+
+Niveau 3.8 : Cheese Factory
+Salles : A, Z, 2*D(1), E(feu), E(eau), E(glace).
+Héros : Elfe(4, {glace}).
+(M’) Salles : A, Z, 2*D(1), E(feu), E(eau), E(glace).
+(M’) Héros : Elfe(3, {feu}), Elfe(2, {eau}), Elfe(4, {glace}).
+(M’’) Salles : A, Z, 2*D(1), E(feu), E(eau), E(glace).
+(M’’) Héros : Elfe(3, {feu}).
+Contraintes supplémentaires :
+Il existe une salle visitée dans (M) mais pas dans (M’).
+Il existe une salle visitée dans (M’) mais pas dans (M’’).
+
+Niveau 3.9 : Elemental Cathedral
+Salles : A, Z, E(feu), E(eau), E(glace).
+Héros : Elfe(1, {eau}).
+(M’) Salles : A, Z, E(feu), E(glace), E(eau).
+(M’) Héros : Elfe(1, {glace}).
+(M’’) Salles : A, Z, E(eau), E(glace), E(feu).
+(M’’) Héros : Elfe(1, {feu}), Elfe(1, {feu, eau, glace}).
+(M’’) Sortilège : Attaque(1).
+Contrainte supplémentaire : (M’) et (M’’) ne sont pas solvables.
+
+
+
+Contrat n°4 : Purple [9]
+
+Coût : 15 points.
+
+Niveau 4.1 : Teleportation Station
+Salles : A, Z, E(poison), P(1, 1).
+Héros : Guerrier(6).
+
+Niveau 4.2 : Science-Fiction Station
+Salles : A, Z, D(1), E(poison), P(1, 1).
+Héros : Guerrier(17).
+Sortilège : Téléportation(1).
+
+Niveau 4.3 : Fake Reset
+Salles : A, Z, D(11), E(poison).
+Héros : Guerrier(20).
+Sortilèges : 2*Téléportation(2).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+Bonus : Le Guerrier doit être téléporté deux fois dans la salle d’attente.
+
+Niveau 4.4 : Polynomial Portal
+Salles : A, Z, D(1), E(feu), P(2, x↦3x-2).
+Héros : Guerrier(9), Elfe(3, {feu}).
+
+Niveau 4.5 : Chemical Loophole
+Salles : A, Z, D(1), E(poison), P(1, 5).
+Héros : Elfe(1, {}).
+Contrainte supplémentaire : dist(A, Z) = 1.
+Bonus : dist(A, P) = dist(A, E) + 2.
+
+Niveau 4.6 : Scarlet and Violet
+Salles : A, Z, D(1), E(feu), E(poison), P(2, x↦5-2x).
+Héros : Elfe(15, {poison}), Elfe(17, {feu}).
+Sortilèges : 2*Téléportation(1).
+Bonus : La salle P doit téléporter chaque héros deux fois.
+
+Niveau 4.7 : Cross With the Bonus
+Salles : A, Z, 2*D(1), E(feu), E(poison).
+Héros : Elfe(4, {}).
+Sortilèges : 2*Téléportation(4).
+(M’) Salles : A, Z, 2*D(1), E(feu), E(poison).
+(M’) Héros : Elfe(4, {}).
+(M’) Sortilèges : 2*Téléportation(40).
+Contrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.
+Bonus : (M’) n’est pas solvable.
+
+Niveau 4.8 : Waste Sorting
+Salles : A, Z, E(feu), E(poison), 2*P(1, 1).
+Héros : Guerrier(5), Elfe(5, {}).
+Contrainte supplémentaire : Un unique héros doit atteindre un nombre de points de vie strictement négatif.
+
+Niveau 4.9 : Wrong Warp
+Salles : A, Z, D(1), P(∞, 1), P(10, x↦1+2*⌊1/x⌋).
+Héros : Guerrier(2).
+(M’) Salles : A, Z, D(1), P(∞, 1), P(10, x↦1+2*⌊1/x⌋).
+(M’) Héros : Elfe(2, {}).
+Contrainte supplémentaire : (M’) n’est pas solvable.
+
+
+
+Contrat n°5 : Capitalism [9]
+
+Coût : 20 points.
+
+Niveau 5.1 : Delicate Wallet
+Salles : A, Z, 2*E(feu), O(1).
+Héros : Guerrier(1), Guerrier(2).
+Contrainte supplémentaire : L’argent ne peut pas se situer dans la même salle au moment de l’apparition d’un héros et au moment de sa mort.
+
+Niveau 5.2 : Wealth Frontier
+Salles : A, Z, D(1), O(1), T(1, feu).
+Héros : Guerrier(5).
+
+Niveau 5.3 : Smarter Coworker
+Salles : A, Z, D(2), E(feu), O(1), T(1, eau).
+Héros : Guerrier(9), Guerrier(4).
+Sortilège : Attaque(1).
+
+Niveau 5.4 : Money Smuggling
+Salles : A, Z, D(1), D(2), D(3), O(1).
+Héros : Guerrier(5), Guerrier(9), Guerrier(2).
+Sortilège : Téléportation(1).
+Contrainte supplémentaire : Chaque héros doit posséder de l’or au moment de sa mort.
+
+Niveau 5.5 : Counting the Riches
+Salles : A, Z, E(feu), P(2, x↦7x-6), O(1), T(1, eau).
+Héros : Guerrier(21).
+Sortilège : Téléportation(4).
+
+Niveau 5.6 : Treasure Chest
+Salles : A, Z, 3*D(1), 4*O(1).
+Héros : Guerrier(3).
+Contraintes supplémentaires : 
+Le donjon doit être carré.
+Le héros doit posséder au moins 3 pièces au moment de sa mort.
+Niveau 5.7 : Dual Shares
+Salles : A, Z, 2*D(3), E(feu), E(glace), 2*O(1).
+Héros : Guerrier(6), Elfe(3, {glace}).
+(M’) Salles : A, Z, 2*D(3), E(feu), E(glace), 2*O(1).
+(M’) Héros : Guerrier(6), Elfe(3, {}).
+Contrainte supplémentaire : Dans (M), chaque héros doit posséder une quantité impaire d’or au moment de sa mort.
+Bonus 1 : La contrainte supplémentaire est toujours valable dans (M’).
+Bonus 2 : La contrainte supplémentaire n’est plus valable dans (M’).
+
+Niveau 5.8 : Vault Break
+Salles : A, Z, D(1), O(1), T(1, feu), T(1, eau).
+Héros : Elfe(1, {feu}), Elfe(13, {eau}).
+
+Niveau 5.9 : Going Bankrupt
+Salles : A, Z, P(1, 1), 2*O(1), T(1, feu).
+Héros : Guerrier(6), Elfe(3 {}).
+Sortilège : Attaque(6).
+(M’) Salles : A, Z, D(6), 2*O(1), T(1, feu).
+(M’) Héros : Guerrier(6), Elfe(3 {}).
+(M’) Sortilège : Attaque(6).
+Contrainte supplémentaire : (M’) n’est pas solvable.
+
+
+
+Contrat n°6 : Movement [10]
+
+Coût : 25 points.
+
+Niveau 6.1 : Room Rumble
+Salles : A, Z, E(feu).
+Héros : Guerrier(4).
+Sortilège : Déplacement().
+(M’) Salles : A, Z, E(feu).
+(M’) Héros : Guerrier(4), Guerrier(1).
+(M’) Sortilège : Déplacement().
+Bonus : (M’) est solvable.
+
+Niveau 6.2 : Room Rumpus
+Salles : A, Z, E(feu).
+Héros : Guerrier(4).
+Sortilège : Échange().
+(M’) Salles : A, Z, E(feu).
+(M’) Héros : Guerrier(4), Guerrier(1).
+(M’) Sortilèges : 2*Échange().
+Bonus : (M’) est solvable.
+
+Niveau 6.3 : Little Big Orbit
+Salles : A, Z, E(feu).
+Héros : Mécanicien(3, {E:1}).
+Sortilège : Échange().
+
+Niveau 6.4 : A Step Back
+Salles : A, Z, D(1), 2*O(1).
+Héros : 2*Guerrier(2).
+Sortilèges : Déplacement(), Échange().
+
+Niveau 6.5 : Forced Confinement
+Salles : A, Z, D(2).
+Héros : Guerrier(5), Guerrier(3).
+Sortilèges : Attaque(3), Déplacement().
+
+Niveau 6.6 : Priority Management
+Salles : A, Z, D(4).
+Héros : Guerrier(7), Mécanicien(7, {D:5}).
+Sortilège : Attaque(3).
+
+Niveau 6.7 : Dungeon Twister
+Salles : A, Z, D(1), E(feu), P(1, 1).
+Héros : Guerrier(13).
+Sortilèges : Déplacement(), Échange().
+(M’) Salles : A, Z, D(1), E(feu), P(1, 1).
+(M’) Héros : Guerrier(14).
+(M’) Sortilèges : Déplacement(), Échange().
+(M’’) Salles : A, Z, D(1), E(feu), P(1, 1).
+(M’’) Héros : Guerrier(13), Guerrier(1).
+(M’’) Sortilèges : Déplacement(), Échange().
+Bonus 1 : (M’) et (M’’) sont solvables.
+Bonus 2 : (M’) est solvable, mais pas (M’’).
+Bonus 3 : (M’’) est solvable, mais pas (M’).
+
+Niveau 6.8 : Sliding Puzzle
+Salles : A, Z, D(1), 2*E(eau).
+Héros : Mécanicien(2, {D:5, E:10}).
+
+Niveau 6.9 : Treadmill Thrill
+Salles : A, Z, 2*D(1), P(1, 6).
+Héros : Guerrier(10), Guerrier(1).
+Sortilèges : Attaque(1), 2*Déplacement().
+
+Niveau 6.10 : Torture Tour
+Salles : A, Z, D(1), E(feu), 2*E(eau).
+Héros : Elfe(3, {feu, eau}), Mécanicien(2, {D:10}).
+Sortilèges : 2*Déplacement().
+
+
+
+Contrat n°7 : Customization [11]
+
+Coût : 30 points.
+
+Niveau 7.1 : Boundless
+Variable : λ = choix(1, ℝ).
+Salles : A, Z, D(42), D(λ).
+Héros : Guerrier(5).
+(M’) Salles : A, Z, D(42), D(λ).
+(M’) Héros : Elfe(5, {}).
+Contrainte supplémentaire : (M’) n'est pas solvable.
+Bonus : Dans (M), aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Niveau 7.2 : Unwanted Connection
+Variable : λ = #{r ∈ Π : r et A sont reliées}.
+Salles : A, Z, D(1), O(1), T(1, feu).
+Héros : Guerrier(2λ-3).
+
+Niveau 7.3 : Magical Tinkering
+Salles : A, Z, D(3).
+Héros : Guerrier(1), Guerrier(3), Guerrier(1).
+Sortilèges : Attaque(1), Attaque(3), Sélection(faux).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Niveau 7.4 : One Way Street
+Variables : (λ, μ) = choix(2, éléments).
+Salles : A, Z, E(λ), E(μ).
+Héros : Guerrier(2).
+(M’) Salles : Z, A, E(λ), E(μ).
+(M’) Héros : Guerrier(2).
+Contrainte supplémentaire : (M’) n'est pas solvable.
+
+Niveau 7.5 : Impractical Toll
+Variables : λ = choix(1, ℕ), μ = choix(1, ℕ).
+Salles : A, Z, O(λ), O(μ), T(λ, feu), T(μ, glace).
+Héros : Guerrier(9).
+
+Niveau 7.6 : Abstract Art
+Variable : λ = #{sortilèges utilisés}.
+Salles : A, Z, D(λ).
+Héros : choix(4, {Guerrier(8), Guerrier(λ+1), Guerrier(λ+4), Guerrier(3λ)}).
+Sortilèges : ∞*Attaque(λ).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif. 
+Bonus 1 : Guerrier(8) apparaît avant Guerrier(λ+4).
+Bonus 2 : Guerrier(8) apparaît après Guerrier(λ+4).
+
+Niveau 7.7 : Dance of Fire and Ice
+Salles : A, Z, E(feu), E(glace).
+Héros : Guerrier(4), Elfe(4).
+Sortilèges : Déplacement(), Échange(), Sélection(faux).
+(M’) Salles : A, Z, E(feu), E(glace).
+(M’) Héros : Guerrier(4), Elfe(4).
+(M’) Sortilèges : Déplacement(), Échange().
+Contrainte supplémentaire : (M’) n'est pas solvable.
+
+Niveau 7.8 : Golden Snap
+Variables : λ = choix(1, ℕ), μ = choix(1, ℕ*).
+Salles : A, Z, D(1), P(λ, ∞), 2*O(2), T(1, eau).
+Héros : Guerrier(μ).
+Contrainte supplémentaire : À la mort du héros, chaque salle O doit contenir 1 or.
+Niveau 7.9 : The Level Where You Are The Hero
+Variables : (λ, μ, α, β, γ) =  choix(5, ℕ*).
+Salles : A, Z, D(3), E(feu), E(poison), P(2, 1).
+Héros : Guerrier(λ), Elfe(μ, {}), Mécanicien(α, {E(feu):1}), Elfe(β, {}), Guerrier(γ).
+Sortilège : Téléportation(1).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Niveau 7.10 : Pick Your Poison
+Salles : A, Z, D(1), D(-1), E(feu).
+Héros : choix(2, {Guerrier(12), Elfe(9, {}), Mécanicien(11,  {D(-1):1})}).
+Sortilèges : Attaque(5), Échange().
+
+Niveau 7.11 : Account Freeze
+Variables :
+(α, β, γ) = choix(3, ℝ)
+λ = #{affectations du héros actif dans (M)}
+μ = #{affectations du héros actif dans (M’)}
+Salles : A, Z, E(glace), O(α), T(β, {glace}), T(γ, {glace}).
+Héros : Guerrier(5), Elfe(5, {glace}).
+Sortilèges : Attaque(λ), Téléportation(∞), Sélection(faux).
+(M’) Salles : A, Z, E(glace), O(α), T(β, {glace}), T(γ, {glace}).
+(M’) Héros : Guerrier(5), Elfe(5, {glace}).
+(M’) Sortilège : Attaque(μ), Téléportation(∞).
+Contrainte supplémentaire : (M’) n’est pas solvable.
+
+
+
+Contrat n°8 : Hypnosis [9]
+
+Coût : 35 points.
+
+Niveau 8.1 : Nap Time
+Salles : A, Z, D(1).
+Héros : 2*Guerrier(2).
+Sortilèges : Attaque(1), Somnolence().
+
+Niveau 8.2 : Simulating Sleepwalking
+Salles : A, Z, E(feu).
+Héros : choix(2, {Guerrier(5), Mécanicien(1, {E:1})}.
+Sortilèges : Attaque(1), Somnolence().
+
+Niveau 8.3 : Dream Trap
+Salles : A, Z, D(1).
+Héros : 3*Guerrier(1).
+Sortilèges : Attaque(1), Sélection(faux), 3*Somnolence(), 4*Réveil().
+Contrainte supplémentaire : Tous les sortilèges doivent être utilisés.
+
+Niveau 8.4 : Alarm Clock
+Variable : λ = #{héros vivants présents dans le donjon}.
+Salles : A, Z, D(λ).
+Héros : Guerrier(3), Guerrier(4), Guerrier(2).
+Sortilèges : Attaque(1), 2*Somnolence(), Réveil().
+
+Niveau 8.5 : Chloroform Smuggling
+Salles : A, Z, D(1), D(2), D(3), P(1, 2), O(1).
+Héros : choix(4, (Guerrier(9), Guerrier(9), Elfe(8, {}), Elfe(10, {}))).
+Sortilèges : Attaque(1), Somnolence().
+Contrainte supplémentaire : Un héros meurt avec de l'or si et seulement si c'est un Guerrier.
+
+Niveau 8.6 : Sleep Cycle
+Salles : A, Z, D(1), D(15), E(glace), O(1), 2*T(1, feu).
+Héros : Elfe(14, {}), Elfe(12, {glace}).
+Sortilèges : ∞*Somnolence, ∞*Réveil.
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Niveau 8.7 : Lucid Dream
+Variable : λ = choix(1, éléments).
+Salles : A, Z, D(1), E(λ).
+Héros : Guerrier(1), Elfe(1, {λ}), Guerrier(1).
+Sortilèges : Déplacement(), Sélection(faux), Somnolence(), 2*Réveil().
+Contrainte supplémentaire : Les héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.
+
+Niveau 8.8 : Lucid Lullaby
+Salles : A, Z, D(1), E(choix(1, éléments)).
+Héros : 2*Guerrier(1).
+Sortilèges : Téléportation(1), Échange(), Sélection(faux), Somnolence().
+Contrainte supplémentaire : Les héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.
+
+Niveau 8.9 : Lucid Nightmare
+Variable : (λ, μ) = choix(2, éléments).
+Salles : A, Z, E(λ), E(μ), O(0), O(1), T(1, feu).
+Héros : Guerrier(3), Elfe(3, {μ}), Guerrier(3).
+Sortilèges : Attaque(1), Déplacement(), Somnolence().
+Contraintes supplémentaires :
+Les héros ne peuvent mourir simultanément.
+Les héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.
+
+
+Contrat n°9 : Artillery [7]
+
+Coût : 40 points.
+
+Niveau 9.1 : Friendly Fire
+Salles : A, Z, D(1), E(feu).
+Héros : Guerrier(5), Artilleur(1, 1, ∞).
+Sortilège : Somnolence().
+
+Niveau 9.2 : Far West
+Salles : A, Z, 3*O(1), T(1, glace), C(1).
+Héros : Guerrier(4).
+
+Niveau 9.3 : 
+Salles : A, Z, E(feu), E(poison), P(1, 1).
+Héros : Artilleur(2, 1, ∞), Elfe(3, {}).
+
+Niveau 9.4 : 
+Variable : (λ, μ) = choix(2, éléments).
+Salles : A, Z, E(λ), E(μ), C(1).
+Héros : Guerrier(14).
+
+Niveau 9.5 : Mutual Exclusion
+Salles : A, Z, E(feu), O(0).
+Héros : Mécanicien(6, {O:1}), Artilleur(1, 3, 2).
+Sortilège : Téléportation(1).
+(M’) Salles : A, Z, E(feu), O(0).
+(M’) Héros : Artilleur(1, 3, 2), Mécanicien(6, {O:1}).
+(M’) Sortilèges : Téléportation(1), Sélection(faux).
+Bonus : (M’) est solvable.
+
+Niveau 9.6 : 
+Variable : (α, β, γ) = choix(3, éléments).
+Salles : A, Z, D(1), E(α), E(β), E(γ), C(2).
+Héros : Guerrier(7), Elfe(10, {γ}), Guerrier(7).
+Sortilège : Somnolence().
+
+Niveau 9.7 : Cereal Killer
+Salles : A, Z, D(1), 2*E(eau), 2*O(1), T(2, eau).
+Héros : Artilleur(1, 8, ∞).
+
+Niveau copié collé
+Salles : A, Z, D(1), E(feu), E(eau), E(glace), C(∞, 2).
+Héros : Guerrier(7), Elfe(10, {eau}), Guerrier(7).
+Sortilège : Somnolence().
+
+
+Contrat n°10 : Return to Basics
+
+Coût : 45 points.
+
+Niveau 10.1 :
+Salles : A, 2*Z, E(feu).
+Héros : Guerrier(3).
+(M’) Salles : A, 2*Z, E(feu).
+(M’) Héros : Elfe(3, {}).
+Contrainte supplémentaire : (M’) n'est pas solvable.
+
+Niveau 10.2 : 
+Salles : 2*A, Z, E(feu).
+Héros : Guerrier(3), Elfe(3, {}).
+(M’) Salles : 2*A, Z, E(feu).
+(M’) Héros : Elfe(3, {}).
+Contrainte supplémentaire : (M’) n'est pas solvable.
+
+Niveau 10.3 : Modern Foundations
+Salles : 2*A, 2*Z, D(5), E(feu), E(eau).
+Héros : Guerrier(5), Elfe(5, {eau}), Guerrier(3).
+Sortilège : Attaque(2).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Niveau 10.4 : The Even Squad
+Salles : 3*A, Z, D(1), D(3), D(5), D(7).
+Héros : choix(3, {Guerrier(4), Guerrier(6), Guerrier(8), Guerrier(10)}).
+Sortilège : Déplacement().
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Niveau 10.5 : Balancing Act
+Salles : A, 2*Z, D(5), E(feu), E(poison).
+Héros : Guerrier(11), Elfe(10, {}).
+Sortilèges : Échange(), Somnolence(), Réveil().
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Niveau 10.6 : Familial Loophole
+Salles : A, 2*Z, E(feu), E(poison).
+Héros : Artilleur(2, ∞, ∞).
+
+Niveau 10.7 : Zipcaster Amateur
+Salles : 3*A, Z, 3*E(feu ou poison), P(1, ∞).
+Héros : Artilleur(_).
+Bonus : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+
+Contrat n°11 : Inventory
+Blabla
+
+
+Contrat n°12 : Celebrity
+Blabla
+
+
+Contrat n°13 : Fortune
+Blabla
+
+
+Contrat n°14 : Necromancy
+Blabla
+
+
+Contrat n°15 : Awareness
+Blabla
+
+
+Test : si on mettait artilleur et somnolence avant déplacement
+Niveau : 
+Salles : A, Z, D(1), 2*E(feu).
+Héros : Artilleur(3, 1).
+
+Niveau :
+Salles : A, Z, D(1).
+Héros : Guerrier(2), Guerrier(2).
+Sortilèges : Attaque(1), Somnolence().
+
+Niveau :
+Salles : A, Z, D(1).
+Héros : Guerrier(2), Guerrier(2).
+Sortilèges : Attaque(1), Somnolence().
+
+Niveau : Sleep Cycle
+Salles : A, Z, D(1), D(15), E(glace), O(1), 2*T(1, feu).
+Héros : Elfe(14, {}), Elfe(12, {glace}).
+Sortilèges : λ*Somnolence, λ*Réveil.
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Quelques niveaux inutilisés
+
+Niveau 1.2
+Salles : A, Z, D(1), E(feu).
+Héros : Guerrier(2).
+Contrainte supplémentaire : dist(A, D) = dist(Z, D).
+
+Niveau 7.5 : One Way Street
+Variable : (lambda, mu)
+Salles : A, Z, D, D.
+Miroir en inversant A et Z.
+Contrainte supplémentaire : miroir non solvable.
+
+Niveau 8.5 : Dream Trap
+Variable : λ = choix(1, {éléments}).
+Salles : A, Z, D(1), E(λ).
+Héros : Guerrier(1), Elfe(1, {λ}).
+Sortilèges : Téléportation(1), Échange(), Sélection(2, faux), Somnolence().
+(M') Salles : A, Z, D(1), E(λ).
+(M’) Héros : Guerrier(1), Elfe(1, {λ}).
+(M’) Sortilèges : Échange(), Sélection(2, faux), Somnolence().
+Contrainte supplémentaire : Dans (M) et (M'), si le Guerrier meurt, alors l'Elfe doit mourir avant lui.
+Bonus 1 : (M’) est solvable.
+Bonus 2 : (M’) n'est pas solvable.
+
+Niveau 8.9 : Lucid Nightmare
+Salles : A, Z, E(feu), E(glace), O(0), O(1), T(1, eau).
+Héros : Guerrier(3), Elfe(3, {glace}), Guerrier(3).
+Sortilèges : Attaque(1), Déplacement(), Somnolence().
+Contraintes supplémentaires :
+Aucun héros ne peut mourir en même temps.
+Les héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.
+
+Niveau 9.1 : Tower Defense
+Salles : A, Z, D(1), 2*E(feu).
+Héros : Artilleur(1, 2, ∞), Artilleur(1, 3, ∞), Guerrier(2).
+
+Niveau 9.3 : Sniper Wannabe
+Salles : A, Z, D(1), E(feu).
+Héros : Artilleur(1, 2, ∞).
