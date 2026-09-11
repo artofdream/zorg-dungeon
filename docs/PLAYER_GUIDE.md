@@ -65,7 +65,8 @@ flowchart TD
 The letters are **types**, not a required path. A legal dungeon is one connected graph of whatever rooms the level listed ([[FR-5]], [[FR-6]]). Diagonals do not count. `C` is shown dashed because it is deferred.
 
 ```mermaid
-flowchart LR
+flowchart TB
+  C["C deferred FR-18"] -.-> defined
   subgraph defined [Defined types — not a required layout]
     A["A spawn FR-11"]
     Z["Z Zorg FR-12"]
@@ -75,7 +76,6 @@ flowchart LR
     O["O gold FR-16"]
     T["T tax FR-17"]
   end
-  C["C deferred FR-18"] -.-> defined
 ```
 
 `dist(r, s)` is Manhattan distance between placed rooms ([[FR-10]]). Levels can hang extra win conditions on those distances ([[FR-44]]).

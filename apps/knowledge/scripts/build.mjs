@@ -156,6 +156,22 @@ function inlineFormat(text) {
     if (/^(fr|nfr)-\d+$/.test(cleanTarget)) {
       return `<a href="honesty.html#${cleanTarget}" class="wikilink requirement-badge">${cleanLabel}</a>`;
     }
+    const pageAlias = {
+      game_spec: "spec.html",
+      status_ledger: "honesty.html",
+      findings: "findings.html",
+      agents: "architecture.html",
+      player_guide: "guide.html",
+    };
+    if (pageAlias[cleanTarget]) {
+      return `<a href="${pageAlias[cleanTarget]}" class="wikilink">${cleanLabel}</a>`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleanTarget)) {
+      return `<a href="journal.html" class="wikilink">${cleanLabel}</a>`;
+    }
+    if (/^\d{4}-/.test(cleanTarget)) {
+      return `<a href="adr.html" class="wikilink">${cleanLabel}</a>`;
+    }
     return `<a href="${cleanTarget}.html" class="wikilink">${cleanLabel}</a>`;
   });
   // Markdown links [text](url)
@@ -207,7 +223,12 @@ function pageShell({ title, current, content }) {
       theme: "dark",
       securityLevel: "strict",
     });
-    await mermaid.run({ querySelector: ".mermaid" });
+    const nodes = [...document.querySelectorAll("pre.mermaid")];
+    for (let i = 0; i < nodes.length; i++) {
+      const source = nodes[i].textContent ?? "";
+      const { svg } = await mermaid.render("zorg-mermaid-" + i, source);
+      nodes[i].innerHTML = svg;
+    }
   </script>
 </head>
 <body class="is-wide page-${current}">
