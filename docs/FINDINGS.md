@@ -107,3 +107,10 @@ Docker daemon socket`. `git fetch` / `git reset` succeeded without sudo;
 command now matches: `sudo docker compose -f deploy/compose.prod.yaml
 up -d --build web`.
 
+Path filters originally omitted workspace manifests that
+`apps/web/Dockerfile` copies (`package.json`, `pnpm-lock.yaml`,
+`pnpm-workspace.yaml`, `tsconfig.base.json`). A lockfile-only merge
+would skip CD and leave prod stale again. Follow-up adds those paths
+to the sensor. Recurrence stays 1 — this is tightening the first
+sensor, not a second miss.
+

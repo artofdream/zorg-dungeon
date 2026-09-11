@@ -5,8 +5,13 @@ on:
   push:
     branches: [main]
     paths:
+      # Keep in sync with apps/web/Dockerfile COPY inputs.
       - "apps/web/**"
       - "packages/engine/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig.base.json"
       - "deploy/**"
       - ".github/workflows/deploy-web.yml"
 
