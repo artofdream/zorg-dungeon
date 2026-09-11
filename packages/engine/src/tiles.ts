@@ -24,6 +24,9 @@ export const NATIVE_HATCH: Cardinal = "right";
 /** FR-20 / FR-31 Warrior (and shared) tie order at orientation 0. */
 export const TIE_BREAK_ORDER: readonly Cardinal[] = ["right", "up", "left", "down"];
 
+/** FR-24 Mechanic tie order at orientation 0: up → right → down → left. */
+export const MECHANIC_TIE_BREAK_ORDER: readonly Cardinal[] = ["up", "right", "down", "left"];
+
 export const CARDINAL_DELTA: Record<Cardinal, { dx: number; dy: number }> = {
   right: { dx: 1, dy: 0 },
   up: { dx: 0, dy: 1 },
@@ -266,6 +269,11 @@ function rotateCardinal90Ccw(dir: Cardinal): Cardinal {
  */
 export function orientedTieBreak(orientation: Orientation): Cardinal[] {
   return TIE_BREAK_ORDER.map((dir) => rotateCardinal(dir, orientation));
+}
+
+/** FR-24 / FR-31: Mechanic directional priorities, rotated with orientation. */
+export function orientedMechanicTieBreak(orientation: Orientation): Cardinal[] {
+  return MECHANIC_TIE_BREAK_ORDER.map((dir) => rotateCardinal(dir, orientation));
 }
 
 export function deltaFor(dir: Cardinal): { dx: number; dy: number } {

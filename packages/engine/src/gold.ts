@@ -106,6 +106,19 @@ export function clonePiles(piles: ReadonlyMap<string, number>): Map<string, numb
   return new Map(piles);
 }
 
+export function parsePilesKey(key: string): Map<string, number> {
+  const piles = new Map<string, number>();
+  if (!key) return piles;
+  for (const part of key.split(";")) {
+    const split = part.lastIndexOf(":");
+    if (split <= 0) continue;
+    const id = part.slice(0, split);
+    const amount = Number(part.slice(split + 1));
+    if (id && !Number.isNaN(amount) && amount > 0) piles.set(id, amount);
+  }
+  return piles;
+}
+
 export function clonePurse(purse: readonly GoldUnit[]): GoldUnit[] {
   return purse.map((unit) => ({ sourceRoomId: unit.sourceRoomId }));
 }

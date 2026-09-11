@@ -59,7 +59,10 @@ export function roomCenterLocal(): CellPos {
   return { x: 2, y: 2 };
 }
 
-export function buildWalkGrid(layout: DungeonLayout): WalkGrid {
+export function buildWalkGrid(
+  layout: DungeonLayout,
+  clearedCells?: ReadonlySet<string>,
+): WalkGrid {
   const cells = new Map<string, WalkCell>();
   for (const room of layout.rooms) {
     const tile = resolvedTile(room);
@@ -67,12 +70,14 @@ export function buildWalkGrid(layout: DungeonLayout): WalkGrid {
       for (let lx = 0; lx < ROOM_SIZE; lx++) {
         const kind = tileCell(tile, lx, ly);
         const world = localToWorld(room, { x: lx, y: ly });
-        cells.set(cellKey(world), {
+        const key = cellKey(world);
+        const cleared = clearedCells?.has(key) === true && kind !== "wall";
+        cells.set(key, {
           world,
           roomId: room.id,
           local: { x: lx, y: ly },
-          kind,
-          element: elementOnCell(room, kind),
+          kind: cleared ? "open" : kind,
+          element: cleared ? undefined : elementOnCell(room, kind),
           toll: tollOnCell(room, kind),
         });
       }
@@ -129,6 +134,15 @@ function isZCell(layout: DungeonLayout, roomId: string): boolean {
   return layout.rooms.find((r) => r.id === roomId)?.def.type === "Z";
 }
 
+function isTargetRoom(
+  layout: DungeonLayout,
+  roomId: string,
+  targetRoomIds?: readonly string[],
+): boolean {
+  if (targetRoomIds) return targetRoomIds.includes(roomId);
+  return isZCell(layout, roomId);
+}
+
 /**
  * FR-14: one chosen direction. Water is not a voluntary step. Entering ice
  * (and not immune) slides through walkable cells until a wall or Z.
@@ -180,22 +194,24 @@ export function roomIdAt(grid: WalkGrid, pos: CellPos): string | undefined {
 }
 
 /**
- * Action-distance to Z on the FR-14 movement graph (ice slides, water
- * blocked unless immune). Unreachable cells are omitted. Ignores HP and
- * other heroes (FR-20, FR-27, FR-28).
+ * Action-distance to any of `targetRoomIds` on the FR-14 movement graph.
+ * Unreachable cells are omitted. Ignores HP and other heroes (FR-20,
+ * FR-27, FR-28). FR-25 reuses this for non-Z weight targets.
  */
-export function distanceToZ(
+export function distanceToRooms(
   layout: DungeonLayout,
   grid: WalkGrid,
+  targetRoomIds: readonly string[],
   immunities: readonly ElementType[] = [],
   gold = 0,
 ): Map<string, number> {
-  const incoming = reverseMoveGraph(layout, grid, immunities, gold);
+  const incoming = reverseMoveGraph(layout, grid, immunities, gold, targetRoomIds);
   const dist = new Map<string, number>();
   const queue: CellPos[] = [];
+  const targets = new Set(targetRoomIds);
 
   for (const room of layout.rooms) {
-    if (room.def.type !== "Z") continue;
+    if (!targets.has(room.id)) continue;
     for (let ly = 0; ly < ROOM_SIZE; ly++) {
       for (let lx = 0; lx < ROOM_SIZE; lx++) {
         const world = localToWorld(room, { x: lx, y: ly });
@@ -227,12 +243,33 @@ export function distanceToZ(
   return dist;
 }
 
+/**
+ * Action-distance to Z on the FR-14 movement graph (ice slides, water
+ * blocked unless immune). Unreachable cells are omitted. Ignores HP and
+ * other heroes (FR-20, FR-27, FR-28).
+ */
+export function distanceToZ(
+  layout: DungeonLayout,
+  grid: WalkGrid,
+  immunities: readonly ElementType[] = [],
+  gold = 0,
+): Map<string, number> {
+  return distanceToRooms(
+    layout,
+    grid,
+    layout.rooms.filter((r) => r.def.type === "Z").map((r) => r.id),
+    immunities,
+    gold,
+  );
+}
+
 /** Cells that can reach `to` in one resolveStep (reverse of the ice-aware graph). */
 function reverseMoveGraph(
   layout: DungeonLayout,
   grid: WalkGrid,
   immunities: readonly ElementType[],
   gold = 0,
+  targetRoomIds?: readonly string[],
 ): Map<string, CellPos[]> {
   const incoming = new Map<string, CellPos[]>();
   const bump = (to: string, from: CellPos) => {
@@ -248,12 +285,12 @@ function reverseMoveGraph(
       if (!path?.length) continue;
       const land = path[path.length - 1];
       if (!land) continue;
-      // A slide that crosses Z "lands" on the first Z cell for distance.
-      const zHit = path.find((p) => {
+      // A slide that crosses a target "lands" on the first target cell.
+      const hit = path.find((p) => {
         const id = roomIdAt(grid, p);
-        return id !== undefined && isZCell(layout, id);
+        return id !== undefined && isTargetRoom(layout, id, targetRoomIds);
       });
-      bump(cellKey(zHit ?? land), cell.world);
+      bump(cellKey(hit ?? land), cell.world);
     }
   }
   return incoming;
@@ -273,6 +310,7 @@ export function chooseWarriorStep(
   layout?: DungeonLayout,
   economy?: PathEconomy,
   roomId?: string,
+  targetRoomIds?: readonly string[],
 ): Cardinal | undefined {
   if (layout && economy && shouldUseEconomy(layout, economy)) {
     return chooseWarriorEconomy(
@@ -283,6 +321,7 @@ export function chooseWarriorStep(
       orientation,
       immunities,
       economy,
+      targetRoomIds,
     );
   }
 
@@ -293,7 +332,7 @@ export function chooseWarriorStep(
   for (const dir of orientedTieBreak(orientation)) {
     const path = resolveStep(grid, from, dir, immunities, layout, gold);
     if (!path?.length) continue;
-    const land = landingForDistance(grid, path, layout);
+    const land = landingForDistance(grid, path, layout, targetRoomIds);
     const nDist = dist.get(cellKey(land));
     if (nDist !== undefined && nDist < here) {
       return dir;
@@ -329,6 +368,7 @@ function chooseWarriorEconomy(
   orientation: Orientation,
   immunities: readonly ElementType[],
   economy: PathEconomy,
+  targetRoomIds?: readonly string[],
 ): Cardinal | undefined {
   const dirs = orientedTieBreak(orientation);
   const start: WarriorEconomyState = {
@@ -362,7 +402,15 @@ function chooseWarriorEconomy(
       let last = path[path.length - 1];
 
       for (const cell of path) {
-        const applied = applyPlannedEconomy(layout, grid, cell, roomNow, goldNow, pilesNow);
+        const applied = applyPlannedEconomy(
+          layout,
+          grid,
+          cell,
+          roomNow,
+          goldNow,
+          pilesNow,
+          targetRoomIds,
+        );
         if (applied.invalid) {
           invalid = true;
           break;
@@ -417,6 +465,7 @@ function applyPlannedEconomy(
   roomId: string,
   gold: number,
   piles: Map<string, number>,
+  targetRoomIds?: readonly string[],
 ): {
   gold: number;
   roomId: string;
@@ -432,8 +481,7 @@ function applyPlannedEconomy(
   let reachedZ = false;
 
   if (nextRoomId !== roomId) {
-    const def = layout.rooms.find((r) => r.id === nextRoomId)?.def;
-    if (def?.type === "Z") reachedZ = true;
+    if (isTargetRoom(layout, nextRoomId, targetRoomIds)) reachedZ = true;
     const pile = piles.get(nextRoomId) ?? 0;
     if (pile > 0) {
       nextGold += pile;
@@ -457,13 +505,14 @@ function landingForDistance(
   grid: WalkGrid,
   path: CellPos[],
   layout: DungeonLayout | undefined,
+  targetRoomIds?: readonly string[],
 ): CellPos {
   if (layout) {
-    const zHit = path.find((p) => {
+    const hit = path.find((p) => {
       const id = roomIdAt(grid, p);
-      return id !== undefined && isZCell(layout, id);
+      return id !== undefined && isTargetRoom(layout, id, targetRoomIds);
     });
-    if (zHit) return zHit;
+    if (hit) return hit;
   }
   return path[path.length - 1] ?? path[0]!;
 }
