@@ -1,0 +1,7 @@
+id: deluxe-9.6
+Contract: 9
+Niveau 9.6 : 
+Variable : (α, β, γ) = choix(3, éléments).
+Salles : A, Z, D(1), E(α), E(β), E(γ), C(2).
+Héros : Guerrier(7), Elfe(10, {γ}), Guerrier(7).
+Sortilège : Somnolence().

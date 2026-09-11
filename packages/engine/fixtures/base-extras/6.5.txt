@@ -1,0 +1,4 @@
+id: base-extras-6.5
+Niveau 6.5 : “”
+Salles : A, Z, O(1), T(1, feu), T(1, poison)
+Héros : Guerrier(9)

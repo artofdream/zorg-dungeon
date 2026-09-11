@@ -1,0 +1,7 @@
+id: base-extras-10.6
+Niveau 10.6 : “Displacement - Beginner Course”
+Salles : A, Z, D(1), 2*O(1)
+Héros : Guerrier(2)
+Sortilège : Déplacement
+
+Difficulté : 1

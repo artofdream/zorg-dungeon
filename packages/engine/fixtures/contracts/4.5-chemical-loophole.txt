@@ -1,0 +1,7 @@
+id: deluxe-4.5
+Contract: 4
+Niveau 4.5 : Chemical Loophole
+Salles : A, Z, D(1), E(poison), P(1, 5).
+Héros : Elfe(1, {}).
+Contrainte supplémentaire : dist(A, Z) = 1.
+Bonus : dist(A, P) = dist(A, E) + 2.

@@ -1,0 +1,9 @@
+id: deluxe-3.1
+Contract: 3
+Niveau 3.1 : Unfair Rivalry
+Salles : A, Z, E(feu).
+Héros : Guerrier(3).
+Sortilège : Attaque(1).
+(M’) Salles : A, Z, E(feu).
+(M’) Héros : Guerrier(3).
+Contrainte supplémentaire : (M’) n’est pas solvable.

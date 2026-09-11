@@ -1,0 +1,6 @@
+id: deluxe-2.2
+Contract: 2
+Niveau 2.2 : Elemental Sanctuary
+Salles : A, Z, E(feu), E(eau), E(glace).
+Héros : Elfe(3, {eau}), Elfe(3, {glace}).
+Contrainte supplémentaire : dist(A, Z) != 2.

@@ -1,0 +1,6 @@
+id: deluxe-9.4
+Contract: 9
+Niveau 9.4 : 
+Variable : (λ, μ) = choix(2, éléments).
+Salles : A, Z, E(λ), E(μ), C(1).
+Héros : Guerrier(14).

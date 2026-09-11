@@ -1,0 +1,10 @@
+id: deluxe-7.1
+Contract: 7
+Niveau 7.1 : Boundless
+Variable : λ = choix(1, ℝ).
+Salles : A, Z, D(42), D(λ).
+Héros : Guerrier(5).
+(M’) Salles : A, Z, D(42), D(λ).
+(M’) Héros : Elfe(5, {}).
+Contrainte supplémentaire : (M’) n'est pas solvable.
+Bonus : Dans (M), aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

@@ -1,0 +1,7 @@
+id: deluxe-10.4
+Contract: 10
+Niveau 10.4 : The Even Squad
+Salles : 3*A, Z, D(1), D(3), D(5), D(7).
+Héros : choix(3, {Guerrier(4), Guerrier(6), Guerrier(8), Guerrier(10)}).
+Sortilège : Déplacement().
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

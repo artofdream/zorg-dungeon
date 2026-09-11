@@ -1,0 +1,6 @@
+id: deluxe-1.4
+Contract: 1
+Niveau 1.4 : Low Blow
+Salles : A, Z, D(2).
+Héros : Guerrier(4).
+Sortilèges : Attaque(3).

@@ -1,0 +1,10 @@
+id: deluxe-3.6
+Contract: 3
+Niveau 3.6 : Into the Multiverse
+Salles : A, Z, D(1), D(1), D(1), E(eau), E(eau), E(eau), E(eau).
+Héros : Guerrier(3).
+(M’) Salles : A, Z, E(eau), E(eau), D(1), D(1),  D(1), E(eau), E(eau).
+(M’) Héros : Guerrier(3).
+(M’’) Salles : A, Z, E(eau), E(eau), E(eau), E(eau), D(1), D(1), D(1).
+(M’’) Héros : Guerrier(3).
+Contrainte supplémentaire : (M’) et (M’’) sont solvables.

@@ -143,9 +143,9 @@ One shared model, two surfaces: a UI-free simulation library (`packages/engine`)
 | 4 | Spellbook (all eight, including Selection) | [[FR-32]]–[[FR-42]] |
 | 5 | Remaining heroes — Mechanic, Gunner + Shell, Princess (duration deferred) | [[FR-22]]–[[FR-25]] |
 | 6 | Mirror worlds and solvability search | [[FR-9]], [[FR-45]], [[FR-46]], [[NFR-4]] |
-| 7 | Content pack as fixtures; contract gating | [[FR-4]], [[NFR-5]] |
+| 7 | Content pack as fixtures; contract grouping as data (gating still open) | [[FR-4]], [[NFR-5]] |
 
-Phase 4+ engine detail is in [[GAME_SPEC]] / [[STATUS_LEDGER]]. Gunner shot-duration ([[FR-22]] third arg) stays deferred ([[NFR-8]]). Phase 7 still waits on [[FR-4]].
+Phase 4+ engine detail is in [[GAME_SPEC]] / [[STATUS_LEDGER]]. Gunner shot-duration ([[FR-22]] third arg) stays deferred ([[NFR-8]]). Phase 7 imported the authored pack as fixtures ([[NFR-5]]). [[FR-4]] point-gating is still open.
 
 ## Repo layout
 

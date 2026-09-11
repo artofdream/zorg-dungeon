@@ -1,3 +1,4 @@
+id: base-classic-12
 Niveau 12 : “Chemical Loophole”
 Salles : A, Z, D(1), E(poison), P(1, 5)
 Héros : choix(1, {Guerrier(1), Elfe(1, {}), Artilleur(1, 1)})

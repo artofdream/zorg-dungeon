@@ -27,11 +27,11 @@ const GREEN_FILES = listTxt(fixturesRoot);
 const QUARANTINE_FILES = listTxt(quarantineRoot);
 
 describe("NFR-2: base-classic corpus parse (green pack)", () => {
-  it("loads every non-quarantined fixture from disk (18 of Niveau 1–20)", () => {
-    expect(GREEN_FILES).toHaveLength(18);
-    expect(GREEN_FILES.some((name) => name.startsWith("11-") || name.startsWith("18-"))).toBe(
-      false,
-    );
+  it("loads every non-quarantined fixture from disk (Niveau 1–24 minus S5 / malformed)", () => {
+    expect(GREEN_FILES).toHaveLength(21);
+    expect(
+      GREEN_FILES.some((name) => name.startsWith("11-") || name.startsWith("18-") || name.startsWith("23-")),
+    ).toBe(false);
   });
 
   it.each(GREEN_FILES)("parses %s without error", (name) => {
@@ -105,9 +105,10 @@ describe("NFR-2: base-classic corpus parse (green pack)", () => {
     expect(n10.spells).toEqual([{ type: "Swap" }, { type: "Move" }]);
   });
 
-  it("notes residual: Niveau 21–24 were not in this extract", () => {
+  it("includes Niveau 21, 22, 24 from the Phase 7 extract", () => {
     const ids = GREEN_FILES.map((name) => parseLevel(readFixture(fixturesRoot, name)).id);
-    expect(ids.some((id) => /^base-classic-2[1-4]$/.test(id))).toBe(false);
+    expect(ids).toEqual(expect.arrayContaining(["base-classic-21", "base-classic-22", "base-classic-24"]));
+    expect(ids).not.toContain("base-classic-23");
   });
 });
 
@@ -128,7 +129,11 @@ describe("NFR-9: authoring/validation of real base-classic levels", () => {
 
 describe("S5 quarantine folder is excluded from the green suite", () => {
   it("keeps Dream Trap and Math Bath only under quarantine/", () => {
-    expect(QUARANTINE_FILES).toEqual(["11-dream-trap.txt", "18-math-bath.txt"]);
+    expect(QUARANTINE_FILES).toEqual([
+      "11-dream-trap.txt",
+      "18-math-bath.txt",
+      "23-equilibrium-atrium.txt",
+    ]);
   });
 });
 

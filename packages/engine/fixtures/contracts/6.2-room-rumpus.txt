@@ -1,0 +1,10 @@
+id: deluxe-6.2
+Contract: 6
+Niveau 6.2 : Room Rumpus
+Salles : A, Z, E(feu).
+Héros : Guerrier(4).
+Sortilège : Échange().
+(M’) Salles : A, Z, E(feu).
+(M’) Héros : Guerrier(4), Guerrier(1).
+(M’) Sortilèges : 2*Échange().
+Bonus : (M’) est solvable.

@@ -51,8 +51,26 @@ export type HeroSlot = HeroDef | ChoixDef<HeroSlot>;
 export type SpellSlot = SpellDef | ChoixDef<SpellSlot> | SpellRepeat;
 
 export interface RoomMultiplicity {
-  count: number;
+  /** Numeric count, or an unresolved source expression such as `λ` / `(3-λ)`. */
+  count: number | string;
   room: RoomSlot;
+}
+
+/** Non-choix assignment kept as source text (e.g. `λ = #{r ∈ Π : …}`). */
+export interface OpaqueAssignment {
+  name: string;
+  expression: string;
+}
+
+export function isOpaqueAssignment(value: unknown): value is OpaqueAssignment {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !("type" in value) &&
+    typeof (value as OpaqueAssignment).name === "string" &&
+    typeof (value as OpaqueAssignment).expression === "string" &&
+    !("domain" in value)
+  );
 }
 
 export type HeroType = "Warrior" | "Elf" | "Gunner" | "Mechanic" | "Princess";
@@ -130,6 +148,8 @@ export interface LevelDef {
   heroes: HeroSlot[];
   spells?: SpellSlot[];
   variables?: ChoixVariableDef[];
+  /** Source assignments that are not `choix(n, E)` — stored, not evaluated. */
+  opaqueAssignments?: OpaqueAssignment[];
   constraints?: ConstraintDef[];
   bonuses?: BonusDef[];
   /** Optional extra win conditions from source `Variante` lines (not bonuses). */
@@ -146,6 +166,9 @@ export function flattenRooms(multiplicities: RoomMultiplicity[]): RoomDef[] {
   for (const m of multiplicities) {
     if (isChoixDef(m.room)) {
       throw new Error("Cannot flatten unresolved choix rooms (player has not chosen yet).");
+    }
+    if (typeof m.count !== "number") {
+      throw new Error("Cannot flatten unresolved room multiplicity.");
     }
     for (let i = 0; i < m.count; i++) {
       result.push(JSON.parse(JSON.stringify(m.room)));

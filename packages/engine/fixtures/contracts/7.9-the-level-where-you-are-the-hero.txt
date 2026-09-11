@@ -1,0 +1,8 @@
+id: deluxe-7.9
+Contract: 7
+Niveau 7.9 : The Level Where You Are The Hero
+Variables : (λ, μ, α, β, γ) =  choix(5, ℕ*).
+Salles : A, Z, D(3), E(feu), E(poison), P(2, 1).
+Héros : Guerrier(λ), Elfe(μ, {}), Mécanicien(α, {E(feu):1}), Elfe(β, {}), Guerrier(γ).
+Sortilège : Téléportation(1).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

@@ -1,0 +1,10 @@
+id: deluxe-5.9
+Contract: 5
+Niveau 5.9 : Going Bankrupt
+Salles : A, Z, P(1, 1), 2*O(1), T(1, feu).
+Héros : Guerrier(6), Elfe(3 {}).
+Sortilège : Attaque(6).
+(M’) Salles : A, Z, D(6), 2*O(1), T(1, feu).
+(M’) Héros : Guerrier(6), Elfe(3 {}).
+(M’) Sortilège : Attaque(6).
+Contrainte supplémentaire : (M’) n’est pas solvable.

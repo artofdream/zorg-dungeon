@@ -1,0 +1,7 @@
+id: deluxe-2.3
+Contract: 2
+Niveau 2.3 : Behavior Test
+Salles : A, Z, D(3), E(feu).
+Héros : Guerrier(3), Elfe(3, {feu}).
+Sortilège : Attaque(3).
+Contrainte supplémentaire : Le donjon créé doit être carré.

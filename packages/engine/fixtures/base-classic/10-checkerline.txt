@@ -1,3 +1,4 @@
+id: base-classic-10
 Niveau 10 : “Checkerline”
 Salles : A, Z, D(1), E(feu), P(1, 1)
 Héros : Guerrier(13)

@@ -1,0 +1,10 @@
+id: deluxe-2.7
+Contract: 2
+Niveau 2.7 : Curse Removal
+Salles : A, Z, D(2), D(4), E(feu).
+Héros : Guerrier(6), Elfe(6, {}), Elfe(5, {feu}).
+Sortilèges : Attaque(1), Attaque(2), Attaque(3), Attaque(4).
+Contraintes supplémentaires : 
+Tous les sortilèges doivent être utilisés.
+Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+Bonus : Une unique salle n'est pas visitée.

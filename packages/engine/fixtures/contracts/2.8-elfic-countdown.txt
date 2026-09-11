@@ -1,0 +1,6 @@
+id: deluxe-2.8
+Contract: 2
+Niveau 2.8 : Elfic Countdown
+Salles : A, Z, D(1), 2*E(feu), E(eau), E(glace).
+Héros : Elfe(3, {glace}), Elfe(3, {eau}), Elfe(3, {}).
+Contrainte supplémentaire : Chaque héros doit mourir dans une salle différente.

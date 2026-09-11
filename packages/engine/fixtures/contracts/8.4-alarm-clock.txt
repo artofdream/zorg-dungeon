@@ -1,0 +1,7 @@
+id: deluxe-8.4
+Contract: 8
+Niveau 8.4 : Alarm Clock
+Variable : λ = #{héros vivants présents dans le donjon}.
+Salles : A, Z, D(λ).
+Héros : Guerrier(3), Guerrier(4), Guerrier(2).
+Sortilèges : Attaque(1), 2*Somnolence(), Réveil().

@@ -1,0 +1,5 @@
+id: deluxe-4.1
+Contract: 4
+Niveau 4.1 : Teleportation Station
+Salles : A, Z, E(poison), P(1, 1).
+Héros : Guerrier(6).

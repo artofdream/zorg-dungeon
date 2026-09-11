@@ -1,0 +1,7 @@
+id: deluxe-2.10
+Contract: 2
+Niveau 2.10 : Health Generator
+Salles : A, Z, D(3), D(-1), E(eau).
+Héros : Elfe(6, {}), Guerrier(9).
+Sortilège : Attaque(6).
+Bonus : dist(E, D(-1)) < dist(A, D(-1)).

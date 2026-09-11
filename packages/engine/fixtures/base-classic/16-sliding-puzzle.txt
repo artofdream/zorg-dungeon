@@ -1,3 +1,4 @@
+id: base-classic-16
 Niveau 16 : “Sliding Puzzle”
 Salles : A, Z, D(1), 2*E(eau)
 Héros : Mécanicien(2, {D:5, E:10})

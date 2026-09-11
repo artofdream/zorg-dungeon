@@ -1,0 +1,5 @@
+id: deluxe-5.2
+Contract: 5
+Niveau 5.2 : Wealth Frontier
+Salles : A, Z, D(1), O(1), T(1, feu).
+Héros : Guerrier(5).

@@ -1,0 +1,7 @@
+id: deluxe-10.3
+Contract: 10
+Niveau 10.3 : Modern Foundations
+Salles : 2*A, 2*Z, D(5), E(feu), E(eau).
+Héros : Guerrier(5), Elfe(5, {eau}), Guerrier(3).
+Sortilège : Attaque(2).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

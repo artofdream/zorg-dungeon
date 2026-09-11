@@ -1,0 +1,10 @@
+id: deluxe-8.9
+Contract: 8
+Niveau 8.9 : Lucid Nightmare
+Variable : (λ, μ) = choix(2, éléments).
+Salles : A, Z, E(λ), E(μ), O(0), O(1), T(1, feu).
+Héros : Guerrier(3), Elfe(3, {μ}), Guerrier(3).
+Sortilèges : Attaque(1), Déplacement(), Somnolence().
+Contraintes supplémentaires :
+Les héros ne peuvent mourir simultanément.
+Les héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.

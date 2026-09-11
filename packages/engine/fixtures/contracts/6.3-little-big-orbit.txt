@@ -1,0 +1,6 @@
+id: deluxe-6.3
+Contract: 6
+Niveau 6.3 : Little Big Orbit
+Salles : A, Z, E(feu).
+Héros : Mécanicien(3, {E:1}).
+Sortilège : Échange().

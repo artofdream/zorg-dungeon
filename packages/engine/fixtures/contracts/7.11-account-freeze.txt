@@ -1,0 +1,14 @@
+id: deluxe-7.11
+Contract: 7
+Niveau 7.11 : Account Freeze
+Variables :
+(α, β, γ) = choix(3, ℝ)
+λ = #{affectations du héros actif dans (M)}
+μ = #{affectations du héros actif dans (M’)}
+Salles : A, Z, E(glace), O(α), T(β, {glace}), T(γ, {glace}).
+Héros : Guerrier(5), Elfe(5, {glace}).
+Sortilèges : Attaque(λ), Téléportation(∞), Sélection(faux).
+(M’) Salles : A, Z, E(glace), O(α), T(β, {glace}), T(γ, {glace}).
+(M’) Héros : Guerrier(5), Elfe(5, {glace}).
+(M’) Sortilège : Attaque(μ), Téléportation(∞).
+Contrainte supplémentaire : (M’) n’est pas solvable.

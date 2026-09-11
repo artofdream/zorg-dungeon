@@ -1,0 +1,7 @@
+id: base-classic-24
+Niveau 24 : “Mutual Destruction”
+Salles : A, D(1), E(feu), P(1, 100)
+Héros : Princesse(13, {P:1}, 2), Mécanicien(10, {D:100, E:10})
+Sortilège : Attaque(1), Déplacement
+
+Difficulté : 3

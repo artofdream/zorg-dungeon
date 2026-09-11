@@ -1,0 +1,10 @@
+id: deluxe-9.5
+Contract: 9
+Niveau 9.5 : Mutual Exclusion
+Salles : A, Z, E(feu), O(0).
+Héros : Mécanicien(6, {O:1}), Artilleur(1, 3, 2).
+Sortilège : Téléportation(1).
+(M’) Salles : A, Z, E(feu), O(0).
+(M’) Héros : Artilleur(1, 3, 2), Mécanicien(6, {O:1}).
+(M’) Sortilèges : Téléportation(1), Sélection(faux).
+Bonus : (M’) est solvable.

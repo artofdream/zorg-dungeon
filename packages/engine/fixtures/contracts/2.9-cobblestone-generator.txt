@@ -1,0 +1,6 @@
+id: deluxe-2.9
+Contract: 2
+Niveau 2.9 : Cobblestone Generator
+Salles : A, Z, E(feu), E(eau).
+Héros : Guerrier(6), Elfe(9, {eau}).
+Sortilège : Attaque(6).

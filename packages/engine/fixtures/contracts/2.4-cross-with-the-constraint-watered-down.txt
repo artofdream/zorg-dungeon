@@ -1,0 +1,6 @@
+id: deluxe-2.4
+Contract: 2
+Niveau 2.4 : Cross With the Constraint - Watered Down
+Salles : A, Z, 2*D(1), E(feu), E(eau).
+Héros : Guerrier(4).
+Contrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.

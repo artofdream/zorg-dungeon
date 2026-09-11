@@ -1,0 +1,8 @@
+id: deluxe-4.9
+Contract: 4
+Niveau 4.9 : Wrong Warp
+Salles : A, Z, D(1), P(∞, 1), P(10, x↦1+2*⌊1/x⌋).
+Héros : Guerrier(2).
+(M’) Salles : A, Z, D(1), P(∞, 1), P(10, x↦1+2*⌊1/x⌋).
+(M’) Héros : Elfe(2, {}).
+Contrainte supplémentaire : (M’) n’est pas solvable.

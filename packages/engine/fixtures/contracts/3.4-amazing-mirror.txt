@@ -1,0 +1,8 @@
+id: deluxe-3.4
+Contract: 3
+Niveau 3.4 : Amazing Mirror
+Salles : A, Z, D(1), D(2), D(3).
+Héros : Guerrier(4).
+(M’) Salles : D(2), D(3), D(1), A, Z.
+(M’) Héros : Guerrier(3).
+Contrainte supplémentaire : (M’) est solvable.

@@ -1,0 +1,9 @@
+id: base-classic-22
+Niveau 22 : “Why Displacing A Population Is Inappropriate”
+Variable : λ = choix(1, {1, 2})
+Salles : λ*A, (3-λ)*Z, 3*D(1)
+Héros : 3*Guerrier(3)
+Sortilèges : Échange, 3*Déplacement
+Contrainte supplémentaire : Au moins deux salles D différentes doivent être bougées par Déplacement.
+
+Difficulté : 3

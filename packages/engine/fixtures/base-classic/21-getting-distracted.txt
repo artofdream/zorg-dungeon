@@ -1,0 +1,8 @@
+id: base-classic-21
+Niveau 21 : “Getting Distracted”
+Salles : A, Z, D(2), D(3), E(glace)
+Héros : Princesse(7, {choix(1, Π):1}, 4), Guerrier(6)
+Sortilège : Banalité
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+
+Difficulté : 2

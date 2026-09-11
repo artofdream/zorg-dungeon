@@ -1,3 +1,4 @@
+id: base-classic-11
 Niveau 11 : “Dream Trap”
 Salles : A, Z, E(choix(1, {éléments})), D(1)
 Héros : Guerrier(1)

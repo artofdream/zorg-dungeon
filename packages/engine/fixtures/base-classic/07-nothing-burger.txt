@@ -1,3 +1,4 @@
+id: base-classic-7
 Niveau 7 : “Nothing Burger”
 Salles : A, Z, 2xD(1), E(feu), E(eau)
 Héros : Elfe(6, {feu, eau})

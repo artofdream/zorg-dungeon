@@ -1,0 +1,6 @@
+id: deluxe-4.2
+Contract: 4
+Niveau 4.2 : Science-Fiction Station
+Salles : A, Z, D(1), E(poison), P(1, 1).
+Héros : Guerrier(17).
+Sortilège : Téléportation(1).

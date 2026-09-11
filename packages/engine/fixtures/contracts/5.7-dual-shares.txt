@@ -1,0 +1,10 @@
+id: deluxe-5.7
+Contract: 5
+Niveau 5.7 : Dual Shares
+Salles : A, Z, 2*D(3), E(feu), E(glace), 2*O(1).
+Héros : Guerrier(6), Elfe(3, {glace}).
+(M’) Salles : A, Z, 2*D(3), E(feu), E(glace), 2*O(1).
+(M’) Héros : Guerrier(6), Elfe(3, {}).
+Contrainte supplémentaire : Dans (M), chaque héros doit posséder une quantité impaire d’or au moment de sa mort.
+Bonus 1 : La contrainte supplémentaire est toujours valable dans (M’).
+Bonus 2 : La contrainte supplémentaire n’est plus valable dans (M’).

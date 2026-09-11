@@ -1,0 +1,6 @@
+id: base-extras-9.6
+Niveau 9.6 : “”
+Salles : A, Z, D(1), E(feu), E(poison), P(2, x↦5-2x)
+Héros : Elfe(15, {poison}), Elfe(17, {feu})
+Sortilèges : 2*Téléportation(1)
+Variante : Le pouvoir de la salle P doit être utilisé 4 fois.

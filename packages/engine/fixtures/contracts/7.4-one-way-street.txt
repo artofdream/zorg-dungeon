@@ -1,0 +1,9 @@
+id: deluxe-7.4
+Contract: 7
+Niveau 7.4 : One Way Street
+Variables : (λ, μ) = choix(2, éléments).
+Salles : A, Z, E(λ), E(μ).
+Héros : Guerrier(2).
+(M’) Salles : Z, A, E(λ), E(μ).
+(M’) Héros : Guerrier(2).
+Contrainte supplémentaire : (M’) n'est pas solvable.

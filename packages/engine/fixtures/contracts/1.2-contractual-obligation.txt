@@ -1,0 +1,6 @@
+id: deluxe-1.2
+Contract: 1
+Niveau 1.2 : Contractual Obligation
+Salles : A, Z, D(1), D(2), D(3).
+Héros : Guerrier(6).
+Contrainte supplémentaire : dist(D(1), D(3)) = 2.

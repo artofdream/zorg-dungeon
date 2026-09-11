@@ -13,6 +13,7 @@ import {
   validatePlayerChoice,
 } from "./level.js";
 import {
+  parseAssignment,
   parseHero,
   parseHeroes,
   parseLevel,
@@ -353,6 +354,51 @@ describe("NFR-9 & NFR-2: Authoring Ergonomics, Validation & Canonical Serializat
       shots: 3,
       duration: 2,
     });
+  });
+
+  it("parses deluxe extract notation: decimal Niveau, (M') lines, 2*heroes, λ*rooms", () => {
+    const level = parseLevel(`
+id: deluxe-3.1
+Contract: 3
+Niveau 3.1 : Unfair Rivalry
+Salles : λ*A, (3-λ)*Z, E(feu).
+Héros : 2*Guerrier(3).
+Sortilège : Attaque(1).
+(M’) Salles : A, Z, E(feu).
+(M’) Héros : Guerrier(3).
+Bonus 1 : (M’) n’est pas solvable.
+`);
+    expect(level.id).toBe("deluxe-3.1");
+    expect(level.contractId).toBe("3");
+    expect(level.name).toBe("Unfair Rivalry");
+    expect(level.rooms).toEqual([
+      { count: "λ", room: { type: "A" } },
+      { count: "(3-λ)", room: { type: "Z" } },
+      { count: 1, room: { type: "E", element: "fire" } },
+    ]);
+    expect(level.heroes).toEqual([
+      { type: "Warrior", hp: 3 },
+      { type: "Warrior", hp: 3 },
+    ]);
+    expect(level.mirrorWorlds).toHaveLength(1);
+    expect(level.mirrorWorlds?.[0]?.rooms.map((r) => r.room)).toEqual([
+      { type: "A" },
+      { type: "Z" },
+      { type: "E", element: "fire" },
+    ]);
+    expect(level.bonuses?.[0]?.expression).toContain("n’est pas solvable");
+  });
+
+  it("keeps non-choix assignments opaque and accepts parenthesized choix lists", () => {
+    const opaque = parseAssignment("λ = #{r ∈ Π : r et A sont reliées}");
+    expect(opaque).toEqual({
+      name: "λ",
+      expression: "#{r ∈ Π : r et A sont reliées}",
+    });
+    const heroes = parseHeroes("choix(2, (Guerrier(9), Elfe(8, {})))");
+    expect(heroes).toHaveLength(1);
+    expect(heroes[0]).toMatchObject({ type: "Choix", n: 2 });
+    expect(parseHero("Elfe(3 {})")).toEqual({ type: "Elf", hp: 3, immunities: [] });
   });
 
   it("round-trips level DSL serialization without data loss", () => {

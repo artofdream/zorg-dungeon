@@ -1,0 +1,11 @@
+id: deluxe-3.9
+Contract: 3
+Niveau 3.9 : Elemental Cathedral
+Salles : A, Z, E(feu), E(eau), E(glace).
+Héros : Elfe(1, {eau}).
+(M’) Salles : A, Z, E(feu), E(glace), E(eau).
+(M’) Héros : Elfe(1, {glace}).
+(M’’) Salles : A, Z, E(eau), E(glace), E(feu).
+(M’’) Héros : Elfe(1, {feu}), Elfe(1, {feu, eau, glace}).
+(M’’) Sortilège : Attaque(1).
+Contrainte supplémentaire : (M’) et (M’’) ne sont pas solvables.

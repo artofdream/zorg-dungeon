@@ -1,0 +1,8 @@
+id: deluxe-2.6
+Contract: 2
+Niveau 2.6 : Ice Palace
+Salles : A, Z, 3*D(1), 4*E(glace).
+Héros : Guerrier(3).
+Contrainte supplémentaire : Le donjon doit être carré.
+Bonus 1 : ∃(s, r) ∈ {D}², dist(s, r) = 3.
+Bonus 2 : ∃(s, r) ∈ {D}², dist(s, r) = 4.

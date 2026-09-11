@@ -1,0 +1,6 @@
+id: deluxe-6.4
+Contract: 6
+Niveau 6.4 : A Step Back
+Salles : A, Z, D(1), 2*O(1).
+Héros : 2*Guerrier(2).
+Sortilèges : Déplacement(), Échange().

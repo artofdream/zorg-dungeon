@@ -1,0 +1,7 @@
+id: base-extras-10.3
+Niveau 10.3 : “Exchange - Beginner Course”
+Salles : A, Z, D(1), O(1)
+Héros : Guerrier(2)
+Sortilège : Échange
+
+Difficulté : 1

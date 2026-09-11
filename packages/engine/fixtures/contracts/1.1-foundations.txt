@@ -1,0 +1,5 @@
+id: deluxe-1.1
+Contract: 1
+Niveau 1.1 : Foundations
+Salles : A, Z, D(2), E(feu).
+Héros : Guerrier(5).

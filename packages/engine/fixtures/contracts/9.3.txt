@@ -1,0 +1,5 @@
+id: deluxe-9.3
+Contract: 9
+Niveau 9.3 : 
+Salles : A, Z, E(feu), E(poison), P(1, 1).
+Héros : Artilleur(2, 1, ∞), Elfe(3, {}).

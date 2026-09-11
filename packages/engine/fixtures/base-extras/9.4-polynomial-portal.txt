@@ -1,0 +1,6 @@
+id: base-extras-9.4
+Niveau 9.4 : “Polynomial Portal”
+Salles : A, Z, D(1), E(feu), P(2, x↦x)
+Héros : Guerrier(9), Elfe(3, {feu})
+
+Difficulté : 1
