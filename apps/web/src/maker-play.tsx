@@ -74,10 +74,10 @@ export function MakerPlay({ entry, onBack }: Props) {
   const playing = run !== null;
 
   useEffect(() => {
-    if (!playing && selectedId === null && supplied[0]) {
+    if (!playing && selectedId === null && rooms.length === 0 && supplied[0]) {
       setSelectedId(supplied[0].id);
     }
-  }, [playing, selectedId, supplied]);
+  }, [playing, selectedId, supplied, rooms.length]);
 
   function resetBoard() {
     setRooms([]);
