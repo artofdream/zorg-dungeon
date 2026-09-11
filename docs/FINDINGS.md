@@ -85,3 +85,32 @@ is imported. Both N11 and N18 live under
 so they cannot fail the green corpus suite. This is Recurrence 1 — quarantine
 + skip is documentation, not a second-miss gate.
 
+## CF-006: Production web image has no CD and went stale
+- Status: Open
+- Recurrence: 1
+- Linked: https://github.com/artofdream/zorg-dungeon/pull/9
+- Sensor added: .github/workflows/deploy-web.yml
+
+Lightsail `zorg.artof.link` (`54.152.172.19`) was still serving a
+pre–Phase-1 bundle until a manual SSH redeploy on 2026-09-11 to `2217dd5`.
+The knowledge site auto-deploys via Pages; the game web image did not.
+
+This PR adds `.github/workflows/deploy-web.yml` so `main` pushes that
+touch the web/engine/deploy paths (or `workflow_dispatch`) SSH and rebuild
+the `web` service. Recurrence 1 — the workflow is the first sensor, not a
+second-miss gate. Do not mark game FRs `Live & Probed` from a redeploy.
+
+First CD run failed with `permission denied while trying to connect to the
+Docker daemon socket`. `git fetch` / `git reset` succeeded without sudo;
+`ubuntu` is not in an effective docker group for that SSH session.
+`deploy/setup-host.sh` already uses `sudo docker compose`. The remote
+command now matches: `sudo docker compose -f deploy/compose.prod.yaml
+up -d --build web`.
+
+Path filters originally omitted workspace manifests that
+`apps/web/Dockerfile` copies (`package.json`, `pnpm-lock.yaml`,
+`pnpm-workspace.yaml`, `tsconfig.base.json`). A lockfile-only merge
+would skip CD and leave prod stale again. Follow-up adds those paths
+to the sensor. Recurrence stays 1 — this is tightening the first
+sensor, not a second miss.
+
