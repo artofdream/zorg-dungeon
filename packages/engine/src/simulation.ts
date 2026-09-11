@@ -714,9 +714,6 @@ function applySpellTeleport(state: SimulationState, hero: HeroRuntime, n: number
   hero.stuck = false;
   hero.cell = { ...dest.firstCell };
   hero.roomId = dest.roomId;
-  if (roomDef(state, dest.roomId).type === "A") {
-    state.mainAId = dest.roomId;
-  }
   events.push({
     type: "teleport",
     heroId: hero.id,

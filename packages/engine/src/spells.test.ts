@@ -145,6 +145,30 @@ describe("FR-35 Teleport(n) to the n-th-most-recent room, or the waiting room", 
     expect(from).not.toEqual(state.heroes[0]?.cell);
   });
 
+  it("does not replace the main A when Teleport relocates into an older A", () => {
+    // FR-11 replaces the main A only on a visit/entry. Spell Teleport is a
+    // relocate (no visits push, no enterRoom), so hopping back to A:0 must
+    // not retarget a later spawn.
+    const level = makeSpellLevel(
+      [{ type: "A" }, { type: "A" }, { type: "Z" }],
+      [{ type: "Warrior", hp: 8 }],
+      [{ type: "Teleport", steps: 2 }],
+    );
+    const layout = corridorLine(level, ["A:0", "A:1", "Z:0"]);
+    const state = createRun(level, layout);
+    stepRun(state); // spawn A:0
+    expect(state.mainAId).toBe("A:0");
+    let guard = 0;
+    while (state.heroes[0]?.roomId !== "A:1" && guard++ < 40) {
+      stepRun(state);
+    }
+    expect(state.heroes[0]?.roomId).toBe("A:1");
+    expect(state.mainAId).toBe("A:1");
+    castSpell(state, { spellId: 0 });
+    expect(state.heroes[0]?.roomId).toBe("A:0");
+    expect(state.mainAId).toBe("A:1");
+  });
+
   it("falls back to the waiting room when history is too short", () => {
     const level = adzSpellLevel(2, [{ type: "Warrior", hp: 5 }], [{ type: "Teleport", steps: 4 }]);
     const state = spawnThen(level);
