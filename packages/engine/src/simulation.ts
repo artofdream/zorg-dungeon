@@ -586,6 +586,28 @@ function applyMechanicShove(
   });
 }
 
+function targetRoomIdsFor(
+  state: SimulationState,
+  hero: HeroRuntime,
+  grid: WalkGrid,
+): string[] {
+  if (!hero.cell) return [];
+  const immunities = heroImmunities(hero.def);
+  // Mechanic shoves can open rooms that are not currently walkable (FR-24).
+  const reachable =
+    hero.def.type === "Mechanic"
+      ? new Set(state.layout.rooms.map((room) => room.id))
+      : reachableRoomIds(
+          state.layout,
+          grid,
+          hero.cell,
+          immunities,
+          hero.gold.length,
+          state.roomGold,
+        );
+  return highestWeightRoomIds(state.layout, hero, state.heroes, reachable);
+}
+
 function chooseStep(
   state: SimulationState,
   hero: HeroRuntime,
@@ -594,8 +616,7 @@ function chooseStep(
   if (!hero.cell || !hero.roomId) return undefined;
   const immunities = heroImmunities(hero.def);
   const economy = { gold: hero.gold.length, piles: state.roomGold };
-  const reachable = reachableRoomIds(state.layout, grid, hero.cell, immunities, hero.gold.length);
-  const targets = highestWeightRoomIds(state.layout, hero, state.heroes, reachable);
+  const targets = targetRoomIdsFor(state, hero, grid);
   if (targets.length === 0) return undefined;
 
   if (hero.def.type === "Mechanic") {
@@ -739,7 +760,15 @@ function finishHeroAction(state: SimulationState, hero: HeroRuntime, grid: WalkG
 
   const dir = action.dir;
   const immunities = heroImmunities(hero.def);
-  const path = resolveStep(grid, hero.cell, dir, immunities, state.layout, hero.gold.length);
+  const path = resolveStep(
+    grid,
+    hero.cell,
+    dir,
+    immunities,
+    state.layout,
+    hero.gold.length,
+    targetRoomIdsFor(state, hero, grid),
+  );
   if (!path?.length) {
     hero.stuck = true;
     events.push({ type: "wait", heroId: hero.id });

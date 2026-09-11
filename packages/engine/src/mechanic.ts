@@ -81,11 +81,13 @@ function layoutFromKey(base: DungeonLayout, key: string): DungeonLayout {
   if (!key) return next;
   const pos = new Map<string, { x: number; y: number }>();
   for (const part of key.split("|")) {
-    const colon = part.indexOf(":");
-    if (colon < 0) continue;
+    const colon = part.lastIndexOf(":");
+    if (colon <= 0) continue;
     const id = part.slice(0, colon);
     const [xs, ys] = part.slice(colon + 1).split(",");
-    pos.set(id, { x: Number(xs), y: Number(ys) });
+    const x = Number(xs);
+    const y = Number(ys);
+    if (id && !Number.isNaN(x) && !Number.isNaN(y)) pos.set(id, { x, y });
   }
   for (const room of next.rooms) {
     const p = pos.get(room.id);

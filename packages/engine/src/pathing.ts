@@ -145,7 +145,8 @@ function isTargetRoom(
 
 /**
  * FR-14: one chosen direction. Water is not a voluntary step. Entering ice
- * (and not immune) slides through walkable cells until a wall or Z.
+ * (and not immune) slides through walkable cells until a wall or a
+ * weight-target room (default Z).
  * Water is not a wall — the hero slides onto/through it and dies in the
  * simulator. Returns the cells entered, or undefined when the first step
  * is illegal.
@@ -157,12 +158,13 @@ export function resolveStep(
   immunities: readonly ElementType[] = [],
   layout?: DungeonLayout,
   gold = 0,
+  targetRoomIds?: readonly string[],
 ): CellPos[] | undefined {
   const first = stepCell(from, dir);
   // Water / unpaid light are impassable as a chosen step (FR-14 / FR-17).
   // Forced landings happen only mid-slide, inside continueSlide.
   if (!isPassable(grid, first, immunities, gold)) return undefined;
-  return continueSlide(grid, [first], dir, immunities, layout);
+  return continueSlide(grid, [first], dir, immunities, layout, targetRoomIds);
 }
 
 function continueSlide(
@@ -171,11 +173,14 @@ function continueSlide(
   dir: Cardinal,
   immunities: readonly ElementType[],
   layout: DungeonLayout | undefined,
+  targetRoomIds?: readonly string[],
 ): CellPos[] {
   const first = path[0];
   if (!first) return path;
   if (!isIceCell(getWalkCell(grid, first), immunities)) return path;
-  if (layout && isZCell(layout, getWalkCell(grid, first)?.roomId ?? "")) return path;
+  if (layout && isTargetRoom(layout, getWalkCell(grid, first)?.roomId ?? "", targetRoomIds)) {
+    return path;
+  }
 
   let current = first;
   while (true) {
@@ -183,7 +188,7 @@ function continueSlide(
     const cell = getWalkCell(grid, next);
     if (!cell || cell.kind === "wall") break;
     path.push(next);
-    if (layout && isZCell(layout, cell.roomId)) break;
+    if (layout && isTargetRoom(layout, cell.roomId, targetRoomIds)) break;
     current = next;
   }
   return path;

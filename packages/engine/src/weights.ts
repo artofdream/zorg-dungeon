@@ -3,6 +3,7 @@
 // princess's pull b who is standing in it. Every hero (not only princesses)
 // is subject to this pull. Default dict is {Z:1}.
 
+import { clonePiles, pilesKey, parsePilesKey } from "./gold.js";
 import type { HeroDef, RoomType } from "./level.js";
 import { cellKey, isPassable, resolveStep, roomIdAt, type CellPos, type WalkGrid } from "./pathing.js";
 import type { DungeonLayout } from "./placement.js";
@@ -68,30 +69,59 @@ export function reachableRoomIds(
   from: CellPos,
   immunities: readonly import("./level.js").ElementType[] = [],
   gold = 0,
+  piles: ReadonlyMap<string, number> = new Map(),
 ): Set<string> {
   const rooms = new Set<string>();
   const here = roomIdAt(grid, from);
   if (here) rooms.add(here);
 
-  const seen = new Set<string>([cellKey(from)]);
-  const queue: CellPos[] = [from];
+  const startPiles = pilesKey(piles);
+  const seen = new Set<string>([`${cellKey(from)}|${gold}|${startPiles}`]);
+  const queue: { cell: CellPos; gold: number; piles: string; roomId: string }[] = [
+    { cell: from, gold, piles: startPiles, roomId: here ?? "" },
+  ];
   let head = 0;
   while (head < queue.length) {
     const cur = queue[head];
     head += 1;
     if (!cur) break;
-    if (!isPassable(grid, cur, immunities, gold) && head > 1) continue;
+    // Already-paid light is standable even if the purse is now empty.
+    if (!isPassable(grid, cur.cell, immunities, Number.POSITIVE_INFINITY) && head > 1) {
+      continue;
+    }
     for (const dir of orientedTieBreak(0)) {
-      const path = resolveStep(grid, cur, dir, immunities, layout, gold);
+      const path = resolveStep(grid, cur.cell, dir, immunities, layout, cur.gold);
       if (!path?.length) continue;
-      const land = path[path.length - 1];
-      if (!land) continue;
-      const k = cellKey(land);
+      let goldNow = cur.gold;
+      let roomNow = cur.roomId;
+      let pilesNow = parsePilesKey(cur.piles);
+      let last = path[path.length - 1];
+      let invalid = false;
+      for (const cell of path) {
+        const id = roomIdAt(grid, cell);
+        if (!id) {
+          invalid = true;
+          break;
+        }
+        rooms.add(id);
+        if (id !== roomNow) {
+          const pile = pilesNow.get(id) ?? 0;
+          if (pile > 0) {
+            goldNow += pile;
+            pilesNow = clonePiles(pilesNow);
+            pilesNow.set(id, 0);
+          }
+          roomNow = id;
+        }
+        const walk = grid.cells.get(cellKey(cell));
+        if (walk?.toll !== undefined && goldNow >= walk.toll) goldNow -= walk.toll;
+        last = cell;
+      }
+      if (invalid || !last) continue;
+      const k = `${cellKey(last)}|${goldNow}|${pilesKey(pilesNow)}`;
       if (seen.has(k)) continue;
       seen.add(k);
-      queue.push(land);
-      const id = roomIdAt(grid, land);
-      if (id) rooms.add(id);
+      queue.push({ cell: last, gold: goldNow, piles: pilesKey(pilesNow), roomId: roomNow });
     }
   }
   return rooms;
