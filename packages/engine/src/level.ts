@@ -6,6 +6,12 @@
 
 export type ElementType = "fire" | "water" | "ice" | "poison";
 
+export const ELEMENT_TYPES: readonly ElementType[] = ["fire", "water", "ice", "poison"];
+
+export function isElementType(value: unknown): value is ElementType {
+  return typeof value === "string" && (ELEMENT_TYPES as readonly string[]).includes(value);
+}
+
 export type RoomType = "A" | "Z" | "D" | "E" | "P" | "O" | "T" | "C";
 
 export type RoomDef =

@@ -141,8 +141,8 @@ export function App() {
     <main className="app">
       <h1>Zorg's Dungeon Maker</h1>
       <p className="lede">
-        Phase 1 slice: place A / Z / D, then watch a Warrior path toward Z. Logic lives in{" "}
-        <code>@zorg/engine</code> — this UI only calls it.
+        Phase 2 engine: A / Z / D / E and Warrior + Elf. This Maker demo still
+        places A / Z / D and plays a Warrior — logic lives in <code>@zorg/engine</code>.
       </p>
       <p className="honesty">
         Status: engine-simulated (Vitest). Not Probed, not Live. See docs/STATUS_LEDGER.md.
@@ -265,7 +265,7 @@ export function App() {
                 {run.heroes.map((h) => (
                   <span key={h.id}>
                     {" "}
-                    · W{h.id} HP {h.hp}
+                    · {h.def.type} {h.id} HP {h.hp}
                     {h.dead ? " (dead)" : h.spawned ? "" : " (waiting)"}
                     {h.cell ? ` @ ${h.cell.x},${h.cell.y}` : ""}
                   </span>
