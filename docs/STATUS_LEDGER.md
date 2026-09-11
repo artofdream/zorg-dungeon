@@ -38,7 +38,7 @@ writing a table row, is not proof.
 | FR-6 | Simulated | packages/engine/src/placement.test.ts |
 | FR-7 | Simulated | packages/engine/src/placement.test.ts |
 | FR-8 | Simulated | packages/engine/src/placement.test.ts |
-| FR-9 | Unknown | |
+| FR-9 | Simulated | packages/engine/src/mirrors.test.ts |
 | FR-10 | Simulated | packages/engine/src/geometry.test.ts |
 | FR-11 | Simulated | packages/engine/src/rooms.test.ts |
 | FR-12 | Simulated | packages/engine/src/rooms.test.ts |
@@ -74,12 +74,12 @@ writing a table row, is not proof.
 | FR-42 | Simulated | packages/engine/src/spells.test.ts |
 | FR-43 | Unknown | |
 | FR-44 | Unknown | |
-| FR-45 | Unknown | |
-| FR-46 | Unknown | |
+| FR-45 | Simulated | packages/engine/src/mirrors.test.ts |
+| FR-46 | Simulated | packages/engine/src/solvability.test.ts |
 | NFR-1 | Unknown | |
 | NFR-2 | Simulated | packages/engine/src/base-classic-corpus.test.ts |
 | NFR-3 | Unknown | |
-| NFR-4 | Unknown | |
+| NFR-4 | Simulated | packages/engine/src/solvability.test.ts |
 | NFR-5 | Unknown | |
 | NFR-6 | Unknown | |
 | NFR-7 | Unknown | |

@@ -1,7 +1,9 @@
-// Phase 5 extermination: rooms A / Z / D / E / P / O / T (FR-11–FR-17),
+// Phase 6 extermination: rooms A / Z / D / E / P / O / T (FR-11–FR-17),
 // Warrior / Elf / Gunner / Mechanic / Princess (FR-20–FR-25, FR-26–FR-31),
-// and the spellbook (FR-32–FR-42). Mirrors and FR-43 extra constraints
-// stay out of scope. Gunner duration semantics stay deferred (S3 / NFR-8).
+// and the spellbook (FR-32–FR-42). A single world's run is unchanged;
+// mirror substitution / sequential resolve live in mirrors.ts (FR-9, FR-45)
+// and solvability search in solvability.ts (FR-46, NFR-4). FR-43 extra
+// constraints stay out of scope. Gunner duration stays deferred (S3 / NFR-8).
 
 import type { HeroAction } from "./action.js";
 import { chooseElfStep } from "./elf.js";

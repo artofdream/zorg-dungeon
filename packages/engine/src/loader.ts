@@ -2,6 +2,7 @@
 // spawn list, optional spell list, constraints, bonuses, variables).
 // Implements FR-2: Parser for choix(n, E) player-chosen variables.
 // Implements FR-3: Parser for order and orientation options on choix(n, E).
+// FR-9: Mirror / M′ / Monde miroir blocks become level.mirrorWorlds.
 // Supports NFR-2 (Data-driven content) and NFR-9 (Authoring ergonomics).
 
 import {
@@ -9,6 +10,7 @@ import {
   ChoixVariableDef,
   ConstraintDef,
   ElementType,
+  flattenRooms,
   HeroSlot,
   HeroType,
   isChoixDef,
@@ -508,8 +510,55 @@ function appendListed(
   list.push({ id: `${prefix}-${list.length + 1}`, expression: cleaned });
 }
 
+/** FR-9: split `Mirror:` / `M':` / `Monde miroir:` blocks from the parent DSL. */
+function mirrorHeaderLabel(trimmed: string): string | null {
+  const named = trimmed.match(/^(?:mirror(?:\s+world)?|monde miroir)(?:\s+(.+?))?\s*:\s*$/i);
+  if (named) {
+    const label = (named[1] ?? "").trim();
+    return label || "M'";
+  }
+  const primes = trimmed.match(/^M([′'ʼʹ″‴‛]+)\s*:\s*$/);
+  if (primes?.[1]) return `M${primes[1]}`;
+  return null;
+}
+
+function extractMirrorBlocks(dsl: string): { head: string; mirrors: { label: string; body: string }[] } {
+  const head: string[] = [];
+  const mirrors: { label: string; body: string[] }[] = [];
+  let current: { label: string; body: string[] } | undefined;
+  for (const line of dsl.split("\n")) {
+    const label = mirrorHeaderLabel(line.trim());
+    if (label !== null) {
+      current = { label, body: [] };
+      mirrors.push(current);
+      continue;
+    }
+    if (current) current.body.push(line);
+    else head.push(line);
+  }
+  return {
+    head: head.join("\n"),
+    mirrors: mirrors.map((m) => ({ label: m.label, body: m.body.join("\n") })),
+  };
+}
+
 /** FR-1: Parse a multi-line level definition DSL (English or base-classic French). */
 export function parseLevel(dsl: string): LevelDef {
+  const { head, mirrors } = extractMirrorBlocks(dsl);
+  const parsed = parseLevelBody(head);
+  if (mirrors.length > 0) {
+    parsed.mirrorWorlds = mirrors.map((block, i) => {
+      const child = parseLevel(block.body);
+      const fallback = `${parsed.id}-${block.label.replace(/\s+/g, "-") || `M${"'".repeat(i + 1)}`}`;
+      if (child.id === "level-0") child.id = fallback;
+      if (child.name === "Untitled Level") child.name = block.label || fallback;
+      return child;
+    });
+  }
+  return parsed;
+}
+
+function parseLevelBody(dsl: string): LevelDef {
   const lines = dsl.split("\n");
   let id = "level-0";
   let name = "Untitled Level";
@@ -707,6 +756,20 @@ export function validateLevel(level: LevelDef): { valid: boolean; errors: string
     validateHeroSlot(h, `Hero at index ${idx}`, errors);
   }
 
+  // FR-9: each mirror world's flattened room list must be 1:1 with the base.
+  if (level.mirrorWorlds?.length && !level.rooms.some((r) => isChoixDef(r.room))) {
+    const baseCount = flattenRooms(level.rooms).length;
+    for (const [i, world] of level.mirrorWorlds.entries()) {
+      if (world.rooms.some((r) => isChoixDef(r.room))) continue;
+      const n = flattenRooms(world.rooms).length;
+      if (n !== baseCount) {
+        errors.push(
+          `FR-9: mirror world ${i} has ${n} rooms; base has ${baseCount} (1:1 by declaration order).`,
+        );
+      }
+    }
+  }
+
   // Variables validation
   if (level.variables) {
     for (const v of level.variables) {
@@ -786,6 +849,15 @@ export function serializeLevel(level: LevelDef): string {
 
   if (level.difficulty !== undefined) {
     lines.push(`Difficulty: ${level.difficulty}`);
+  }
+
+  if (level.mirrorWorlds && level.mirrorWorlds.length > 0) {
+    for (const [i, world] of level.mirrorWorlds.entries()) {
+      const label = world.id !== "level-0" && world.id !== level.id ? world.name || world.id : `M${"'".repeat(i + 1)}`;
+      lines.push(`Mirror ${label}:`);
+      const { mirrorWorlds: _nested, ...flat } = world;
+      lines.push(serializeLevel(flat));
+    }
   }
 
   return lines.join("\n");

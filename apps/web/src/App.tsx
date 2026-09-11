@@ -209,10 +209,10 @@ export function App() {
     <main className="app">
       <h1>Zorg's Dungeon Maker</h1>
       <p className="lede">
-        Phase 5 engine: A / Z / D / E / P / O / T, Warrior / Elf / Mechanic /
-        Gunner / Princess, and the spellbook. This Maker demo still places
-        A / Z / D and plays a Warrior with <code>Attack(3)</code> — logic
-        lives in <code>@zorg/engine</code>.
+        Phase 6 engine: A / Z / D / E / P / O / T, all five heroes, the
+        spellbook, mirror-world substitution, and a bounded solvability
+        search. This Maker demo still places A / Z / D and plays a Warrior
+        with <code>Attack(3)</code> — logic lives in <code>@zorg/engine</code>.
       </p>
       <p className="honesty">
         Status: engine-simulated (Vitest). Not Probed, not Live. See docs/STATUS_LEDGER.md.
