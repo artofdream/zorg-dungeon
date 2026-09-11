@@ -1,0 +1,1001 @@
+[
+  {
+    "edition": "base-classic",
+    "id": "1",
+    "title": "Foundations",
+    "source_line": 188,
+    "quarantine": [],
+    "text": "Niveau 1 : “Foundations”\nSalles : A, Z, D(2), E(feu)\nHéros : Guerrier(5)\n\nDifficulté : 1\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "2",
+    "title": "Light Magic",
+    "source_line": 195,
+    "quarantine": [],
+    "text": "Niveau 2 : “Light Magic”\nSalles : A, Z, D(1), E(feu), E(eau)\nHéros : Elfe(5, {eau})\nSortilège : Attaque(1)\nVariante : Remplacer Elfe par Guerrier(5)\n\nDifficulté : 1\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "3",
+    "title": "Cross with the Constraint",
+    "source_line": 204,
+    "quarantine": [],
+    "text": "Niveau 3 : “Cross with the Constraint”\nSalles : A, Z, 2xD(1), E(feu), E(glace)\nHéros : Guerrier(4)\nContrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "4",
+    "title": "Teleportation” Station",
+    "source_line": 212,
+    "quarantine": [],
+    "text": "Niveau 4 : “Teleportation” Station”\nSalles : A, Z, D(1), E(feu), P(1, 1)\nHéros : Guerrier(11)\nSortilège : Téléportation(1)\n\nDifficulté : 1\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "5",
+    "title": "Double Trouble",
+    "source_line": 220,
+    "quarantine": [],
+    "text": "Niveau 5 : “Double Trouble”\nSalles : A, Z, D(3), E(feu)\nHéros : Guerrier(3), Elfe(3, {feu})\nSortilège : Attaque(3)\nContrainte supplémentaire : Le donjon doit être carré.\n\nDifficulté : 1\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "6",
+    "title": "Gold Rush",
+    "source_line": 229,
+    "quarantine": [],
+    "text": "Niveau 6 : “Gold Rush”\nSalles : A, Z, D(2), E(feu), O(1), T(1, eau)\nHéros : Guerrier(9), Guerrier(4)\nSortilège : Attaque(1)\nVariante : Chaque héros doit posséder de l'or au moment de sa mort.\n\nDifficulté : 2 \n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "7",
+    "title": "Nothing Burger",
+    "source_line": 238,
+    "quarantine": [],
+    "text": "Niveau 7 : “Nothing Burger”\nSalles : A, Z, 2xD(1), E(feu), E(eau)\nHéros : Elfe(6, {feu, eau})\nSortilège : Banalité\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "8",
+    "title": "The Human Beast",
+    "source_line": 246,
+    "quarantine": [],
+    "text": "Niveau 8 : “The Human Beast”\nSalles : A, Z, 2*E(feu), 2*P(1, 1)\nHéros : Guerrier(1), Artilleur(6, 1)\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "9",
+    "title": "Dimensional Settings",
+    "source_line": 253,
+    "quarantine": [],
+    "text": "Niveau 9 : “Dimensional Settings”\nSalles : A, Z, E(feu), P(2, x↦7x-6), O(1), T(1, eau)\nHéros : Guerrier(21)\nSortilège : Téléportation(4)\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "10",
+    "title": "Checkerline",
+    "source_line": 261,
+    "quarantine": [],
+    "text": "Niveau 10 : “Checkerline”\nSalles : A, Z, D(1), E(feu), P(1, 1)\nHéros : Guerrier(13)\nSortilèges : Échange, Déplacement\nContrainte supplémentaire : Avant l'arrivée des héros, le donjon doit vérifier la contrainte suivante : Soient F = {A, Z} et G = Π\\F. ∀(r, s) ∈ FxG, dist(r, s) ≡ 1[2].\n\nDifficulté : 3\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "11",
+    "title": "Dream Trap",
+    "source_line": 270,
+    "quarantine": [
+      "author_flagged_bug",
+      "dream_trap"
+    ],
+    "text": "Niveau 11 : “Dream Trap”\nSalles : A, Z, E(choix(1, {éléments})), D(1)\nHéros : Guerrier(1)\nSortilèges : Somnolence, choix(2, {Téléportation(1), Échange, Déplacement})\n\nDifficulté : 2 (euh y a un problème dans celui-ci à mon grand regret)\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "12",
+    "title": "Chemical Loophole",
+    "source_line": 278,
+    "quarantine": [],
+    "text": "Niveau 12 : “Chemical Loophole”\nSalles : A, Z, D(1), E(poison), P(1, 5)\nHéros : choix(1, {Guerrier(1), Elfe(1, {}), Artilleur(1, 1)})\nContrainte supplémentaire : dist(A, Z) = 1.\nVariante : On doit également avoir \ndist(A, P) = dist(A, E) + 2\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "13",
+    "title": "Waiting Room",
+    "source_line": 288,
+    "quarantine": [],
+    "text": "Niveau 13 : “Waiting Room”\nSalles : A, Z, D(1)\nHéros : Guerrier(2), Mécanicien(2, {D:5})\nSortilège : Attaque(1)\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "14",
+    "title": "Sleep Cycle",
+    "source_line": 296,
+    "quarantine": [],
+    "text": "Niveau 14 : “Sleep Cycle”\nVariable : λ = choix(1, ℕ)\nSalles : A, Z, D(1), D(15), E(glace), O(1), 2*T(1, feu)\nHéros : Elfe(14, {}), Elfe(12, {glace})\nSortilèges : λ*Somnolence, λ*Réveil\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n\nDifficulté : 3\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "15",
+    "title": "A Lesson On Inflation",
+    "source_line": 306,
+    "quarantine": [],
+    "text": "Niveau 15 : “A Lesson On Inflation”\nVariables : λ = choix(1, ℕ), μ = choix(1, ℕ)\nSalles : A, Z, O(λ), O(μ), T(λ, feu), T(μ, glace)\nHéros : Guerrier(9)\n\nDifficulté : 2\n\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "16",
+    "title": "Sliding Puzzle",
+    "source_line": 315,
+    "quarantine": [],
+    "text": "Niveau 16 : “Sliding Puzzle”\nSalles : A, Z, D(1), 2*E(eau)\nHéros : Mécanicien(2, {D:5, E:10})\n\nDifficulté : 3\n\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "17",
+    "title": "Cereal Killer",
+    "source_line": 323,
+    "quarantine": [],
+    "text": "Niveau 17 : “Cereal Killer”\nSalles : A, Z, D(1), 2*E(eau), 2*O(1), T(2, eau)\nHéros : Artilleur(1, 7)\nVariante : Remplacer Artilleur(1, 7) par Artilleur(1, 8)\n\nDifficulté : 3\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "18",
+    "title": "Math Bath",
+    "source_line": 331,
+    "quarantine": [
+      "malformed_suspect"
+    ],
+    "text": "Niveau 18 : “Math Bath”\nSalles : 3*A, Z, choix(3, {D(1), D(2), D(3), D(4), D(5)})\nHéros : Guerrier(3), Guerrier(4), Guerrier(choix(1, {1,3,5}), Guerrier(2)\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "19",
+    "title": "Random God",
+    "source_line": 339,
+    "quarantine": [],
+    "text": "Niveau 19 : “Random God”\nSalles : A, 3*Z, D(3), E(choix(1, {éléments})), P(1, 1)\nHéros : Guerrier(42)\nSortilèges : Téléportation(1), Échange, Déplacement\nContrainte supplémentaire : Le donjon, lors de sa création, doit pouvoir être contenu dans un donjon carré de 3x3.\n\nDifficulté : 3\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "20",
+    "title": "Stupidity Award",
+    "source_line": 348,
+    "quarantine": [],
+    "text": "Niveau 20 : “Stupidity Award”\nSalles : 3*A, Z, D(1), E(eau), 2*O(1), T(1, feu)\nHéros : Elfe(10, {glace}), Artilleur(8, 1)\nSortilèges : Attaque(3), Banalité, Déplacement\n\nDifficulté : 4\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "21",
+    "title": "Getting Distracted",
+    "source_line": 356,
+    "quarantine": [],
+    "text": "Niveau 21 : “Getting Distracted”\nSalles : A, Z, D(2), D(3), E(glace)\nHéros : Princesse(7, {choix(1, Π):1}, 4), Guerrier(6)\nSortilège : Banalité\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "22",
+    "title": "Why Displacing A Population Is Inappropriate",
+    "source_line": 365,
+    "quarantine": [],
+    "text": "Niveau 22 : “Why Displacing A Population Is Inappropriate”\nVariable : λ = choix(1, {1, 2})\nSalles : λ*A, (3-λ)*Z, 3*D(1)\nHéros : 3*Guerrier(3)\nSortilèges : Échange, 3*Déplacement\nContrainte supplémentaire : Au moins deux salles D différentes doivent être bougées par Déplacement.\n\nDifficulté : 3\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "23",
+    "title": "Equilibrium Atrium",
+    "source_line": 375,
+    "quarantine": [],
+    "text": "Niveau 23 : “Equilibrium Atrium”\nSalles : A, Z, 2*D(1), E(feu), E(glace), P(1, 5)\nHéros : choix(1, {Guerrier(14), Elfe(14, {}), Artilleur(14, 1), Mécanicien(14, {D:5}), Princesse(14, {D:5}), 2)})\nSortilèges : Échange\nContrainte supplémentaire : ∀s∈Π\\{A}, ∃r∈Π\\{s}, dist(A, s) = dist(A, r)\n\nDifficulté : 3\n\n"
+  },
+  {
+    "edition": "base-classic",
+    "id": "24",
+    "title": "Mutual Destruction",
+    "source_line": 384,
+    "quarantine": [],
+    "text": "Niveau 24 : “Mutual Destruction”\nSalles : A, D(1), E(feu), P(1, 100)\nHéros : Princesse(13, {P:1}, 2), Mécanicien(10, {D:100, E:10})\nSortilège : Attaque(1), Déplacement\n\nDifficulté : 3\n\n\n\nNiveaux supplémentaires - filler intéressant\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "3.5",
+    "title": "Mirror Maze",
+    "source_line": 395,
+    "quarantine": [],
+    "text": "Niveau 3.5 : “Mirror Maze”\nSalles : A, Z, 3*D(1), 4*E(glace)\nHéros : Guerrier(3)\nContrainte supplémentaire : Le donjon doit être carré.\nVariante 1 : ∃(s, r) ∈ {D}x{D}, dist(s, r) = 3.\nVariante 2 : ∃(s, r) ∈ {D}x{D}, dist(s, r) = 4.\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "6.25",
+    "title": "",
+    "source_line": 405,
+    "quarantine": [],
+    "text": "Niveau 6.25 : “”\nSalles : A, Z, D(1), D(2), D(3), O(1)\nHéros : Guerrier(5), Guerrier(9), Guerrier(2)\nSortilège : Téléportation(1)\nContrainte supplémentaire : Chaque héros doit posséder de l'or au moment de sa mort.\n\nDifficulté : 1\n\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "6.5",
+    "title": "",
+    "source_line": 414,
+    "quarantine": [],
+    "text": "Niveau 6.5 : “”\nSalles : A, Z, O(1), T(1, feu), T(1, poison)\nHéros : Guerrier(9)\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "6.75",
+    "title": "",
+    "source_line": 418,
+    "quarantine": [],
+    "text": "Niveau 6.75 : “”\nSalles : A, Z, D(1), D(2), E(feu), E(glace), 2*O(1)\nHéros : Guerrier(5), Elfe(3, {glace})\nContrainte supplémentaire : Chaque héros doit posséder 1 en or au moment de sa mort.\nVariante 1 : Le donjon construit n'est plus une solution si l'Elfe perd son immunité.\nVariante 2 : Le donjon construit est toujours une solution si l'Elfe perd son immunité.\n\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "9.2",
+    "title": "",
+    "source_line": 426,
+    "quarantine": [],
+    "text": "Niveau 9.2 : “”\nSalles : A, Z, D(11), E(poison)\nHéros : Guerrier(20)\nSortilèges : 2*Téléportation(2)\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\nVariante : Chaque héros doit être téléporté 2 fois dans la salle d'attente.\n\nDifficulté : 1\n\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "9.4",
+    "title": "Polynomial Portal",
+    "source_line": 436,
+    "quarantine": [],
+    "text": "Niveau 9.4 : “Polynomial Portal”\nSalles : A, Z, D(1), E(feu), P(2, x↦x)\nHéros : Guerrier(9), Elfe(3, {feu})\n\nDifficulté : 1\n\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "9.6",
+    "title": "",
+    "source_line": 443,
+    "quarantine": [],
+    "text": "Niveau 9.6 : “”\nSalles : A, Z, D(1), E(feu), E(poison), P(2, x↦5-2x)\nHéros : Elfe(15, {poison}), Elfe(17, {feu})\nSortilèges : 2*Téléportation(1)\nVariante : Le pouvoir de la salle P doit être utilisé 4 fois.\n\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "9.8",
+    "title": "",
+    "source_line": 450,
+    "quarantine": [],
+    "text": "Niveau 9.8 : “”\nSalles : A, Z, D(1), P(100, 1), P(10, x↦1+2*⌊1/x⌋)\nHéros : Guerrier(2)\n\nDifficulté : 2\n\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "10.3",
+    "title": "Exchange - Beginner Course",
+    "source_line": 457,
+    "quarantine": [],
+    "text": "Niveau 10.3 : “Exchange - Beginner Course”\nSalles : A, Z, D(1), O(1)\nHéros : Guerrier(2)\nSortilège : Échange\n\nDifficulté : 1\n\n"
+  },
+  {
+    "edition": "base-extras",
+    "id": "10.6",
+    "title": "Displacement - Beginner Course",
+    "source_line": 465,
+    "quarantine": [],
+    "text": "Niveau 10.6 : “Displacement - Beginner Course”\nSalles : A, Z, D(1), 2*O(1)\nHéros : Guerrier(2)\nSortilège : Déplacement\n\nDifficulté : 1\nManuel - Deluxe\nZorg’s Dungeon Maker\nManuel - Deluxe Edition\n\n\nChapitre 1 : Généralités\n\nPrincipe\n\nCréez un donjon pour empêcher les héros de vous mettre une raclée !\n\nChaque niveau se découpe en deux étapes : la construction d’un donjon, et l’extermination des héros entrant dans ce donjon. Le niveau est gagné quand, à l’issue de la seconde phase, tous les héros ont été éliminés, et toutes les contraintes supplémentaires ont été satisfaites ; il est perdu si un héros pénètre dans la salle Z.\n\nConstruction du donjon\n\nIl s’agit de créer un labyrinthe utilisant toutes les salles décrites dans le niveau.\n\nLes salles du donjon doivent se positionner sur une grille : pas de salles en diagonale, se chevauchant, ou pas correctement alignées ! Plus précisément, si deux salles sont connectées, alors elles le sont sur toute la longueur d’un de leur côté.\n\nDe plus, le sens des hachures sur les murs doit être le même sur toutes les salles du donjon.\n\nChaque salle a des caractéristiques propres : voir le chapitre “Salles” pour plus de détails.\n\nExtermination des héros\n\nConcernant les héros : \n\nLes héros peuvent apparaître, un à un et dans l’ordre indiqué, dès que le donjon a été entièrement construit. On rappelle que le niveau n’est pas gagné avant qu’ils ne soient tous morts ; au moment où le dernier héros meurt, le niveau s’arrête.\n\nPar défaut, chaque héros cherche à atteindre la salle Z : il choisit pour ce faire le chemin qui satisfait le plus à ses priorités individuelles - voir le chapitre “Héros” pour plus de détails. S’il ne peut pas choisir de meilleur chemin, par exemple si la salle Z lui est inaccessible, alors il ne bouge pas et attend qu’un chemin apparaisse.\n\nOn précise au cas où qu’on n’a encore jamais vu de héros traverser les murs ou marcher sur du vide.\n\nSi le nombre de points de vie d’un héros est à un moment ou à un autre négatif ou nul, alors il décède instantanément et devient un cadavre, qui ne peut plus faire quoi que ce soit. Important : les héros ne se rendent pas compte qu’ils peuvent mourir, et planifient leurs chemins sous l’hypothèse qu’ils pourront toujours bouger, peu importe leur nombre de points de vie !\n\nLes héros ont ainsi accès à toutes les informations sur le donjon en permanence (ils ont une minimap!), ce qui leur permet de modifier leurs décisions à tout moment si nécessaire, à l’exception des données suivantes : 1) les autres héros du niveau ; 2) les sortilèges utilisables ; 3) les conséquence de la mort.\n\nUn héros ne peut apparaître ou bouger que lorsque tous les précédents ont été vaincus ou sont immobiles : on parle alors de héros actif. Il ne peut y avoir qu’un seul héros actif dans le donjon à la fois. Par conséquent, si un héros précédemment incapable de bouger est libéré de cette contrainte, il empêche de bouger tous les héros qui sont apparus après lui. Les héros n’ont aucune collision entre eux et agissent comme s’ils étaient seuls dans le labyrinthe.\n\nConcernant les sortilèges : \n\nC’est pendant la phase d’extermination des héros que peuvent être utilisés les sortilèges.\n\nChaque sortilège est à usage unique, et peut être utilisé dès qu’un héros a fini une action : par exemple, quand un héros s’est déplacé d’une case, ou bien quand il est apparu dans la salle A, mais pas avant qu’il ne soit téléporté par l’action d’une salle P car l’action entamée par le héros ne s’est pas terminée.\n\nOn précise qu’un sortilège n’est applicable que lorsque sa description est compatible avec la situation : notamment, un sortilège s’appliquant au héros actif ne peut être conjuré s’il n’y a pas de héros actif.\n\nChaque sortilège a des caractéristiques propres : voir le chapitre “Sortilèges” pour plus de détails.\n\nSur les contraintes supplémentaires\n\nDans un niveau peuvent être mentionnées une ou plusieurs contraintes supplémentaires. Dans ce cas, le niveau est gagné dès que tous les héros sont morts et que toutes les contraintes supplémentaires ont été satisfaites.\n\nUn bonus est une contrainte supplémentaire optionnelle qui vient s’ajouter à toutes celles déjà présentes dans le niveau. Finir un niveau avec un bonus rapporte surtout de la satisfaction personnelle. Si un niveau comporte plusieurs bonus, il n’est pas obligatoire de les satisfaire en même temps pour les acquérir.\n\nMondes miroirs\n\nDans certains niveaux, l’énoncé peut présenter des (M’), (M’’) ou encore (M(n)) dans la marge de certaines sections. Il s’agit de mondes miroirs.\n\nLes mondes miroirs sont reliés au monde normal par leurs salles : pour passer d’un monde normal à un monde miroir, la donjon créé reste le même, à ceci près que la première salle (dans l’ordre des salles de l’énoncé) du monde normal se transforme en la première salle du monde miroir (toujours selon l’ordre de l’énoncé), la deuxième salle du monde normal se transforme en la deuxième salle du monde miroir, etc.\n\nLes contraintes supplémentaires et variables sont communes au monde normal et à tous les mondes miroirs ; les héros et sortilèges sont eux propres à chaque monde.\n\nLors de la phase d’exécution des héros, les mondes se résolvent en partant du monde normal, puis en allant vers le bas dans l’ordre des mondes. On passe au monde suivant lorsque plus rien ne se passe dans le monde précédent, ou lorsque la salle Z a été atteinte ; quand cela se produit, le monde devient inaccessible et ne peut plus être réactivé.\n\nPar défaut, aucune contrainte ne s’applique sur les différents mondes, si ce n’est que le monde normal doit être solvable (ie tous les héros doivent mourir avant d’avoir atteint la salle Z). C’est au travers des contraintes supplémentaires que s'ajoutent des contraintes sur les mondes miroirs.\n\nNotamment, la contrainte de solvabilité sur un monde impose l’existence d’une séquence de sortilèges telle que le donjon créé puisse permettre l’extermination des héros de ce monde avant que la salle Z ne soit atteinte ; la contrainte de non-solvabilité, au contraire, demande l’impossibilité de l’existence d’une telle séquence de sortilèges. \n\nVariables et choix\n\nCertains niveaux utilisent la notion de choix, notamment au travers des variables.\n\nConcernant les variables : \n\nUne variable est une donnée quelconque stockée dans le niveau et intervenant le plus souvent comme paramètre dans certaines composantes du niveau. Elle peut potentiellement varier au cours du niveau !\n\nConcernant le choix : \n\n Le texte “choix(n, E)” désigne pour le joueur la possibilité de choisir au début de la phase de création du donjon n éléments “distincts” parmi ceux de l’ensemble/liste E (la différence étant qu’une liste, entourée de parenthèses, peut au contraire de l’ensemble entouré d’accolades contenir des doublons qui peuvent être choisis indépendamment).\n\nEn même temps que le choix des données de E, le joueur choisit dans quel sens il les prend, ce qui peut avoir son intérêt dans certains niveaux.\n\nExemples : dans “choix(2, (D(1), D(1), D(3)))” on peut choisir (D(1), D(1)) ou (D(1), D(3)) mais pas (D(3), D(3)) ; dans “choix(2, ℝ)”, on peut choisir (5, 8) mais pas (6, 6).\n\nTerminologie\n\nUne salle désigne une tuile positionnable sur le plateau, composée de 25 cases.\n\nUn héros est un algorithme qui essaye selon ses propres règles détaillées ci-dessous d'atteindre la salle du boss, Zorg (vous).\n\nUn labyrinthe/donjon est une disposition de salles sur le plateau, qui fait intervenir toutes les salles à disposition.\n\nL'orientation du donjon désigne l'orientation commune de toutes les salles A présentes dans le donjon. La direction “haut”, aussi appelée “nord”, se réfère alors au vecteur allant du bas du A au haut du A, et de même pour le bas (le sud), la gauche (l’ouest) et la droite (l’est).\n\nΠ désigne l’ensemble des salles du niveau, Γ l’ensemble des héros (pas encore morts) du niveau, et Φ l’ensemble des sortilèges pas encore utilisés du niveau. Si nécessaire, on notera Π(M(n)) pour désigner l’ensemble des salles du monde M(n), et de même pour les héros et les sortilèges.\n\nLa salle d’attente désigne une zone virtuelle où se trouvent les héros avant d’apparaître - un peu comme une page de chargement. Un héros dans la salle d’attente peut apparaître dès que tous les héros présents avant lui dans la liste des héros sont apparus et rendus inactifs.\n\nLa distance entre deux salles r et s, que l'on note dist(r, s), désigne la somme de la différence en ordonnée de ces salles et de leur différence en abscisse (pour les plus puants d’entre vous, il s’agit de la distance Manhattan).\n\nChapitre 2 : Salles\n\nCe chapitre propose une liste exhaustive de toutes les salles du jeu.\n\nA : Salle d'Apparition\n\nTout héros qui apparaît le fait depuis la salle A actuelle, sur la case marquée d’un A.\n\nSi plusieurs salles A sont en jeu, le joueur en choisit une principale d'où les héros apparaissent par défaut; toute salle A visitée par un héros actif remplace immédiatement la salle A principale.\n\nPour que le donjon soit convenablement orienté, toutes les salles A doivent être orientées de la même manière.\n\nZ : Salle de Zorg\n\nUn niveau est immédiatement perdu si un héros entre dans une salle Z.\n\nD(x) : Salle de Dégâts \n\nÀ chaque fois qu'un héros entre dans une salle D(x), il subit x dégâts.\n\nE(elem) : Salle Élémentaire\n\nLes cases marquées en vert sont des cases élémentaires déterminées en fonction du paramètre elem : les cases élémentaires deviennent ainsi des cases de feu (resp. d’eau, resp. de glace, resp. de poison) si elem vaut feu (resp. eau, resp. glace, resp. poison). Ces cases élémentaire se comportent comme suit : \n\nChaque fois qu’un héros non immunisé rentre dans une case de feu, il subit 1 dégât.\n\nUn héros non immunisé ne peut entrer dans une case d’eau qui agit comme un mur. Si un héros non immunisé se retrouve dans une case d’eau, il meurt instantanément.\n\nUn héros non immunisé ne peut faire que glisser dans la même direction que celle par laquelle il est rentrée tant qu’il se trouve sur une case de glace ou qu’il n’est pas arrêté par un mur.\n\nLa première fois qu’un héros non immunisé visite une case de poison donnée, il gagne 1 point de vie, mais chaque visite ultérieure de cette case lui fait perdre 3 points de vie.\n\nUn héros immunisé à un élément donné est donc complètement insensible à tout effet lié à la traversée d’une case de cet élément , et agit en fait comme si ces cases n’existaient pas.\n\nP(n, f) : Salle du Portail\n\nQuand un héros rentre dans une salle P pour la i-ième fois, où 1≤i≤n, il est téléporté dans la f(i)-ième dernière salle où il est passé (en comptant les répétitions), sur la première case qu'il a visitée lors dudit passage dans la salle.\n\nSi f(i) est trop grand, le héros revient là où il se trouvait avant d'apparaître (dans une salle d'attente fictive), puis réapparaît.\n\nO(x) : Salle de l'Or\n\nLe premier héros qui rentre dans une salle O reçoit immédiatement l'entièreté de son contenu x en or. Si ce héros meurt , tout l'or y qu'il a récupéré devient associé à la salle où il se trouve / où il est décédé, qui se comporte alors également comme une salle O(y), en plus de sa fonction première.\n\nLa récupération de l’or a priorité sur toute autre conséquence d’un déplacement dans une salle (comme la mort ou la téléportation, entre autres).\n\nT(x, elem) : Salle des Taxes\n\nLes cases vert foncé, élémentaires, se comportent comme dans une salle E(elem).\n\nSi un héros désire passer dans la zone vert clair en revanche, il doit débourser les x premières pièces d'or qu'il a récupérées, qui retournent automatiquement à leur salle de départ (sa bourse se comporte comme une file). S'il ne peut payer ce coût, le héros ne peut emprunter ce passage.\n\nUn héros qui se retrouverait par malchance sur une salle des taxes trop chère pour lui se verrait immédiatement ôter la vie.\n\nChapitre 3 : Héros\n\nCe chapitre propose une liste exhaustive de tous les héros du jeu.\n\nGuerrier(x)\n\nApparaît initialement avec x points de vie.\n\nTéméraire : Le guerrier choisit le trajet le plus court pour arriver à une salle Z, sans aucune considération pour sa santé.\n\nDroitier : Si, à un moment quelconque du niveau, le guerrier a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.\n\nElfe(x, elems)\n\nApparaît initialement avec x points de vie.\n\nPrudent : L'elfe choisit le trajet le plus court parmi ceux lui laissant le plus de points de vie pour arriver à une salle Z.\n\nÉcolo : L'elfe est immunisé à tous les éléments de elems.\n\nDroitier : Si, à un moment quelconque du niveau, l'elfe a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.\n\nMécanicien(x, dico)\n\nApparaît initialement avec x points de vie.\n\nCapacité spéciale - technopathe : Soit s ∈ dico.keys(). Si le mécanicien est situé dans la salle s, alors il peut la déplacer vers une case vide adjacente de la grille des salles, instantanément, mais en consommant dico[s] pas.\n\nTéméraire : Le mécanicien choisit le trajet le plus court pour arriver à une salle Z, sans aucune considération pour sa santé, en prenant en compte ses pouvoirs.\n\nPragmatique : Le mécanicien préfère les chemins qui consomment le moins de pas à l'utilisation infondée de son pouvoir. Il préférera cependant utiliser son pouvoir le plus tôt possible, par rapport à un chemin aussi rapide qui ne l’utiliserait pas, ou trop tard.\n\nGaucher : Si, à un moment quelconque du niveau, le mécanicien a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus en haut, puis à droite, puis en bas, puis à gauche.\n\nArtilleur(x, c) (incoming)\n\nApparaît initialement avec x points de vie.\n\nCapacité spéciale - destructeur : Au plus c fois, l’artilleur peut tirer un obus dans l’une des 4 directions cardinales, i.e. invoquer un héros “obus” sur une case adjacente, ce qui lui est possible si le tir n'a pas une durée infinie. \n\nPrudent : L'artilleur choisit le trajet le plus court parmi ceux lui laissant le plus de points de vie pour arriver à une salle Z - ou pour arriver à tirer sur une salle Z - en prenant en compte ses pouvoirs.\n\nVantard : L'artilleur préfère les chemins qui lui permettent de tirer un obus le plus tôt possible, ce qui est prioritaire par rapport à la longueur du chemin.\n\nDroitier : Si, à un moment quelconque du niveau, l'artilleur a le choix entre plusieurs options de trajet jugées de même valeur, il préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.\n\nObus (incoming)\n\nProjectile invoqué par un artilleur.\n\nAvance en ligne droite dans la direction choisie par l’artilleur jusqu'à ce qu'il rencontre un mur ou sorte définitivement du donjon. \n\nSe déplace instantanément : jusqu'à sa destruction, ni le joueur ni les autres héros ne peuvent effectuer un action.\n\nDétruit toutes les cases élémentaires et les monstres - qui peuplent les salles D et Z - qu'il rencontre. Inflige 2 dégâts à tout héros qu'il croise.\n\nPrincesse(x, dico, b) (incoming)\n\nApparaît initialement avec x points de vie.\n\nObstinée : La princesse cherche à aller dans l'une des salles ayant le coefficient le plus élevé. Par défaut, toutes les salles (dont les salles Z) ont un coefficient de 0 ; un couple (s, v) dans dico signifie que la salle s a un coefficient v. La princesse ne peut considérer un chemin passant par une case de coefficient négatif valide que si la salle qu'elle cherche à atteindre a un coefficient strictement supérieur.\n\nPrudente : La princesse choisit le trajet le plus court parmi ceux lui laissant le plus de points de vie pour arriver à une salle de plus haut coefficient.\n\nAttractive : Soit h un héros présent dans le donjon. h est en temps normal soumis à des attractions données par les coefficients par défaut des salles ({Z:1} en général, mais h.dico si h est une princesse). Le coefficient perçu par h d'une salle s∈Π est la moyenne du coefficient par défaut de s (spécifique à h) et de l'attractivité b de chaque princesse autre que h présente dans s. h se comporte alors comme un Obstiné vis-à-vis de ces coefficients.\n\nDroitière : Si, à un moment quelconque du niveau, la princesse a le choix entre plusieurs options de trajet jugées de même valeur, elle préférera choisir les chemins qui débutent le plus à droite, puis en haut, puis à gauche, puis en bas.\n\n\n\nChapitre 4 : Sortilèges\n\nCe chapitre propose une liste exhaustive de tous les sortilèges du jeu.\n\nAttaque(x)\n\nInflige x dégâts à tous les héros (vivants) actuellement présents dans le donjon.\n\nSous sélection : Inflige x dégâts à tous les héros sélectionnés.\n\nTéléportation(n)\n\nLe héros actif est téléporté dans la n-ième dernière salle où il est passé (en comptant les répétitions), sur la première case qu'il a visitée lors dudit passage dans la salle.\nSi f(n) est trop grand, le héros retourne dans la salle d’attente, puis réapparaît dès qu'il le peut.\n\nSous sélection : Chacun des héros sélectionnés revient dans la n-ième dernière salles qu’il a visitée (comptée avec multiplicité), sur la première case visitée lors de ce passage, ou dans la salle d’attente si nécessaire.\n\nDéplacement()\n\nDéplace instantanément la salle qui contient le héros actif vers une position anciennement vide (une salle mouvante entraîne avec elle tout son contenu).\n\nSous sélection : Soient s1, …, sn les salles deux à deux distinctes contenant les héros sélectionnés, et r1, …, rn des positions libres deux à deux distinctes de la grille des salles. Alors, en notant “u↦v” l’opération “la salle u bouge instantanément (elle et son contenu)sur la position v”, on a  s1 ↦ r1, …, sn ↦ rn.\n\nEchange()\n\nÉchange instantanément la position de la salle qui contient le héros actif et d’une autre salle distincte (une salle mouvante entraîne avec elle tout ce qu’elle contient : héros, argent, etc.).\n\nSous sélection : Soient s1, …, sn les salles deux à deux distinctes contenant les héros sélectionnés, et r ∈ Π \\ {s1, …, sn}. Alors, en notant “u↦v” l’opération “la salle u bouge instantanément (elle et son contenu)sur la salle v”, on a  s1 ↦ s2 ↦ s3 ↦ … ↦ sn-1 ↦ sn ↦ r ↦ s1.\n\nSélection(cad)\n\nQuand le joueur conjure le sortilège de sélection, il sélectionne k ≥ 1 héros présents dans le donjon et un sortilège φ ∈ Φ\\{Sélection}, puis applique φ en même temps à tous les héros sélectionnés ; les modalités de cette application sont spécifiques à chaque sortilège, et sont donc précisées dans le manuel (option “Sous sélection”).\n\nLe booléen cad, si mis à vrai, permet parmi les héros sélectionnés de choisir des cadavres.\n\nSomnolence (incoming)\nEndort le héros éveillé choisi, qui ne peut plus bouger jusqu'à ce qu'il soit réveillé (par un sortilège de réveil ou parce que son nombre de points de vie varie strictement).\n\nRéveil (incoming)\nRéveille le héros endormi choisi.\n\nBanalité (incoming)\nChoisissez un héros présent dans le donjon, qui devient un Guerrier et conserve son nombre actuel de points de vie.\nNiveaux - Deluxe\nZorg’s Dungeon Maker\nDeluxe Edition\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "1.1",
+    "title": "Foundations",
+    "source_line": 747,
+    "quarantine": [],
+    "text": "Niveau 1.1 : Foundations\nSalles : A, Z, D(2), E(feu).\nHéros : Guerrier(5).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "1.2",
+    "title": "Contractual Obligation",
+    "source_line": 751,
+    "quarantine": [],
+    "text": "Niveau 1.2 : Contractual Obligation\nSalles : A, Z, D(1), D(2), D(3).\nHéros : Guerrier(6).\nContrainte supplémentaire : dist(D(1), D(3)) = 2.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "1.3",
+    "title": "Around The Bush",
+    "source_line": 756,
+    "quarantine": [],
+    "text": "Niveau 1.3 : Around The Bush\nSalles : A, Z, 2*D(1), E(feu).\nHéros : Guerrier(5).\nContrainte supplémentaire : dist(A, Z) = 2.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "1.4",
+    "title": "Low Blow",
+    "source_line": 761,
+    "quarantine": [],
+    "text": "Niveau 1.4 : Low Blow\nSalles : A, Z, D(2).\nHéros : Guerrier(4).\nSortilèges : Attaque(3).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "1.5",
+    "title": "Magical Foundations",
+    "source_line": 766,
+    "quarantine": [],
+    "text": "Niveau 1.5 : Magical Foundations\nSalles : A, Z, D(2), E(feu).\nHéros : Guerrier(7).\nSortilèges : Attaque(1), Attaque(2).\nContrainte supplémentaire : Le héros ne peut atteindre un nombre de points de vie strictement négatif.\nBonus : Tous les sortilèges doivent être utilisés.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "1.6",
+    "title": "Heavy Paperwork",
+    "source_line": 773,
+    "quarantine": [],
+    "text": "Niveau 1.6 : Heavy Paperwork\nSalles : A, Z, D(2), E(feu).\nHéros : Guerrier(6).\nSortilèges : Attaque(1), Attaque(2).\nContraintes supplémentaires : \ndist(A, D) = dist(Z, D).\nLe héros ne peut pas subir deux sortilèges différents dans une même salle.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "1.7",
+    "title": "Double Trouble",
+    "source_line": 781,
+    "quarantine": [],
+    "text": "Niveau 1.7 : Double Trouble\nSalles : A, Z, D(3).\nHéros : Guerrier(4), Guerrier(6).\nSortilèges : Attaque(2), Attaque(4).\nBonus : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "1.8",
+    "title": "The Odd Squad",
+    "source_line": 787,
+    "quarantine": [],
+    "text": "Niveau 1.8 : The Odd Squad\nSalles : A, Z, 2*D(3), E(feu).\nHéros : Guerrier(3), Guerrier(5), Guerrier(7), Guerrier(9).\nSortilège : Attaque(1).\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "1.9",
+    "title": "Warrior Countdown",
+    "source_line": 793,
+    "quarantine": [],
+    "text": "Niveau 1.9 : Warrior Countdown\nSalles : A, Z, D(3), 2*E(feu).\nHéros : Guerrier(4), Guerrier(3), Guerrier(2), Guerrier(1).\nSortilège : Attaque(1).\nContrainte supplémentaire : Chaque héros doit mourir dans une salle différente.\n\n\n\nContrat n°2 : Elements [10]\n\nCoût : 5 points. (à modifier : au moins 7)\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.1",
+    "title": "Fire Immunity",
+    "source_line": 805,
+    "quarantine": [],
+    "text": "Niveau 2.1 : Fire Immunity\nSalles : A, Z, E(feu).\nHéros : Elfe(1, {feu}), Guerrier(1).\nSortilège : Attaque(1).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.2",
+    "title": "Elemental Sanctuary",
+    "source_line": 810,
+    "quarantine": [],
+    "text": "Niveau 2.2 : Elemental Sanctuary\nSalles : A, Z, E(feu), E(eau), E(glace).\nHéros : Elfe(3, {eau}), Elfe(3, {glace}).\nContrainte supplémentaire : dist(A, Z) != 2.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.3",
+    "title": "Behavior Test",
+    "source_line": 815,
+    "quarantine": [],
+    "text": "Niveau 2.3 : Behavior Test\nSalles : A, Z, D(3), E(feu).\nHéros : Guerrier(3), Elfe(3, {feu}).\nSortilège : Attaque(3).\nContrainte supplémentaire : Le donjon créé doit être carré.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.4",
+    "title": "Cross With the Constraint - Watered Down",
+    "source_line": 821,
+    "quarantine": [],
+    "text": "Niveau 2.4 : Cross With the Constraint - Watered Down\nSalles : A, Z, 2*D(1), E(feu), E(eau).\nHéros : Guerrier(4).\nContrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.5",
+    "title": "Cross With the Constraint",
+    "source_line": 826,
+    "quarantine": [],
+    "text": "Niveau 2.5 : Cross With the Constraint\nSalles : A, Z, 2*D(1), E(feu), E(glace).\nHéros : Guerrier(4).\nContrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.6",
+    "title": "Ice Palace",
+    "source_line": 831,
+    "quarantine": [],
+    "text": "Niveau 2.6 : Ice Palace\nSalles : A, Z, 3*D(1), 4*E(glace).\nHéros : Guerrier(3).\nContrainte supplémentaire : Le donjon doit être carré.\nBonus 1 : ∃(s, r) ∈ {D}², dist(s, r) = 3.\nBonus 2 : ∃(s, r) ∈ {D}², dist(s, r) = 4.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.7",
+    "title": "Curse Removal",
+    "source_line": 838,
+    "quarantine": [],
+    "text": "Niveau 2.7 : Curse Removal\nSalles : A, Z, D(2), D(4), E(feu).\nHéros : Guerrier(6), Elfe(6, {}), Elfe(5, {feu}).\nSortilèges : Attaque(1), Attaque(2), Attaque(3), Attaque(4).\nContraintes supplémentaires : \nTous les sortilèges doivent être utilisés.\nAucun héros ne peut atteindre un nombre de points de vie strictement négatif.\nBonus : Une unique salle n'est pas visitée.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.8",
+    "title": "Elfic Countdown",
+    "source_line": 847,
+    "quarantine": [],
+    "text": "Niveau 2.8 : Elfic Countdown\nSalles : A, Z, D(1), 2*E(feu), E(eau), E(glace).\nHéros : Elfe(3, {glace}), Elfe(3, {eau}), Elfe(3, {}).\nContrainte supplémentaire : Chaque héros doit mourir dans une salle différente.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.9",
+    "title": "Cobblestone Generator",
+    "source_line": 852,
+    "quarantine": [],
+    "text": "Niveau 2.9 : Cobblestone Generator\nSalles : A, Z, E(feu), E(eau).\nHéros : Guerrier(6), Elfe(9, {eau}).\nSortilège : Attaque(6).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "2.10",
+    "title": "Health Generator",
+    "source_line": 857,
+    "quarantine": [],
+    "text": "Niveau 2.10 : Health Generator\nSalles : A, Z, D(3), D(-1), E(eau).\nHéros : Elfe(6, {}), Guerrier(9).\nSortilège : Attaque(6).\nBonus : dist(E, D(-1)) < dist(A, D(-1)).\n\n\n\nContrat n°3 : Parallelism [9]\n\nCoût : 10 points.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "3.1",
+    "title": "Unfair Rivalry",
+    "source_line": 869,
+    "quarantine": [],
+    "text": "Niveau 3.1 : Unfair Rivalry\nSalles : A, Z, E(feu).\nHéros : Guerrier(3).\nSortilège : Attaque(1).\n(M’) Salles : A, Z, E(feu).\n(M’) Héros : Guerrier(3).\nContrainte supplémentaire : (M’) n’est pas solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "3.2",
+    "title": "Emmental Sanctuary",
+    "source_line": 877,
+    "quarantine": [],
+    "text": "Niveau 3.2 : Emmental Sanctuary\nSalles : A, Z, 2*E(feu), E(glace).\nHéros : Elfe(3, {glace}).\n(M’) Salles : A, Z, 2*E(feu), E(glace).\n(M’) Héros : Elfe(3, {eau}).\nContrainte supplémentaire : Il existe une salle visitée dans (M) mais pas dans (M').\nBonus : Il existe une unique salle visitée dans (M) mais pas dans (M’).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "3.3",
+    "title": "Pivotal Issue",
+    "source_line": 885,
+    "quarantine": [],
+    "text": "Niveau 3.3 : Pivotal Issue\nSalles : A, Z, D(1), D(1), E(feu).\nHéros : Guerrier(5).\n(M’) Salles : A, Z, D(1), E(feu), D(1).\n(M’) Héros : Guerrier(4).\nContrainte supplémentaire : (M’) n’est pas solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "3.4",
+    "title": "Amazing Mirror",
+    "source_line": 892,
+    "quarantine": [],
+    "text": "Niveau 3.4 : Amazing Mirror\nSalles : A, Z, D(1), D(2), D(3).\nHéros : Guerrier(4).\n(M’) Salles : D(2), D(3), D(1), A, Z.\n(M’) Héros : Guerrier(3).\nContrainte supplémentaire : (M’) est solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "3.5",
+    "title": "One Way Zone",
+    "source_line": 899,
+    "quarantine": [],
+    "text": "Niveau 3.5 : One Way Zone\nSalles : A, Z, D(3), E(feu).\nHéros : Guerrier(3).\n(M’) Salles : Z, A, D(3), E(feu).\n(M’) Héros : Guerrier(3).\nContrainte supplémentaire : (M’) n’est pas solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "3.6",
+    "title": "Into the Multiverse",
+    "source_line": 906,
+    "quarantine": [],
+    "text": "Niveau 3.6 : Into the Multiverse\nSalles : A, Z, D(1), D(1), D(1), E(eau), E(eau), E(eau), E(eau).\nHéros : Guerrier(3).\n(M’) Salles : A, Z, E(eau), E(eau), D(1), D(1),  D(1), E(eau), E(eau).\n(M’) Héros : Guerrier(3).\n(M’’) Salles : A, Z, E(eau), E(eau), E(eau), E(eau), D(1), D(1), D(1).\n(M’’) Héros : Guerrier(3).\nContrainte supplémentaire : (M’) et (M’’) sont solvables.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "3.7",
+    "title": "Elemental Temple",
+    "source_line": 915,
+    "quarantine": [],
+    "text": "Niveau 3.7 : Elemental Temple\nSalles : A, Z, 2*D(1), E(feu).\nHéros : Elfe(2, {eau}).\n(M’) Salles : A, Z, 2*D(1), E(glace).\n(M’) Héros : Elfe(2, {eau}).\n(M’’) Salles : A, Z, 2*D(1), E(eau).\n(M’’) Héros : Elfe(2, {eau}).\nContraintes supplémentaires : \n(M’) est solvable.\n(M’’) n’est pas solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "3.8",
+    "title": "Cheese Factory",
+    "source_line": 926,
+    "quarantine": [],
+    "text": "Niveau 3.8 : Cheese Factory\nSalles : A, Z, 2*D(1), E(feu), E(eau), E(glace).\nHéros : Elfe(4, {glace}).\n(M’) Salles : A, Z, 2*D(1), E(feu), E(eau), E(glace).\n(M’) Héros : Elfe(3, {feu}), Elfe(2, {eau}), Elfe(4, {glace}).\n(M’’) Salles : A, Z, 2*D(1), E(feu), E(eau), E(glace).\n(M’’) Héros : Elfe(3, {feu}).\nContraintes supplémentaires :\nIl existe une salle visitée dans (M) mais pas dans (M’).\nIl existe une salle visitée dans (M’) mais pas dans (M’’).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "3.9",
+    "title": "Elemental Cathedral",
+    "source_line": 937,
+    "quarantine": [],
+    "text": "Niveau 3.9 : Elemental Cathedral\nSalles : A, Z, E(feu), E(eau), E(glace).\nHéros : Elfe(1, {eau}).\n(M’) Salles : A, Z, E(feu), E(glace), E(eau).\n(M’) Héros : Elfe(1, {glace}).\n(M’’) Salles : A, Z, E(eau), E(glace), E(feu).\n(M’’) Héros : Elfe(1, {feu}), Elfe(1, {feu, eau, glace}).\n(M’’) Sortilège : Attaque(1).\nContrainte supplémentaire : (M’) et (M’’) ne sont pas solvables.\n\n\n\nContrat n°4 : Purple [9]\n\nCoût : 15 points.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "4.1",
+    "title": "Teleportation Station",
+    "source_line": 953,
+    "quarantine": [],
+    "text": "Niveau 4.1 : Teleportation Station\nSalles : A, Z, E(poison), P(1, 1).\nHéros : Guerrier(6).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "4.2",
+    "title": "Science-Fiction Station",
+    "source_line": 957,
+    "quarantine": [],
+    "text": "Niveau 4.2 : Science-Fiction Station\nSalles : A, Z, D(1), E(poison), P(1, 1).\nHéros : Guerrier(17).\nSortilège : Téléportation(1).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "4.3",
+    "title": "Fake Reset",
+    "source_line": 962,
+    "quarantine": [],
+    "text": "Niveau 4.3 : Fake Reset\nSalles : A, Z, D(11), E(poison).\nHéros : Guerrier(20).\nSortilèges : 2*Téléportation(2).\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\nBonus : Le Guerrier doit être téléporté deux fois dans la salle d’attente.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "4.4",
+    "title": "Polynomial Portal",
+    "source_line": 969,
+    "quarantine": [],
+    "text": "Niveau 4.4 : Polynomial Portal\nSalles : A, Z, D(1), E(feu), P(2, x↦3x-2).\nHéros : Guerrier(9), Elfe(3, {feu}).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "4.5",
+    "title": "Chemical Loophole",
+    "source_line": 973,
+    "quarantine": [],
+    "text": "Niveau 4.5 : Chemical Loophole\nSalles : A, Z, D(1), E(poison), P(1, 5).\nHéros : Elfe(1, {}).\nContrainte supplémentaire : dist(A, Z) = 1.\nBonus : dist(A, P) = dist(A, E) + 2.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "4.6",
+    "title": "Scarlet and Violet",
+    "source_line": 979,
+    "quarantine": [],
+    "text": "Niveau 4.6 : Scarlet and Violet\nSalles : A, Z, D(1), E(feu), E(poison), P(2, x↦5-2x).\nHéros : Elfe(15, {poison}), Elfe(17, {feu}).\nSortilèges : 2*Téléportation(1).\nBonus : La salle P doit téléporter chaque héros deux fois.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "4.7",
+    "title": "Cross With the Bonus",
+    "source_line": 985,
+    "quarantine": [],
+    "text": "Niveau 4.7 : Cross With the Bonus\nSalles : A, Z, 2*D(1), E(feu), E(poison).\nHéros : Elfe(4, {}).\nSortilèges : 2*Téléportation(4).\n(M’) Salles : A, Z, 2*D(1), E(feu), E(poison).\n(M’) Héros : Elfe(4, {}).\n(M’) Sortilèges : 2*Téléportation(40).\nContrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.\nBonus : (M’) n’est pas solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "4.8",
+    "title": "Waste Sorting",
+    "source_line": 995,
+    "quarantine": [],
+    "text": "Niveau 4.8 : Waste Sorting\nSalles : A, Z, E(feu), E(poison), 2*P(1, 1).\nHéros : Guerrier(5), Elfe(5, {}).\nContrainte supplémentaire : Un unique héros doit atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "4.9",
+    "title": "Wrong Warp",
+    "source_line": 1000,
+    "quarantine": [],
+    "text": "Niveau 4.9 : Wrong Warp\nSalles : A, Z, D(1), P(∞, 1), P(10, x↦1+2*⌊1/x⌋).\nHéros : Guerrier(2).\n(M’) Salles : A, Z, D(1), P(∞, 1), P(10, x↦1+2*⌊1/x⌋).\n(M’) Héros : Elfe(2, {}).\nContrainte supplémentaire : (M’) n’est pas solvable.\n\n\n\nContrat n°5 : Capitalism [9]\n\nCoût : 20 points.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "5.1",
+    "title": "Delicate Wallet",
+    "source_line": 1013,
+    "quarantine": [],
+    "text": "Niveau 5.1 : Delicate Wallet\nSalles : A, Z, 2*E(feu), O(1).\nHéros : Guerrier(1), Guerrier(2).\nContrainte supplémentaire : L’argent ne peut pas se situer dans la même salle au moment de l’apparition d’un héros et au moment de sa mort.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "5.2",
+    "title": "Wealth Frontier",
+    "source_line": 1018,
+    "quarantine": [],
+    "text": "Niveau 5.2 : Wealth Frontier\nSalles : A, Z, D(1), O(1), T(1, feu).\nHéros : Guerrier(5).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "5.3",
+    "title": "Smarter Coworker",
+    "source_line": 1022,
+    "quarantine": [],
+    "text": "Niveau 5.3 : Smarter Coworker\nSalles : A, Z, D(2), E(feu), O(1), T(1, eau).\nHéros : Guerrier(9), Guerrier(4).\nSortilège : Attaque(1).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "5.4",
+    "title": "Money Smuggling",
+    "source_line": 1027,
+    "quarantine": [],
+    "text": "Niveau 5.4 : Money Smuggling\nSalles : A, Z, D(1), D(2), D(3), O(1).\nHéros : Guerrier(5), Guerrier(9), Guerrier(2).\nSortilège : Téléportation(1).\nContrainte supplémentaire : Chaque héros doit posséder de l’or au moment de sa mort.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "5.5",
+    "title": "Counting the Riches",
+    "source_line": 1033,
+    "quarantine": [],
+    "text": "Niveau 5.5 : Counting the Riches\nSalles : A, Z, E(feu), P(2, x↦7x-6), O(1), T(1, eau).\nHéros : Guerrier(21).\nSortilège : Téléportation(4).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "5.6",
+    "title": "Treasure Chest",
+    "source_line": 1038,
+    "quarantine": [],
+    "text": "Niveau 5.6 : Treasure Chest\nSalles : A, Z, 3*D(1), 4*O(1).\nHéros : Guerrier(3).\nContraintes supplémentaires : \nLe donjon doit être carré.\nLe héros doit posséder au moins 3 pièces au moment de sa mort."
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "5.7",
+    "title": "Dual Shares",
+    "source_line": 1044,
+    "quarantine": [],
+    "text": "Niveau 5.7 : Dual Shares\nSalles : A, Z, 2*D(3), E(feu), E(glace), 2*O(1).\nHéros : Guerrier(6), Elfe(3, {glace}).\n(M’) Salles : A, Z, 2*D(3), E(feu), E(glace), 2*O(1).\n(M’) Héros : Guerrier(6), Elfe(3, {}).\nContrainte supplémentaire : Dans (M), chaque héros doit posséder une quantité impaire d’or au moment de sa mort.\nBonus 1 : La contrainte supplémentaire est toujours valable dans (M’).\nBonus 2 : La contrainte supplémentaire n’est plus valable dans (M’).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "5.8",
+    "title": "Vault Break",
+    "source_line": 1053,
+    "quarantine": [],
+    "text": "Niveau 5.8 : Vault Break\nSalles : A, Z, D(1), O(1), T(1, feu), T(1, eau).\nHéros : Elfe(1, {feu}), Elfe(13, {eau}).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "5.9",
+    "title": "Going Bankrupt",
+    "source_line": 1057,
+    "quarantine": [],
+    "text": "Niveau 5.9 : Going Bankrupt\nSalles : A, Z, P(1, 1), 2*O(1), T(1, feu).\nHéros : Guerrier(6), Elfe(3 {}).\nSortilège : Attaque(6).\n(M’) Salles : A, Z, D(6), 2*O(1), T(1, feu).\n(M’) Héros : Guerrier(6), Elfe(3 {}).\n(M’) Sortilège : Attaque(6).\nContrainte supplémentaire : (M’) n’est pas solvable.\n\n\n\nContrat n°6 : Movement [10]\n\nCoût : 25 points.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.1",
+    "title": "Room Rumble",
+    "source_line": 1072,
+    "quarantine": [],
+    "text": "Niveau 6.1 : Room Rumble\nSalles : A, Z, E(feu).\nHéros : Guerrier(4).\nSortilège : Déplacement().\n(M’) Salles : A, Z, E(feu).\n(M’) Héros : Guerrier(4), Guerrier(1).\n(M’) Sortilège : Déplacement().\nBonus : (M’) est solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.2",
+    "title": "Room Rumpus",
+    "source_line": 1081,
+    "quarantine": [],
+    "text": "Niveau 6.2 : Room Rumpus\nSalles : A, Z, E(feu).\nHéros : Guerrier(4).\nSortilège : Échange().\n(M’) Salles : A, Z, E(feu).\n(M’) Héros : Guerrier(4), Guerrier(1).\n(M’) Sortilèges : 2*Échange().\nBonus : (M’) est solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.3",
+    "title": "Little Big Orbit",
+    "source_line": 1090,
+    "quarantine": [],
+    "text": "Niveau 6.3 : Little Big Orbit\nSalles : A, Z, E(feu).\nHéros : Mécanicien(3, {E:1}).\nSortilège : Échange().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.4",
+    "title": "A Step Back",
+    "source_line": 1095,
+    "quarantine": [],
+    "text": "Niveau 6.4 : A Step Back\nSalles : A, Z, D(1), 2*O(1).\nHéros : 2*Guerrier(2).\nSortilèges : Déplacement(), Échange().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.5",
+    "title": "Forced Confinement",
+    "source_line": 1100,
+    "quarantine": [],
+    "text": "Niveau 6.5 : Forced Confinement\nSalles : A, Z, D(2).\nHéros : Guerrier(5), Guerrier(3).\nSortilèges : Attaque(3), Déplacement().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.6",
+    "title": "Priority Management",
+    "source_line": 1105,
+    "quarantine": [],
+    "text": "Niveau 6.6 : Priority Management\nSalles : A, Z, D(4).\nHéros : Guerrier(7), Mécanicien(7, {D:5}).\nSortilège : Attaque(3).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.7",
+    "title": "Dungeon Twister",
+    "source_line": 1110,
+    "quarantine": [],
+    "text": "Niveau 6.7 : Dungeon Twister\nSalles : A, Z, D(1), E(feu), P(1, 1).\nHéros : Guerrier(13).\nSortilèges : Déplacement(), Échange().\n(M’) Salles : A, Z, D(1), E(feu), P(1, 1).\n(M’) Héros : Guerrier(14).\n(M’) Sortilèges : Déplacement(), Échange().\n(M’’) Salles : A, Z, D(1), E(feu), P(1, 1).\n(M’’) Héros : Guerrier(13), Guerrier(1).\n(M’’) Sortilèges : Déplacement(), Échange().\nBonus 1 : (M’) et (M’’) sont solvables.\nBonus 2 : (M’) est solvable, mais pas (M’’).\nBonus 3 : (M’’) est solvable, mais pas (M’).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.8",
+    "title": "Sliding Puzzle",
+    "source_line": 1124,
+    "quarantine": [],
+    "text": "Niveau 6.8 : Sliding Puzzle\nSalles : A, Z, D(1), 2*E(eau).\nHéros : Mécanicien(2, {D:5, E:10}).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.9",
+    "title": "Treadmill Thrill",
+    "source_line": 1128,
+    "quarantine": [],
+    "text": "Niveau 6.9 : Treadmill Thrill\nSalles : A, Z, 2*D(1), P(1, 6).\nHéros : Guerrier(10), Guerrier(1).\nSortilèges : Attaque(1), 2*Déplacement().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "6.10",
+    "title": "Torture Tour",
+    "source_line": 1133,
+    "quarantine": [],
+    "text": "Niveau 6.10 : Torture Tour\nSalles : A, Z, D(1), E(feu), 2*E(eau).\nHéros : Elfe(3, {feu, eau}), Mécanicien(2, {D:10}).\nSortilèges : 2*Déplacement().\n\n\n\nContrat n°7 : Customization [11]\n\nCoût : 30 points.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.1",
+    "title": "Boundless",
+    "source_line": 1144,
+    "quarantine": [],
+    "text": "Niveau 7.1 : Boundless\nVariable : λ = choix(1, ℝ).\nSalles : A, Z, D(42), D(λ).\nHéros : Guerrier(5).\n(M’) Salles : A, Z, D(42), D(λ).\n(M’) Héros : Elfe(5, {}).\nContrainte supplémentaire : (M’) n'est pas solvable.\nBonus : Dans (M), aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.2",
+    "title": "Unwanted Connection",
+    "source_line": 1153,
+    "quarantine": [],
+    "text": "Niveau 7.2 : Unwanted Connection\nVariable : λ = #{r ∈ Π : r et A sont reliées}.\nSalles : A, Z, D(1), O(1), T(1, feu).\nHéros : Guerrier(2λ-3).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.3",
+    "title": "Magical Tinkering",
+    "source_line": 1158,
+    "quarantine": [],
+    "text": "Niveau 7.3 : Magical Tinkering\nSalles : A, Z, D(3).\nHéros : Guerrier(1), Guerrier(3), Guerrier(1).\nSortilèges : Attaque(1), Attaque(3), Sélection(faux).\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.4",
+    "title": "One Way Street",
+    "source_line": 1164,
+    "quarantine": [],
+    "text": "Niveau 7.4 : One Way Street\nVariables : (λ, μ) = choix(2, éléments).\nSalles : A, Z, E(λ), E(μ).\nHéros : Guerrier(2).\n(M’) Salles : Z, A, E(λ), E(μ).\n(M’) Héros : Guerrier(2).\nContrainte supplémentaire : (M’) n'est pas solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.5",
+    "title": "Impractical Toll",
+    "source_line": 1172,
+    "quarantine": [],
+    "text": "Niveau 7.5 : Impractical Toll\nVariables : λ = choix(1, ℕ), μ = choix(1, ℕ).\nSalles : A, Z, O(λ), O(μ), T(λ, feu), T(μ, glace).\nHéros : Guerrier(9).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.6",
+    "title": "Abstract Art",
+    "source_line": 1177,
+    "quarantine": [],
+    "text": "Niveau 7.6 : Abstract Art\nVariable : λ = #{sortilèges utilisés}.\nSalles : A, Z, D(λ).\nHéros : choix(4, {Guerrier(8), Guerrier(λ+1), Guerrier(λ+4), Guerrier(3λ)}).\nSortilèges : ∞*Attaque(λ).\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif. \nBonus 1 : Guerrier(8) apparaît avant Guerrier(λ+4).\nBonus 2 : Guerrier(8) apparaît après Guerrier(λ+4).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.7",
+    "title": "Dance of Fire and Ice",
+    "source_line": 1186,
+    "quarantine": [],
+    "text": "Niveau 7.7 : Dance of Fire and Ice\nSalles : A, Z, E(feu), E(glace).\nHéros : Guerrier(4), Elfe(4).\nSortilèges : Déplacement(), Échange(), Sélection(faux).\n(M’) Salles : A, Z, E(feu), E(glace).\n(M’) Héros : Guerrier(4), Elfe(4).\n(M’) Sortilèges : Déplacement(), Échange().\nContrainte supplémentaire : (M’) n'est pas solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.8",
+    "title": "Golden Snap",
+    "source_line": 1195,
+    "quarantine": [],
+    "text": "Niveau 7.8 : Golden Snap\nVariables : λ = choix(1, ℕ), μ = choix(1, ℕ*).\nSalles : A, Z, D(1), P(λ, ∞), 2*O(2), T(1, eau).\nHéros : Guerrier(μ).\nContrainte supplémentaire : À la mort du héros, chaque salle O doit contenir 1 or."
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.9",
+    "title": "The Level Where You Are The Hero",
+    "source_line": 1200,
+    "quarantine": [],
+    "text": "Niveau 7.9 : The Level Where You Are The Hero\nVariables : (λ, μ, α, β, γ) =  choix(5, ℕ*).\nSalles : A, Z, D(3), E(feu), E(poison), P(2, 1).\nHéros : Guerrier(λ), Elfe(μ, {}), Mécanicien(α, {E(feu):1}), Elfe(β, {}), Guerrier(γ).\nSortilège : Téléportation(1).\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.10",
+    "title": "Pick Your Poison",
+    "source_line": 1207,
+    "quarantine": [],
+    "text": "Niveau 7.10 : Pick Your Poison\nSalles : A, Z, D(1), D(-1), E(feu).\nHéros : choix(2, {Guerrier(12), Elfe(9, {}), Mécanicien(11,  {D(-1):1})}).\nSortilèges : Attaque(5), Échange().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "7.11",
+    "title": "Account Freeze",
+    "source_line": 1212,
+    "quarantine": [],
+    "text": "Niveau 7.11 : Account Freeze\nVariables :\n(α, β, γ) = choix(3, ℝ)\nλ = #{affectations du héros actif dans (M)}\nμ = #{affectations du héros actif dans (M’)}\nSalles : A, Z, E(glace), O(α), T(β, {glace}), T(γ, {glace}).\nHéros : Guerrier(5), Elfe(5, {glace}).\nSortilèges : Attaque(λ), Téléportation(∞), Sélection(faux).\n(M’) Salles : A, Z, E(glace), O(α), T(β, {glace}), T(γ, {glace}).\n(M’) Héros : Guerrier(5), Elfe(5, {glace}).\n(M’) Sortilège : Attaque(μ), Téléportation(∞).\nContrainte supplémentaire : (M’) n’est pas solvable.\n\n\n\nContrat n°8 : Hypnosis [9]\n\nCoût : 35 points.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "8.1",
+    "title": "Nap Time",
+    "source_line": 1231,
+    "quarantine": [],
+    "text": "Niveau 8.1 : Nap Time\nSalles : A, Z, D(1).\nHéros : 2*Guerrier(2).\nSortilèges : Attaque(1), Somnolence().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "8.2",
+    "title": "Simulating Sleepwalking",
+    "source_line": 1236,
+    "quarantine": [],
+    "text": "Niveau 8.2 : Simulating Sleepwalking\nSalles : A, Z, E(feu).\nHéros : choix(2, {Guerrier(5), Mécanicien(1, {E:1})}.\nSortilèges : Attaque(1), Somnolence().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "8.3",
+    "title": "Dream Trap",
+    "source_line": 1241,
+    "quarantine": [
+      "dream_trap"
+    ],
+    "text": "Niveau 8.3 : Dream Trap\nSalles : A, Z, D(1).\nHéros : 3*Guerrier(1).\nSortilèges : Attaque(1), Sélection(faux), 3*Somnolence(), 4*Réveil().\nContrainte supplémentaire : Tous les sortilèges doivent être utilisés.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "8.4",
+    "title": "Alarm Clock",
+    "source_line": 1247,
+    "quarantine": [],
+    "text": "Niveau 8.4 : Alarm Clock\nVariable : λ = #{héros vivants présents dans le donjon}.\nSalles : A, Z, D(λ).\nHéros : Guerrier(3), Guerrier(4), Guerrier(2).\nSortilèges : Attaque(1), 2*Somnolence(), Réveil().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "8.5",
+    "title": "Chloroform Smuggling",
+    "source_line": 1253,
+    "quarantine": [],
+    "text": "Niveau 8.5 : Chloroform Smuggling\nSalles : A, Z, D(1), D(2), D(3), P(1, 2), O(1).\nHéros : choix(4, (Guerrier(9), Guerrier(9), Elfe(8, {}), Elfe(10, {}))).\nSortilèges : Attaque(1), Somnolence().\nContrainte supplémentaire : Un héros meurt avec de l'or si et seulement si c'est un Guerrier.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "8.6",
+    "title": "Sleep Cycle",
+    "source_line": 1259,
+    "quarantine": [],
+    "text": "Niveau 8.6 : Sleep Cycle\nSalles : A, Z, D(1), D(15), E(glace), O(1), 2*T(1, feu).\nHéros : Elfe(14, {}), Elfe(12, {glace}).\nSortilèges : ∞*Somnolence, ∞*Réveil.\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "8.7",
+    "title": "Lucid Dream",
+    "source_line": 1265,
+    "quarantine": [],
+    "text": "Niveau 8.7 : Lucid Dream\nVariable : λ = choix(1, éléments).\nSalles : A, Z, D(1), E(λ).\nHéros : Guerrier(1), Elfe(1, {λ}), Guerrier(1).\nSortilèges : Déplacement(), Sélection(faux), Somnolence(), 2*Réveil().\nContrainte supplémentaire : Les héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "8.8",
+    "title": "Lucid Lullaby",
+    "source_line": 1272,
+    "quarantine": [],
+    "text": "Niveau 8.8 : Lucid Lullaby\nSalles : A, Z, D(1), E(choix(1, éléments)).\nHéros : 2*Guerrier(1).\nSortilèges : Téléportation(1), Échange(), Sélection(faux), Somnolence().\nContrainte supplémentaire : Les héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "8.9",
+    "title": "Lucid Nightmare",
+    "source_line": 1278,
+    "quarantine": [],
+    "text": "Niveau 8.9 : Lucid Nightmare\nVariable : (λ, μ) = choix(2, éléments).\nSalles : A, Z, E(λ), E(μ), O(0), O(1), T(1, feu).\nHéros : Guerrier(3), Elfe(3, {μ}), Guerrier(3).\nSortilèges : Attaque(1), Déplacement(), Somnolence().\nContraintes supplémentaires :\nLes héros ne peuvent mourir simultanément.\nLes héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.\n\n\nContrat n°9 : Artillery [7]\n\nCoût : 40 points.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "9.1",
+    "title": "Friendly Fire",
+    "source_line": 1292,
+    "quarantine": [],
+    "text": "Niveau 9.1 : Friendly Fire\nSalles : A, Z, D(1), E(feu).\nHéros : Guerrier(5), Artilleur(1, 1, ∞).\nSortilège : Somnolence().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "9.2",
+    "title": "Far West",
+    "source_line": 1297,
+    "quarantine": [],
+    "text": "Niveau 9.2 : Far West\nSalles : A, Z, 3*O(1), T(1, glace), C(1).\nHéros : Guerrier(4).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "9.3",
+    "title": "",
+    "source_line": 1301,
+    "quarantine": [],
+    "text": "Niveau 9.3 : \nSalles : A, Z, E(feu), E(poison), P(1, 1).\nHéros : Artilleur(2, 1, ∞), Elfe(3, {}).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "9.4",
+    "title": "",
+    "source_line": 1305,
+    "quarantine": [],
+    "text": "Niveau 9.4 : \nVariable : (λ, μ) = choix(2, éléments).\nSalles : A, Z, E(λ), E(μ), C(1).\nHéros : Guerrier(14).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "9.5",
+    "title": "Mutual Exclusion",
+    "source_line": 1310,
+    "quarantine": [],
+    "text": "Niveau 9.5 : Mutual Exclusion\nSalles : A, Z, E(feu), O(0).\nHéros : Mécanicien(6, {O:1}), Artilleur(1, 3, 2).\nSortilège : Téléportation(1).\n(M’) Salles : A, Z, E(feu), O(0).\n(M’) Héros : Artilleur(1, 3, 2), Mécanicien(6, {O:1}).\n(M’) Sortilèges : Téléportation(1), Sélection(faux).\nBonus : (M’) est solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "9.6",
+    "title": "",
+    "source_line": 1319,
+    "quarantine": [],
+    "text": "Niveau 9.6 : \nVariable : (α, β, γ) = choix(3, éléments).\nSalles : A, Z, D(1), E(α), E(β), E(γ), C(2).\nHéros : Guerrier(7), Elfe(10, {γ}), Guerrier(7).\nSortilège : Somnolence().\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "9.7",
+    "title": "Cereal Killer",
+    "source_line": 1325,
+    "quarantine": [],
+    "text": "Niveau 9.7 : Cereal Killer\nSalles : A, Z, D(1), 2*E(eau), 2*O(1), T(2, eau).\nHéros : Artilleur(1, 8, ∞).\n\nNiveau copié collé\nSalles : A, Z, D(1), E(feu), E(eau), E(glace), C(∞, 2).\nHéros : Guerrier(7), Elfe(10, {eau}), Guerrier(7).\nSortilège : Somnolence().\n\n\nContrat n°10 : Return to Basics\n\nCoût : 45 points.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "10.1",
+    "title": "",
+    "source_line": 1339,
+    "quarantine": [],
+    "text": "Niveau 10.1 :\nSalles : A, 2*Z, E(feu).\nHéros : Guerrier(3).\n(M’) Salles : A, 2*Z, E(feu).\n(M’) Héros : Elfe(3, {}).\nContrainte supplémentaire : (M’) n'est pas solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "10.2",
+    "title": "",
+    "source_line": 1346,
+    "quarantine": [],
+    "text": "Niveau 10.2 : \nSalles : 2*A, Z, E(feu).\nHéros : Guerrier(3), Elfe(3, {}).\n(M’) Salles : 2*A, Z, E(feu).\n(M’) Héros : Elfe(3, {}).\nContrainte supplémentaire : (M’) n'est pas solvable.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "10.3",
+    "title": "Modern Foundations",
+    "source_line": 1353,
+    "quarantine": [],
+    "text": "Niveau 10.3 : Modern Foundations\nSalles : 2*A, 2*Z, D(5), E(feu), E(eau).\nHéros : Guerrier(5), Elfe(5, {eau}), Guerrier(3).\nSortilège : Attaque(2).\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "10.4",
+    "title": "The Even Squad",
+    "source_line": 1359,
+    "quarantine": [],
+    "text": "Niveau 10.4 : The Even Squad\nSalles : 3*A, Z, D(1), D(3), D(5), D(7).\nHéros : choix(3, {Guerrier(4), Guerrier(6), Guerrier(8), Guerrier(10)}).\nSortilège : Déplacement().\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "10.5",
+    "title": "Balancing Act",
+    "source_line": 1365,
+    "quarantine": [],
+    "text": "Niveau 10.5 : Balancing Act\nSalles : A, 2*Z, D(5), E(feu), E(poison).\nHéros : Guerrier(11), Elfe(10, {}).\nSortilèges : Échange(), Somnolence(), Réveil().\nContrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "10.6",
+    "title": "Familial Loophole",
+    "source_line": 1371,
+    "quarantine": [],
+    "text": "Niveau 10.6 : Familial Loophole\nSalles : A, 2*Z, E(feu), E(poison).\nHéros : Artilleur(2, ∞, ∞).\n"
+  },
+  {
+    "edition": "deluxe-contracts",
+    "id": "10.7",
+    "title": "Zipcaster Amateur",
+    "source_line": 1375,
+    "quarantine": [],
+    "text": "Niveau 10.7 : Zipcaster Amateur\nSalles : 3*A, Z, 3*E(feu ou poison), P(1, ∞).\nHéros : Artilleur(_).\nBonus : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.\n\n"
+  }
+]
