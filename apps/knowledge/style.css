@@ -270,6 +270,32 @@ pre code {
   padding: 0;
 }
 
+.mermaid-wrap {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.mermaid-wrap .mermaid,
+pre.mermaid {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  font-family: var(--font);
+  text-align: center;
+}
+
+.mermaid-wrap svg {
+  max-width: 100%;
+  height: auto;
+}
+
 li {
   margin-left: 1.5rem;
   margin-bottom: 0.35rem;
