@@ -136,6 +136,7 @@ export interface LevelDef {
   variants?: BonusDef[];
   /** Source `Difficulté` line; stored, not interpreted. */
   difficulty?: number | string;
+  /** FR-9 / FR-45: M′, M″, … each with its own room list, heroes, and spells. */
   mirrorWorlds?: LevelDef[];
 }
 

@@ -31,7 +31,7 @@ What the gate actually checks before Extermination ([[FR-8]] wrapping [[FR-5]]�
 - Neighboring rooms share a **full side**, wall meeting wall and open cell meeting open cell ([[FR-6]]).
 - Every room shares one orientation, taken from the `A` rooms' common hatch direction ([[FR-7]], [[NFR-6]]).
 
-Win/loss is not “the last hero died” alone. Extra constraints and bonuses can sit on top ([[FR-43]], [[FR-44]]). Mirror worlds, if a level has them, are a later engine topic ([[FR-9]], [[FR-45]]) — this guide does not invent how they play.
+Win/loss is not “the last hero died” alone. Extra constraints and bonuses can sit on top ([[FR-43]], [[FR-44]]). Mirror worlds share the constructed room graph and swap rooms 1:1 by declaration order ([[FR-9]]). Worlds resolve normal → M′ → M″ and retire when idle or when that world's Z is reached ([[FR-45]]). Whether a world is solvable is a bounded engine search ([[FR-46]], [[NFR-4]]). If this paragraph and [[GAME_SPEC]] disagree, the spec wins.
 
 ## Rooms A / Z / D / E / P / O / T
 
