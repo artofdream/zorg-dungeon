@@ -82,10 +82,13 @@ export function MakerPlay({ entry, onBack }: Props) {
   const playing = run !== null;
 
   useEffect(() => {
-    if (!playing && selectedId === null && supplied[0]) {
+    // Only refill the tray after a clear board (choix reset). A finished
+    // line / last-room place leaves selectedId null on purpose so the next
+    // empty-cell click does not relocate an already-placed room.
+    if (!playing && rooms.length === 0 && selectedId === null && supplied[0]) {
       setSelectedId(supplied[0].id);
     }
-  }, [playing, selectedId, supplied]);
+  }, [playing, rooms.length, selectedId, supplied]);
 
   function resetBoard() {
     setRooms([]);
