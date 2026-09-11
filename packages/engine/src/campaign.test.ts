@@ -157,6 +157,46 @@ Héros : Guerrier(5)
     });
     expect(resolved.heroes).toEqual([{ type: "Elf", hp: 1, immunities: [] }]);
   });
+
+  it("marks ℕ* domains unavailable instead of binding the domain token as HP", () => {
+    const level = parseLevel(readFileSync(join(fixturesRoot, "contracts/7.8-golden-snap.txt"), "utf8"));
+    const play = classifyCampaignPlayability(level);
+    expect(play.playable).toBe(false);
+    expect(play.reasons).toContain("unresolved");
+    const bound = bindNamedChoix(level, defaultNamedChoices(level));
+    expect(bound.heroes[0]).toMatchObject({ type: "Warrior", hp: "ℕ*" });
+  });
+
+  it("marks nested princess choix keys unavailable (no Π picker)", () => {
+    const level = parseLevel(
+      readFileSync(join(fixturesRoot, "base-classic/21-getting-distracted.txt"), "utf8"),
+    );
+    const play = classifyCampaignPlayability(level);
+    expect(play.playable).toBe(false);
+    expect(play.reasons).toContain("unresolved");
+    const princess = level.heroes[0];
+    expect(princess).toMatchObject({ type: "Princess" });
+    const weightKeys =
+      princess && !isChoixDef(princess) && princess.type === "Princess"
+        ? Object.keys(princess.weights)
+        : [];
+    expect(weightKeys.some((k) => /choix\s*\(/i.test(k) || /[ΠΓΦ]/.test(k))).toBe(true);
+  });
+
+  it("keeps multi-pick inline hero choix playable and requires exactly n picks", () => {
+    const level = parseLevel(readFileSync(join(fixturesRoot, "contracts/10.4-the-even-squad.txt"), "utf8"));
+    expect(classifyCampaignPlayability(level)).toMatchObject({ playable: true, needsChoix: true });
+    const prepared = prepareCampaignLevel(level);
+    expect(prepared.heroes).toHaveLength(3);
+    expect(prepared.heroes.every((h) => !isChoixDef(h) && typeof h.hp === "number")).toBe(true);
+    expect(() =>
+      resolveInlineChoix(level, {
+        rooms: level.rooms.map(() => []),
+        heroes: [[0]],
+        spells: [],
+      }),
+    ).toThrow(/3 picks/);
+  });
 });
 
 describe("catalog grouping by Difficulté", () => {
@@ -195,10 +235,13 @@ describe("catalog grouping by Difficulté", () => {
 
     const playable = catalog.filter((e) => e.playable);
     expect(playable.length).toBeGreaterThan(20);
+    expect(playable.some((e) => e.id === "deluxe-7.8")).toBe(false);
+    expect(playable.some((e) => e.id === "base-classic-21")).toBe(false);
     for (const entry of playable) {
       const prepared = prepareCampaignLevel(parseLevel(entry.text));
       expect(flattenRooms(prepared.rooms).length).toBeGreaterThan(0);
       expect(prepared.heroes.some((h) => isChoixDef(h))).toBe(false);
+      expect(prepared.heroes.every((h) => isChoixDef(h) || typeof h.hp === "number")).toBe(true);
     }
   });
 });

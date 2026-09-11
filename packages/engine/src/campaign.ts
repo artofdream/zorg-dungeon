@@ -130,6 +130,12 @@ function addToken(tokens: Set<string>, value: number | string | undefined): void
   if (typeof value === "string" && value !== "inf" && value !== "∞") tokens.add(value);
 }
 
+/** Nested authored `choix(...)` keys (e.g. Princess `{choix(1, Π):1}`) are not bindable. */
+function addDictKeyToken(tokens: Set<string>, key: string): void {
+  const trimmed = key.trim();
+  if (/^choix\s*\(/i.test(trimmed) || /[ΠΓΦ]/.test(trimmed)) tokens.add(key);
+}
+
 function addElementToken(tokens: Set<string>, value: unknown): void {
   if (typeof value !== "string") return;
   if (!isElementType(value) && !(ELEMENT_TYPES as readonly string[]).includes(value)) {
@@ -166,11 +172,17 @@ function walkHeroSlot(hero: HeroSlot, tokens: Set<string>, flags: Set<Unavailabl
     if (hero.duration !== undefined) flags.add("gunner_duration");
   }
   if (hero.type === "Mechanic") {
-    for (const value of Object.values(hero.powerSteps)) addToken(tokens, value);
+    for (const [key, value] of Object.entries(hero.powerSteps)) {
+      addDictKeyToken(tokens, key);
+      addToken(tokens, value);
+    }
   }
   if (hero.type === "Princess") {
     addToken(tokens, hero.pull);
-    for (const value of Object.values(hero.weights)) addToken(tokens, value);
+    for (const [key, value] of Object.entries(hero.weights)) {
+      addDictKeyToken(tokens, key);
+      addToken(tokens, value);
+    }
   }
 }
 
@@ -211,14 +223,32 @@ function walkLevelTokens(
   for (const spell of level.spells ?? []) walkSpellSlot(spell, tokens, flags);
 }
 
+function collectUnresolved(
+  level: LevelDef,
+  names: Set<string>,
+  flags: Set<UnavailableReason>,
+): void {
+  const tokens = new Set<string>();
+  walkLevelTokens(level, tokens, flags);
+  for (const token of tokens) {
+    if (!names.has(token)) flags.add("unresolved");
+  }
+}
+
 /** Classify whether the Maker can start a Simulated run without inventing deferred rules. */
 export function classifyCampaignPlayability(level: LevelDef): CampaignPlayability {
   const flags = new Set<UnavailableReason>();
-  const tokens = new Set<string>();
-  walkLevelTokens(level, tokens, flags);
   const names = namedChoixNames(level);
-  for (const token of tokens) {
-    if (!names.has(token)) flags.add("unresolved");
+  collectUnresolved(level, names, flags);
+  // Default bind must leave concrete slots (not domain leftovers such as `ℕ*`).
+  try {
+    const prepared = prepareCampaignLevel(level);
+    collectUnresolved(prepared, names, flags);
+    if (prepared.heroes.some((h) => !isChoixDef(h) && typeof h.hp !== "number")) {
+      flags.add("unresolved");
+    }
+  } catch {
+    flags.add("unresolved");
   }
   const needsChoix = (level.variables?.length ?? 0) > 0 || hasInlineChoix(level);
   const reasons = [...flags];
@@ -276,6 +306,9 @@ export function listInlineChoixSlots(level: LevelDef): InlineChoixSlot[] {
 }
 
 function pickChoix<T>(slot: ChoixDef<T>, indices: readonly number[]): T[] {
+  if (typeof slot.n === "number" && indices.length !== slot.n) {
+    throw new Error(`Choix requires ${slot.n} picks, got ${indices.length}`);
+  }
   return indices.map((i) => {
     const opt = slot.options[i];
     if (opt === undefined) {
