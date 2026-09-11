@@ -71,6 +71,9 @@ function fingerprint(state: SimulationState): string {
       v: h.visits,
       pe: [...h.portalEntries.entries()].sort(([x], [y]) => x.localeCompare(y)),
       sv: [...h.shoveLeft.entries()].sort(([x], [y]) => x.localeCompare(y)),
+      // Banality rewrites def (type / immunities / pull) without touching the
+      // fields above; omitting it collapses distinct FR-42 targets into one key.
+      df: h.def,
     })),
     sp: state.spells.map((s) => (s.consumed ? 1 : 0)),
     rm: state.layout.rooms
@@ -218,22 +221,24 @@ export function checkSolvability(
   while (queue.length > 0) {
     const node = queue.shift();
     if (!node) break;
-    nodes += 1;
-    if (nodes > maxNodes) {
-      return { solvable: false, verdict: "budget", exhausted: false, nodes, maxNodes };
-    }
-
     const { state, sequence } = node;
+    // A winning node already in the queue must be reported even if the
+    // remaining expansion budget is zero — otherwise BFS can discard a
+    // generated win and return `budget` (NFR-4 / FR-46).
     if (isSolved(state)) {
       return {
         solvable: true,
         verdict: "solvable",
         exhausted: false,
-        nodes,
+        nodes: nodes + 1,
         maxNodes,
         sequence,
       };
     }
+    if (nodes >= maxNodes) {
+      return { solvable: false, verdict: "budget", exhausted: false, nodes, maxNodes };
+    }
+    nodes += 1;
     if (isLost(state) || state.outcome !== "in_progress") continue;
     if (state.stepCount >= maxSteps) continue;
 
