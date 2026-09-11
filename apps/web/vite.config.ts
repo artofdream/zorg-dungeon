@@ -6,4 +6,9 @@ import { defineConfig } from "vite";
 // RoomView interface (see src/App.tsx) without touching @zorg/engine.
 export default defineConfig({
   plugins: [react()],
+  server: {
+    fs: {
+      allow: ["../.."],
+    },
+  },
 });
