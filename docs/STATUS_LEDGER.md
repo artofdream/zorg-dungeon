@@ -51,10 +51,10 @@ writing a table row, is not proof.
 | FR-19 | Unknown | |
 | FR-20 | Simulated | packages/engine/src/warrior.test.ts |
 | FR-21 | Simulated | packages/engine/src/elf.test.ts |
-| FR-22 | Unknown | |
-| FR-23 | Unknown | |
-| FR-24 | Unknown | |
-| FR-25 | Unknown | |
+| FR-22 | Simulated | packages/engine/src/gunner.test.ts |
+| FR-23 | Simulated | packages/engine/src/gunner.test.ts |
+| FR-24 | Simulated | packages/engine/src/mechanic.test.ts |
+| FR-25 | Simulated | packages/engine/src/princess.test.ts |
 | FR-26 | Simulated | packages/engine/src/scheduler.test.ts |
 | FR-27 | Simulated | packages/engine/src/scheduler.test.ts |
 | FR-28 | Simulated | packages/engine/src/scheduler.test.ts |

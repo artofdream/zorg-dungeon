@@ -30,6 +30,10 @@ export interface ElfStepInput {
   orientation: Orientation;
   /** FR-16 / FR-17: coins in hand and remaining piles (map knowledge). */
   economy?: PathEconomy;
+  /** FR-25: weight-pull targets. Default is every Z room. */
+  targetRoomIds?: readonly string[];
+  /** FR-23: D rooms whose monster a Shell already cleared. */
+  clearedMonsters?: ReadonlySet<string>;
 }
 
 interface SearchState {
@@ -75,6 +79,15 @@ function better(a: SearchState, b: SearchState): boolean {
   return false;
 }
 
+function isTargetRoom(
+  layout: DungeonLayout,
+  roomId: string,
+  targetRoomIds?: readonly string[],
+): boolean {
+  if (targetRoomIds) return targetRoomIds.includes(roomId);
+  return roomDefOf(layout, roomId)?.type === "Z";
+}
+
 function applyPlannedCell(
   layout: DungeonLayout,
   grid: WalkGrid,
@@ -85,6 +98,8 @@ function applyPlannedCell(
   immunities: readonly ElementType[],
   gold: number,
   piles: Map<string, number>,
+  targetRoomIds?: readonly string[],
+  clearedMonsters?: ReadonlySet<string>,
 ): {
   hp: number;
   roomId: string;
@@ -107,8 +122,8 @@ function applyPlannedCell(
 
   if (nextRoomId !== roomId) {
     const def = roomDefOf(layout, nextRoomId);
-    if (def?.type === "Z") reachedZ = true;
-    if (def?.type === "D") {
+    if (isTargetRoom(layout, nextRoomId, targetRoomIds)) reachedZ = true;
+    if (def?.type === "D" && !clearedMonsters?.has(nextRoomId)) {
       const amount = typeof def.damage === "number" ? def.damage : Number(def.damage);
       if (!Number.isNaN(amount)) nextHp -= amount;
     }
@@ -163,7 +178,20 @@ function applyPlannedCell(
  * undefined when no improving path exists (FR-30 wait).
  */
 export function chooseElfStep(input: ElfStepInput): Cardinal | undefined {
-  const { layout, grid, from, hp, roomId, poisonVisits, immunities, orientation, economy } = input;
+  const {
+    layout,
+    grid,
+    from,
+    hp,
+    roomId,
+    poisonVisits,
+    immunities,
+    orientation,
+    economy,
+    targetRoomIds,
+    clearedMonsters,
+  } = input;
+  if (targetRoomIds?.includes(roomId)) return undefined;
   const dirs = orientedTieBreak(orientation);
   const start: SearchState = {
     cell: from,
@@ -220,6 +248,8 @@ export function chooseElfStep(input: ElfStepInput): Cardinal | undefined {
           immunities,
           goldNow,
           pilesNow,
+          targetRoomIds,
+          clearedMonsters,
         );
         if (applied.invalid) {
           invalid = true;

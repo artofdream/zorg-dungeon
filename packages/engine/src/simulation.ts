@@ -1,9 +1,18 @@
-// Phase 4 extermination: rooms A / Z / D / E / P / O / T (FR-11–FR-17),
-// Warrior + Elf scheduling (FR-20, FR-21, FR-26–FR-31), and the spellbook
-// (FR-32–FR-42). Mechanic / Gunner / Princess, mirrors, and FR-43 extra
-// constraints stay out of scope.
+// Phase 5 extermination: rooms A / Z / D / E / P / O / T (FR-11–FR-17),
+// Warrior / Elf / Gunner / Mechanic / Princess (FR-20–FR-25, FR-26–FR-31),
+// and the spellbook (FR-32–FR-42). Mirrors and FR-43 extra constraints
+// stay out of scope. Gunner duration semantics stay deferred (S3 / NFR-8).
 
+import type { HeroAction } from "./action.js";
 import { chooseElfStep } from "./elf.js";
+import { chooseGunnerStep, gunnerShots, type ShotCount } from "./gunner.js";
+import { chooseMechanicStep } from "./mechanic.js";
+import {
+  collectShellClears,
+  SHELL_DAMAGE,
+  shellPath,
+} from "./shell.js";
+import { highestWeightRoomIds, reachableRoomIds } from "./weights.js";
 import { elementalTick, heroImmunities } from "./elements.js";
 import {
   dropGold,
@@ -37,12 +46,13 @@ import {
   buildWalkGrid,
   cellKey,
   chooseWarriorStep,
-  distanceToZ,
+  distanceToRooms,
   dungeonOrientation,
   localToWorld,
   resolveStep,
   roomCenterLocal,
   roomIdAt,
+  stepCell,
   type CellPos,
   type WalkGrid,
 } from "./pathing.js";
@@ -63,7 +73,7 @@ import {
   type CastRequest,
   type SpellRuntime,
 } from "./spells.js";
-import type { Cardinal } from "./tiles.js";
+import { deltaFor, type Cardinal } from "./tiles.js";
 
 export type { CastRequest, SpellRuntime } from "./spells.js";
 export { SpellCastError } from "./spells.js";
@@ -87,6 +97,10 @@ export interface HeroRuntime {
   portalEntries: Map<string, number>;
   /** FR-40: asleep until Wake or an HP change. */
   sleeping: boolean;
+  /** FR-22: remaining shots; null if this hero is not a Gunner. */
+  shotsLeft: ShotCount | null;
+  /** FR-24: remaining shove budget per room instance. */
+  shoveLeft: Map<string, number>;
 }
 
 export type SimEvent =
@@ -106,6 +120,17 @@ export type SimEvent =
   | { type: "wake"; heroId: number; cause: "spell" | "hp" }
   | { type: "banality"; heroId: number }
   | { type: "room_move"; roomId: string; from: { x: number; y: number }; to: { x: number; y: number } }
+  | { type: "shove"; heroId: number; roomId: string; dir: Cardinal; from: { x: number; y: number }; to: { x: number; y: number } }
+  | { type: "fire"; heroId: number; dir: Cardinal; shotsLeft: ShotCount }
+  | {
+      type: "shell";
+      heroId: number;
+      dir: Cardinal;
+      cells: CellPos[];
+      clearedCells: CellPos[];
+      clearedRooms: string[];
+      hitHeroIds: number[];
+    }
   | { type: "loss"; heroId: number }
   | { type: "win" }
   | { type: "stalemate" };
@@ -127,6 +152,10 @@ export interface SimulationState {
   spells: SpellRuntime[];
   /** FR-33: true while stepRun is resolving a single hero action. */
   midAction: boolean;
+  /** FR-23: world cells whose element a Shell cleared. */
+  clearedCells: Set<string>;
+  /** FR-23: D rooms whose monster a Shell cleared. */
+  clearedMonsters: Set<string>;
 }
 
 export interface StepResult {
@@ -145,12 +174,7 @@ function resolvedHeroes(level: LevelDef): HeroDef[] {
   const heroes: HeroDef[] = [];
   for (const [i, slot] of level.heroes.entries()) {
     if (isChoixDef(slot)) {
-      throw new SimulationError(`Hero slot ${i} is unresolved choix — not a Phase 4 input.`);
-    }
-    if (slot.type !== "Warrior" && slot.type !== "Elf") {
-      throw new SimulationError(
-        `Phase 4 simulates Warrior and Elf (FR-20, FR-21); hero ${i} is ${slot.type}.`,
-      );
+      throw new SimulationError(`Hero slot ${i} is unresolved choix — not a Phase 5 input.`);
     }
     if (typeof slot.hp !== "number") {
       throw new SimulationError(`${slot.type} ${i} has unresolved HP "${slot.hp}".`);
@@ -202,6 +226,8 @@ export function createRun(level: LevelDef, layout: DungeonLayout): SimulationSta
       visits: [],
       portalEntries: new Map(),
       sleeping: false,
+      shotsLeft: def.type === "Gunner" ? gunnerShots(def.shots) : null,
+      shoveLeft: initialShoveBudget(def, runLayout),
     })),
     mainAId,
     orientation: dungeonOrientation(runLayout),
@@ -212,7 +238,21 @@ export function createRun(level: LevelDef, layout: DungeonLayout): SimulationSta
     roomGold: initialRoomGold(runLayout.rooms),
     spells: initialSpells(level.spells),
     midAction: false,
+    clearedCells: new Set(),
+    clearedMonsters: new Set(),
   };
+}
+
+function initialShoveBudget(def: HeroDef, layout: DungeonLayout): Map<string, number> {
+  const budget = new Map<string, number>();
+  if (def.type !== "Mechanic") return budget;
+  for (const room of layout.rooms) {
+    const raw = def.powerSteps[room.id] ?? def.powerSteps[room.def.type];
+    if (raw === undefined) continue;
+    const n = typeof raw === "number" ? raw : Number(raw);
+    if (!Number.isNaN(n) && n > 0) budget.set(room.id, n);
+  }
+  return budget;
 }
 
 /** FR-26: first living hero who is not stuck, else first living stuck hero that still needs a wait tick? */
@@ -227,7 +267,7 @@ export function selectActiveHero(heroes: HeroRuntime[]): HeroRuntime | undefined
 }
 
 function gridOf(state: SimulationState): WalkGrid {
-  return buildWalkGrid(state.layout);
+  return buildWalkGrid(state.layout, state.clearedCells);
 }
 
 function roomDef(state: SimulationState, roomId: string): RoomDef {
@@ -313,7 +353,7 @@ function applyEntry(
     return false;
   }
 
-  if (def.type === "D") {
+  if (def.type === "D" && !state.clearedMonsters.has(roomId)) {
     const amount = typeof def.damage === "number" ? def.damage : Number(def.damage);
     if (Number.isNaN(amount)) {
       throw new SimulationError(`D room "${roomId}" has non-numeric damage "${def.damage}".`);
@@ -470,16 +510,109 @@ function maybeSettle(state: SimulationState, events: SimEvent[]): void {
   }
 }
 
+function applyGunnerFire(
+  state: SimulationState,
+  hero: HeroRuntime,
+  dir: Cardinal,
+  grid: WalkGrid,
+  events: SimEvent[],
+): void {
+  if (!hero.cell) return;
+  hero.stuck = false;
+  if (hero.shotsLeft !== "inf") {
+    const left = typeof hero.shotsLeft === "number" ? hero.shotsLeft : 0;
+    hero.shotsLeft = Math.max(0, left - 1);
+  }
+  events.push({ type: "fire", heroId: hero.id, dir, shotsLeft: hero.shotsLeft ?? 0 });
+
+  const cells = shellPath(grid, stepCell(hero.cell, dir), dir);
+  const clears = collectShellClears(
+    state.layout,
+    grid,
+    cells,
+    state.clearedCells,
+    state.clearedMonsters,
+  );
+  for (const key of clears.clearedCellKeys) state.clearedCells.add(key);
+  for (const id of clears.clearedRoomIds) state.clearedMonsters.add(id);
+
+  const hitHeroIds: number[] = [];
+  for (const pos of cells) {
+    for (const other of state.heroes) {
+      if (other.dead || !other.cell) continue;
+      if (other.cell.x !== pos.x || other.cell.y !== pos.y) continue;
+      applyDamage(other, SHELL_DAMAGE, events);
+      checkDeath(state, other, events);
+      hitHeroIds.push(other.id);
+      if (state.outcome !== "in_progress") break;
+    }
+    if (state.outcome !== "in_progress") break;
+  }
+
+  events.push({
+    type: "shell",
+    heroId: hero.id,
+    dir,
+    cells,
+    clearedCells: cells.filter((p) => clears.clearedCellKeys.includes(cellKey(p))),
+    clearedRooms: clears.clearedRoomIds,
+    hitHeroIds,
+  });
+}
+
+function applyMechanicShove(
+  state: SimulationState,
+  hero: HeroRuntime,
+  dir: Cardinal,
+  events: SimEvent[],
+): void {
+  if (!hero.roomId) return;
+  const room = state.layout.rooms.find((r) => r.id === hero.roomId);
+  if (!room) return;
+  const { dx, dy } = deltaFor(dir);
+  const dest = { x: room.position.x + dx, y: room.position.y + dy };
+  const relocation = plannedMove(state.layout, room.id, dest);
+  applyRelocations(state.layout, [relocation], state.heroes, state.heroes, state.poisonVisits);
+  const left = hero.shoveLeft.get(room.id) ?? 0;
+  if (left > 0) hero.shoveLeft.set(room.id, left - 1);
+  hero.stuck = false;
+  events.push({
+    type: "shove",
+    heroId: hero.id,
+    roomId: room.id,
+    dir,
+    from: relocation.from,
+    to: relocation.to,
+  });
+}
+
 function chooseStep(
   state: SimulationState,
   hero: HeroRuntime,
   grid: WalkGrid,
-): Cardinal | undefined {
+): HeroAction | undefined {
   if (!hero.cell || !hero.roomId) return undefined;
   const immunities = heroImmunities(hero.def);
   const economy = { gold: hero.gold.length, piles: state.roomGold };
-  if (hero.def.type === "Elf") {
-    return chooseElfStep({
+  const reachable = reachableRoomIds(state.layout, grid, hero.cell, immunities, hero.gold.length);
+  const targets = highestWeightRoomIds(state.layout, hero, state.heroes, reachable);
+  if (targets.length === 0) return undefined;
+
+  if (hero.def.type === "Mechanic") {
+    return chooseMechanicStep({
+      layout: state.layout,
+      grid,
+      from: hero.cell,
+      roomId: hero.roomId,
+      orientation: state.orientation,
+      immunities,
+      economy,
+      targetRoomIds: targets,
+      shoveLeft: hero.shoveLeft,
+    });
+  }
+  if (hero.def.type === "Gunner") {
+    return chooseGunnerStep({
       layout: state.layout,
       grid,
       from: hero.cell,
@@ -489,10 +622,30 @@ function chooseStep(
       immunities,
       orientation: state.orientation,
       economy,
+      targetRoomIds: targets,
+      shotsLeft: hero.shotsLeft ?? 0,
+      clearedCells: state.clearedCells,
+      clearedMonsters: state.clearedMonsters,
     });
   }
-  const dist = distanceToZ(state.layout, grid, immunities, hero.gold.length);
-  return chooseWarriorStep(
+  if (hero.def.type === "Elf" || hero.def.type === "Princess") {
+    const dir = chooseElfStep({
+      layout: state.layout,
+      grid,
+      from: hero.cell,
+      hp: hero.hp,
+      roomId: hero.roomId,
+      poisonVisits: state.poisonVisits,
+      immunities,
+      orientation: state.orientation,
+      economy,
+      targetRoomIds: targets,
+      clearedMonsters: state.clearedMonsters,
+    });
+    return dir ? { type: "walk", dir } : undefined;
+  }
+  const dist = distanceToRooms(state.layout, grid, targets, immunities, hero.gold.length);
+  const dir = chooseWarriorStep(
     grid,
     dist,
     hero.cell,
@@ -501,7 +654,9 @@ function chooseStep(
     state.layout,
     economy,
     hero.roomId,
+    targets,
   );
+  return dir ? { type: "walk", dir } : undefined;
 }
 
 /** Advance one hero action: spawn, one chosen direction (ice may slide), or wait. */
@@ -559,10 +714,10 @@ function finishHeroAction(state: SimulationState, hero: HeroRuntime, grid: WalkG
     throw new SimulationError(`Hero ${hero.id} is spawned without a cell.`);
   }
 
-  // FR-20 / FR-21 / FR-30 / FR-31. Planning ignores death (FR-28) and other
-  // heroes (FR-27, FR-29).
-  const dir = chooseStep(state, hero, grid);
-  if (!dir) {
+  // FR-20–FR-25 / FR-30 / FR-31. Planning ignores death (FR-28) and other
+  // heroes (FR-27, FR-29) except Shell hits at resolution time.
+  const action = chooseStep(state, hero, grid);
+  if (!action) {
     hero.stuck = true;
     events.push({ type: "wait", heroId: hero.id });
     maybeSettle(state, events);
@@ -570,6 +725,19 @@ function finishHeroAction(state: SimulationState, hero: HeroRuntime, grid: WalkG
     return { state, events };
   }
 
+  if (action.type === "fire") {
+    applyGunnerFire(state, hero, action.dir, grid, events);
+    state.events.push(...events);
+    return { state, events };
+  }
+
+  if (action.type === "shove") {
+    applyMechanicShove(state, hero, action.dir, events);
+    state.events.push(...events);
+    return { state, events };
+  }
+
+  const dir = action.dir;
   const immunities = heroImmunities(hero.def);
   const path = resolveStep(grid, hero.cell, dir, immunities, state.layout, hero.gold.length);
   if (!path?.length) {
@@ -999,5 +1167,18 @@ export function phase4DemoLevel(): LevelDef {
     ],
     heroes: [{ type: "Warrior", hp: 5 }],
     spells: [{ type: "Attack", damage: 3 }],
+  };
+}
+
+export function phase5DemoLevel(): LevelDef {
+  return {
+    id: "phase-5-demo",
+    name: "Phase 5 Mechanic / Gunner / Princess",
+    rooms: [
+      { count: 1, room: { type: "A" } },
+      { count: 1, room: { type: "Z" } },
+      { count: 1, room: { type: "D", damage: 2 } },
+    ],
+    heroes: [{ type: "Mechanic", hp: 5, powerSteps: { A: 1 } }],
   };
 }
