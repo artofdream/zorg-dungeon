@@ -34,11 +34,16 @@ function markdownToHtml(md) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Code blocks
+    // Code blocks (```mermaid renders client-side; other fences stay <pre><code>)
     if (line.startsWith("```")) {
       if (inCode) {
-        html.push(`<pre><code class="language-${codeLang}">${escapeHtml(codeBuffer.join("\n"))}</code></pre>`);
+        if (codeLang === "mermaid") {
+          html.push(`<div class="mermaid-wrap"><pre class="mermaid">${escapeHtml(codeBuffer.join("\n"))}</pre></div>`);
+        } else {
+          html.push(`<pre><code class="language-${escapeHtml(codeLang)}">${escapeHtml(codeBuffer.join("\n"))}</code></pre>`);
+        }
         inCode = false;
+        codeLang = "";
         codeBuffer = [];
       } else {
         inCode = true;
@@ -129,7 +134,13 @@ function markdownToHtml(md) {
   }
 
   if (inTable) html.push("</tbody></table></div>");
-  if (inCode) html.push(`<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>`);
+  if (inCode) {
+    if (codeLang === "mermaid") {
+      html.push(`<div class="mermaid-wrap"><pre class="mermaid">${escapeHtml(codeBuffer.join("\n"))}</pre></div>`);
+    } else {
+      html.push(`<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>`);
+    }
+  }
 
   return html.join("\n");
 }
@@ -144,6 +155,22 @@ function inlineFormat(text) {
     const cleanLabel = label ? label.trim() : target.trim();
     if (/^(fr|nfr)-\d+$/.test(cleanTarget)) {
       return `<a href="honesty.html#${cleanTarget}" class="wikilink requirement-badge">${cleanLabel}</a>`;
+    }
+    const pageAlias = {
+      game_spec: "spec.html",
+      status_ledger: "honesty.html",
+      findings: "findings.html",
+      agents: "architecture.html",
+      player_guide: "guide.html",
+    };
+    if (pageAlias[cleanTarget]) {
+      return `<a href="${pageAlias[cleanTarget]}" class="wikilink">${cleanLabel}</a>`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleanTarget)) {
+      return `<a href="journal.html" class="wikilink">${cleanLabel}</a>`;
+    }
+    if (/^\d{4}-/.test(cleanTarget)) {
+      return `<a href="adr.html" class="wikilink">${cleanLabel}</a>`;
     }
     return `<a href="${cleanTarget}.html" class="wikilink">${cleanLabel}</a>`;
   });
@@ -168,6 +195,7 @@ function inlineFormat(text) {
 function pageShell({ title, current, content }) {
   const navItems = [
     { id: "home", label: "Home", href: "index.html" },
+    { id: "guide", label: "Guide", href: "guide.html" },
     { id: "spec", label: "Rules & Spec", href: "spec.html" },
     { id: "honesty", label: "Honesty Ledger", href: "honesty.html" },
     { id: "findings", label: "Findings", href: "findings.html" },
@@ -188,6 +216,20 @@ function pageShell({ title, current, content }) {
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
   <link rel="stylesheet" href="style.css">
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "dark",
+      securityLevel: "strict",
+    });
+    const nodes = [...document.querySelectorAll("pre.mermaid")];
+    for (let i = 0; i < nodes.length; i++) {
+      const source = nodes[i].textContent ?? "";
+      const { svg } = await mermaid.render("zorg-mermaid-" + i, source);
+      nodes[i].innerHTML = svg;
+    }
+  </script>
 </head>
 <body class="is-wide page-${current}">
   <header>
@@ -229,6 +271,11 @@ const homeContent = `
 
 <div class="grid-cards">
   <div class="card">
+    <h3>🧭 Player &amp; builder guide</h3>
+    <p>Plain-English walkthrough of the two phases, rooms, heroes so far, honesty words, and the 0–7 build plan — with diagrams. Formal IDs stay in the spec; if they disagree, the spec wins.</p>
+    <a href="guide.html">Open the guide →</a>
+  </div>
+  <div class="card">
     <h3>📜 Rules & Specification</h3>
     <p>Complete translated and restructured rules from the original design manual: room mechanics, hero AI priority layers, single-use spells, and win/loss conditions.</p>
     <a href="spec.html">Explore Game Spec →</a>
@@ -266,6 +313,17 @@ const homeContent = `
 </div>
 `;
 writeFileSync(join(distDir, "index.html"), pageShell({ title: "Home", current: "home", content: homeContent }));
+
+// 1b. Player & builder guide (companion — GAME_SPEC remains the legal voice)
+const guideMd = readDoc("docs/PLAYER_GUIDE.md");
+if (!guideMd.trim()) {
+  throw new Error("knowledge build: missing docs/PLAYER_GUIDE.md");
+}
+const guideHtml = markdownToHtml(guideMd);
+if (!guideHtml.includes('class="mermaid"')) {
+  throw new Error("knowledge build: PLAYER_GUIDE.md produced no mermaid diagrams");
+}
+writeFileSync(join(distDir, "guide.html"), pageShell({ title: "Player & builder guide", current: "guide", content: guideHtml }));
 
 // 2. Spec Page
 const specMd = readDoc("GAME_SPEC.md");

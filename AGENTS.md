@@ -107,6 +107,9 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
 - `docs/adr` — why we built it this way. `docs/journal` — what happened,
   day by day (the "second brain"). `docs/STATUS_LEDGER.md` and
   `docs/FINDINGS.md` — the honesty/antifragility ledgers above.
+  `docs/PLAYER_GUIDE.md` — plain-English + diagram companion to
+  `GAME_SPEC.md` (published as `guide.html`). Formal IDs stay in the spec;
+  if they disagree, the spec wins.
 - `scripts/*.mjs` — the governance checks, runnable locally
   (`pnpm governance`) exactly as CI runs them.
 
