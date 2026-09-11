@@ -117,7 +117,7 @@ sensor, not a second miss.
 ## CF-007: Portal chains reapplied landing cell effects
 - Status: Resolved
 - Recurrence: 1
-- Linked: (this PR)
+- Linked: https://github.com/artofdream/zorg-dungeon/pull/11
 - Sensor added: packages/engine/src/portals.test.ts
 
 [[FR-15]] `applyPortal` always ticked elemental / toll effects on `hero.cell` after a hop. A destination that was another still-active `P` nested into `applyEntry` → `applyPortal`, which already applied those effects on the final landing cell; the outer call then repeated them. A P→P→E(fire) chain dealt 2 fire instead of 1.
@@ -127,7 +127,7 @@ Fix: skip the outer landing tick when the nested `applyEntry` already resolved a
 ## CF-008: Light hatch ignored gold waiting on the entered room
 - Status: Resolved
 - Recurrence: 1
-- Linked: (this PR)
+- Linked: https://github.com/artofdream/zorg-dungeon/pull/11
 - Sensor added: packages/engine/src/tolls.test.ts
 
 [[FR-16]] pickup pre-empts other entry effects, and `applyEntry` already adds a room's pile before [[FR-17]] charges that cell's toll. `isPassable` / `resolveStep` used purse gold from *before* the step, so a hero with an empty purse could not step onto a default `T` light hatch that held a death pile they would collect first. Later heroes waited; the pile was unreachable.
@@ -137,7 +137,7 @@ Fix: count the destination room's pile toward the first-step toll when the step 
 ## CF-009: Elf discarded forced unpaid light slides
 - Status: Resolved
 - Recurrence: 1
-- Linked: (this PR)
+- Linked: https://github.com/artofdream/zorg-dungeon/pull/11
 - Sensor added: packages/engine/src/elf.test.ts
 
 [[FR-28]] heroes plan as though they cannot die. Elf `applyPlannedCell` marked any unpaid light `invalid`, including ice-slide landings. That dropped the only route to `Z` when the slide was forced, so the Elf waited instead of planning through the lethal landing the way it already plans through water slides and lethal `D`. Warrior planning already kept those slides.
