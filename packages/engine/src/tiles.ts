@@ -7,7 +7,7 @@ import type { Orientation } from "./level.js";
 
 export const ROOM_SIZE = 5;
 
-export type CellKind = "open" | "wall" | "green";
+export type CellKind = "open" | "wall" | "green" | "dark" | "light";
 
 /** tile[y][x] with x=0 west, y=0 south (mathematical +x east, +y north). */
 export type Tile = CellKind[][];
@@ -115,22 +115,74 @@ export function makeElementalTile(): Tile {
 
 export const DEFAULT_ELEMENTAL_TILE: Tile = makeElementalTile();
 
+/**
+ * FR-17 default T-room tile: same 4-hatch cross, interior 3×3 dark
+ * (elemental like E), hatches painted light (FIFO gold toll). Official
+ * dark/light art was not in the extract — tests that need a precise cell
+ * should call paintDark / paintLight. Dark and light ≡ open for FR-6.
+ */
+export function makeTollTile(): Tile {
+  const tile = makeDefaultTile();
+  for (let y = 1; y < ROOM_SIZE - 1; y++) {
+    for (let x = 1; x < ROOM_SIZE - 1; x++) {
+      if (tileCell(tile, x, y) !== "wall") {
+        setTileCell(tile, x, y, "dark");
+      }
+    }
+  }
+  const last = ROOM_SIZE - 1;
+  const mid = 2;
+  setTileCell(tile, mid, 0, "light");
+  setTileCell(tile, mid, last, "light");
+  setTileCell(tile, 0, mid, "light");
+  setTileCell(tile, last, mid, "light");
+  return tile;
+}
+
+export const DEFAULT_TOLL_TILE: Tile = makeTollTile();
+
 /** Test / authoring helper: mark listed local cells green (FR-14). */
 export function paintGreen(tile: Tile, cells: ReadonlyArray<{ x: number; y: number }>): Tile {
+  return paintKind(tile, cells, "green");
+}
+
+/** Test / authoring helper: mark listed local cells dark (FR-17). */
+export function paintDark(tile: Tile, cells: ReadonlyArray<{ x: number; y: number }>): Tile {
+  return paintKind(tile, cells, "dark");
+}
+
+/** Test / authoring helper: mark listed local cells light (FR-17). */
+export function paintLight(tile: Tile, cells: ReadonlyArray<{ x: number; y: number }>): Tile {
+  return paintKind(tile, cells, "light");
+}
+
+function paintKind(
+  tile: Tile,
+  cells: ReadonlyArray<{ x: number; y: number }>,
+  kind: CellKind,
+): Tile {
   const next = cloneTile(tile);
   for (const cell of cells) {
-    setTileCell(next, cell.x, cell.y, "green");
+    setTileCell(next, cell.x, cell.y, kind);
   }
   return next;
 }
 
-/** FR-6: green cells are open floor, not walls. */
+/** FR-6: green / dark / light cells are open floor, not walls. */
 export function walkableKind(kind: CellKind): "open" | "wall" {
   return kind === "wall" ? "wall" : "open";
 }
 
 export function isGreen(kind: CellKind): boolean {
   return kind === "green";
+}
+
+export function isDark(kind: CellKind): boolean {
+  return kind === "dark";
+}
+
+export function isLight(kind: CellKind): boolean {
+  return kind === "light";
 }
 
 export function cloneTile(tile: Tile): Tile {
@@ -246,7 +298,7 @@ export function edgeProfile(tile: Tile, side: Side): CellKind[] {
   return cells;
 }
 
-/** FR-6: wall meets wall and open meets open across the shared side. Green ≡ open. */
+/** FR-6: wall meets wall and open meets open across the shared side. Green/dark/light ≡ open. */
 export function edgesMatch(a: CellKind[], b: CellKind[]): boolean {
   if (a.length !== b.length) return false;
   return a.every((cell, i) => walkableKind(cell) === walkableKind(b[i] ?? "wall"));

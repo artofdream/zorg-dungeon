@@ -2,8 +2,11 @@
 // relative directional fallback). FR-27 / FR-29: the walkable grid is the map
 // only — other heroes are never obstacles. FR-28: distances ignore HP / D(x).
 // FR-14: water is impassable (unless immune); ice slides until a wall.
+// FR-17: unpaid light cells are impassable as a chosen step (like water);
+// gold pickups along a path can open later tolls (Warrior sees map gold).
 
 import { ignoresElement } from "./elements.js";
+import { clonePiles, pilesKey, type PathEconomy } from "./gold.js";
 import type { ElementType, Orientation } from "./level.js";
 import { isElementType } from "./level.js";
 import { findRoom, resolvedTile, type DungeonLayout, type PlacedRoom } from "./placement.js";
@@ -16,6 +19,8 @@ import {
   type CellKind,
 } from "./tiles.js";
 
+export type { PathEconomy } from "./gold.js";
+
 export interface CellPos {
   x: number;
   y: number;
@@ -26,8 +31,10 @@ export interface WalkCell {
   roomId: string;
   local: CellPos;
   kind: CellKind;
-  /** Present on green cells of an E(elem) room (FR-14). */
+  /** Present on green E cells (FR-14) and dark T cells (FR-17). */
   element?: ElementType;
+  /** Present on light T cells — gold cost to cross (FR-17). */
+  toll?: number;
 }
 
 export interface WalkGrid {
@@ -66,6 +73,7 @@ export function buildWalkGrid(layout: DungeonLayout): WalkGrid {
           local: { x: lx, y: ly },
           kind,
           element: elementOnCell(room, kind),
+          toll: tollOnCell(room, kind),
         });
       }
     }
@@ -86,17 +94,31 @@ export function isPassable(
   grid: WalkGrid,
   pos: CellPos,
   immunities: readonly ElementType[] = [],
+  gold = 0,
 ): boolean {
   const cell = getWalkCell(grid, pos);
   if (!cell || cell.kind === "wall") return false;
   if (cell.element === "water" && !ignoresElement(immunities, "water")) return false;
+  // FR-17: unpaid light is not a voluntary step (forced landing dies later).
+  if (cell.toll !== undefined && gold < cell.toll) return false;
   return true;
 }
 
 function elementOnCell(room: PlacedRoom, kind: CellKind): ElementType | undefined {
-  if (kind !== "green") return undefined;
-  if (room.def.type === "E" && isElementType(room.def.element)) return room.def.element;
+  if (kind === "green" && room.def.type === "E" && isElementType(room.def.element)) {
+    return room.def.element;
+  }
+  if (kind === "dark" && room.def.type === "T" && isElementType(room.def.element)) {
+    return room.def.element;
+  }
   return undefined;
+}
+
+function tollOnCell(room: PlacedRoom, kind: CellKind): number | undefined {
+  if (kind !== "light" || room.def.type !== "T") return undefined;
+  const raw = room.def.cost;
+  const cost = typeof raw === "number" ? raw : Number(raw);
+  return Number.isNaN(cost) ? 0 : cost;
 }
 
 function isIceCell(cell: WalkCell | undefined, immunities: readonly ElementType[]): boolean {
@@ -120,11 +142,12 @@ export function resolveStep(
   dir: Cardinal,
   immunities: readonly ElementType[] = [],
   layout?: DungeonLayout,
+  gold = 0,
 ): CellPos[] | undefined {
   const first = stepCell(from, dir);
-  // Water is impassable as a chosen step (FR-14). Forced water happens only
-  // mid-slide, inside continueSlide.
-  if (!isPassable(grid, first, immunities)) return undefined;
+  // Water / unpaid light are impassable as a chosen step (FR-14 / FR-17).
+  // Forced landings happen only mid-slide, inside continueSlide.
+  if (!isPassable(grid, first, immunities, gold)) return undefined;
   return continueSlide(grid, [first], dir, immunities, layout);
 }
 
@@ -165,8 +188,9 @@ export function distanceToZ(
   layout: DungeonLayout,
   grid: WalkGrid,
   immunities: readonly ElementType[] = [],
+  gold = 0,
 ): Map<string, number> {
-  const incoming = reverseMoveGraph(layout, grid, immunities);
+  const incoming = reverseMoveGraph(layout, grid, immunities, gold);
   const dist = new Map<string, number>();
   const queue: CellPos[] = [];
 
@@ -208,6 +232,7 @@ function reverseMoveGraph(
   layout: DungeonLayout,
   grid: WalkGrid,
   immunities: readonly ElementType[],
+  gold = 0,
 ): Map<string, CellPos[]> {
   const incoming = new Map<string, CellPos[]>();
   const bump = (to: string, from: CellPos) => {
@@ -217,9 +242,9 @@ function reverseMoveGraph(
   };
 
   for (const cell of grid.cells.values()) {
-    if (!isPassable(grid, cell.world, immunities)) continue;
+    if (!isPassable(grid, cell.world, immunities, gold)) continue;
     for (const dir of orientedTieBreak(0)) {
-      const path = resolveStep(grid, cell.world, dir, immunities, layout);
+      const path = resolveStep(grid, cell.world, dir, immunities, layout, gold);
       if (!path?.length) continue;
       const land = path[path.length - 1];
       if (!land) continue;
@@ -246,12 +271,27 @@ export function chooseWarriorStep(
   orientation: Orientation,
   immunities: readonly ElementType[] = [],
   layout?: DungeonLayout,
+  economy?: PathEconomy,
+  roomId?: string,
 ): Cardinal | undefined {
+  if (layout && economy && shouldUseEconomy(layout, economy)) {
+    return chooseWarriorEconomy(
+      layout,
+      grid,
+      from,
+      roomId ?? roomIdAt(grid, from) ?? "",
+      orientation,
+      immunities,
+      economy,
+    );
+  }
+
   const here = dist.get(cellKey(from));
   if (here === undefined) return undefined;
+  const gold = economy?.gold ?? 0;
 
   for (const dir of orientedTieBreak(orientation)) {
-    const path = resolveStep(grid, from, dir, immunities, layout);
+    const path = resolveStep(grid, from, dir, immunities, layout, gold);
     if (!path?.length) continue;
     const land = landingForDistance(grid, path, layout);
     const nDist = dist.get(cellKey(land));
@@ -260,6 +300,157 @@ export function chooseWarriorStep(
     }
   }
   return undefined;
+}
+
+function shouldUseEconomy(layout: DungeonLayout, economy: PathEconomy): boolean {
+  if (economy.gold > 0) return true;
+  if ([...economy.piles.values()].some((amount) => amount > 0)) return true;
+  return layout.rooms.some((room) => room.def.type === "T" || room.def.type === "O");
+}
+
+interface WarriorEconomyState {
+  cell: CellPos;
+  roomId: string;
+  gold: number;
+  piles: string;
+  length: number;
+  firstDir: Cardinal | undefined;
+}
+
+/**
+ * FR-20 + FR-16/FR-17: shortest path to Z, treating unpaid light as blocked
+ * and scoring pickups so a nearby O can open a later T. Still ignores HP.
+ */
+function chooseWarriorEconomy(
+  layout: DungeonLayout,
+  grid: WalkGrid,
+  from: CellPos,
+  roomId: string,
+  orientation: Orientation,
+  immunities: readonly ElementType[],
+  economy: PathEconomy,
+): Cardinal | undefined {
+  const dirs = orientedTieBreak(orientation);
+  const start: WarriorEconomyState = {
+    cell: from,
+    roomId,
+    gold: economy.gold,
+    piles: pilesKey(economy.piles),
+    length: 0,
+    firstDir: undefined,
+  };
+  const seen = new Set<string>([`${cellKey(from)}|${roomId}|${start.gold}|${start.piles}`]);
+  const queue: WarriorEconomyState[] = [start];
+  const passable = [...grid.cells.values()].filter((c) => c.kind !== "wall").length;
+  const maxLength = Math.max(8, passable * 4);
+  let head = 0;
+
+  while (head < queue.length) {
+    const cur = queue[head];
+    head += 1;
+    if (!cur || cur.length >= maxLength) continue;
+
+    for (const dir of dirs) {
+      const path = resolveStep(grid, cur.cell, dir, immunities, layout, cur.gold);
+      if (!path?.length) continue;
+
+      let goldNow = cur.gold;
+      let roomNow = cur.roomId;
+      let pilesNow = parsePiles(cur.piles);
+      let reachedZ = false;
+      let invalid = false;
+      let last = path[path.length - 1];
+
+      for (const cell of path) {
+        const applied = applyPlannedEconomy(layout, grid, cell, roomNow, goldNow, pilesNow);
+        if (applied.invalid) {
+          invalid = true;
+          break;
+        }
+        goldNow = applied.gold;
+        roomNow = applied.roomId;
+        pilesNow = applied.piles;
+        last = cell;
+        if (applied.reachedZ) {
+          reachedZ = true;
+          break;
+        }
+      }
+      if (invalid || !last) continue;
+
+      const next: WarriorEconomyState = {
+        cell: last,
+        roomId: roomNow,
+        gold: goldNow,
+        piles: pilesKey(pilesNow),
+        length: cur.length + 1,
+        firstDir: cur.firstDir ?? dir,
+      };
+      if (reachedZ) return next.firstDir;
+
+      const nk = `${cellKey(next.cell)}|${next.roomId}|${next.gold}|${next.piles}`;
+      if (seen.has(nk)) continue;
+      seen.add(nk);
+      queue.push(next);
+    }
+  }
+  return undefined;
+}
+
+function parsePiles(key: string): Map<string, number> {
+  const piles = new Map<string, number>();
+  if (!key) return piles;
+  for (const part of key.split(";")) {
+    const split = part.lastIndexOf(":");
+    if (split <= 0) continue;
+    const id = part.slice(0, split);
+    const amount = Number(part.slice(split + 1));
+    if (id && !Number.isNaN(amount) && amount > 0) piles.set(id, amount);
+  }
+  return piles;
+}
+
+function applyPlannedEconomy(
+  layout: DungeonLayout,
+  grid: WalkGrid,
+  cell: CellPos,
+  roomId: string,
+  gold: number,
+  piles: Map<string, number>,
+): {
+  gold: number;
+  roomId: string;
+  piles: Map<string, number>;
+  reachedZ: boolean;
+  invalid: boolean;
+} {
+  const nextRoomId = roomIdAt(grid, cell);
+  if (!nextRoomId) return { gold, roomId, piles, reachedZ: false, invalid: true };
+
+  let nextGold = gold;
+  let nextPiles = piles;
+  let reachedZ = false;
+
+  if (nextRoomId !== roomId) {
+    const def = layout.rooms.find((r) => r.id === nextRoomId)?.def;
+    if (def?.type === "Z") reachedZ = true;
+    const pile = piles.get(nextRoomId) ?? 0;
+    if (pile > 0) {
+      nextGold += pile;
+      nextPiles = clonePiles(piles);
+      nextPiles.set(nextRoomId, 0);
+    }
+  }
+
+  const walk = grid.cells.get(cellKey(cell));
+  if (walk?.toll !== undefined && nextGold >= walk.toll) {
+    // FR-28: Warrior still plans a path that would die on a later unpaid
+    // light (same as D). Voluntary unpaid steps are already rejected by
+    // resolveStep.
+    nextGold -= walk.toll;
+  }
+
+  return { gold: nextGold, roomId: nextRoomId, piles: nextPiles, reachedZ, invalid: false };
 }
 
 function landingForDistance(

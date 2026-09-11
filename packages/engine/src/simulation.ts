@@ -1,9 +1,17 @@
-// Phase 2 extermination: rooms A / Z / D / E (FR-11–FR-14) and Warrior + Elf
-// scheduling (FR-20, FR-21, FR-26–FR-31). Spells, Mechanic/Gunner/Princess,
-// portals, gold, mirrors, and FR-43 extra constraints are out of scope.
+// Phase 3 extermination: rooms A / Z / D / E / P / O / T (FR-11–FR-17) and
+// Warrior + Elf scheduling (FR-20, FR-21, FR-26–FR-31). Spells, Mechanic /
+// Gunner / Princess, mirrors, and FR-43 extra constraints are out of scope.
 
 import { chooseElfStep } from "./elf.js";
 import { elementalTick, heroImmunities } from "./elements.js";
+import {
+  dropGold,
+  initialRoomGold,
+  payToll,
+  pickupGold,
+  type GoldUnit,
+  type TollRefund,
+} from "./gold.js";
 import {
   flattenRooms,
   isChoixDef,
@@ -12,6 +20,12 @@ import {
   type Orientation,
   type RoomDef,
 } from "./level.js";
+import {
+  evalPortalIndex,
+  lookupVisit,
+  portalStillActive,
+  type RoomVisit,
+} from "./portals.js";
 import {
   canStartExtermination,
   defaultMainAId,
@@ -43,6 +57,12 @@ export interface HeroRuntime {
   stuck: boolean;
   cell: CellPos | null;
   roomId: string | null;
+  /** FR-16 / FR-17: FIFO purse (oldest coin first). */
+  gold: GoldUnit[];
+  /** FR-15: room visits in chronological order (oldest first). */
+  visits: RoomVisit[];
+  /** FR-15: per-portal-room entry counts (1-based next index lives in apply). */
+  portalEntries: Map<string, number>;
 }
 
 export type SimEvent =
@@ -50,6 +70,11 @@ export type SimEvent =
   | { type: "move"; heroId: number; from: CellPos; to: CellPos; dir: Cardinal }
   | { type: "enter"; heroId: number; roomId: string; roomType: RoomDef["type"] }
   | { type: "damage"; heroId: number; amount: number; hp: number }
+  | { type: "pickup"; heroId: number; roomId: string; amount: number; gold: number }
+  | { type: "toll"; heroId: number; amount: number; gold: number; refunds: TollRefund[] }
+  | { type: "gold_drop"; heroId: number; roomId: string; amount: number }
+  | { type: "teleport"; heroId: number; fromRoomId: string; toRoomId: string; to: CellPos }
+  | { type: "wait_room"; heroId: number }
   | { type: "death"; heroId: number }
   | { type: "wait"; heroId: number }
   | { type: "loss"; heroId: number }
@@ -67,6 +92,8 @@ export interface SimulationState {
   stepCount: number;
   /** FR-14: poison cells already visited by a non-immune hero. */
   poisonVisits: Set<string>;
+  /** FR-16 / FR-17: remaining gold piles (authored O plus death/refund). */
+  roomGold: Map<string, number>;
 }
 
 export interface StepResult {
@@ -85,11 +112,11 @@ function resolvedHeroes(level: LevelDef): HeroDef[] {
   const heroes: HeroDef[] = [];
   for (const [i, slot] of level.heroes.entries()) {
     if (isChoixDef(slot)) {
-      throw new SimulationError(`Hero slot ${i} is unresolved choix — not a Phase 2 input.`);
+      throw new SimulationError(`Hero slot ${i} is unresolved choix — not a Phase 3 input.`);
     }
     if (slot.type !== "Warrior" && slot.type !== "Elf") {
       throw new SimulationError(
-        `Phase 2 simulates Warrior and Elf (FR-20, FR-21); hero ${i} is ${slot.type}.`,
+        `Phase 3 simulates Warrior and Elf (FR-20, FR-21); hero ${i} is ${slot.type}.`,
       );
     }
     if (typeof slot.hp !== "number") {
@@ -137,6 +164,9 @@ export function createRun(level: LevelDef, layout: DungeonLayout): SimulationSta
       stuck: false,
       cell: null,
       roomId: null,
+      gold: [],
+      visits: [],
+      portalEntries: new Map(),
     })),
     mainAId,
     orientation: dungeonOrientation(layout),
@@ -144,6 +174,7 @@ export function createRun(level: LevelDef, layout: DungeonLayout): SimulationSta
     events: [],
     stepCount: 0,
     poisonVisits: new Set(),
+    roomGold: initialRoomGold(layout.rooms),
   };
 }
 
@@ -173,11 +204,28 @@ function applyDamage(hero: HeroRuntime, amount: number, events: SimEvent[]): voi
   events.push({ type: "damage", heroId: hero.id, amount, hp: hero.hp });
 }
 
+function enterRoom(
+  state: SimulationState,
+  hero: HeroRuntime,
+  roomId: string,
+  firstCell: CellPos,
+  events: SimEvent[],
+): boolean {
+  const prior = hero.visits.slice();
+  hero.visits.push({ roomId, firstCell: { ...firstCell } });
+  hero.roomId = roomId;
+  return applyEntry(state, hero, roomId, events, prior);
+}
+
 function checkDeath(state: SimulationState, hero: HeroRuntime, events: SimEvent[]): void {
   // FR-28: death at ≤0 HP is instant.
   if (hero.hp <= 0 && !hero.dead) {
     hero.dead = true;
     hero.stuck = false;
+    if (hero.roomId && hero.gold.length > 0) {
+      const amount = dropGold(state.roomGold, hero.gold, hero.roomId);
+      events.push({ type: "gold_drop", heroId: hero.id, roomId: hero.roomId, amount });
+    }
     events.push({ type: "death", heroId: hero.id });
     if (state.heroes.every((h) => h.dead)) {
       state.outcome = "win";
@@ -187,12 +235,26 @@ function checkDeath(state: SimulationState, hero: HeroRuntime, events: SimEvent[
 }
 
 /**
- * FR-11 / FR-12 / FR-13: apply the entry effect of the room the hero just
- * stepped into (including spawn into A).
+ * FR-11–FR-17: apply the entry effect of the room the hero just stepped
+ * into (including spawn into A). Gold pickup pre-empts other effects
+ * (FR-16). `priorVisits` is the history used by a portal lookup (FR-15).
  */
-function applyEntry(state: SimulationState, hero: HeroRuntime, roomId: string, events: SimEvent[]): void {
+function applyEntry(
+  state: SimulationState,
+  hero: HeroRuntime,
+  roomId: string,
+  events: SimEvent[],
+  priorVisits: readonly RoomVisit[],
+  teleportDepth = 0,
+): boolean {
   const def = roomDef(state, roomId);
   events.push({ type: "enter", heroId: hero.id, roomId, roomType: def.type });
+
+  // FR-16: pickup takes priority over any other move consequence.
+  const taken = pickupGold(state.roomGold, hero.gold, roomId);
+  if (taken > 0) {
+    events.push({ type: "pickup", heroId: hero.id, roomId, amount: taken, gold: hero.gold.length });
+  }
 
   if (def.type === "A") {
     // FR-11: any A a hero visits becomes the new main spawn.
@@ -203,7 +265,7 @@ function applyEntry(state: SimulationState, hero: HeroRuntime, roomId: string, e
     // FR-12: entering Z is an immediate loss.
     state.outcome = "loss";
     events.push({ type: "loss", heroId: hero.id });
-    return;
+    return false;
   }
 
   if (def.type === "D") {
@@ -215,6 +277,76 @@ function applyEntry(state: SimulationState, hero: HeroRuntime, roomId: string, e
   }
 
   checkDeath(state, hero, events);
+  if (state.outcome !== "in_progress" || hero.dead) return false;
+
+  if (def.type === "P") {
+    return applyPortal(state, hero, roomId, def, events, priorVisits, teleportDepth);
+  }
+  return false;
+}
+
+function numericArg(value: number | string, label: string): number {
+  const amount = typeof value === "number" ? value : Number(value);
+  if (Number.isNaN(amount)) {
+    throw new SimulationError(`${label} is non-numeric "${value}".`);
+  }
+  return amount;
+}
+
+/** FR-15: teleport on the i-th entry while i ≤ n; else P is a normal room. */
+function applyPortal(
+  state: SimulationState,
+  hero: HeroRuntime,
+  roomId: string,
+  def: Extract<RoomDef, { type: "P" }>,
+  events: SimEvent[],
+  priorVisits: readonly RoomVisit[],
+  teleportDepth: number,
+): boolean {
+  const n = numericArg(def.entries, `P room "${roomId}" entries`);
+  const i = (hero.portalEntries.get(roomId) ?? 0) + 1;
+  hero.portalEntries.set(roomId, i);
+  if (!portalStillActive(i, n)) return false;
+
+  const k = evalPortalIndex(def.formula, i);
+  const dest = lookupVisit(priorVisits, k);
+  if (!dest) {
+    hero.spawned = false;
+    hero.stuck = false;
+    hero.cell = null;
+    hero.roomId = null;
+    events.push({ type: "wait_room", heroId: hero.id });
+    return true;
+  }
+
+  hero.cell = { ...dest.firstCell };
+  events.push({
+    type: "teleport",
+    heroId: hero.id,
+    fromRoomId: roomId,
+    toRoomId: dest.roomId,
+    to: hero.cell,
+  });
+
+  if (teleportDepth >= 8) {
+    throw new SimulationError("FR-15: portal teleport chain exceeded 8 hops.");
+  }
+
+  if (dest.roomId !== roomId) {
+    const nextPrior = hero.visits.slice();
+    hero.visits.push({ roomId: dest.roomId, firstCell: { ...dest.firstCell } });
+    hero.roomId = dest.roomId;
+    applyEntry(state, hero, dest.roomId, events, nextPrior, teleportDepth + 1);
+  }
+
+  if (state.outcome === "in_progress" && hero.spawned && !hero.dead && hero.cell) {
+    const grid = gridOf(state);
+    applyElementalCell(state, hero, hero.cell, grid, events);
+    if (state.outcome === "in_progress" && !hero.dead) {
+      applyTollCell(state, hero, hero.cell, grid, events, true);
+    }
+  }
+  return true;
 }
 
 /** FR-14: apply a green cell's element after the hero enters it. */
@@ -247,6 +379,37 @@ function applyElementalCell(
   checkDeath(state, hero, events);
 }
 
+/** FR-17: light cells charge FIFO gold; forced unpaid landing is death. */
+function applyTollCell(
+  state: SimulationState,
+  hero: HeroRuntime,
+  cell: CellPos,
+  grid: WalkGrid,
+  events: SimEvent[],
+  forced: boolean,
+): void {
+  const walk = grid.cells.get(cellKey(cell));
+  const cost = walk?.toll;
+  if (cost === undefined || cost <= 0) return;
+
+  const paid = payToll(state.roomGold, hero.gold, cost);
+  if (paid) {
+    events.push({
+      type: "toll",
+      heroId: hero.id,
+      amount: paid.paid,
+      gold: hero.gold.length,
+      refunds: paid.refunds,
+    });
+    return;
+  }
+
+  if (forced) {
+    hero.hp = 0;
+    checkDeath(state, hero, events);
+  }
+}
+
 function maybeSettle(state: SimulationState, events: SimEvent[]): void {
   if (state.outcome !== "in_progress") return;
   if (state.heroes.every((h) => h.dead)) {
@@ -267,6 +430,7 @@ function chooseStep(
 ): Cardinal | undefined {
   if (!hero.cell || !hero.roomId) return undefined;
   const immunities = heroImmunities(hero.def);
+  const economy = { gold: hero.gold.length, piles: state.roomGold };
   if (hero.def.type === "Elf") {
     return chooseElfStep({
       layout: state.layout,
@@ -277,10 +441,20 @@ function chooseStep(
       poisonVisits: state.poisonVisits,
       immunities,
       orientation: state.orientation,
+      economy,
     });
   }
-  const dist = distanceToZ(state.layout, grid, immunities);
-  return chooseWarriorStep(grid, dist, hero.cell, state.orientation, immunities, state.layout);
+  const dist = distanceToZ(state.layout, grid, immunities, hero.gold.length);
+  return chooseWarriorStep(
+    grid,
+    dist,
+    hero.cell,
+    state.orientation,
+    immunities,
+    state.layout,
+    economy,
+    hero.roomId,
+  );
 }
 
 /** Advance one hero action: spawn, one chosen direction (ice may slide), or wait. */
@@ -311,8 +485,9 @@ export function stepRun(state: SimulationState): StepResult {
     hero.cell = cell;
     hero.roomId = spawnRoom.id;
     events.push({ type: "spawn", heroId: hero.id, cell, roomId: spawnRoom.id });
-    applyEntry(state, hero, spawnRoom.id, events);
+    enterRoom(state, hero, spawnRoom.id, cell, events);
     applyElementalCell(state, hero, cell, grid, events);
+    applyTollCell(state, hero, cell, grid, events, false);
     state.events.push(...events);
     return { state, events };
   }
@@ -333,7 +508,7 @@ export function stepRun(state: SimulationState): StepResult {
   }
 
   const immunities = heroImmunities(hero.def);
-  const path = resolveStep(grid, hero.cell, dir, immunities, state.layout);
+  const path = resolveStep(grid, hero.cell, dir, immunities, state.layout, hero.gold.length);
   if (!path?.length) {
     hero.stuck = true;
     events.push({ type: "wait", heroId: hero.id });
@@ -343,7 +518,7 @@ export function stepRun(state: SimulationState): StepResult {
   }
 
   hero.stuck = false;
-  for (const to of path) {
+  for (const [index, to] of path.entries()) {
     const from = hero.cell;
     if (!from) break;
     hero.cell = to;
@@ -353,13 +528,15 @@ export function stepRun(state: SimulationState): StepResult {
     if (!nextRoomId) {
       throw new SimulationError(`Hero stepped into the void at (${to.x}, ${to.y}).`);
     }
+    let teleported = false;
     if (nextRoomId !== hero.roomId) {
-      hero.roomId = nextRoomId;
-      applyEntry(state, hero, nextRoomId, events);
+      teleported = enterRoom(state, hero, nextRoomId, to, events);
     }
-    if (state.outcome !== "in_progress" || hero.dead) break;
+    if (teleported || state.outcome !== "in_progress" || hero.dead || !hero.spawned) break;
     applyElementalCell(state, hero, to, grid, events);
-    if (state.outcome !== "in_progress" || hero.dead) break;
+    if (state.outcome !== "in_progress" || hero.dead || !hero.spawned) break;
+    applyTollCell(state, hero, to, grid, events, index > 0);
+    if (state.outcome !== "in_progress" || hero.dead || !hero.spawned) break;
   }
 
   state.events.push(...events);
@@ -407,5 +584,19 @@ export function phase2DemoLevel(): LevelDef {
       { count: 1, room: { type: "E", element: "fire" } },
     ],
     heroes: [{ type: "Elf", hp: 3, immunities: ["fire"] }],
+  };
+}
+
+export function phase3DemoLevel(): LevelDef {
+  return {
+    id: "phase-3-demo",
+    name: "Phase 3 Portals + Gold + Tolls",
+    rooms: [
+      { count: 1, room: { type: "A" } },
+      { count: 1, room: { type: "Z" } },
+      { count: 1, room: { type: "O", gold: 1 } },
+      { count: 1, room: { type: "T", cost: 1, element: "fire" } },
+    ],
+    heroes: [{ type: "Warrior", hp: 5 }],
   };
 }
