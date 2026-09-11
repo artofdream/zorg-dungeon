@@ -35,6 +35,7 @@ settings. Set them once:
     "producer doesn't merge its own change" rule to actually hold.
 - **Settings → General → Pull Requests**: disable "Allow auto-merge" unless
   you want it, and consider requiring linear history.
+- **Settings → Secrets and variables → Actions** (production web CD, `.github/workflows/deploy-web.yml`): required `LIGHTSAIL_SSH_KEY` (private key PEM); optional `LIGHTSAIL_HOST` (default `54.152.172.19`) and `LIGHTSAIL_USER` (default `ubuntu`). Do not invent or commit credentials.
 
 ## Running the gates locally
 

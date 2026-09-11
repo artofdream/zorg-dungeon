@@ -1,0 +1,57 @@
+name: deploy-web
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/engine/**"
+      - "deploy/**"
+      - ".github/workflows/deploy-web.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Require Lightsail SSH key
+        env:
+          LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${LIGHTSAIL_SSH_KEY:-}" ]; then
+            echo "::error::LIGHTSAIL_SSH_KEY is not set. Add the Lightsail private key PEM under Settings → Secrets and variables → Actions. Optional secrets: LIGHTSAIL_HOST (default 54.152.172.19), LIGHTSAIL_USER (default ubuntu). Do not invent or commit credentials."
+            exit 1
+          fi
+
+      - name: Redeploy web on Lightsail
+        env:
+          LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+        run: |
+          set -euo pipefail
+          SSH_HOST="${LIGHTSAIL_HOST:-54.152.172.19}"
+          SSH_USER="${LIGHTSAIL_USER:-ubuntu}"
+          KEY_FILE="${RUNNER_TEMP}/lightsail_ssh_key"
+          printf '%s\n' "$LIGHTSAIL_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          mkdir -p "${HOME}/.ssh"
+          chmod 700 "${HOME}/.ssh"
+          ssh-keyscan -H "$SSH_HOST" >> "${HOME}/.ssh/known_hosts" 2>/dev/null || true
+          echo "Redeploying web on ${SSH_USER}@${SSH_HOST}"
+          ssh -i "$KEY_FILE" \
+            -o IdentitiesOnly=yes \
+            -o BatchMode=yes \
+            -o ConnectTimeout=20 \
+            -o StrictHostKeyChecking=accept-new \
+            "${SSH_USER}@${SSH_HOST}" \
+            'cd /opt/zorg && git fetch && git reset --hard origin/main && docker compose -f deploy/compose.prod.yaml up -d --build web'

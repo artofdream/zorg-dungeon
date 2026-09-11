@@ -85,3 +85,18 @@ is imported. Both N11 and N18 live under
 so they cannot fail the green corpus suite. This is Recurrence 1 — quarantine
 + skip is documentation, not a second-miss gate.
 
+## CF-006: Production web image has no CD and went stale
+- Status: Open
+- Recurrence: 1
+- Linked: (this PR)
+- Sensor added: .github/workflows/deploy-web.yml
+
+Lightsail `zorg.artof.link` (`54.152.172.19`) was still serving a
+pre–Phase-1 bundle until a manual SSH redeploy on 2026-09-11 to `2217dd5`.
+The knowledge site auto-deploys via Pages; the game web image did not.
+
+This PR adds `.github/workflows/deploy-web.yml` so `main` pushes that
+touch the web/engine/deploy paths (or `workflow_dispatch`) SSH and rebuild
+the `web` service. Recurrence 1 — the workflow is the first sensor, not a
+second-miss gate. Do not mark game FRs `Live & Probed` from a redeploy.
+
