@@ -13,6 +13,7 @@ import {
 } from "./level.js";
 import {
   CARDINAL_TO_SIDE,
+  DEFAULT_ELEMENTAL_TILE,
   DEFAULT_ROOM_TILE,
   edgeProfile,
   edgesMatch,
@@ -87,8 +88,14 @@ export function enumerateSuppliedRooms(level: LevelDef): SuppliedRoom[] {
   });
 }
 
+export function defaultTileFor(def: RoomDef): Tile {
+  // FR-14: E rooms default to interior green cells. Other types stay the
+  // Phase 1 4-hatch cross (no invented art for A/Z/D).
+  return def.type === "E" ? DEFAULT_ELEMENTAL_TILE : DEFAULT_ROOM_TILE;
+}
+
 export function resolvedTile(room: PlacedRoom): Tile {
-  const base = room.tile ?? DEFAULT_ROOM_TILE;
+  const base = room.tile ?? defaultTileFor(room.def);
   return rotateTile(base, room.orientation);
 }
 

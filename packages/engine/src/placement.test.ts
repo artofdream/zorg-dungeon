@@ -1,6 +1,6 @@
 // Covers FR-5, FR-6, FR-7, FR-8 (see src/placement.ts, src/tiles.ts).
 import { describe, expect, it } from "vitest";
-import { azdLevel, placeAll } from "./phase1-fixtures.js";
+import { azdLevel, makeLevel, placeAll } from "./phase1-fixtures.js";
 import {
   canStartExtermination,
   enumerateSuppliedRooms,
@@ -92,6 +92,19 @@ describe("FR-5 Maker grid placement", () => {
 });
 
 describe("FR-6 shared-side wall/open matching", () => {
+  it("accepts a default E-room tile against an A-room hatch (green ≡ open)", () => {
+    const level = makeLevel(
+      [{ type: "A" }, { type: "Z" }, { type: "E", element: "fire" }],
+      [{ type: "Warrior", hp: 3 }],
+    );
+    const layout = placeAll(level, {
+      "A:0": { x: 0, y: 0 },
+      "E:0": { x: 1, y: 0 },
+      "Z:0": { x: 2, y: 0 },
+    });
+    expect(validateLayout(level, layout).ok).toBe(true);
+  });
+
   it("accepts default 4-hatch tiles across a shared side", () => {
     const level = azdLevel();
     const layout = placeAll(level, {

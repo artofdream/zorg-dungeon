@@ -1,13 +1,13 @@
-// Phase 1 room tiles: each placed room is a 5×5 cell (GAME_SPEC.md terminology).
-// Official per-type art is not in the source extract — this default is a
-// 4-hatch cross so FR-6 edge matching is real without inventing Phase 2
-// elemental cell rules. Hatch *direction* is orientation metadata (FR-7 / NFR-6).
+// Room tiles: each placed room is a 5×5 cell (GAME_SPEC.md terminology).
+// Official per-type art is not in the source extract. The default is a
+// 4-hatch cross so FR-6 edge matching is real. E rooms add interior green
+// cells (FR-14); hatch *direction* is orientation metadata (FR-7 / NFR-6).
 
 import type { Orientation } from "./level.js";
 
 export const ROOM_SIZE = 5;
 
-export type CellKind = "open" | "wall";
+export type CellKind = "open" | "wall" | "green";
 
 /** tile[y][x] with x=0 west, y=0 south (mathematical +x east, +y north). */
 export type Tile = CellKind[][];
@@ -94,6 +94,44 @@ export function makeDefaultTile(): Tile {
 }
 
 export const DEFAULT_ROOM_TILE: Tile = makeDefaultTile();
+
+/**
+ * FR-14 default E-room tile: same 4-hatch cross, interior 3×3 painted green.
+ * Perimeter hatches stay plain open so FR-6 seams still match A/Z/D rooms.
+ * Official green-cell art was not in the extract — tests that need a precise
+ * cell should call paintGreen on a default tile.
+ */
+export function makeElementalTile(): Tile {
+  const tile = makeDefaultTile();
+  for (let y = 1; y < ROOM_SIZE - 1; y++) {
+    for (let x = 1; x < ROOM_SIZE - 1; x++) {
+      if (tileCell(tile, x, y) !== "wall") {
+        setTileCell(tile, x, y, "green");
+      }
+    }
+  }
+  return tile;
+}
+
+export const DEFAULT_ELEMENTAL_TILE: Tile = makeElementalTile();
+
+/** Test / authoring helper: mark listed local cells green (FR-14). */
+export function paintGreen(tile: Tile, cells: ReadonlyArray<{ x: number; y: number }>): Tile {
+  const next = cloneTile(tile);
+  for (const cell of cells) {
+    setTileCell(next, cell.x, cell.y, "green");
+  }
+  return next;
+}
+
+/** FR-6: green cells are open floor, not walls. */
+export function walkableKind(kind: CellKind): "open" | "wall" {
+  return kind === "wall" ? "wall" : "open";
+}
+
+export function isGreen(kind: CellKind): boolean {
+  return kind === "green";
+}
 
 export function cloneTile(tile: Tile): Tile {
   return tile.map((row) => [...row]);
@@ -208,10 +246,23 @@ export function edgeProfile(tile: Tile, side: Side): CellKind[] {
   return cells;
 }
 
-/** FR-6: wall meets wall and open meets open across the shared side. */
+/** FR-6: wall meets wall and open meets open across the shared side. Green ≡ open. */
 export function edgesMatch(a: CellKind[], b: CellKind[]): boolean {
   if (a.length !== b.length) return false;
-  return a.every((cell, i) => cell === b[i]);
+  return a.every((cell, i) => walkableKind(cell) === walkableKind(b[i] ?? "wall"));
+}
+
+/**
+ * East–west one-cell corridor (FR-14 forced-path tests). North/south are
+ * walls, so a hero cannot walk around a green cell on y=2.
+ */
+export function makeEwCorridorTile(): Tile {
+  const mid = 2;
+  const tile = makeBlank("wall");
+  for (let x = 0; x < ROOM_SIZE; x++) {
+    setTileCell(tile, x, mid, "open");
+  }
+  return tile;
 }
 
 /** Test helper: close the hatch on one side (still a legal 5×5 tile). */
