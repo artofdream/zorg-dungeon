@@ -1,0 +1,5 @@
+id: deluxe-9.2
+Contract: 9
+Niveau 9.2 : Far West
+Salles : A, Z, 3*O(1), T(1, glace), C(1).
+Héros : Guerrier(4).

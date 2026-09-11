@@ -1,0 +1,6 @@
+id: deluxe-5.3
+Contract: 5
+Niveau 5.3 : Smarter Coworker
+Salles : A, Z, D(2), E(feu), O(1), T(1, eau).
+Héros : Guerrier(9), Guerrier(4).
+Sortilège : Attaque(1).

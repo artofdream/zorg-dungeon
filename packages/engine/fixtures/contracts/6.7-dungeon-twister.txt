@@ -1,0 +1,15 @@
+id: deluxe-6.7
+Contract: 6
+Niveau 6.7 : Dungeon Twister
+Salles : A, Z, D(1), E(feu), P(1, 1).
+Héros : Guerrier(13).
+Sortilèges : Déplacement(), Échange().
+(M’) Salles : A, Z, D(1), E(feu), P(1, 1).
+(M’) Héros : Guerrier(14).
+(M’) Sortilèges : Déplacement(), Échange().
+(M’’) Salles : A, Z, D(1), E(feu), P(1, 1).
+(M’’) Héros : Guerrier(13), Guerrier(1).
+(M’’) Sortilèges : Déplacement(), Échange().
+Bonus 1 : (M’) et (M’’) sont solvables.
+Bonus 2 : (M’) est solvable, mais pas (M’’).
+Bonus 3 : (M’’) est solvable, mais pas (M’).

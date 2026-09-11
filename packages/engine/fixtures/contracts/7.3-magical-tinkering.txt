@@ -1,0 +1,7 @@
+id: deluxe-7.3
+Contract: 7
+Niveau 7.3 : Magical Tinkering
+Salles : A, Z, D(3).
+Héros : Guerrier(1), Guerrier(3), Guerrier(1).
+Sortilèges : Attaque(1), Attaque(3), Sélection(faux).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

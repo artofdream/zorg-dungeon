@@ -1,0 +1,5 @@
+id: deluxe-10.6
+Contract: 10
+Niveau 10.6 : Familial Loophole
+Salles : A, 2*Z, E(feu), E(poison).
+Héros : Artilleur(2, ∞, ∞).

@@ -1,0 +1,6 @@
+id: deluxe-7.5
+Contract: 7
+Niveau 7.5 : Impractical Toll
+Variables : λ = choix(1, ℕ), μ = choix(1, ℕ).
+Salles : A, Z, O(λ), O(μ), T(λ, feu), T(μ, glace).
+Héros : Guerrier(9).

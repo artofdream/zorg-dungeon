@@ -1,0 +1,6 @@
+id: deluxe-6.9
+Contract: 6
+Niveau 6.9 : Treadmill Thrill
+Salles : A, Z, 2*D(1), P(1, 6).
+Héros : Guerrier(10), Guerrier(1).
+Sortilèges : Attaque(1), 2*Déplacement().

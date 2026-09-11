@@ -1,0 +1,5 @@
+id: deluxe-4.4
+Contract: 4
+Niveau 4.4 : Polynomial Portal
+Salles : A, Z, D(1), E(feu), P(2, x↦3x-2).
+Héros : Guerrier(9), Elfe(3, {feu}).

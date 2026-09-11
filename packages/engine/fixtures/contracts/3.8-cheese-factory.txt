@@ -1,0 +1,12 @@
+id: deluxe-3.8
+Contract: 3
+Niveau 3.8 : Cheese Factory
+Salles : A, Z, 2*D(1), E(feu), E(eau), E(glace).
+Héros : Elfe(4, {glace}).
+(M’) Salles : A, Z, 2*D(1), E(feu), E(eau), E(glace).
+(M’) Héros : Elfe(3, {feu}), Elfe(2, {eau}), Elfe(4, {glace}).
+(M’’) Salles : A, Z, 2*D(1), E(feu), E(eau), E(glace).
+(M’’) Héros : Elfe(3, {feu}).
+Contraintes supplémentaires :
+Il existe une salle visitée dans (M) mais pas dans (M’).
+Il existe une salle visitée dans (M’) mais pas dans (M’’).

@@ -1,0 +1,6 @@
+id: deluxe-8.1
+Contract: 8
+Niveau 8.1 : Nap Time
+Salles : A, Z, D(1).
+Héros : 2*Guerrier(2).
+Sortilèges : Attaque(1), Somnolence().

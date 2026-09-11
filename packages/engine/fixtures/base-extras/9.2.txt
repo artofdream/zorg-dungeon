@@ -1,0 +1,9 @@
+id: base-extras-9.2
+Niveau 9.2 : “”
+Salles : A, Z, D(11), E(poison)
+Héros : Guerrier(20)
+Sortilèges : 2*Téléportation(2)
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+Variante : Chaque héros doit être téléporté 2 fois dans la salle d'attente.
+
+Difficulté : 1

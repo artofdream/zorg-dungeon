@@ -1,0 +1,6 @@
+id: deluxe-5.5
+Contract: 5
+Niveau 5.5 : Counting the Riches
+Salles : A, Z, E(feu), P(2, x↦7x-6), O(1), T(1, eau).
+Héros : Guerrier(21).
+Sortilège : Téléportation(4).

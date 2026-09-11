@@ -1,0 +1,7 @@
+id: deluxe-10.5
+Contract: 10
+Niveau 10.5 : Balancing Act
+Salles : A, 2*Z, D(5), E(feu), E(poison).
+Héros : Guerrier(11), Elfe(10, {}).
+Sortilèges : Échange(), Somnolence(), Réveil().
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

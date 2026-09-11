@@ -1,0 +1,8 @@
+id: deluxe-4.3
+Contract: 4
+Niveau 4.3 : Fake Reset
+Salles : A, Z, D(11), E(poison).
+Héros : Guerrier(20).
+Sortilèges : 2*Téléportation(2).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.
+Bonus : Le Guerrier doit être téléporté deux fois dans la salle d’attente.

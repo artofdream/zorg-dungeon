@@ -1,0 +1,8 @@
+id: deluxe-3.5
+Contract: 3
+Niveau 3.5 : One Way Zone
+Salles : A, Z, D(3), E(feu).
+Héros : Guerrier(3).
+(M’) Salles : Z, A, D(3), E(feu).
+(M’) Héros : Guerrier(3).
+Contrainte supplémentaire : (M’) n’est pas solvable.

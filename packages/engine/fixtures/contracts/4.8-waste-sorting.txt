@@ -1,0 +1,6 @@
+id: deluxe-4.8
+Contract: 4
+Niveau 4.8 : Waste Sorting
+Salles : A, Z, E(feu), E(poison), 2*P(1, 1).
+Héros : Guerrier(5), Elfe(5, {}).
+Contrainte supplémentaire : Un unique héros doit atteindre un nombre de points de vie strictement négatif.

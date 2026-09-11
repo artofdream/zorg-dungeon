@@ -1,3 +1,4 @@
+id: base-classic-20
 Niveau 20 : “Stupidity Award”
 Salles : 3*A, Z, D(1), E(eau), 2*O(1), T(1, feu)
 Héros : Elfe(10, {glace}), Artilleur(8, 1)

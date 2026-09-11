@@ -16,6 +16,7 @@ import {
   isChoixDef,
   isSpellRepeat,
   LevelDef,
+  OpaqueAssignment,
   RoomMultiplicity,
   RoomSlot,
   RoomType,
@@ -23,6 +24,42 @@ import {
   SpellSlot,
   SpellType,
 } from "./level.js";
+
+/** Strip a trailing period/semicolon that deluxe lines put on section tokens. */
+function stripTrailingJunk(token: string): string {
+  return token.replace(/[.;]+\s*$/, "").trim();
+}
+
+function parseCount(raw: string): number | string {
+  const n = Number(raw);
+  return Number.isNaN(n) ? raw : n;
+}
+
+/**
+ * Split `2*D(1)`, `2x E(water)`, `λ*A`, `(3-λ)*Z` at a depth-0 `*` / `x` / `×`.
+ * `x` inside `P(2, x↦…)` stays inside parens and is not a multiplicity mark.
+ */
+function splitMultiplicity(tok: string): { count: number | string; body: string } | null {
+  let depth = 0;
+  for (let i = 0; i < tok.length; i++) {
+    const char = tok[i] ?? "";
+    if (char === "(" || char === "[" || char === "{") depth++;
+    else if (char === ")" || char === "]" || char === "}") depth--;
+    else if (depth === 0) {
+      const left = tok.slice(0, i).trim();
+      const right = tok.slice(i + 1).trim();
+      if (!left || !right) continue;
+      if (char === "*" || char === "×") return { count: parseCount(left), body: right };
+      // `2x E` only — do not treat the `x` in `choix(...)` as a multiplier.
+      if ((char === "x" || char === "X") && /^\d+$/.test(left)) {
+        return { count: Number(left), body: right };
+      }
+    }
+  }
+  const space = tok.match(/^(\d+)\s+(.+)$/);
+  if (space?.[1] && space[2]) return { count: Number(space[1]), body: space[2] };
+  return null;
+}
 
 /** Split on separators only at brace/paren depth 0. */
 export function splitTopLevel(text: string, separator = ","): string[] {
@@ -119,7 +156,8 @@ function parseChoixRaw(token: string): { n: number | string; items: string[] } {
   let items: string[];
   if (
     (domainPart.startsWith("{") && domainPart.endsWith("}")) ||
-    (domainPart.startsWith("[") && domainPart.endsWith("]"))
+    (domainPart.startsWith("[") && domainPart.endsWith("]")) ||
+    (domainPart.startsWith("(") && domainPart.endsWith(")"))
   ) {
     items = splitTopLevel(domainPart.slice(1, -1));
   } else {
@@ -239,15 +277,10 @@ export function parseRooms(text: string): RoomMultiplicity[] {
   }
   if (current.trim()) tokens.push(current.trim());
 
-  return tokens.map((tok) => {
-    // Check for multiplicity prefix like "2 A", "3*D(2)", "2x Z", "3 * D(2)"
-    const multMatch =
-      tok.match(/^(\d+)\s*(?:\*|x)\s*(.+)$/i) || tok.match(/^(\d+)\s+(.+)$/);
-    if (multMatch && multMatch[1] && multMatch[2]) {
-      const count = parseInt(multMatch[1], 10);
-      const room = parseRoom(multMatch[2]);
-      return { count, room };
-    }
+  return tokens.map((raw) => {
+    const tok = stripTrailingJunk(raw);
+    const split = splitMultiplicity(tok);
+    if (split) return { count: split.count, room: parseRoom(split.body) };
     return { count: 1, room: parseRoom(tok) };
   });
 }
@@ -266,7 +299,12 @@ export function parseHero(token: string): HeroSlot {
 
   const heroName = canonicalizeHeroType(match[1]);
   const rawArgs = match[2] ?? "";
-  const args = splitTopLevel(rawArgs);
+  let args = splitTopLevel(rawArgs);
+  // Source typo seen as `Elfe(3 {})` — treat as hp + set, not one mashed arg.
+  if (args.length === 1 && args[0]) {
+    const loose = args[0].match(/^(\S+)\s+(\{.*\}|\[.*\])$/);
+    if (loose?.[1] && loose[2]) args = [loose[1], loose[2]];
+  }
 
   const hp = Number.isNaN(Number(args[0])) ? (args[0] ?? 1) : Number(args[0]);
 
@@ -322,7 +360,16 @@ export function parseHero(token: string): HeroSlot {
 export function parseHeroes(text: string): HeroSlot[] {
   if (!text.trim()) return [];
   const tokens = splitTopLevel(text.replace(/\n/g, ","));
-  return tokens.map((tok) => parseHero(tok));
+  return tokens.flatMap((raw) => {
+    const tok = stripTrailingJunk(raw);
+    const split = splitMultiplicity(tok);
+    if (!split) return [parseHero(tok)];
+    const hero = parseHero(split.body);
+    if (typeof split.count === "number") {
+      return Array.from({ length: split.count }, () => structuredClone(hero));
+    }
+    return [hero];
+  });
 }
 
 /** FR-1: Parse a spell definition, e.g. "Attack(3)", "Teleport(2)", "Move", "Selection(false)". */
@@ -392,7 +439,7 @@ export function parseSpellEntry(token: string): SpellSlot {
 export function parseSpells(text: string): SpellSlot[] {
   if (!text.trim()) return [];
   const tokens = splitTopLevel(text.replace(/\n/g, ","));
-  return tokens.map((tok) => parseSpellEntry(tok));
+  return tokens.map((tok) => parseSpellEntry(stripTrailingJunk(tok)));
 }
 
 /**
@@ -410,7 +457,7 @@ export function parseVariable(line: string): ChoixVariableDef {
   }
 
   const name = trimmed.slice(0, eqIndex).trim();
-  const rest = trimmed.slice(eqIndex + 1).trim();
+  const rest = stripTrailingJunk(trimmed.slice(eqIndex + 1).trim());
 
   const choixMatch = rest.match(/^choix\s*\(\s*(\d+)\s*,\s*(.+)\)$/s);
   if (!choixMatch || !choixMatch[1] || !choixMatch[2]) {
@@ -486,13 +533,41 @@ export function parseVariable(line: string): ChoixVariableDef {
 
 /** FR-2: Parse a multi-line variables block (also `λ = choix(...), μ = choix(...)`). */
 export function parseVariables(text: string): ChoixVariableDef[] {
+  return parseVariableEntries(text).variables;
+}
+
+/** Choix variables plus opaque `name = expr` assignments from the same block. */
+export function parseVariableEntries(text: string): {
+  variables: ChoixVariableDef[];
+  opaqueAssignments: OpaqueAssignment[];
+} {
   const lines = text
     .split("\n")
     .map((l) => l.trim())
     .filter((l) => l.length > 0 && !l.startsWith("#"));
 
   const defs = splitTopLevel(lines.join(", "));
-  return defs.map((l) => parseVariable(l));
+  const variables: ChoixVariableDef[] = [];
+  const opaqueAssignments: OpaqueAssignment[] = [];
+  for (const line of defs) {
+    const item = parseAssignment(line);
+    if ("domain" in item) variables.push(item);
+    else opaqueAssignments.push(item);
+  }
+  return { variables, opaqueAssignments };
+}
+
+/** `name = choix(...)` or an opaque `name = <source expr>`. */
+export function parseAssignment(line: string): ChoixVariableDef | OpaqueAssignment {
+  const trimmed = line.trim();
+  const eqIndex = trimmed.indexOf("=");
+  if (eqIndex === -1) {
+    throw new Error(`Variable definition missing '=' in: "${trimmed}"`);
+  }
+  const rest = stripTrailingJunk(trimmed.slice(eqIndex + 1).trim());
+  const cleaned = `${trimmed.slice(0, eqIndex + 1)} ${rest}`;
+  if (/^choix\s*\(/i.test(rest)) return parseVariable(cleaned);
+  return { name: trimmed.slice(0, eqIndex).trim(), expression: rest };
 }
 
 function appendListed(
@@ -522,12 +597,41 @@ function mirrorHeaderLabel(trimmed: string): string | null {
   return null;
 }
 
+/** Deluxe source prefixes each mirror line: `(M’) Salles : …`. */
+function inlineMirrorPrefix(trimmed: string): { label: string; rest: string } | null {
+  const match = trimmed.match(/^\((M(?:\([^)]+\)|[′'’ʼʹ″‴‛]+))\)\s*(.*)$/u);
+  if (!match?.[1]) return null;
+  const rest = (match[2] ?? "").trim();
+  // Constraint prose such as "(M’) est solvable." is not a mirror block.
+  if (
+    rest &&
+    !/^(?:salles|rooms|h[eé]ros|heroes|sortil[eè]ges?|spells|variables?|pi|Π|gamma|Γ|phi|Φ)\s*:/i.test(
+      rest,
+    )
+  ) {
+    return null;
+  }
+  return { label: match[1], rest };
+}
+
 function extractMirrorBlocks(dsl: string): { head: string; mirrors: { label: string; body: string }[] } {
   const head: string[] = [];
   const mirrors: { label: string; body: string[] }[] = [];
   let current: { label: string; body: string[] } | undefined;
   for (const line of dsl.split("\n")) {
-    const label = mirrorHeaderLabel(line.trim());
+    const trimmed = line.trim();
+    const inline = inlineMirrorPrefix(trimmed);
+    if (inline) {
+      let bucket = mirrors.find((m) => m.label === inline.label);
+      if (!bucket) {
+        bucket = { label: inline.label, body: [] };
+        mirrors.push(bucket);
+      }
+      if (inline.rest) bucket.body.push(inline.rest);
+      current = undefined;
+      continue;
+    }
+    const label = mirrorHeaderLabel(trimmed);
     if (label !== null) {
       current = { label, body: [] };
       mirrors.push(current);
@@ -561,6 +665,7 @@ export function parseLevel(dsl: string): LevelDef {
 function parseLevelBody(dsl: string): LevelDef {
   const lines = dsl.split("\n");
   let id = "level-0";
+  let idExplicit = false;
   let name = "Untitled Level";
   let contractId: string | undefined = undefined;
   let difficulty: number | string | undefined = undefined;
@@ -587,10 +692,18 @@ function parseLevelBody(dsl: string): LevelDef {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
 
-    const niveauMatch = trimmed.match(/^Niveau\s+(\d+)\s*:\s*(.+)$/i);
-    if (niveauMatch?.[1] && niveauMatch[2]) {
-      id = `base-classic-${niveauMatch[1]}`;
-      name = unquoteTitle(niveauMatch[2]);
+    const niveauMatch = trimmed.match(/^Niveau\s+(\d+(?:\.\d+)?)\s*:\s*(.*)$/i);
+    if (niveauMatch?.[1]) {
+      if (!idExplicit) {
+        const num = niveauMatch[1];
+        id = num.includes(".") ? `niveau-${num}` : `base-classic-${num}`;
+      }
+      if (niveauMatch[2]) name = unquoteTitle(niveauMatch[2]);
+      currentSection = "none";
+      continue;
+    }
+
+    if (/^contrat\b/i.test(trimmed) || /^co[uû]t\s*:/i.test(trimmed)) {
       currentSection = "none";
       continue;
     }
@@ -599,6 +712,7 @@ function parseLevelBody(dsl: string): LevelDef {
     const idMatch = trimmed.match(/^id:\s*(.+)$/i);
     if (idMatch && idMatch[1]) {
       id = idMatch[1].trim();
+      idExplicit = true;
       continue;
     }
     const nameMatch = trimmed.match(/^(?:level|name):\s*(.+)$/i);
@@ -648,24 +762,24 @@ function parseLevelBody(dsl: string): LevelDef {
       if (inline) variablesText += "\n" + inline;
       continue;
     }
-    if (/^(?:contrainte suppl[eé]mentaire|contraintes?|constraints?)\s*:\s*(.*)$/i.test(trimmed)) {
+    if (/^(?:contraintes? suppl[eé]mentaires?|contraintes?|constraints?)\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "constraints";
       const inline = trimmed.replace(
-        /^(?:contrainte suppl[eé]mentaire|contraintes?|constraints?)\s*:\s*/i,
+        /^(?:contraintes? suppl[eé]mentaires?|contraintes?|constraints?)\s*:\s*/i,
         "",
       );
       if (inline) appendListed(constraints, "c", inline);
       continue;
     }
-    if (/^(?:variantes?|variants?)\s*:\s*(.*)$/i.test(trimmed)) {
+    if (/^(?:variantes?|variants?)(?:\s+\d+)?\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "variants";
-      const inline = trimmed.replace(/^(?:variantes?|variants?)\s*:\s*/i, "");
+      const inline = trimmed.replace(/^(?:variantes?|variants?)(?:\s+\d+)?\s*:\s*/i, "");
       if (inline) appendListed(variants, "v", inline);
       continue;
     }
-    if (/^bonuses?\s*:\s*(.*)$/i.test(trimmed)) {
+    if (/^bonus(?:es)?(?:\s+\d+)?\s*:\s*(.*)$/i.test(trimmed)) {
       currentSection = "bonuses";
-      const inline = trimmed.replace(/^bonuses?\s*:\s*/i, "");
+      const inline = trimmed.replace(/^bonus(?:es)?(?:\s+\d+)?\s*:\s*/i, "");
       if (inline) appendListed(bonuses, "b", inline);
       continue;
     }
@@ -699,7 +813,11 @@ function parseLevelBody(dsl: string): LevelDef {
   const rooms = parseRooms(roomsText);
   const heroes = parseHeroes(heroesText);
   const spells = spellsText ? parseSpells(spellsText) : undefined;
-  const variables = variablesText.trim() ? parseVariables(variablesText) : undefined;
+  const parsedVars = variablesText.trim() ? parseVariableEntries(variablesText) : undefined;
+  const variables = parsedVars?.variables.length ? parsedVars.variables : undefined;
+  const opaqueAssignments = parsedVars?.opaqueAssignments.length
+    ? parsedVars.opaqueAssignments
+    : undefined;
 
   return {
     id,
@@ -709,6 +827,7 @@ function parseLevelBody(dsl: string): LevelDef {
     heroes,
     spells,
     variables,
+    opaqueAssignments,
     constraints: constraints.length ? constraints : undefined,
     bonuses: bonuses.length ? bonuses : undefined,
     variants: variants.length ? variants : undefined,
@@ -739,14 +858,18 @@ export function validateLevel(level: LevelDef): { valid: boolean; errors: string
   const errors: string[] = [];
 
   // FR-1: Level must have at least one A room and one Z room
-  const hasA = level.rooms.some((r) => r.count > 0 && roomSlotHasType(r.room, "A"));
-  const hasZ = level.rooms.some((r) => r.count > 0 && roomSlotHasType(r.room, "Z"));
+  const hasA = level.rooms.some(
+    (r) => (typeof r.count !== "number" || r.count > 0) && roomSlotHasType(r.room, "A"),
+  );
+  const hasZ = level.rooms.some(
+    (r) => (typeof r.count !== "number" || r.count > 0) && roomSlotHasType(r.room, "Z"),
+  );
   if (!hasA) errors.push("Level must contain at least one spawn room ('A').");
   if (!hasZ) errors.push("Level must contain at least one Zorg room ('Z').");
 
   // Multiplicities must be positive
   for (const [idx, r] of level.rooms.entries()) {
-    if (r.count <= 0) {
+    if (typeof r.count === "number" && r.count <= 0) {
       errors.push(`Room multiplicity at index ${idx} must be positive, got ${r.count}`);
     }
   }
@@ -796,7 +919,8 @@ export function serializeLevel(level: LevelDef): string {
 
   const roomStrs = level.rooms.map((r) => {
     const roomStr = serializeRoom(r.room);
-    return r.count === 1 ? roomStr : `${r.count} ${roomStr}`;
+    if (r.count === 1) return roomStr;
+    return typeof r.count === "number" ? `${r.count} ${roomStr}` : `${r.count}*${roomStr}`;
   });
   lines.push(`Rooms: ${roomStrs.join(", ")}`);
 
@@ -823,6 +947,13 @@ export function serializeLevel(level: LevelDef): string {
       if (v.captureOrientation) opts.push("orientation=true");
       const optsStr = opts.length ? `, ${opts.join(", ")}` : "";
       lines.push(`  ${v.name} = choix(${v.n}, ${domainStr}${optsStr})`);
+    }
+  }
+
+  if (level.opaqueAssignments && level.opaqueAssignments.length > 0) {
+    if (!level.variables?.length) lines.push("Variables:");
+    for (const a of level.opaqueAssignments) {
+      lines.push(`  ${a.name} = ${a.expression}`);
     }
   }
 

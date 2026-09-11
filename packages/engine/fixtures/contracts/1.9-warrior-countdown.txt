@@ -1,0 +1,7 @@
+id: deluxe-1.9
+Contract: 1
+Niveau 1.9 : Warrior Countdown
+Salles : A, Z, D(3), 2*E(feu).
+Héros : Guerrier(4), Guerrier(3), Guerrier(2), Guerrier(1).
+Sortilège : Attaque(1).
+Contrainte supplémentaire : Chaque héros doit mourir dans une salle différente.

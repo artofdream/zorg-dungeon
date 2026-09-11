@@ -1,0 +1,11 @@
+id: deluxe-4.7
+Contract: 4
+Niveau 4.7 : Cross With the Bonus
+Salles : A, Z, 2*D(1), E(feu), E(poison).
+Héros : Elfe(4, {}).
+Sortilèges : 2*Téléportation(4).
+(M’) Salles : A, Z, 2*D(1), E(feu), E(poison).
+(M’) Héros : Elfe(4, {}).
+(M’) Sortilèges : 2*Téléportation(40).
+Contrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.
+Bonus : (M’) n’est pas solvable.

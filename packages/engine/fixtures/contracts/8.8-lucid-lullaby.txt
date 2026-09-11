@@ -1,0 +1,7 @@
+id: deluxe-8.8
+Contract: 8
+Niveau 8.8 : Lucid Lullaby
+Salles : A, Z, D(1), E(choix(1, éléments)).
+Héros : 2*Guerrier(1).
+Sortilèges : Téléportation(1), Échange(), Sélection(faux), Somnolence().
+Contrainte supplémentaire : Les héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.

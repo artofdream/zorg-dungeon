@@ -1,0 +1,8 @@
+id: deluxe-8.7
+Contract: 8
+Niveau 8.7 : Lucid Dream
+Variable : λ = choix(1, éléments).
+Salles : A, Z, D(1), E(λ).
+Héros : Guerrier(1), Elfe(1, {λ}), Guerrier(1).
+Sortilèges : Déplacement(), Sélection(faux), Somnolence(), 2*Réveil().
+Contrainte supplémentaire : Les héros doivent mourir dans l'ordre inverse de leur ordre d'apparition.

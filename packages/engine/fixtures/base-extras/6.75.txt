@@ -1,0 +1,7 @@
+id: base-extras-6.75
+Niveau 6.75 : “”
+Salles : A, Z, D(1), D(2), E(feu), E(glace), 2*O(1)
+Héros : Guerrier(5), Elfe(3, {glace})
+Contrainte supplémentaire : Chaque héros doit posséder 1 en or au moment de sa mort.
+Variante 1 : Le donjon construit n'est plus une solution si l'Elfe perd son immunité.
+Variante 2 : Le donjon construit est toujours une solution si l'Elfe perd son immunité.

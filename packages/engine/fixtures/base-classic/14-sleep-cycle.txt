@@ -1,3 +1,4 @@
+id: base-classic-14
 Niveau 14 : “Sleep Cycle”
 Variable : λ = choix(1, ℕ)
 Salles : A, Z, D(1), D(15), E(glace), O(1), 2*T(1, feu)

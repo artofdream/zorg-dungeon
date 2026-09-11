@@ -1,0 +1,7 @@
+id: deluxe-5.4
+Contract: 5
+Niveau 5.4 : Money Smuggling
+Salles : A, Z, D(1), D(2), D(3), O(1).
+Héros : Guerrier(5), Guerrier(9), Guerrier(2).
+Sortilège : Téléportation(1).
+Contrainte supplémentaire : Chaque héros doit posséder de l’or au moment de sa mort.

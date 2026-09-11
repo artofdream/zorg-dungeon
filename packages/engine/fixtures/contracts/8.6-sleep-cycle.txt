@@ -1,0 +1,7 @@
+id: deluxe-8.6
+Contract: 8
+Niveau 8.6 : Sleep Cycle
+Salles : A, Z, D(1), D(15), E(glace), O(1), 2*T(1, feu).
+Héros : Elfe(14, {}), Elfe(12, {glace}).
+Sortilèges : ∞*Somnolence, ∞*Réveil.
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

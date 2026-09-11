@@ -1,0 +1,9 @@
+id: deluxe-3.2
+Contract: 3
+Niveau 3.2 : Emmental Sanctuary
+Salles : A, Z, 2*E(feu), E(glace).
+Héros : Elfe(3, {glace}).
+(M’) Salles : A, Z, 2*E(feu), E(glace).
+(M’) Héros : Elfe(3, {eau}).
+Contrainte supplémentaire : Il existe une salle visitée dans (M) mais pas dans (M').
+Bonus : Il existe une unique salle visitée dans (M) mais pas dans (M’).

@@ -1,0 +1,9 @@
+id: deluxe-1.6
+Contract: 1
+Niveau 1.6 : Heavy Paperwork
+Salles : A, Z, D(2), E(feu).
+Héros : Guerrier(6).
+Sortilèges : Attaque(1), Attaque(2).
+Contraintes supplémentaires : 
+dist(A, D) = dist(Z, D).
+Le héros ne peut pas subir deux sortilèges différents dans une même salle.

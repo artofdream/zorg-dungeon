@@ -1,0 +1,38 @@
+[
+  {
+    "id": "base-classic-11",
+    "path": "base-classic/quarantine/11-dream-trap.txt",
+    "reasons": [
+      "S5_dream_trap"
+    ]
+  },
+  {
+    "id": "base-classic-18",
+    "path": "base-classic/quarantine/18-math-bath.txt",
+    "reasons": [
+      "S5_malformed_choix"
+    ]
+  },
+  {
+    "id": "base-classic-23",
+    "path": "base-classic/quarantine/23-equilibrium-atrium.txt",
+    "reasons": [
+      "malformed_princess_choix"
+    ]
+  },
+  {
+    "id": "deluxe-8.2",
+    "path": "contracts/quarantine/8.2-simulating-sleepwalking.txt",
+    "reasons": [
+      "malformed_unbalanced_choix"
+    ]
+  },
+  {
+    "id": "deluxe-10.7",
+    "path": "contracts/quarantine/10.7-zipcaster-amateur.txt",
+    "reasons": [
+      "S5_artilleur_placeholder",
+      "artilleur_placeholder"
+    ]
+  }
+]

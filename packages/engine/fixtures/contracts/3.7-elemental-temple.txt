@@ -1,0 +1,12 @@
+id: deluxe-3.7
+Contract: 3
+Niveau 3.7 : Elemental Temple
+Salles : A, Z, 2*D(1), E(feu).
+Héros : Elfe(2, {eau}).
+(M’) Salles : A, Z, 2*D(1), E(glace).
+(M’) Héros : Elfe(2, {eau}).
+(M’’) Salles : A, Z, 2*D(1), E(eau).
+(M’’) Héros : Elfe(2, {eau}).
+Contraintes supplémentaires : 
+(M’) est solvable.
+(M’’) n’est pas solvable.

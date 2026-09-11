@@ -1,0 +1,6 @@
+id: deluxe-10.7
+Contract: 10
+Niveau 10.7 : Zipcaster Amateur
+Salles : 3*A, Z, 3*E(feu ou poison), P(1, ∞).
+Héros : Artilleur(_).
+Bonus : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

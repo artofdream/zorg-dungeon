@@ -1,0 +1,6 @@
+id: deluxe-6.6
+Contract: 6
+Niveau 6.6 : Priority Management
+Salles : A, Z, D(4).
+Héros : Guerrier(7), Mécanicien(7, {D:5}).
+Sortilège : Attaque(3).

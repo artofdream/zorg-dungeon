@@ -1,0 +1,6 @@
+id: deluxe-7.10
+Contract: 7
+Niveau 7.10 : Pick Your Poison
+Salles : A, Z, D(1), D(-1), E(feu).
+Héros : choix(2, {Guerrier(12), Elfe(9, {}), Mécanicien(11,  {D(-1):1})}).
+Sortilèges : Attaque(5), Échange().

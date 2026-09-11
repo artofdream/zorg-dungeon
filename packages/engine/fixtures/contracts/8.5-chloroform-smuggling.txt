@@ -1,0 +1,7 @@
+id: deluxe-8.5
+Contract: 8
+Niveau 8.5 : Chloroform Smuggling
+Salles : A, Z, D(1), D(2), D(3), P(1, 2), O(1).
+Héros : choix(4, (Guerrier(9), Guerrier(9), Elfe(8, {}), Elfe(10, {}))).
+Sortilèges : Attaque(1), Somnolence().
+Contrainte supplémentaire : Un héros meurt avec de l'or si et seulement si c'est un Guerrier.

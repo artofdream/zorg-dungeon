@@ -1,0 +1,6 @@
+id: deluxe-6.5
+Contract: 6
+Niveau 6.5 : Forced Confinement
+Salles : A, Z, D(2).
+Héros : Guerrier(5), Guerrier(3).
+Sortilèges : Attaque(3), Déplacement().

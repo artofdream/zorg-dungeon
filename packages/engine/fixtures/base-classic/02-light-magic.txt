@@ -1,3 +1,4 @@
+id: base-classic-2
 Niveau 2 : “Light Magic”
 Salles : A, Z, D(1), E(feu), E(eau)
 Héros : Elfe(5, {eau})

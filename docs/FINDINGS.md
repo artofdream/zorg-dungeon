@@ -79,11 +79,16 @@ deploy job is not a production content probe.
 Sponsor resolution S5: Base N11 “Dream Trap” is author-flagged in the source
 (`euh y a un problème dans celui-ci à mon grand regret`). Base N18 “Math Bath”
 has a malformed heroes line (`Guerrier(choix(1, {1,3,5}), Guerrier(2)` —
-unbalanced `choix`). Deluxe 10.7 `Artilleur(_)` is noted for when/if that pack
-is imported. Both N11 and N18 live under
-`packages/engine/fixtures/base-classic/quarantine/` and are `describe.skip`’d
-so they cannot fail the green corpus suite. This is Recurrence 1 — quarantine
-+ skip is documentation, not a second-miss gate.
+unbalanced `choix`). Deluxe 10.7 `Artilleur(_)` is now imported under
+`packages/engine/fixtures/contracts/quarantine/`. Phase 7 also quarantines
+two clearly malformed authored lines that cannot parse: Base N23 Equilibrium
+Atrium (broken `Princesse`/`choix` close) and Deluxe 8.2 (unbalanced `choix`).
+N11, N18, and N23 live under
+`packages/engine/fixtures/base-classic/quarantine/`. Green corpus suites
+(`base-classic-corpus.test.ts`, `level-pack-corpus.test.ts`) assert these
+paths are excluded and `describe.skip` the quarantine folder so they cannot
+fail CI. Recurrence stays 1 — quarantine + skip is documentation, not a
+second-miss gate.
 
 ## CF-006: Production web image has no CD and went stale
 - Status: Open

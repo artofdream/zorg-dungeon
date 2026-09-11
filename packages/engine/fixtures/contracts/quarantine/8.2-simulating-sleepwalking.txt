@@ -1,0 +1,6 @@
+id: deluxe-8.2
+Contract: 8
+Niveau 8.2 : Simulating Sleepwalking
+Salles : A, Z, E(feu).
+Héros : choix(2, {Guerrier(5), Mécanicien(1, {E:1})}.
+Sortilèges : Attaque(1), Somnolence().

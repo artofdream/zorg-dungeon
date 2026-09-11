@@ -80,7 +80,7 @@ writing a table row, is not proof.
 | NFR-2 | Simulated | packages/engine/src/base-classic-corpus.test.ts |
 | NFR-3 | Unknown | |
 | NFR-4 | Simulated | packages/engine/src/solvability.test.ts |
-| NFR-5 | Unknown | |
+| NFR-5 | Simulated | packages/engine/src/level-pack-corpus.test.ts |
 | NFR-6 | Unknown | |
 | NFR-7 | Unknown | |
 | NFR-8 | Unknown | |

@@ -1,0 +1,8 @@
+id: deluxe-1.5
+Contract: 1
+Niveau 1.5 : Magical Foundations
+Salles : A, Z, D(2), E(feu).
+Héros : Guerrier(7).
+Sortilèges : Attaque(1), Attaque(2).
+Contrainte supplémentaire : Le héros ne peut atteindre un nombre de points de vie strictement négatif.
+Bonus : Tous les sortilèges doivent être utilisés.

@@ -1,0 +1,5 @@
+id: deluxe-9.7
+Contract: 9
+Niveau 9.7 : Cereal Killer
+Salles : A, Z, D(1), 2*E(eau), 2*O(1), T(2, eau).
+Héros : Artilleur(1, 8, ∞).

@@ -1,0 +1,7 @@
+id: deluxe-1.8
+Contract: 1
+Niveau 1.8 : The Odd Squad
+Salles : A, Z, 2*D(3), E(feu).
+Héros : Guerrier(3), Guerrier(5), Guerrier(7), Guerrier(9).
+Sortilège : Attaque(1).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

@@ -1,3 +1,4 @@
+id: base-classic-15
 Niveau 15 : “A Lesson On Inflation”
 Variables : λ = choix(1, ℕ), μ = choix(1, ℕ)
 Salles : A, Z, O(λ), O(μ), T(λ, feu), T(μ, glace)

@@ -1,0 +1,7 @@
+id: deluxe-7.8
+Contract: 7
+Niveau 7.8 : Golden Snap
+Variables : λ = choix(1, ℕ), μ = choix(1, ℕ*).
+Salles : A, Z, D(1), P(λ, ∞), 2*O(2), T(1, eau).
+Héros : Guerrier(μ).
+Contrainte supplémentaire : À la mort du héros, chaque salle O doit contenir 1 or.

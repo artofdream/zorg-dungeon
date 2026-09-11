@@ -1,0 +1,6 @@
+id: base-extras-9.8
+Niveau 9.8 : “”
+Salles : A, Z, D(1), P(100, 1), P(10, x↦1+2*⌊1/x⌋)
+Héros : Guerrier(2)
+
+Difficulté : 2

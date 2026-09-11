@@ -1,0 +1,6 @@
+id: deluxe-6.10
+Contract: 6
+Niveau 6.10 : Torture Tour
+Salles : A, Z, D(1), E(feu), 2*E(eau).
+Héros : Elfe(3, {feu, eau}), Mécanicien(2, {D:10}).
+Sortilèges : 2*Déplacement().

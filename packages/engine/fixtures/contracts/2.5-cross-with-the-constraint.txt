@@ -1,0 +1,6 @@
+id: deluxe-2.5
+Contract: 2
+Niveau 2.5 : Cross With the Constraint
+Salles : A, Z, 2*D(1), E(feu), E(glace).
+Héros : Guerrier(4).
+Contrainte supplémentaire : ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1.

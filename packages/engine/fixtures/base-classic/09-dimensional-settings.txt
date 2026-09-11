@@ -1,3 +1,4 @@
+id: base-classic-9
 Niveau 9 : “Dimensional Settings”
 Salles : A, Z, E(feu), P(2, x↦7x-6), O(1), T(1, eau)
 Héros : Guerrier(21)

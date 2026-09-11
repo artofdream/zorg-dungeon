@@ -1,0 +1,6 @@
+id: deluxe-2.1
+Contract: 2
+Niveau 2.1 : Fire Immunity
+Salles : A, Z, E(feu).
+Héros : Elfe(1, {feu}), Guerrier(1).
+Sortilège : Attaque(1).

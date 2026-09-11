@@ -1,0 +1,8 @@
+id: deluxe-10.2
+Contract: 10
+Niveau 10.2 : 
+Salles : 2*A, Z, E(feu).
+Héros : Guerrier(3), Elfe(3, {}).
+(M’) Salles : 2*A, Z, E(feu).
+(M’) Héros : Elfe(3, {}).
+Contrainte supplémentaire : (M’) n'est pas solvable.

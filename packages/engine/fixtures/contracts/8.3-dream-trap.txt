@@ -1,0 +1,7 @@
+id: deluxe-8.3
+Contract: 8
+Niveau 8.3 : Dream Trap
+Salles : A, Z, D(1).
+Héros : 3*Guerrier(1).
+Sortilèges : Attaque(1), Sélection(faux), 3*Somnolence(), 4*Réveil().
+Contrainte supplémentaire : Tous les sortilèges doivent être utilisés.

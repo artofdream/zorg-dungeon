@@ -1,0 +1,8 @@
+id: deluxe-3.3
+Contract: 3
+Niveau 3.3 : Pivotal Issue
+Salles : A, Z, D(1), D(1), E(feu).
+Héros : Guerrier(5).
+(M’) Salles : A, Z, D(1), E(feu), D(1).
+(M’) Héros : Guerrier(4).
+Contrainte supplémentaire : (M’) n’est pas solvable.

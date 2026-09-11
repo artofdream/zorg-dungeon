@@ -1,0 +1,10 @@
+id: deluxe-7.6
+Contract: 7
+Niveau 7.6 : Abstract Art
+Variable : λ = #{sortilèges utilisés}.
+Salles : A, Z, D(λ).
+Héros : choix(4, {Guerrier(8), Guerrier(λ+1), Guerrier(λ+4), Guerrier(3λ)}).
+Sortilèges : ∞*Attaque(λ).
+Contrainte supplémentaire : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif. 
+Bonus 1 : Guerrier(8) apparaît avant Guerrier(λ+4).
+Bonus 2 : Guerrier(8) apparaît après Guerrier(λ+4).

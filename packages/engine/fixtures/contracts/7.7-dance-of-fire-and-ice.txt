@@ -1,0 +1,10 @@
+id: deluxe-7.7
+Contract: 7
+Niveau 7.7 : Dance of Fire and Ice
+Salles : A, Z, E(feu), E(glace).
+Héros : Guerrier(4), Elfe(4).
+Sortilèges : Déplacement(), Échange(), Sélection(faux).
+(M’) Salles : A, Z, E(feu), E(glace).
+(M’) Héros : Guerrier(4), Elfe(4).
+(M’) Sortilèges : Déplacement(), Échange().
+Contrainte supplémentaire : (M’) n'est pas solvable.

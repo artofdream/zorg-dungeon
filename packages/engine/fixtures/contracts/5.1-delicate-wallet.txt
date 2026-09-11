@@ -1,0 +1,6 @@
+id: deluxe-5.1
+Contract: 5
+Niveau 5.1 : Delicate Wallet
+Salles : A, Z, 2*E(feu), O(1).
+Héros : Guerrier(1), Guerrier(2).
+Contrainte supplémentaire : L’argent ne peut pas se situer dans la même salle au moment de l’apparition d’un héros et au moment de sa mort.

@@ -1,0 +1,5 @@
+id: deluxe-5.8
+Contract: 5
+Niveau 5.8 : Vault Break
+Salles : A, Z, D(1), O(1), T(1, feu), T(1, eau).
+Héros : Elfe(1, {feu}), Elfe(13, {eau}).

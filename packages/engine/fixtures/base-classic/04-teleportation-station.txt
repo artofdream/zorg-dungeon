@@ -1,3 +1,4 @@
+id: base-classic-4
 Niveau 4 : “Teleportation” Station”
 Salles : A, Z, D(1), E(feu), P(1, 1)
 Héros : Guerrier(11)

@@ -1,0 +1,6 @@
+id: deluxe-9.1
+Contract: 9
+Niveau 9.1 : Friendly Fire
+Salles : A, Z, D(1), E(feu).
+Héros : Guerrier(5), Artilleur(1, 1, ∞).
+Sortilège : Somnolence().

@@ -1,0 +1,7 @@
+id: deluxe-4.6
+Contract: 4
+Niveau 4.6 : Scarlet and Violet
+Salles : A, Z, D(1), E(feu), E(poison), P(2, x↦5-2x).
+Héros : Elfe(15, {poison}), Elfe(17, {feu}).
+Sortilèges : 2*Téléportation(1).
+Bonus : La salle P doit téléporter chaque héros deux fois.

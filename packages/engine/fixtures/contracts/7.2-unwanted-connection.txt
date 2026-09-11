@@ -1,0 +1,6 @@
+id: deluxe-7.2
+Contract: 7
+Niveau 7.2 : Unwanted Connection
+Variable : λ = #{r ∈ Π : r et A sont reliées}.
+Salles : A, Z, D(1), O(1), T(1, feu).
+Héros : Guerrier(2λ-3).

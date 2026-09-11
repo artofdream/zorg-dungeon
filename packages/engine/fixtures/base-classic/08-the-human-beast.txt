@@ -1,3 +1,4 @@
+id: base-classic-8
 Niveau 8 : “The Human Beast”
 Salles : A, Z, 2*E(feu), 2*P(1, 1)
 Héros : Guerrier(1), Artilleur(6, 1)

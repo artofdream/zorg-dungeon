@@ -1,0 +1,5 @@
+id: deluxe-6.8
+Contract: 6
+Niveau 6.8 : Sliding Puzzle
+Salles : A, Z, D(1), 2*E(eau).
+Héros : Mécanicien(2, {D:5, E:10}).

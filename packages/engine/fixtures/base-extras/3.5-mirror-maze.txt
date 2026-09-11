@@ -1,0 +1,9 @@
+id: base-extras-3.5
+Niveau 3.5 : “Mirror Maze”
+Salles : A, Z, 3*D(1), 4*E(glace)
+Héros : Guerrier(3)
+Contrainte supplémentaire : Le donjon doit être carré.
+Variante 1 : ∃(s, r) ∈ {D}x{D}, dist(s, r) = 3.
+Variante 2 : ∃(s, r) ∈ {D}x{D}, dist(s, r) = 4.
+
+Difficulté : 2

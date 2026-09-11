@@ -1,0 +1,7 @@
+id: deluxe-1.7
+Contract: 1
+Niveau 1.7 : Double Trouble
+Salles : A, Z, D(3).
+Héros : Guerrier(4), Guerrier(6).
+Sortilèges : Attaque(2), Attaque(4).
+Bonus : Aucun héros ne peut atteindre un nombre de points de vie strictement négatif.

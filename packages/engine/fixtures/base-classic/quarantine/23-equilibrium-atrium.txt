@@ -1,0 +1,8 @@
+id: base-classic-23
+Niveau 23 : “Equilibrium Atrium”
+Salles : A, Z, 2*D(1), E(feu), E(glace), P(1, 5)
+Héros : choix(1, {Guerrier(14), Elfe(14, {}), Artilleur(14, 1), Mécanicien(14, {D:5}), Princesse(14, {D:5}), 2)})
+Sortilèges : Échange
+Contrainte supplémentaire : ∀s∈Π\{A}, ∃r∈Π\{s}, dist(A, s) = dist(A, r)
+
+Difficulté : 3

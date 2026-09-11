@@ -1,0 +1,8 @@
+id: base-extras-6.25
+Niveau 6.25 : “”
+Salles : A, Z, D(1), D(2), D(3), O(1)
+Héros : Guerrier(5), Guerrier(9), Guerrier(2)
+Sortilège : Téléportation(1)
+Contrainte supplémentaire : Chaque héros doit posséder de l'or au moment de sa mort.
+
+Difficulté : 1

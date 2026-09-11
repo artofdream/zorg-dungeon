@@ -1,3 +1,4 @@
+id: base-classic-19
 Niveau 19 : “Random God”
 Salles : A, 3*Z, D(3), E(choix(1, {éléments})), P(1, 1)
 Héros : Guerrier(42)
