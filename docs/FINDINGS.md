@@ -88,7 +88,7 @@ so they cannot fail the green corpus suite. This is Recurrence 1 — quarantine
 ## CF-006: Production web image has no CD and went stale
 - Status: Open
 - Recurrence: 1
-- Linked: (this PR)
+- Linked: https://github.com/artofdream/zorg-dungeon/pull/9
 - Sensor added: .github/workflows/deploy-web.yml
 
 Lightsail `zorg.artof.link` (`54.152.172.19`) was still serving a
