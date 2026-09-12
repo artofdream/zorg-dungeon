@@ -169,7 +169,7 @@ Does not invent Gunner duration or new shove rules.
 ## CF-010: Skills written only after AFK rebase pain
 - Status: Open
 - Recurrence: 1
-- Linked: https://github.com/artofdream/zorg-dungeon/issues/50, https://github.com/artofdream/zorg-dungeon/issues/53
+- Linked: https://github.com/artofdream/zorg-dungeon/issues/50, https://github.com/artofdream/zorg-dungeon/issues/53, https://github.com/artofdream/zorg-dungeon/pull/54
 - Sensor added:
 
 Keep learning and apply lagged in practice. Shared Grok skills
