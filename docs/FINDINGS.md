@@ -151,3 +151,18 @@ the guide cites FR-22–25 / FR-32–33 / NFR-5 and does not claim “two types
 have rules encoded.” Recurrence 1 — first sensor, not a second-miss gate.
 Do not promote ledger rows from companion prose.
 
+## CF-008: Mechanic shove search dropped colon-bearing room ids
+- Status: Resolved
+- Recurrence: 1
+- Linked: https://github.com/artofdream/zorg-dungeon/pull/23
+- Sensor added: packages/engine/src/mechanic.test.ts
+
+`layoutKeyOf` / `layoutFromKey` encoded positions as `A:0:x,y` and split on
+the first `:`. Room ids are already `Type:n`, so a shove snapshot restored
+nothing and later search steps planned on the pre-shove graph. From spawn
+center the equal-length shove-first path was invisible; the run lucked into
+walk-then-shove because Z had not moved.
+
+Fix: encode `A:0@x,y`. Recurrence 1 — first sensor, not a second-miss gate.
+Does not invent Gunner duration or new shove rules.
+

@@ -1,7 +1,7 @@
 // Covers FR-22 (Gunner 2-arg path/fire priorities) and FR-23 (Shell).
 // S3 / NFR-8: a stored third argument must not change instant-shot behavior.
 import { describe, expect, it } from "vitest";
-import { azdLevel, placeAll } from "./phase1-fixtures.js";
+import { azdLevel, placeAll, twoDLevel } from "./phase1-fixtures.js";
 import { aezLine } from "./phase2-fixtures.js";
 import { corridorLine } from "./phase3-fixtures.js";
 import { adzHeroes } from "./phase5-fixtures.js";
@@ -184,16 +184,18 @@ describe("FR-23 Shell instant projectile", () => {
 });
 
 describe("FR-22 / FR-31 Gunner uses Warrior tie order", () => {
-  it("breaks equal walk options toward +x (right) at orientation 0 when nothing to shoot", () => {
-    const level = azdLevel(0, [{ type: "Gunner", hp: 5, shots: 0 }]);
+  it("breaks a true 2-path square toward +x (right) when shots are 0", () => {
+    const level = twoDLevel(1, 1, [{ type: "Gunner", hp: 5, shots: 0 }]);
     const layout = placeAll(level, {
       "A:0": { x: 0, y: 1 },
       "D:0": { x: 1, y: 1 },
+      "D:1": { x: 0, y: 0 },
       "Z:0": { x: 1, y: 0 },
     });
-    // Only one improving path (right then down). With 0 shots this is Elf/Warrior-like.
     const state = simulate(level, layout);
     const firstMove = state.events.find((e) => e.type === "move");
     expect(firstMove && firstMove.type === "move" ? firstMove.dir : "").toBe("right");
+    expect(enteredRooms(state.events)).toContain("D:0");
+    expect(enteredRooms(state.events)).not.toContain("D:1");
   });
 });

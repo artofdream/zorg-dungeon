@@ -7,7 +7,6 @@ import {
   defaultInlinePicks,
   defaultNamedChoices,
   enumerateSuppliedRooms,
-  hatchDirection,
   listInlineChoixSlots,
   parseLevel,
   prepareCampaignLevel,
@@ -23,15 +22,15 @@ import {
   type PlayerChoice,
   type SimulationState,
 } from "@zorg/engine";
+import { HatchCompass, RoomHatchMark } from "./hatch-mark.js";
 import { heroSlotLabel, roomLabel, roomSlotLabel, spellLabel, spellSlotLabel } from "./labels.js";
-
-const ORIENTATIONS: Orientation[] = [0, 90, 180, 270];
-const HATCH_GLYPH: Record<string, string> = {
-  right: "→",
-  up: "↑",
-  left: "←",
-  down: "↓",
-};
+import {
+  boardCellAriaLabel,
+  describeHatch,
+  HATCH_HELPER,
+  MAKER_ORIENTATIONS,
+  selectedRoomHatchLabel,
+} from "./orientation-ui.js";
 
 interface Props {
   entry: CampaignEntry;
@@ -66,6 +65,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
   const [run, setRun] = useState<SimulationState | null>(null);
   const [spellPick, setSpellPick] = useState<number | null>(null);
   const [castError, setCastError] = useState<string | null>(null);
+  const [hoverCell, setHoverCell] = useState<{ x: number; y: number } | null>(null);
 
   const layout: DungeonLayout = useMemo(
     () => ({ rooms: rooms.map((r) => ({ ...r, orientation })) }),
@@ -168,7 +168,8 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
 
   const boardLayout = run?.layout ?? layout;
   const heroRoomId = run?.heroes.find((h) => h.spawned && !h.dead)?.roomId ?? null;
-  const hatch = hatchDirection(orientation);
+  const hatch = describeHatch(orientation);
+  const selectedSpec = supplied.find((spec) => spec.id === selectedId);
   const active = run ? selectActiveHero(run.heroes) : undefined;
   const pickedSpell = run && spellPick !== null ? run.spells[spellPick] : undefined;
   const ys = Array.from({ length: extent.max - extent.min + 1 }, (_, i) => extent.max - i);
@@ -263,9 +264,10 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
         heroes and spells.
       </p>
       <p className="honesty">
-        Simulated engine, not Live. The outcome here is heroes dead, Z reached,
-        or stalemate. Extra constraints, bonuses, and mirror worlds are not
-        scored in this view.
+        Simulated engine, not Live. The outcome here is the scheduler result:
+        heroes dead, Z reached, or stalemate. Engine `scoreLevel` (FR-43 /
+        FR-44) is Simulated in tests; this view does not score extra
+        constraints, bonuses, or mirror-world aggregates.
         {entry.pack === "generated"
           ? " This dungeon is generator output (parse + placement + FR-46 bounded search) — not a live production probe. FR-4 gating is still not built."
           : ""}
@@ -359,14 +361,25 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
                 className={selectedId === spec.id ? "selected" : ""}
                 disabled={playing}
                 onClick={() => setSelectedId(spec.id)}
+                aria-label={selectedRoomHatchLabel(
+                  roomLabel(spec.def),
+                  orientation,
+                  spec.def.type === "A",
+                )}
               >
                 {roomLabel(spec.def)} {placedIds.has(spec.id) ? "· placed" : "· tray"}
+                <span className="tray-hatch">
+                  wall-hatch {hatch.shortLabel} ({orientation}°)
+                  {spec.def.type === "A" ? " · spawn-room anchor" : ""}
+                </span>
               </button>
             ))}
           </div>
-          <h2 style={{ marginTop: "1rem" }}>Hatch / orientation</h2>
+          <h2 style={{ marginTop: "1rem" }}>Wall-hatch / orientation</h2>
+          <p className="hint">{HATCH_HELPER}</p>
+          <HatchCompass orientation={orientation} />
           <div className="orient">
-            {ORIENTATIONS.map((deg) => (
+            {MAKER_ORIENTATIONS.map((deg) => (
               <button
                 key={deg}
                 type="button"
@@ -374,7 +387,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
                 disabled={playing}
                 onClick={() => applyOrientation(deg)}
               >
-                {deg}° {HATCH_GLYPH[hatchDirection(deg)]}
+                {describeHatch(deg).degreesLabel}
               </button>
             ))}
           </div>
@@ -386,8 +399,9 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
         <section className="panel">
           <h2>Board</h2>
           <p className="hint">
-            Click a cell to place the selected room. Click a placed room to pick it up. Hatch{" "}
-            {HATCH_GLYPH[hatch]}.
+            Click a cell to place the selected room. Click a placed room to pick it up. Shared
+            wall-hatch {hatch.shortLabel}
+            {selectedSpec ? ` · placing ${roomLabel(selectedSpec.def)}` : ""}.
           </p>
           <div className="board-wrap">
             <div
@@ -398,28 +412,45 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
                 xs.map((x) => {
                   const room = boardLayout.rooms.find((r) => r.position.x === x && r.position.y === y);
                   const isHero = Boolean(room && heroRoomId === room.id);
+                  const isSelectedPlaced = Boolean(room && selectedId === room.id);
+                  const isAnchor = room?.def.type === "A";
+                  const isPreview =
+                    !playing && !room && Boolean(selectedSpec) && hoverCell?.x === x && hoverCell?.y === y;
+                  const previewName = isPreview && selectedSpec ? roomLabel(selectedSpec.def) : undefined;
                   return (
                     <button
                       key={`${x},${y}`}
                       type="button"
-                      className={`cell${room ? " filled" : ""}${isHero ? " hero" : ""}`}
+                      className={`cell${room ? " filled" : ""}${isHero ? " hero" : ""}${
+                        isSelectedPlaced ? " selected-room" : ""
+                      }${isPreview ? " preview" : ""}${isAnchor ? " anchor" : ""}`}
                       style={{ width: 64, height: 64 }}
                       onClick={() => onCellClick(x, y)}
-                      aria-label={room ? `${roomLabel(room.def)} at ${x},${y}` : `Empty ${x},${y}`}
+                      onMouseEnter={() => setHoverCell({ x, y })}
+                      onMouseLeave={() => setHoverCell((cur) => (cur?.x === x && cur?.y === y ? null : cur))}
+                      data-hatch={room || isPreview ? hatch.cardinal : undefined}
+                      aria-label={boardCellAriaLabel({
+                        roomName: room ? roomLabel(room.def) : previewName,
+                        x,
+                        y,
+                        orientation,
+                        preview: isPreview,
+                        selected: isSelectedPlaced,
+                        isAnchor,
+                      })}
                     >
+                      {room || isPreview ? <RoomHatchMark orientation={orientation} /> : null}
                       {room ? (
                         <>
-                          <span className="hatch" aria-hidden>
-                            {HATCH_GLYPH[hatch]}
-                          </span>
                           <span className="kind">{roomLabel(room.def)}</span>
                           <span className="meta">
-                            {x},{y}
+                            {x},{y} · {hatch.glyph}
                           </span>
                         </>
                       ) : (
                         <span className="meta">
                           {x},{y}
+                          {isPreview && previewName ? ` · ${previewName}` : ""}
                         </span>
                       )}
                     </button>
@@ -537,7 +568,11 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
               </pre>
             </>
           ) : (
-            <p className="hint">Start is disabled until the layout is a single valid dungeon.</p>
+            <p className="hint">
+              {gateOpen
+                ? "Layout is a valid dungeon. Start opens extermination."
+                : "Start is disabled until the layout is a single valid dungeon."}
+            </p>
           )}
         </section>
       </div>
