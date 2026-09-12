@@ -54,9 +54,7 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
         quarantine and Blabla contracts 11–15 omitted
       </p>
 
-      <h2 className="panel" style={{ marginBottom: "0.75rem" }}>
-        Difficulté
-      </h2>
+      <h2 className="section-label">Difficulté</h2>
       <div className="filters" role="tablist" aria-label="Difficulté">
         {groups.map((group) => (
           <button
@@ -97,7 +95,7 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
         Contract points are labels only. Every playable level in this list is
         open.
       </p>
-      <label className="hint" style={{ display: "inline-flex", gap: "0.4rem", alignItems: "center" }}>
+      <label className="toggle">
         <input
           type="checkbox"
           checked={showUnavailable}
@@ -106,7 +104,7 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
         Show unavailable (C / Gunner duration / unresolved)
       </label>
 
-      <div className="level-grid" style={{ marginTop: "0.85rem" }}>
+      <div className="level-grid">
         {visible.map((entry) => (
           <button
             key={entry.id}
@@ -143,7 +141,7 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
         <p className="hint">No levels in this filter. Try another Difficulté or show unavailable.</p>
       ) : null}
 
-      <section className="panel" style={{ marginTop: "1.5rem" }}>
+      <section className="panel generate">
         <h2>Generate a practice dungeon</h2>
         <p className="hint">
           Additive — the authored campaign above stays the default. The engine
