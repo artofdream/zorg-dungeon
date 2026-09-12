@@ -11,6 +11,9 @@ game. Build a dungeon, then watch scripted heroes try to kill you through it.
 - [`docs/STATUS_LEDGER.md`](./docs/STATUS_LEDGER.md) /
   [`docs/FINDINGS.md`](./docs/FINDINGS.md) — what's actually proven, and
   what's been caught and fixed.
+- [`docs/SKILL_MATRIX.md`](./docs/SKILL_MATRIX.md) — which agent skills
+  apply, who loads them, and why they were chosen (knowledge page:
+  `skills.html`).
 
 ## Layout
 

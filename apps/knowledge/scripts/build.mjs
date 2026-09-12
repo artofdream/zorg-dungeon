@@ -162,6 +162,7 @@ function inlineFormat(text) {
       findings: "findings.html",
       agents: "architecture.html",
       player_guide: "guide.html",
+      skill_matrix: "skills.html",
     };
     if (pageAlias[cleanTarget]) {
       return `<a href="${pageAlias[cleanTarget]}" class="wikilink">${cleanLabel}</a>`;
@@ -202,6 +203,7 @@ function pageShell({ title, current, content }) {
     { id: "adr", label: "ADRs", href: "adr.html" },
     { id: "journal", label: "Dev Journal", href: "journal.html" },
     { id: "architecture", label: "Architecture", href: "architecture.html" },
+    { id: "skills", label: "Skills", href: "skills.html" },
     { id: "observability", label: "Observability", href: "observability.html" },
     { id: "aea", label: "AEA Harness", href: "aea.html" },
   ];
@@ -337,8 +339,16 @@ const homeContent = `
     <p>Shared memory, fail-closed honesty, and no self-merge — the same rules this repo uses.</p>
     <a href="aea.html">Explore AEA →</a>
   </div>
+  <div class="card">
+    <h3>🧰 Skills</h3>
+    <p>Which agent skills apply, who must load them, and why they were chosen after the 2026-09 build. A map, not a ledger promotion.</p>
+    <a href="skills.html">Open the skill matrix →</a>
+  </div>
 </div>
 `;
+if (!homeContent.includes("skills.html")) {
+  throw new Error("knowledge build: home page must link the skill matrix");
+}
 writeFileSync(join(distDir, "index.html"), pageShell({ title: "Home", current: "home", content: homeContent }));
 
 // 1b. Player & builder guide (companion — GAME_SPEC remains the legal voice)
@@ -414,7 +424,7 @@ const architectureOverviewMd = `
 
 ## Knowledge vs Maker
 
-Plain English: the spec is the rulebook. The engine is the referee ([[NFR-1]], [[NFR-10]]). The Maker is the table you play on. This knowledge site is the companion booklet. See [[0002-typescript-monorepo-2d-to-3d]].
+Plain English: the spec is the rulebook. The engine is the referee ([[NFR-1]], [[NFR-10]]). The Maker is the table you play on. This knowledge site is the companion booklet. Agent skills and why they were chosen live in [[SKILL_MATRIX]]. See [[0002-typescript-monorepo-2d-to-3d]].
 
 \`\`\`mermaid
 flowchart TB
@@ -435,6 +445,34 @@ if (!architectureHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: architecture page produced no mermaid diagram");
 }
 writeFileSync(join(distDir, "architecture.html"), pageShell({ title: "Architecture & Agent Framework", current: "architecture", content: architectureHtml }));
+
+// 7b. Skill matrix — dedicated page so the retrospective stays findable
+const skillsMd = readDoc("docs/SKILL_MATRIX.md");
+if (!skillsMd.trim()) {
+  throw new Error("knowledge build: missing docs/SKILL_MATRIX.md");
+}
+for (const name of [
+  "code-changes",
+  "routines",
+  "box-desktop",
+  "skill-authoring",
+  "pr-train-rebase",
+  "honesty-ledger-gate",
+  "companion-plain-docs",
+  "persona-journey-validation",
+]) {
+  if (!skillsMd.includes(name)) {
+    throw new Error(`knowledge build: SKILL_MATRIX.md must list ${name}`);
+  }
+}
+const skillsHtml = markdownToHtml(skillsMd);
+if (!skillsHtml.includes('class="mermaid"')) {
+  throw new Error("knowledge build: SKILL_MATRIX.md produced no mermaid diagram");
+}
+if (!skillsHtml.includes("<table>")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md produced no matrix table");
+}
+writeFileSync(join(distDir, "skills.html"), pageShell({ title: "Skill matrix", current: "skills", content: skillsHtml }));
 
 // 8. Observability Page
 const obsContent = `
@@ -545,7 +583,7 @@ const aeaContent = `
 <div class="grid-cards">
   <div class="card">
     <h3>📖 1. Procedure Memory (Skills)</h3>
-    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands.</p>
+    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands. Which ones apply — and why they were chosen after the 2026-09 build — is on the <a href="skills.html">skill matrix</a>.</p>
   </div>
   <div class="card">
     <h3>🚫 2. Correction Memory (Constraints)</h3>

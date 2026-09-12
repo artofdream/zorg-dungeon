@@ -110,6 +110,9 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
   `docs/PLAYER_GUIDE.md` — plain-English + diagram companion to
   `GAME_SPEC.md` (published as `guide.html`). Formal IDs stay in the spec;
   if they disagree, the spec wins.
+  `docs/SKILL_MATRIX.md` — which agent skills apply, who must load them,
+  and why they were chosen after the 2026-09 build (published as
+  `skills.html`). See [[SKILL_MATRIX]].
 - `scripts/*.mjs` — the governance checks, runnable locally
   (`pnpm governance`) exactly as CI runs them.
 
