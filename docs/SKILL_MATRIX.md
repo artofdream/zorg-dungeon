@@ -2,7 +2,13 @@
 
 This page lists which agent skills apply to zorg-dungeon, **who must load them**, and **why they were chosen**. It is not a new game rule and it does not promote any FR/NFR. Formal IDs stay in [[GAME_SPEC]]; proof stays in [[STATUS_LEDGER]].
 
-The set was chosen **after** shipping phases 0–7, the authored campaign, the Difficulté generator, AFK parallel PRs, and first-timer Maker UX work. The point was to encode what kept failing or repeating: rebase trains, honesty promotions, companion docs, and kid journeys.
+**Keep learning and apply** (AEA principle, pending a stable ID from [adaptive-experience-architecture](https://architecture.artof.link)): each skill here is an **apply-artifact** of historical pain, not a one-off note. The **Why selected** column already names that pain; the section below maps each row to what we now load instead of re-learning it in chat. Status of this principle in this repo: **Documented / Planned**, not Live & Probed.
+
+The same-miss rule sits with the principle: a CF that recurs (`Recurrence` ≥ 2) must add a sensor or gate — see [[AGENTS]] and [[FINDINGS]]. A paragraph is not apply.
+
+Tracked with [#50](https://github.com/artofdream/zorg-dungeon/issues/50) (this matrix), [#51](https://github.com/artofdream/zorg-dungeon/issues/51) (kid learn page), [#52](https://github.com/artofdream/zorg-dungeon/issues/52) (corpus quarantine), and [#53](https://github.com/artofdream/zorg-dungeon/issues/53) (name the principle).
+
+The set was chosen **after** shipping phases 0–7, the authored campaign, the Difficulté generator, AFK parallel PRs, and first-timer Maker UX work. The point was to encode what kept failing or repeating: rebase trains, honesty promotions, companion docs, and kid journeys. Practice lagged — shared skills were written after that AFK rebase pain, not continuously (see [[FINDINGS]] CF-010). This page is the apply step.
 
 ```mermaid
 flowchart TB
@@ -40,10 +46,41 @@ Kid-rules / persona-journey pages that land later should **compose** with this m
 | `docs/journal/` | Project playbook | End of a slice: what shipped, what stayed open, what the next agent needs. | Second brain. See [[2026-09-10]], [[2026-09-11]], [[2026-09-12]]. |
 | `docs/adr/` | Project playbook | Before changing architecture, deploy, or generator shape. | Why the engine is UI-free ([[0002-typescript-monorepo-2d-to-3d]]), how agents collaborate ([[0003-multi-agent-collaboration]]), and later slices (generator, grounded constraints). |
 
+## Keep learning and apply
+
+Each row is what we now load so the 2026-09 pain does not have to be rediscovered. Shared Grok skills are library recipes (not files in this tree); playbooks are committed.
+
+| Skill | Keep learning and apply (apply-artifact of) |
+|---|---|
+| `code-changes` | Every phase PR was a cloud edit. Apply: default to this skill for repo work, not a live-only session. |
+| `routines` | AFK parallel PRs went red with no one watching. Apply: babysit CI after the producer steps away. |
+| `box-desktop` | First-timer audit [#30](https://github.com/artofdream/zorg-dungeon/issues/30)–[#43](https://github.com/artofdream/zorg-dungeon/issues/43) needed a real browser. Apply: live play, not a knowledge screenshot. |
+| `skill-authoring` | Rebase / honesty / companion / kid misses repeated as paragraphs. Apply: save a recipe; this matrix is the map. |
+| `pr-train-rebase` | [#23](https://github.com/artofdream/zorg-dungeon/pull/23)/[#24](https://github.com/artofdream/zorg-dungeon/pull/24)/[#25](https://github.com/artofdream/zorg-dungeon/pull/25) CONFLICTING after earlier merges. Apply: rebase onto latest `main`; do not rewrite a peer's ledger rows. |
+| `honesty-ledger-gate` | S2–S6 deferrals; invented `C` / Gunner / [[FR-4]] would be a lie. Apply: five status words and evidence-only promotions. |
+| `companion-plain-docs` | CF-007: guide still said only Warrior/Elf after phases 4–7. Apply: plain English + diagrams; [[GAME_SPEC]] wins. |
+| `persona-journey-validation` | 2026-09-12 ~8yo first-play audit. Apply: personas → issues → fix. Compose with [#51](https://github.com/artofdream/zorg-dungeon/issues/51); do not stomp in-flight journey PRs. |
+| [[AGENTS]] | Multi-agent chat amnesia and tool-specific drift. Apply: one file, every session. |
+| [[GAME_SPEC]] | Companion prose drifting from rules. Apply: IDs frozen; spec wins. |
+| [[STATUS_LEDGER]] | Status words used as marketing. Apply: proof or `Unknown` / `Planned`. |
+| [[FINDINGS]] | Same miss twice with only a paragraph. Apply: CF + sensor when `Recurrence` ≥ 2. |
+| `docs/journal/` | Next agent cannot see the last chat. Apply: end-of-slice handoff on `main`. |
+| `docs/adr/` | Architecture re-litigated every session. Apply: read the decision before changing shape. |
+
+## Planned candidates (not skills yet)
+
+Documented / Planned only — do not treat these as loaded shared skills.
+
+| Candidate | Issue | Why? (pain) | What (when acked) |
+|---|---|---|---|
+| Kid visual rules / learn page | [#51](https://github.com/artofdream/zorg-dungeon/issues/51) | Live audit P1/P6/P10/P12 — win condition and room letters unexplained. | Companion learn page; [[GAME_SPEC]] wins; link from landing How to play. In progress on the journeys PR — compose, do not duplicate. |
+| Corpus quarantine honesty | [#52](https://github.com/artofdream/zorg-dungeon/issues/52) | CF-005 N11/N18 quarantine; S5; green corpus must not silently include broken levels. | Recipe for quarantine paths, CI skip, [[FINDINGS]] link; never promote an NFR on quarantined fixtures. |
+
 ## How to use this page
 
 1. Load **OOTB** skills for the job (edit / babysit / live audit / save a recipe).
 2. Load the **shared Grok** skill that matches the repeating miss (rebase, honesty, companion, persona).
 3. Read the **project playbooks** on `main`. If it is not in those files, it did not happen.
+4. After a miss, **keep learning and apply**: write a CF, add a sensor on recurrence 2, and update this matrix — do not stop at a journal sentence.
 
 This page is a map. It is not Live & Probed evidence and it does not close [[FR-4]], [[FR-18]], or Gunner duration.

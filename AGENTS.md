@@ -33,6 +33,28 @@ CI) can check. Use `docs/STATUS_LEDGER.md`'s five-word vocabulary
 (`Unknown`, `Planned`, `Simulated`, `Probed (date)`, `Live & Probed`) — see
 that file for the exact rules. Closing an issue is not proof.
 
+## Keep learning and apply
+
+> Learn from the build, then change the harness — a skill, a finding, a
+> sensor, a matrix row, a persona retro. A one-off note is not apply.
+> — AEA principle (pending a stable ID from
+> [adaptive-experience-architecture](https://architecture.artof.link);
+> cite the ID here when it lands).
+
+Pain that already happened should become something the next agent loads.
+That is **keep learning and apply**: shared skills, the [[SKILL_MATRIX]],
+findings that grow sensors, and persona retros — not a paragraph that
+dies in one chat.
+
+The sensor rule sits next to this principle, not only in §3: **if a CF's
+`Recurrence` reaches 2, the closing change must add or change a sensor**
+(`.github/workflows/**` or a `*.test.*` file). "Be more careful" is not
+apply. See `docs/FINDINGS.md`.
+
+Status of *this* principle in zorg-dungeon: **Documented / Planned**, not
+`Live & Probed`. Naming it in docs is not a production probe. Update the
+citation when the formal AEA ID is published.
+
 ## 3. Antifragility
 
 > "The same miss twice is a missing sensor or gate, not a missing
@@ -41,7 +63,8 @@ that file for the exact rules. Closing an issue is not proof.
 Log every discrepancy you find or cause as a CF-NNN entry in
 `docs/FINDINGS.md`. If something breaks the same way twice, the fix is not
 allowed to be "be more careful" — it has to change `.github/workflows/**`
-or add a test. See that file for the enforced rule.
+or add a test. That recurrence → sensor step is how this repo **keeps
+learning and apply**. See that file and the principle above.
 
 ## 4. Traceability (the "graph")
 
@@ -111,8 +134,9 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
   `GAME_SPEC.md` (published as `guide.html`). Formal IDs stay in the spec;
   if they disagree, the spec wins.
   `docs/SKILL_MATRIX.md` — which agent skills apply, who must load them,
-  and why they were chosen after the 2026-09 build (published as
-  `skills.html`). See [[SKILL_MATRIX]].
+  why they were chosen after the 2026-09 build, and how each one
+  **keeps learning and apply** (published as `skills.html`). See
+  [[SKILL_MATRIX]].
 - `scripts/*.mjs` — the governance checks, runnable locally
   (`pnpm governance`) exactly as CI runs them.
 

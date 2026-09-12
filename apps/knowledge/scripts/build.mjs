@@ -336,12 +336,12 @@ const homeContent = `
   </div>
   <div class="card">
     <h3>⚙️ AEA harness</h3>
-    <p>Shared memory, fail-closed honesty, and no self-merge — the same rules this repo uses.</p>
+    <p>Shared memory, fail-closed honesty, no self-merge, and keep learning and apply — the same rules this repo uses.</p>
     <a href="aea.html">Explore AEA →</a>
   </div>
   <div class="card">
     <h3>🧰 Skills</h3>
-    <p>Which agent skills apply, who must load them, and why they were chosen after the 2026-09 build. A map, not a ledger promotion.</p>
+    <p>Which agent skills apply, who must load them, and why they were chosen after the 2026-09 build. Each row is an apply-artifact of historical pain (AEA: keep learning and apply). A map, not a ledger promotion.</p>
     <a href="skills.html">Open the skill matrix →</a>
   </div>
 </div>
@@ -465,6 +465,9 @@ for (const name of [
     throw new Error(`knowledge build: SKILL_MATRIX.md must list ${name}`);
   }
 }
+if (!/Keep learning and apply/i.test(skillsMd)) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must name Keep learning and apply");
+}
 const skillsHtml = markdownToHtml(skillsMd);
 if (!skillsHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: SKILL_MATRIX.md produced no mermaid diagram");
@@ -538,6 +541,11 @@ const aeaContent = `
   <p>"The engineers who thrive in the AI era are not the ones who write the most code. They are the ones who build the best environments for AI agents and human teams to stay honest."</p>
 </div>
 
+<div class="alert alert-note">
+  <div class="alert-title">Keep learning and apply</div>
+  <p>AEA principle (pending a stable ID from <a href="https://architecture.artof.link" target="_blank" rel="noreferrer">adaptive-experience-architecture</a>): learn from the build, then change the harness — a skill, a finding, a sensor, a matrix row, a persona retro. A one-off note is not apply. In this repo that map is the <a href="skills.html">skill matrix</a>. If a CF recurs, add a sensor or gate — not another paragraph. Status here: <span class="badge badge-planned">Planned</span> / Documented, not Live &amp; Probed.</p>
+</div>
+
 <h2>1. The Core Formula in Everyday Terms</h2>
 <div class="card aea-formula">
   <p>Adaptive Experience = Shared Understanding + Domain Services + Outer Harness</p>
@@ -583,11 +591,11 @@ const aeaContent = `
 <div class="grid-cards">
   <div class="card">
     <h3>📖 1. Procedure Memory (Skills)</h3>
-    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands. Which ones apply — and why they were chosen after the 2026-09 build — is on the <a href="skills.html">skill matrix</a>.</p>
+    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands. Which ones apply — and why they were chosen after the 2026-09 build — is on the <a href="skills.html">skill matrix</a>. That page is keep-learning-and-apply: each skill is an apply-artifact of historical pain.</p>
   </div>
   <div class="card">
     <h3>🚫 2. Correction Memory (Constraints)</h3>
-    <p>Hard rules learned from past mistakes: <code>docs/FINDINGS.md</code> logs every miss (CF-NNN). Upon recurrence &ge; 2, an automated sensor in CI or tests is mandatory.</p>
+    <p>Hard rules learned from past mistakes: <code>docs/FINDINGS.md</code> logs every miss (CF-NNN). Upon recurrence &ge; 2, an automated sensor in CI or tests is mandatory. That recurrence → sensor step is keep learning and apply, stated next to the principle in <code>AGENTS.md</code>.</p>
   </div>
   <div class="card">
     <h3>🕸️ 3. Relationship Memory (Graph)</h3>
@@ -633,6 +641,9 @@ if (aeaMermaidCount < 3) {
 }
 if (/[┌┐└┘│─┬┴┼▼]/.test(aeaContent)) {
   throw new Error("knowledge build: AEA page still contains ASCII box-drawing diagrams");
+}
+if (!/Keep learning and apply/i.test(aeaContent)) {
+  throw new Error("knowledge build: AEA page must name Keep learning and apply");
 }
 writeFileSync(join(distDir, "aea.html"), pageShell({ title: "AEA Harness", current: "aea", content: aeaContent }));
 
