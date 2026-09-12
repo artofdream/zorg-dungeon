@@ -2,9 +2,7 @@
 
 This page lists which agent skills apply to zorg-dungeon, **who must load them**, and **why they were chosen**. It is not a new game rule and it does not promote any FR/NFR. Formal IDs stay in [[GAME_SPEC]]; proof stays in [[STATUS_LEDGER]].
 
-**Keep learning and apply** (AEA principle, pending a stable ID from [adaptive-experience-architecture](https://architecture.artof.link)): each skill here is an **apply-artifact** of historical pain, not a one-off note. The **Why selected** column already names that pain; the section below maps each row to what we now load instead of re-learning it in chat. Status of this principle in this repo: **Documented / Planned**, not Live & Probed.
-
-The same-miss rule sits with the principle: a CF that recurs (`Recurrence` ≥ 2) must add a sensor or gate — see [[AGENTS]] and [[FINDINGS]]. A paragraph is not apply.
+**Keep Learning and Apply** ([AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)): when the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure. Each skill here is an **apply-artifact** of historical pain, not a one-off note. The **Why selected** column already names that pain; the section below maps each row to what we now load. Complements Honesty and Knowledge First; **not** Antifragility (§3 second-miss → sensor). Status in this repo: **Documented / Planned**. Knowledge Pages for this principle: **Unknown** until AEA probes.
 
 Tracked with [#50](https://github.com/artofdream/zorg-dungeon/issues/50) (this matrix), [#51](https://github.com/artofdream/zorg-dungeon/issues/51) (kid learn page), [#52](https://github.com/artofdream/zorg-dungeon/issues/52) (corpus quarantine), and [#53](https://github.com/artofdream/zorg-dungeon/issues/53) (name the principle).
 
@@ -46,11 +44,11 @@ Kid-rules / persona-journey pages that land later should **compose** with this m
 | `docs/journal/` | Project playbook | End of a slice: what shipped, what stayed open, what the next agent needs. | Second brain. See [[2026-09-10]], [[2026-09-11]], [[2026-09-12]]. |
 | `docs/adr/` | Project playbook | Before changing architecture, deploy, or generator shape. | Why the engine is UI-free ([[0002-typescript-monorepo-2d-to-3d]]), how agents collaborate ([[0003-multi-agent-collaboration]]), and later slices (generator, grounded constraints). |
 
-## Keep learning and apply
+## Keep Learning and Apply
 
 Each row is what we now load so the 2026-09 pain does not have to be rediscovered. Shared Grok skills are library recipes (not files in this tree); playbooks are committed.
 
-| Skill | Keep learning and apply (apply-artifact of) |
+| Skill | Keep Learning and Apply (apply-artifact of) |
 |---|---|
 | `code-changes` | Every phase PR was a cloud edit. Apply: default to this skill for repo work, not a live-only session. |
 | `routines` | AFK parallel PRs went red with no one watching. Apply: babysit CI after the producer steps away. |
@@ -81,6 +79,6 @@ Documented / Planned only — do not treat these as loaded shared skills.
 1. Load **OOTB** skills for the job (edit / babysit / live audit / save a recipe).
 2. Load the **shared Grok** skill that matches the repeating miss (rebase, honesty, companion, persona).
 3. Read the **project playbooks** on `main`. If it is not in those files, it did not happen.
-4. After a miss, **keep learning and apply**: write a CF, add a sensor on recurrence 2, and update this matrix — do not stop at a journal sentence.
+4. After the build teaches something, **Keep Learning and Apply** ([#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)): write a skill, guide, matrix row, or ADR into the harness before the next loop. Do not stop at a journal sentence. Recurrence → sensor remains [[AGENTS]] §3 Antifragility.
 
-This page is a map. It is not Live & Probed evidence and it does not close [[FR-4]], [[FR-18]], or Gunner duration.
+This page is a map. It is not Live & Probed evidence and it does not close [[FR-4]], [[FR-18]], or Gunner duration. Knowledge Pages status for this principle is Unknown until AEA probes.

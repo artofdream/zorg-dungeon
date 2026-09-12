@@ -336,12 +336,12 @@ const homeContent = `
   </div>
   <div class="card">
     <h3>⚙️ AEA harness</h3>
-    <p>Shared memory, fail-closed honesty, no self-merge, and keep learning and apply — the same rules this repo uses.</p>
+    <p>Shared memory, fail-closed honesty, no self-merge, and Keep Learning and Apply (AEA #434) — the same rules this repo uses.</p>
     <a href="aea.html">Explore AEA →</a>
   </div>
   <div class="card">
     <h3>🧰 Skills</h3>
-    <p>Which agent skills apply, who must load them, and why they were chosen after the 2026-09 build. Each row is an apply-artifact of historical pain (AEA: keep learning and apply). A map, not a ledger promotion.</p>
+    <p>Which agent skills apply, who must load them, and why they were chosen after the 2026-09 build. Each row is an apply-artifact of historical pain (AEA Keep Learning and Apply, #434). A map, not a ledger promotion.</p>
     <a href="skills.html">Open the skill matrix →</a>
   </div>
 </div>
@@ -465,8 +465,11 @@ for (const name of [
     throw new Error(`knowledge build: SKILL_MATRIX.md must list ${name}`);
   }
 }
-if (!/Keep learning and apply/i.test(skillsMd)) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must name Keep learning and apply");
+if (!/Keep Learning and Apply/i.test(skillsMd)) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must name Keep Learning and Apply");
+}
+if (!skillsMd.includes("work_items/434")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA work item #434");
 }
 const skillsHtml = markdownToHtml(skillsMd);
 if (!skillsHtml.includes('class="mermaid"')) {
@@ -542,8 +545,8 @@ const aeaContent = `
 </div>
 
 <div class="alert alert-note">
-  <div class="alert-title">Keep learning and apply</div>
-  <p>AEA principle (pending a stable ID from <a href="https://architecture.artof.link" target="_blank" rel="noreferrer">adaptive-experience-architecture</a>): learn from the build, then change the harness — a skill, a finding, a sensor, a matrix row, a persona retro. A one-off note is not apply. In this repo that map is the <a href="skills.html">skill matrix</a>. If a CF recurs, add a sensor or gate — not another paragraph. Status here: <span class="badge badge-planned">Planned</span> / Documented, not Live &amp; Probed.</p>
+  <div class="alert-title">Keep Learning and Apply</div>
+  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">AEA #434</a>: when the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure. Complements Honesty and Knowledge First. Not Antifragility. In this repo the apply map is the <a href="skills.html">skill matrix</a>. Status: <span class="badge badge-planned">Planned</span> / Documented. Knowledge Pages for this principle: <span class="badge badge-unknown">Unknown</span> until AEA probes.</p>
 </div>
 
 <h2>1. The Core Formula in Everyday Terms</h2>
@@ -591,11 +594,11 @@ const aeaContent = `
 <div class="grid-cards">
   <div class="card">
     <h3>📖 1. Procedure Memory (Skills)</h3>
-    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands. Which ones apply — and why they were chosen after the 2026-09 build — is on the <a href="skills.html">skill matrix</a>. That page is keep-learning-and-apply: each skill is an apply-artifact of historical pain.</p>
+    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands. Which ones apply — and why they were chosen after the 2026-09 build — is on the <a href="skills.html">skill matrix</a>. That page is Keep Learning and Apply (<a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434">#434</a>): each skill is an apply-artifact of historical pain.</p>
   </div>
   <div class="card">
     <h3>🚫 2. Correction Memory (Constraints)</h3>
-    <p>Hard rules learned from past mistakes: <code>docs/FINDINGS.md</code> logs every miss (CF-NNN). Upon recurrence &ge; 2, an automated sensor in CI or tests is mandatory. That recurrence → sensor step is keep learning and apply, stated next to the principle in <code>AGENTS.md</code>.</p>
+    <p>Hard rules learned from past mistakes: <code>docs/FINDINGS.md</code> logs every miss (CF-NNN). Upon recurrence &ge; 2, an automated sensor in CI or tests is mandatory. That second-miss gate is Antifragility, not Keep Learning and Apply.</p>
   </div>
   <div class="card">
     <h3>🕸️ 3. Relationship Memory (Graph)</h3>
@@ -642,8 +645,11 @@ if (aeaMermaidCount < 3) {
 if (/[┌┐└┘│─┬┴┼▼]/.test(aeaContent)) {
   throw new Error("knowledge build: AEA page still contains ASCII box-drawing diagrams");
 }
-if (!/Keep learning and apply/i.test(aeaContent)) {
-  throw new Error("knowledge build: AEA page must name Keep learning and apply");
+if (!/Keep Learning and Apply/i.test(aeaContent)) {
+  throw new Error("knowledge build: AEA page must name Keep Learning and Apply");
+}
+if (!aeaContent.includes("work_items/434")) {
+  throw new Error("knowledge build: AEA page must cite AEA work item #434");
 }
 writeFileSync(join(distDir, "aea.html"), pageShell({ title: "AEA Harness", current: "aea", content: aeaContent }));
 
