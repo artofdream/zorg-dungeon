@@ -15,17 +15,20 @@ export function App() {
   const [selected, setSelected] = useState<CampaignEntry | null>(null);
   const [suggestedLayout, setSuggestedLayout] = useState<DungeonLayout | undefined>(undefined);
   const [generatedSeed, setGeneratedSeed] = useState<number | undefined>(undefined);
+  const [beginnerAssist, setBeginnerAssist] = useState(false);
 
-  function openAuthored(entry: CampaignEntry) {
+  function openAuthored(entry: CampaignEntry, assist = false) {
     setSuggestedLayout(undefined);
     setGeneratedSeed(undefined);
+    setBeginnerAssist(assist);
     setSelected(entry);
   }
 
-  function openGenerated(band: GenerationBand, seed?: number) {
+  function openGenerated(band: GenerationBand, seed?: number, assist = false) {
     const generated = generateLevel({ difficulty: band, seed });
     setSuggestedLayout(generated.layout);
     setGeneratedSeed(generated.seed);
+    setBeginnerAssist(assist);
     setSelected(generatedCampaignEntry(generated));
   }
 
@@ -35,14 +38,16 @@ export function App() {
       <MakerPlay
         entry={selected}
         suggestedLayout={suggestedLayout}
+        beginnerAssist={beginnerAssist}
         onBack={() => {
           setSelected(null);
           setSuggestedLayout(undefined);
           setGeneratedSeed(undefined);
+          setBeginnerAssist(false);
         }}
         onRegenerate={
           generated
-            ? () => openGenerated(selected.difficultyBand as GenerationBand, (generatedSeed ?? 0) + 1)
+            ? () => openGenerated(selected.difficultyBand as GenerationBand, (generatedSeed ?? 0) + 1, beginnerAssist)
             : undefined
         }
       />
@@ -50,6 +55,12 @@ export function App() {
   }
 
   return (
-    <CampaignBrowser catalog={catalog} onPick={openAuthored} onGenerate={(band) => openGenerated(band)} />
+    <CampaignBrowser
+      catalog={catalog}
+      onPick={(entry) => openAuthored(entry, false)}
+      onGenerate={(band, assist) => openGenerated(band, undefined, assist ?? false)}
+      onStartHereAuthored={(entry) => openAuthored(entry, true)}
+      onStartHereGenerate={() => openGenerated("1", undefined, true)}
+    />
   );
 }

@@ -43,6 +43,7 @@ export interface HatchView {
   wallClass: string;
   shortLabel: string;
   degreesLabel: string;
+  doorsFaceLabel: string;
 }
 
 export function describeHatch(orientation: Orientation): HatchView {
@@ -51,6 +52,7 @@ export function describeHatch(orientation: Orientation): HatchView {
   const glyph = HATCH_GLYPH[cardinal];
   const word = HATCH_WORD[cardinal];
   const sideWord = HATCH_SIDE_WORD[cardinal];
+  const doorsFaceLabel = `Doors face ${word}`;
   return {
     orientation,
     cardinal,
@@ -60,24 +62,25 @@ export function describeHatch(orientation: Orientation): HatchView {
     sideWord,
     wallClass: `hatch-${side}`,
     shortLabel: `${glyph} ${word}`,
-    degreesLabel: `${orientation}° ${glyph} ${word}`,
+    degreesLabel: `${doorsFaceLabel} ${glyph}`,
+    doorsFaceLabel,
   };
 }
 
-/** Selected tray / board room: same wall-hatch words as the placement ghost. */
+/** Selected tray / board room: kid “doors face …” words (#38). */
 export function selectedRoomHatchLabel(
   roomName: string,
   orientation: Orientation,
   isAnchor = false,
 ): string {
   const hatch = describeHatch(orientation);
-  const anchor = isAnchor ? " · spawn-room anchor" : "";
-  return `${roomName} · wall-hatch ${hatch.shortLabel} (${orientation}°)${anchor}`;
+  const anchor = isAnchor ? " · start-room doors" : "";
+  return `${roomName} · ${hatch.doorsFaceLabel}${anchor}`;
 }
 
 export function placementPreviewLabel(roomName: string, orientation: Orientation): string {
   const hatch = describeHatch(orientation);
-  return `Place ${roomName} · wall-hatch ${hatch.shortLabel}`;
+  return `Place ${roomName} · ${hatch.doorsFaceLabel}`;
 }
 
 export function boardCellAriaLabel(opts: {
@@ -91,20 +94,24 @@ export function boardCellAriaLabel(opts: {
 }): string {
   const hatch = describeHatch(opts.orientation);
   if (opts.preview) {
-    const bits = [`Empty ${opts.x},${opts.y}`, "preview wall-hatch " + hatch.shortLabel];
+    const bits = [`Empty ${opts.x},${opts.y}`, "preview " + hatch.doorsFaceLabel];
     if (opts.roomName) bits.splice(1, 0, `placing ${opts.roomName}`);
-    if (opts.isAnchor) bits.push("spawn-room orientation anchor");
+    if (opts.isAnchor) bits.push("start-room doors");
     return bits.join(" · ");
   }
   if (!opts.roomName) {
     return `Empty ${opts.x},${opts.y}`;
   }
-  const bits = [`${opts.roomName} at ${opts.x},${opts.y}`, `wall-hatch ${hatch.shortLabel}`];
-  if (opts.isAnchor) bits.push("spawn-room orientation anchor");
+  const bits = [`${opts.roomName} at ${opts.x},${opts.y}`, hatch.doorsFaceLabel];
+  if (opts.isAnchor) bits.push("start-room doors");
   if (opts.selected) bits.push("selected");
   return bits.join(" · ");
 }
 
-/** Plain-English FR-7 reminder shown while placing (NFR-6 / NFR-7 terminology). */
+/** Kid-facing doors helper — FR-7 lives in Maker honesty only (#38). */
 export const HATCH_HELPER =
-  "Every room shares one wall-hatch direction, taken from the spawn (A) rooms (FR-7). The bright arrow is that direction. Change it here before you place — Extermination stays closed until FR-5–FR-7 hold.";
+  "Every room’s doors face the same way, taken from the Start (A) rooms. The bright arrow shows that way. Change it here before you place.";
+
+/** Honesty / engineer note (not shown in kid primary copy). */
+export const HATCH_HONESTY =
+  "Wall-hatch direction / orientation follows the spawn-room (A) anchor (FR-7). Start fight stays closed until FR-5–FR-7 hold.";

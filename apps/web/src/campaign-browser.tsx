@@ -9,6 +9,7 @@ import {
 } from "@zorg/engine";
 import { HeroTypeRow } from "./hero-icon.js";
 import { heroTypesFromLevelText } from "./hero-icons.js";
+import { displayCampaignTitle } from "./labels.js";
 import {
   HELPER_BLURB,
   HONESTY_DETAILS,
@@ -20,6 +21,10 @@ import {
   KNOWLEDGE_JOURNEYS_HREF,
   KNOWLEDGE_LEARN_HREF,
   LEARN_THE_RULES_LABEL,
+  MORE_FILTERS_HINT,
+  MORE_FILTERS_SUMMARY,
+  PRACTICE_SECTION_HINT,
+  PRACTICE_SECTION_TITLE,
   START_HERE_CARD_BADGE,
   START_HERE_DIFFICULTY_LABEL,
   START_HERE_GENERATE_LABEL,
@@ -31,10 +36,18 @@ import {
 interface Props {
   catalog: CampaignEntry[];
   onPick: (entry: CampaignEntry) => void;
-  onGenerate: (band: GenerationBand) => void;
+  onGenerate: (band: GenerationBand, assist?: boolean) => void;
+  onStartHereAuthored: (entry: CampaignEntry) => void;
+  onStartHereGenerate: () => void;
 }
 
-export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
+export function CampaignBrowser({
+  catalog,
+  onPick,
+  onGenerate,
+  onStartHereAuthored,
+  onStartHereGenerate,
+}: Props) {
   const groups = useMemo(() => groupCampaignByDifficulty(catalog), [catalog]);
   const contracts = useMemo(() => authoredCampaignContracts(), []);
   const startHere = useMemo(() => firstPlayableDifficulty1(catalog), [catalog]);
@@ -57,12 +70,12 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
   function startAuthoredDifficulty1() {
     if (!startHere) return;
     setBand("1");
-    onPick(startHere);
+    onStartHereAuthored(startHere);
   }
 
   return (
     <main className="app">
-      <h1>Zorg's Dungeon Maker</h1>
+      <h1>Zorg&apos;s Dungeon Maker</h1>
       <p className="lede">{KID_LEDE}</p>
 
       <section className="how-to" aria-labelledby="how-to-play">
@@ -89,10 +102,36 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
         <button type="button" className="cta" disabled={!startHere} onClick={startAuthoredDifficulty1}>
           {START_HERE_DIFFICULTY_LABEL}
         </button>
-        <button type="button" className="cta cta-secondary" onClick={() => onGenerate("1")}>
+        <button type="button" className="cta cta-secondary" onClick={onStartHereGenerate}>
           {START_HERE_GENERATE_LABEL}
         </button>
       </div>
+
+      <section className="panel generate generate-top" aria-labelledby="practice-dungeon">
+        <h2 id="practice-dungeon">{PRACTICE_SECTION_TITLE}</h2>
+        <p className="hint">{PRACTICE_SECTION_HINT}</p>
+        <div className="filters" aria-label="Generate Difficulty">
+          {GENERATION_BANDS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={generateBand === item ? "selected" : ""}
+              onClick={() => setGenerateBand(item)}
+            >
+              Difficulty {item}
+            </button>
+          ))}
+        </div>
+        <div className="controls">
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => onGenerate(generateBand, false)}
+          >
+            Generate Difficulty {generateBand}
+          </button>
+        </div>
+      </section>
 
       <details className="honesty">
         <summary>{HONESTY_SUMMARY}</summary>
@@ -117,28 +156,32 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
         ))}
       </div>
 
-      <div className="filters" aria-label="Contract flavour filter">
-        <button
-          type="button"
-          className={contractId === "all" ? "selected" : ""}
-          onClick={() => setContractId("all")}
-        >
-          All contracts
-        </button>
-        {contracts.map((contract) => (
+      <details className="more-filters">
+        <summary>{MORE_FILTERS_SUMMARY}</summary>
+        <p className="hint">{MORE_FILTERS_HINT}</p>
+        <div className="filters" aria-label="Contract flavour filter">
           <button
-            key={contract.id}
             type="button"
-            className={contractId === contract.id ? "selected" : ""}
-            onClick={() => setContractId(contract.id)}
+            className={contractId === "all" ? "selected" : ""}
+            onClick={() => setContractId("all")}
           >
-            {contract.name}
-            {contract.costPoints !== null ? ` · ${contract.costPoints} pts` : ""}
+            All contracts
           </button>
-        ))}
-      </div>
+          {contracts.map((contract) => (
+            <button
+              key={contract.id}
+              type="button"
+              className={contractId === contract.id ? "selected" : ""}
+              onClick={() => setContractId(contract.id)}
+            >
+              {contract.name}
+              {contract.costPoints !== null ? ` · ${contract.costPoints} pts` : ""}
+            </button>
+          ))}
+        </div>
+      </details>
 
-      <p className="hint">Every playable level in this list is open. Contract points are labels only.</p>
+      <p className="hint">Every playable level in this list is open.</p>
       <label className="toggle">
         <input
           type="checkbox"
@@ -149,70 +192,42 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
       </label>
 
       <div className="level-grid">
-        {visible.map((entry) => (
-          <button
-            key={entry.id}
-            type="button"
-            className={`level-card${startHere && entry.id === startHere.id ? " start-here-card" : ""}`}
-            disabled={!entry.playable}
-            onClick={() => onPick(entry)}
-          >
-            {startHere && entry.id === startHere.id ? (
-              <span className="badge-start">{START_HERE_CARD_BADGE}</span>
-            ) : null}
-            <span className="title">{entry.name || entry.id}</span>
-            <span className="meta">
-              {entry.id}
-              {difficultyEntryLabel(entry.difficulty)}
-            </span>
-            <span className="meta">
-              {entry.pack}
-              {entry.contractName
-                ? ` · ${entry.contractName}${
-                    entry.contractCost !== null ? ` (cost ${entry.contractCost}` : ""
-                  }${entry.contractCostNote ? `; ${entry.contractCostNote}` : ""}${
-                    entry.contractCost !== null ? ")" : ""
-                  }`
-                : ""}
-              {entry.needsChoix ? " · setup choices" : ""}
-            </span>
-            <HeroTypeRow types={heroTypesFromLevelText(entry.text)} labelled />
-            {!entry.playable ? (
-              <span className="reason">
-                Unfinished — {entry.unavailableReasons.map(unavailableReasonLabel).join(" · ")}
+        {visible.map((entry) => {
+          const title = displayCampaignTitle(entry);
+          return (
+            <button
+              key={entry.id}
+              type="button"
+              className={`level-card${startHere && entry.id === startHere.id ? " start-here-card" : ""}`}
+              disabled={!entry.playable}
+              onClick={() => onPick(entry)}
+            >
+              {startHere && entry.id === startHere.id ? (
+                <span className="badge-start">{START_HERE_CARD_BADGE}</span>
+              ) : null}
+              <span className="title">{title}</span>
+              <span className="meta">
+                {entry.id}
+                {difficultyEntryLabel(entry.difficulty)}
               </span>
-            ) : null}
-          </button>
-        ))}
+              <span className="meta">
+                {entry.pack}
+                {entry.contractName ? ` · ${entry.contractName}` : ""}
+                {entry.needsChoix ? " · setup choices" : ""}
+              </span>
+              <HeroTypeRow types={heroTypesFromLevelText(entry.text)} labelled />
+              {!entry.playable ? (
+                <span className="reason">
+                  Unfinished — {entry.unavailableReasons.map(unavailableReasonLabel).join(" · ")}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
       {visible.length === 0 ? (
         <p className="hint">No levels in this filter. Try another Difficulty or show unfinished levels.</p>
       ) : null}
-
-      <section className="panel generate">
-        <h2>Generate a practice dungeon</h2>
-        <p className="hint">
-          Want a fresh easy map? Generate Difficulty 1–4, place rooms, then Start fight. The authored
-          levels above stay the main campaign.
-        </p>
-        <div className="filters" aria-label="Generate Difficulty">
-          {GENERATION_BANDS.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={generateBand === item ? "selected" : ""}
-              onClick={() => setGenerateBand(item)}
-            >
-              Difficulty {item}
-            </button>
-          ))}
-        </div>
-        <div className="controls">
-          <button type="button" onClick={() => onGenerate(generateBand)}>
-            Generate Difficulty {generateBand}
-          </button>
-        </div>
-      </section>
     </main>
   );
 }
