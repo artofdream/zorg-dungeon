@@ -166,6 +166,30 @@ walk-then-shove because Z had not moved.
 Fix: encode `A:0@x,y`. Recurrence 1 — first sensor, not a second-miss gate.
 Does not invent Gunner duration or new shove rules.
 
+## CF-009: First-timer landing is engineer-first
+- Status: Resolved
+- Recurrence: 1
+- Linked: (this PR — persona journeys + first-run landing)
+- Sensor added: apps/web/src/first-run.test.ts
+
+Sponsor: the game should be reachable from about age 8. The live Maker
+lede led with Difficulté / FR-4 / C rooms / Gunner duration / Simulated
+ledger language before a first-timer could see “pick a level.” That is a
+docs-vs-audience miss (companion claims a playable campaign; the first
+screen spoke engineer).
+
+This PR adds [[PLAYER_JOURNEYS]] (J-KID, J-HELPER, J-CAMPAIGN, J-PRACTICE,
+J-HONESTY) as UX validation cases — [[GAME_SPEC]] still wins on rules —
+and rewrites the landing to How to play + Start here (Difficulty 1 or
+Generate Difficulty 1). Honesty / FR notes stay in a disclosure.
+Recurrence 1 — `first-run.test.ts` is the first sensor (kid-facing copy
+must stay free of FR-4 / C / Gunner / ledger jargon), not a second-miss
+gate. Maker-play leftovers (JSON log, Φ, choix setup) are filed as
+follow-up issues, not this CF.
+
+Do not promote [[STATUS_LEDGER]] rows from landing copy. Do not invent
+`C`, Gunner duration, or [[FR-4]] gating.
+
 ## CF-010: Skills written only after AFK rebase pain
 - Status: Open
 - Recurrence: 1

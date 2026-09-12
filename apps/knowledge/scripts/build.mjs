@@ -162,6 +162,7 @@ function inlineFormat(text) {
       findings: "findings.html",
       agents: "architecture.html",
       player_guide: "guide.html",
+      player_journeys: "journeys.html",
       skill_matrix: "skills.html",
     };
     if (pageAlias[cleanTarget]) {
@@ -197,6 +198,7 @@ function pageShell({ title, current, content }) {
   const navItems = [
     { id: "home", label: "Home", href: "index.html" },
     { id: "guide", label: "Guide", href: "guide.html" },
+    { id: "journeys", label: "Journeys", href: "journeys.html" },
     { id: "spec", label: "Rules & Spec", href: "spec.html" },
     { id: "honesty", label: "Honesty Ledger", href: "honesty.html" },
     { id: "findings", label: "Findings", href: "findings.html" },
@@ -296,8 +298,13 @@ const homeContent = `
 <div class="grid-cards">
   <div class="card">
     <h3>🧭 Guide</h3>
-    <p>How to play: pick Difficulté, place rooms, start the fight. Rooms, heroes, spells, and what is still unavailable — with diagrams. If English disagrees with the spec, the spec wins.</p>
+    <p>How to play: pick Difficulty, place rooms, start the fight. Rooms, heroes, spells, and what is still unavailable — with diagrams. If English disagrees with the spec, the spec wins.</p>
     <a href="guide.html">Open the guide →</a>
+  </div>
+  <div class="card">
+    <h3>🚶 Journeys</h3>
+    <p>Five personas (kid, helper, campaign, practice, honesty) used as UX validation cases. Not new rules — the spec wins.</p>
+    <a href="journeys.html">Open persona journeys →</a>
   </div>
   <div class="card">
     <h3>▶️ Play Maker</h3>
@@ -375,6 +382,31 @@ if (!guideHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: PLAYER_GUIDE.md produced no mermaid diagrams");
 }
 writeFileSync(join(distDir, "guide.html"), pageShell({ title: "Player & builder guide", current: "guide", content: guideHtml }));
+
+// 1c. Persona journeys (UX validation — GAME_SPEC remains the legal voice)
+const journeysMd = readDoc("docs/PLAYER_JOURNEYS.md");
+if (!journeysMd.trim()) {
+  throw new Error("knowledge build: missing docs/PLAYER_JOURNEYS.md");
+}
+if (!/the spec wins/i.test(journeysMd)) {
+  throw new Error("knowledge build: PLAYER_JOURNEYS.md must say the spec wins");
+}
+if (!/UX validation/i.test(journeysMd)) {
+  throw new Error("knowledge build: PLAYER_JOURNEYS.md must say it is UX validation only");
+}
+for (const id of ["J-KID", "J-HELPER", "J-CAMPAIGN", "J-PRACTICE", "J-HONESTY"]) {
+  if (!journeysMd.includes(id)) {
+    throw new Error(`knowledge build: PLAYER_JOURNEYS.md must define ${id}`);
+  }
+}
+if (/C rooms? are now defined|Gunner duration is encoded|FR-4 gating is built/i.test(journeysMd)) {
+  throw new Error("knowledge build: PLAYER_JOURNEYS.md must not invent C / Gunner duration / FR-4");
+}
+const journeysHtml = markdownToHtml(journeysMd);
+writeFileSync(
+  join(distDir, "journeys.html"),
+  pageShell({ title: "Persona journeys", current: "journeys", content: journeysHtml }),
+);
 
 // 2. Spec Page — companion banner only; GAME_SPEC.md body is not rewritten
 const specBanner = `

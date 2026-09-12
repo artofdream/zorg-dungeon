@@ -132,7 +132,8 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
   `docs/FINDINGS.md` — the honesty/antifragility ledgers above.
   `docs/PLAYER_GUIDE.md` — plain-English + diagram companion to
   `GAME_SPEC.md` (published as `guide.html`). Formal IDs stay in the spec;
-  if they disagree, the spec wins.
+  if they disagree, the spec wins. `docs/PLAYER_JOURNEYS.md` — persona UX
+  validation cases (published as `journeys.html`). Not a rules rewrite.
   `docs/SKILL_MATRIX.md` — which agent skills apply, who must load them,
   why they were chosen after the 2026-09 build, and how each row
   **Keep Learning and Apply**

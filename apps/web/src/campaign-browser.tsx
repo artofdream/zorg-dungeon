@@ -4,12 +4,27 @@ import {
   GENERATION_BANDS,
   groupCampaignByDifficulty,
   unavailableReasonLabel,
-  UNSPECIFIED_DIFFICULTY,
   type CampaignEntry,
   type GenerationBand,
 } from "@zorg/engine";
 import { HeroTypeRow } from "./hero-icon.js";
 import { heroTypesFromLevelText } from "./hero-icons.js";
+import {
+  HELPER_BLURB,
+  HONESTY_DETAILS,
+  HONESTY_SUMMARY,
+  HOW_TO_PLAY_STEPS,
+  HOW_TO_PLAY_TITLE,
+  KID_LEDE,
+  KNOWLEDGE_GUIDE_HREF,
+  KNOWLEDGE_JOURNEYS_HREF,
+  START_HERE_CARD_BADGE,
+  START_HERE_DIFFICULTY_LABEL,
+  START_HERE_GENERATE_LABEL,
+  difficultyChipLabel,
+  difficultyEntryLabel,
+  firstPlayableDifficulty1,
+} from "./first-run.js";
 
 interface Props {
   catalog: CampaignEntry[];
@@ -20,6 +35,7 @@ interface Props {
 export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
   const groups = useMemo(() => groupCampaignByDifficulty(catalog), [catalog]);
   const contracts = useMemo(() => authoredCampaignContracts(), []);
+  const startHere = useMemo(() => firstPlayableDifficulty1(catalog), [catalog]);
   const [band, setBand] = useState<string>(groups[0]?.band ?? "1");
   const [contractId, setContractId] = useState<string>("all");
   const [showUnavailable, setShowUnavailable] = useState(false);
@@ -36,28 +52,57 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
 
   const playableCount = catalog.filter((e) => e.playable).length;
 
+  function startAuthoredDifficulty1() {
+    if (!startHere) return;
+    setBand("1");
+    onPick(startHere);
+  }
+
   return (
     <main className="app">
       <h1>Zorg's Dungeon Maker</h1>
-      <p className="lede">
-        Pick a <strong>Difficulté</strong>, open an authored level, place its
-        rooms, then start the fight. After the campaign, you can also generate
-        a practice dungeon for the same Difficulté bands.
-      </p>
-      <p className="honesty">
-        Simulated engine tests — not a live production probe. Contract costs are
-        labels only (FR-4 gating is not built). Levels with C rooms or Gunner
-        duration stay unavailable. Generated levels are Simulated engine output,
-        not a live probe. See the honesty ledger.
-      </p>
+      <p className="lede">{KID_LEDE}</p>
 
-      <p className="hint">
-        {playableCount} playable · {catalog.length - playableCount} unavailable ·
-        quarantine and Blabla contracts 11–15 omitted
-      </p>
+      <section className="how-to" aria-labelledby="how-to-play">
+        <h2 id="how-to-play">{HOW_TO_PLAY_TITLE}</h2>
+        <p className="hint">{HELPER_BLURB}</p>
+        <ol>
+          {HOW_TO_PLAY_STEPS.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+        <p className="hint">
+          More detail:{" "}
+          <a href={KNOWLEDGE_GUIDE_HREF} target="_blank" rel="noreferrer">
+            Player guide
+          </a>
+          {" · "}
+          <a href={KNOWLEDGE_JOURNEYS_HREF} target="_blank" rel="noreferrer">
+            Persona journeys
+          </a>
+        </p>
+      </section>
 
-      <h2 className="section-label">Difficulté</h2>
-      <div className="filters" role="tablist" aria-label="Difficulté">
+      <div className="start-here">
+        <button type="button" className="cta" disabled={!startHere} onClick={startAuthoredDifficulty1}>
+          {START_HERE_DIFFICULTY_LABEL}
+        </button>
+        <button type="button" className="cta cta-secondary" onClick={() => onGenerate("1")}>
+          {START_HERE_GENERATE_LABEL}
+        </button>
+      </div>
+
+      <details className="honesty">
+        <summary>{HONESTY_SUMMARY}</summary>
+        <p>{HONESTY_DETAILS}</p>
+        <p className="hint">
+          {playableCount} playable · {catalog.length - playableCount} unfinished · quarantine and
+          placeholder contracts 11–15 omitted
+        </p>
+      </details>
+
+      <h2 className="section-label">Pick a level</h2>
+      <div className="filters" role="tablist" aria-label="Difficulty">
         {groups.map((group) => (
           <button
             key={group.band}
@@ -65,9 +110,7 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
             className={band === group.band ? "selected" : ""}
             onClick={() => setBand(group.band)}
           >
-            {group.band === UNSPECIFIED_DIFFICULTY
-              ? `No Difficulté (${group.entries.length})`
-              : `Difficulté ${group.band} (${group.entries.length})`}
+            {difficultyChipLabel(group.band, group.entries.length)}
           </button>
         ))}
       </div>
@@ -93,17 +136,14 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
         ))}
       </div>
 
-      <p className="hint">
-        Contract points are labels only. Every playable level in this list is
-        open.
-      </p>
+      <p className="hint">Every playable level in this list is open. Contract points are labels only.</p>
       <label className="toggle">
         <input
           type="checkbox"
           checked={showUnavailable}
           onChange={(ev) => setShowUnavailable(ev.target.checked)}
         />
-        Show unavailable (C / Gunner duration / unresolved)
+        Show unfinished levels
       </label>
 
       <div className="level-grid">
@@ -111,14 +151,17 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
           <button
             key={entry.id}
             type="button"
-            className="level-card"
+            className={`level-card${startHere && entry.id === startHere.id ? " start-here-card" : ""}`}
             disabled={!entry.playable}
             onClick={() => onPick(entry)}
           >
+            {startHere && entry.id === startHere.id ? (
+              <span className="badge-start">{START_HERE_CARD_BADGE}</span>
+            ) : null}
             <span className="title">{entry.name || entry.id}</span>
             <span className="meta">
               {entry.id}
-              {entry.difficulty !== null ? ` · Difficulté ${entry.difficulty}` : ""}
+              {difficultyEntryLabel(entry.difficulty)}
             </span>
             <span className="meta">
               {entry.pack}
@@ -129,29 +172,28 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
                     entry.contractCost !== null ? ")" : ""
                   }`
                 : ""}
-              {entry.needsChoix ? " · choix setup" : ""}
+              {entry.needsChoix ? " · setup choices" : ""}
             </span>
             <HeroTypeRow types={heroTypesFromLevelText(entry.text)} labelled />
             {!entry.playable ? (
               <span className="reason">
-                Unavailable — {entry.unavailableReasons.map(unavailableReasonLabel).join(" · ")}
+                Unfinished — {entry.unavailableReasons.map(unavailableReasonLabel).join(" · ")}
               </span>
             ) : null}
           </button>
         ))}
       </div>
       {visible.length === 0 ? (
-        <p className="hint">No levels in this filter. Try another Difficulté or show unavailable.</p>
+        <p className="hint">No levels in this filter. Try another Difficulty or show unfinished levels.</p>
       ) : null}
 
       <section className="panel generate">
         <h2>Generate a practice dungeon</h2>
         <p className="hint">
-          Additive — the authored campaign above stays the default. The engine
-          builds a legal A–Z corridor for Difficulté 1–4 (the authored numeric
-          bands). No C rooms, no Gunner duration, no contract unlock.
+          Want a fresh easy map? Generate Difficulty 1–4, place rooms, then Start fight. The authored
+          levels above stay the main campaign.
         </p>
-        <div className="filters" aria-label="Generate Difficulté">
+        <div className="filters" aria-label="Generate Difficulty">
           {GENERATION_BANDS.map((item) => (
             <button
               key={item}
@@ -159,13 +201,13 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
               className={generateBand === item ? "selected" : ""}
               onClick={() => setGenerateBand(item)}
             >
-              Difficulté {item}
+              Difficulty {item}
             </button>
           ))}
         </div>
         <div className="controls">
           <button type="button" onClick={() => onGenerate(generateBand)}>
-            Generate Difficulté {generateBand}
+            Generate Difficulty {generateBand}
           </button>
         </div>
       </section>

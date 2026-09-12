@@ -5,14 +5,14 @@ This page is a **plain-English companion** to [[GAME_SPEC]]. It is not the legal
 > [!IMPORTANT]
 > If this English or a diagram disagrees with [[GAME_SPEC]], the spec wins. Do not invent room `C`, Gunner shot-duration, or contract gating ([[FR-18]], [[FR-22]], [[FR-4]]).
 
-Play the authored campaign in the Maker: [https://zorg.artof.link](https://zorg.artof.link).
+Play the authored campaign in the Maker: [https://zorg.artof.link](https://zorg.artof.link). The Maker landing now has a kid-facing **How to play** plus **Start here** (Difficulty 1 or Generate Difficulty 1). Persona checklists live in [[PLAYER_JOURNEYS]] — UX validation only; this guide and those journeys never override the spec.
 
 ## How to play the campaign
 
-The public Maker is a **campaign browser first**. You pick an authored level, place its rooms, then watch the fight. After that, a **Generate** control can roll a practice dungeon for the same numeric Difficulté bands.
+The public Maker is a **campaign browser first**. You pick an authored level, place its rooms, then watch the fight. After that, a **Generate** control can roll a practice dungeon for the same numeric **Difficulty** bands (source word: Difficulté).
 
 1. Open the Maker at [https://zorg.artof.link](https://zorg.artof.link).
-2. Pick a **Difficulté** band (the author's difficulty number). Deluxe contract levels with no Difficulté line sit in a **No Difficulté** band; you can also filter by contract name.
+2. Pick a **Difficulty** band (the author's Difficulté number). Deluxe contract levels with no Difficulté line sit in a **No Difficulty** band; you can also filter by contract name.
 3. Open a **playable** authored level. Place every room that level supplies on the grid so they form one legal dungeon ([[FR-5]]–[[FR-8]]).
 4. Start **extermination**. Heroes walk by their own fixed rules. You may spend leftover one-time spells between finished actions ([[FR-32]], [[FR-33]]).
 5. Optional: use **Generate a practice dungeon** (Difficulté 1–4) or **Regenerate** on a generated level. Authored campaign stays the default.
