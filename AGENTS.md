@@ -57,10 +57,13 @@ content for this principle is **Unknown** until AEA probes it. Naming
 it in docs is not `Live & Probed`. Do not treat !513 as merged.
 
 The skill map is [[SKILL_MATRIX]] (columns: Skill | Scope | Why? | What).
-Four shared Grok skills (sand-workflow slugs `pr-train-rebase`,
+Shared Grok skills (sand-workflow slugs `pr-train-rebase`,
 `honesty-ledger-gate`, `companion-plain-docs`,
-`persona-journey-validation`) are adopted here — tracked by
+`persona-journey-validation`, `corpus-quarantine-honesty`) are
+adopted here — tracked by
 [#50](https://github.com/artofdream/zorg-dungeon/issues/50).
+Quarantine evidence: [#52](https://github.com/artofdream/zorg-dungeon/issues/52).
+Kid learn page stays Planned: [#51](https://github.com/artofdream/zorg-dungeon/issues/51).
 Cross-project fit (Café Fausse App and Knowledge received; AEA agent
 waiting) is an assessment, not a live probe, not a claim those repos
 created the skills, and not a ledger promotion.

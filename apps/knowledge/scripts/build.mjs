@@ -562,6 +562,7 @@ for (const name of [
   "honesty-ledger-gate",
   "companion-plain-docs",
   "persona-journey-validation",
+  "corpus-quarantine-honesty",
 ]) {
   if (!skillsMd.includes(name)) {
     throw new Error(`knowledge build: SKILL_MATRIX.md must list ${name}`);
@@ -602,6 +603,11 @@ if (!skillsMd.includes("Proposed / other-repo")) {
 }
 if (!skillsMd.includes("Spec-phased engine slice")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must list the spec-phased engine slice candidate");
+}
+for (const n of [50, 51, 52]) {
+  if (!skillsMd.includes(`github.com/artofdream/zorg-dungeon/issues/${n}`)) {
+    throw new Error(`knowledge build: SKILL_MATRIX.md must link issue #${n}`);
+  }
 }
 const skillsHtml = markdownToHtml(skillsMd);
 if (!skillsHtml.includes('class="mermaid"')) {
