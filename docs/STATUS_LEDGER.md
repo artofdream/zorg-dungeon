@@ -81,9 +81,9 @@ writing a table row, is not proof.
 | NFR-3 | Unknown | |
 | NFR-4 | Simulated | packages/engine/src/solvability.test.ts |
 | NFR-5 | Simulated | packages/engine/src/level-pack-corpus.test.ts |
-| NFR-6 | Unknown | |
+| NFR-6 | Simulated | apps/web/src/orientation-ui.test.ts |
 | NFR-7 | Unknown | |
-| NFR-8 | Unknown | |
+| NFR-8 | Simulated | packages/engine/src/nfr8-deferrals.test.ts |
 | NFR-9 | Simulated | packages/engine/src/base-classic-corpus.test.ts |
 | NFR-10 | Simulated | packages/engine/src/hero-layers.test.ts |
 
@@ -102,3 +102,6 @@ A later honesty slice promoted [[FR-19]], [[NFR-1]], and [[NFR-10]] to
 A later `scoreLevel` slice promoted [[FR-43]] and [[FR-44]] to `Simulated`
 from grounded constraint tests — not from `generateLevel`. Opaque authored
 prose stays unevaluated. See [[0006-grounded-constraint-evaluation]].
+
+A later Maker slice promoted [[NFR-6]] and [[NFR-8]] to `Simulated` from
+orientation-UI and deferral tests — also not from `generateLevel`.

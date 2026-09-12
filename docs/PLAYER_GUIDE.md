@@ -77,7 +77,8 @@ What the gate actually checks before Extermination ([[FR-8]] wrapping [[FR-5]]�
 
 - Every supplied room is on the board exactly once, 5×5 cells aligned, no overlap, no diagonal-only touching ([[FR-5]]).
 - Neighboring rooms share a **full side**, wall meeting wall and open cell meeting open cell ([[FR-6]]).
-- Every room shares one orientation, taken from the `A` rooms' common hatch direction ([[FR-7]], [[NFR-6]]).
+- Every room shares one orientation, taken from the `A` rooms' common wall-hatch direction ([[FR-7]], [[NFR-6]]).
+- The Maker draws that wall-hatch as a bright arrow on each placed room, on the selected tray room, and as a ghost on the cell you are about to drop onto ([[NFR-6]]). The default tile still has a hatch on every side so seams can match ([[FR-6]]); the arrow is the shared [[FR-7]] direction, not extra geometry.
 
 Win/loss is not “the last hero died” alone. Extra constraints and bonuses can sit on top ([[FR-43]], [[FR-44]]). Mirror worlds share the constructed room graph and swap rooms 1:1 by declaration order ([[FR-9]]). Worlds resolve normal → M′ → M″ and retire when idle or when that world's Z is reached ([[FR-45]]). Whether a world is solvable is a bounded engine search ([[FR-46]], [[NFR-4]]). The engine scores a grounded subset of those extras (`scoreLevel`: any-world Z is a loss; win needs every world’s heroes dead and every blocking constraint held; bonuses are tracked separately and never block). Authored lines the spec does not define stay `unsupported` and refuse a win claim — the engine does not invent a constraint language ([[0006-grounded-constraint-evaluation]], [[NFR-8]]). Maker playback still shows only the scheduler outcome. If this paragraph and [[GAME_SPEC]] disagree, the spec wins.
 
