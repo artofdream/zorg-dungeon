@@ -607,6 +607,17 @@ if (!skillsMd.includes("work_items/434")) {
 if (!skillsMd.includes("merge_requests/512") || !skillsMd.includes("merge_requests/513")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA !512 and !513");
 }
+{
+  const adoptIdx = skillsMd.indexOf("### Cross-project adopt links");
+  const adoptBlock = adoptIdx >= 0 ? skillsMd.slice(adoptIdx, adoptIdx + 1800) : "";
+  if (
+    !adoptBlock.includes("merge_requests/512") ||
+    !adoptBlock.includes("merge_requests/513") ||
+    !adoptBlock.includes("work_items/434")
+  ) {
+    throw new Error("knowledge build: Cross-project adopt table must link AEA !512 (matrix) and !513 / #434 (principle)");
+  }
+}
 if (!skillsMd.includes("2026-09-12-session-memory-log-aea-grok-skill-matrix.md")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite the AEA skill-matrix session log");
 }
