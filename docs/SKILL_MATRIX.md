@@ -76,11 +76,59 @@ Documented / Planned only — do not treat these as loaded shared skills.
 | Kid visual rules / learn page | [#51](https://github.com/artofdream/zorg-dungeon/issues/51) | Live audit P1/P6/P10/P12 — win condition and room letters unexplained. | Companion learn page; [[GAME_SPEC]] wins; link from landing How to play. In progress on the journeys PR — compose, do not duplicate. |
 | Corpus quarantine honesty | [#52](https://github.com/artofdream/zorg-dungeon/issues/52) | CF-005 N11/N18 quarantine; S5; green corpus must not silently include broken levels. | Recipe for quarantine paths, CI skip, [[FINDINGS]] link; never promote an NFR on quarantined fixtures. |
 
+## Cross-project fit
+
+The four shared Grok skills came from zorg-dungeon pain. Other projects can reuse them when their history matches. Fit below is from **assessments received** — not a live probe of those sites from this page, and not a [[STATUS_LEDGER]] promotion.
+
+```mermaid
+flowchart LR
+  shared["Shared Grok skills"]
+  cafeApp["Café Fausse App — received"]
+  aeaWait["AEA agent — waiting"]
+  cafeKnow["Café Fausse Knowledge — waiting"]
+  shared --> cafeApp
+  shared --> aeaWait
+  shared --> cafeKnow
+```
+
+### Café Fausse App (received)
+
+Public app: [cafe.artof.link](https://cafe.artof.link). Companion site is separate ([knowledge.cafe.artof.link](https://knowledge.cafe.artof.link)). This subsection is the **App** assessment only.
+
+| Shared skill | Fit | Why (Café App history) |
+|---|---|---|
+| `pr-train-rebase` | Yes | SES honesty #201 landed after Stack #199 / #202. Same pattern as zorg's Knowledge + App trains: rebase onto latest `main`; do not rewrite a peer's rows. |
+| `honesty-ledger-gate` | Yes | Newsletter SES probe and NFR broadband evidence. Did **not** invent Café FR-19. Same gate: status words need a probe; closing a ticket is not proof. |
+| `companion-plain-docs` | Partial | Quantic pack helped. App source of truth is **SRS + `freeze.json`**, not a PLAYER_GUIDE twin. Knowledge owns the companion prose. Formal App rules still win if English disagrees. |
+| `persona-journey-validation` | Yes / partial | Diner book, Café FR-9 409, newsletter, Operator recording, ROG mobile. Would have caught lightbox / mobile earlier. Not a full first-timer matrix like zorg's kid bar. |
+
+#### Candidates / other projects (Café App)
+
+These are **Café App** recipes, not zorg-dungeon shared Grok skills. Do not load them here unless you are working that App. Not acked as library skills on this repo.
+
+| Candidate | Why it exists on the App |
+|---|---|
+| `freeze-first` | Code follows SRS / `freeze.json`. Do not invent fields the freeze does not name. |
+| `fail-closed missing-DB` | If the database is missing, fail closed — do not pretend the store is up. |
+| `probe-before-status-words` | Same honesty habit as [[STATUS_LEDGER]]: probe, then write the status word. |
+| `optional SES after-store fail-soft` | Newsletter SES is optional after the store write; a mail miss must not unwind a good save. |
+| `official-image allowlist only` | Only official allowlisted images. No random remote art. |
+| `staging keep/tear honesty` | Say whether staging is kept or torn down. Do not leave a zombie env implied. |
+
+### AEA agent (waiting)
+
+No assessment in yet. Do not invent a fit row. When it arrives, add a table like the Café App one and keep [AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513) as the AEA cites.
+
+### Café Fausse Knowledge (waiting)
+
+No assessment in yet. Knowledge owns the companion layer; the App row above does **not** speak for [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Do not invent a fit row. When it arrives, say how `companion-plain-docs` lands there (likely stronger than Partial).
+
 ## How to use this page
 
 1. Load **OOTB** skills for the job (edit / babysit / live audit / save a recipe).
 2. Load the **shared Grok** skill that matches the repeating miss (rebase, honesty, companion, persona).
 3. Read the **project playbooks** on `main`. If it is not in those files, it did not happen.
 4. After the build teaches something, **Keep Learning and Apply** ([#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)): write a skill, guide, matrix row, or ADR into the harness before the next loop. Do not stop at a journal sentence. Recurrence → sensor remains [[AGENTS]] §3 Antifragility.
+5. **Cross-project fit:** reuse the four shared skills where another project's history matches. Keep that project's source of truth (Café App: SRS + `freeze.json`). Fill AEA agent and Café Fausse Knowledge when those assessments arrive.
 
 This page is a map. It is not Live & Probed evidence and it does not close [[FR-4]], [[FR-18]], or Gunner duration. Knowledge Pages status for this principle is Unknown until AEA probes.

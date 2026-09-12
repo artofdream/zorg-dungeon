@@ -579,6 +579,15 @@ if (!skillsMd.includes("merge_requests/512") || !skillsMd.includes("merge_reques
 if (!skillsMd.includes("2026-09-12-session-memory-log-aea-grok-skill-matrix.md")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite the AEA skill-matrix session log");
 }
+if (!/Cross-project fit/i.test(skillsMd)) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep the Cross-project fit section");
+}
+if (!skillsMd.includes("Café Fausse App")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must record the Café Fausse App assessment");
+}
+if (!skillsMd.includes("AEA agent (waiting)") || !skillsMd.includes("Café Fausse Knowledge (waiting)")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep AEA agent and Café Fausse Knowledge placeholders");
+}
 const skillsHtml = markdownToHtml(skillsMd);
 if (!skillsHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: SKILL_MATRIX.md produced no mermaid diagram");
