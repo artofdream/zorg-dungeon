@@ -33,6 +33,29 @@ CI) can check. Use `docs/STATUS_LEDGER.md`'s five-word vocabulary
 (`Unknown`, `Planned`, `Simulated`, `Probed (date)`, `Live & Probed`) — see
 that file for the exact rules. Closing an issue is not proof.
 
+## Keep Learning and Apply
+
+> When the build teaches something, write it into the harness (skill,
+> sensor, guide, matrix row, or ADR) before the next loop — so the next
+> agent inherits it instead of rediscovering the failure.
+> — AEA [Keep Learning and Apply](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
+> (GitLab work item #434; landing in open
+> [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513))
+
+This complements **Honesty** (§2) and **Knowledge First** (§1). It is
+**not** Antifragility (§3). Antifragility is the second-miss → sensor
+gate. This principle is the first-loop write: if the build taught
+something, commit a skill, guide, [[SKILL_MATRIX]] row, or ADR before
+the next agent starts — a chat note is not apply.
+
+AEA cites (same GitLab project):
+- Skill matrix (merged [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512), closes [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433)): [`research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md`](https://gitlab.com/artof-group/adaptive-experience-architecture/-/blob/main/research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md)
+- Principle (open [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513), Closes [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434))
+
+Status in zorg-dungeon: **Documented / Planned**. Knowledge Pages
+content for this principle is **Unknown** until AEA probes it. Naming
+it in docs is not `Live & Probed`. Do not treat !513 as merged.
+
 ## 3. Antifragility
 
 > "The same miss twice is a missing sensor or gate, not a missing
@@ -110,6 +133,13 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
   `docs/PLAYER_GUIDE.md` — plain-English + diagram companion to
   `GAME_SPEC.md` (published as `guide.html`). Formal IDs stay in the spec;
   if they disagree, the spec wins.
+  `docs/SKILL_MATRIX.md` — which agent skills apply, who must load them,
+  why they were chosen after the 2026-09 build, and how each row
+  **Keep Learning and Apply**
+  ([#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) /
+  [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513);
+  AEA matrix [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512))
+  (published as `skills.html`). See [[SKILL_MATRIX]].
 - `scripts/*.mjs` — the governance checks, runnable locally
   (`pnpm governance`) exactly as CI runs them.
 

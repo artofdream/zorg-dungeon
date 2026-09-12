@@ -162,6 +162,7 @@ function inlineFormat(text) {
       findings: "findings.html",
       agents: "architecture.html",
       player_guide: "guide.html",
+      skill_matrix: "skills.html",
     };
     if (pageAlias[cleanTarget]) {
       return `<a href="${pageAlias[cleanTarget]}" class="wikilink">${cleanLabel}</a>`;
@@ -202,6 +203,7 @@ function pageShell({ title, current, content }) {
     { id: "adr", label: "ADRs", href: "adr.html" },
     { id: "journal", label: "Dev Journal", href: "journal.html" },
     { id: "architecture", label: "Architecture", href: "architecture.html" },
+    { id: "skills", label: "Skills", href: "skills.html" },
     { id: "observability", label: "Observability", href: "observability.html" },
     { id: "aea", label: "AEA Harness", href: "aea.html" },
   ];
@@ -334,11 +336,19 @@ const homeContent = `
   </div>
   <div class="card">
     <h3>⚙️ AEA harness</h3>
-    <p>Shared memory, fail-closed honesty, and no self-merge — the same rules this repo uses.</p>
+    <p>Shared memory, fail-closed honesty, no self-merge, and Keep Learning and Apply (AEA #434) — the same rules this repo uses.</p>
     <a href="aea.html">Explore AEA →</a>
+  </div>
+  <div class="card">
+    <h3>🧰 Skills</h3>
+    <p>Which agent skills apply, who must load them, and why they were chosen after the 2026-09 build. Each row is an apply-artifact of historical pain (AEA Keep Learning and Apply, #434). A map, not a ledger promotion.</p>
+    <a href="skills.html">Open the skill matrix →</a>
   </div>
 </div>
 `;
+if (!homeContent.includes("skills.html")) {
+  throw new Error("knowledge build: home page must link the skill matrix");
+}
 writeFileSync(join(distDir, "index.html"), pageShell({ title: "Home", current: "home", content: homeContent }));
 
 // 1b. Player & builder guide (companion — GAME_SPEC remains the legal voice)
@@ -414,7 +424,7 @@ const architectureOverviewMd = `
 
 ## Knowledge vs Maker
 
-Plain English: the spec is the rulebook. The engine is the referee ([[NFR-1]], [[NFR-10]]). The Maker is the table you play on. This knowledge site is the companion booklet. See [[0002-typescript-monorepo-2d-to-3d]].
+Plain English: the spec is the rulebook. The engine is the referee ([[NFR-1]], [[NFR-10]]). The Maker is the table you play on. This knowledge site is the companion booklet. Agent skills and why they were chosen live in [[SKILL_MATRIX]]. See [[0002-typescript-monorepo-2d-to-3d]].
 
 \`\`\`mermaid
 flowchart TB
@@ -435,6 +445,46 @@ if (!architectureHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: architecture page produced no mermaid diagram");
 }
 writeFileSync(join(distDir, "architecture.html"), pageShell({ title: "Architecture & Agent Framework", current: "architecture", content: architectureHtml }));
+
+// 7b. Skill matrix — dedicated page so the retrospective stays findable
+const skillsMd = readDoc("docs/SKILL_MATRIX.md");
+if (!skillsMd.trim()) {
+  throw new Error("knowledge build: missing docs/SKILL_MATRIX.md");
+}
+for (const name of [
+  "code-changes",
+  "routines",
+  "box-desktop",
+  "skill-authoring",
+  "pr-train-rebase",
+  "honesty-ledger-gate",
+  "companion-plain-docs",
+  "persona-journey-validation",
+]) {
+  if (!skillsMd.includes(name)) {
+    throw new Error(`knowledge build: SKILL_MATRIX.md must list ${name}`);
+  }
+}
+if (!/Keep Learning and Apply/i.test(skillsMd)) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must name Keep Learning and Apply");
+}
+if (!skillsMd.includes("work_items/434")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA work item #434");
+}
+if (!skillsMd.includes("merge_requests/512") || !skillsMd.includes("merge_requests/513")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA !512 and !513");
+}
+if (!skillsMd.includes("2026-09-12-session-memory-log-aea-grok-skill-matrix.md")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite the AEA skill-matrix session log");
+}
+const skillsHtml = markdownToHtml(skillsMd);
+if (!skillsHtml.includes('class="mermaid"')) {
+  throw new Error("knowledge build: SKILL_MATRIX.md produced no mermaid diagram");
+}
+if (!skillsHtml.includes("<table>")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md produced no matrix table");
+}
+writeFileSync(join(distDir, "skills.html"), pageShell({ title: "Skill matrix", current: "skills", content: skillsHtml }));
 
 // 8. Observability Page
 const obsContent = `
@@ -500,6 +550,11 @@ const aeaContent = `
   <p>"The engineers who thrive in the AI era are not the ones who write the most code. They are the ones who build the best environments for AI agents and human teams to stay honest."</p>
 </div>
 
+<div class="alert alert-note">
+  <div class="alert-title">Keep Learning and Apply</div>
+  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">AEA #434</a> (open <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a>): when the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a> (closes <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433" target="_blank" rel="noreferrer">#433</a>). In this repo the apply map is the <a href="skills.html">skill matrix</a>. Status: <span class="badge badge-planned">Planned</span> / Documented. Knowledge Pages for this principle: <span class="badge badge-unknown">Unknown</span> until AEA probes. Do not treat !513 as merged.</p>
+</div>
+
 <h2>1. The Core Formula in Everyday Terms</h2>
 <div class="card aea-formula">
   <p>Adaptive Experience = Shared Understanding + Domain Services + Outer Harness</p>
@@ -545,11 +600,11 @@ const aeaContent = `
 <div class="grid-cards">
   <div class="card">
     <h3>📖 1. Procedure Memory (Skills)</h3>
-    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands.</p>
+    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands. Which ones apply — and why they were chosen after the 2026-09 build — is on the <a href="skills.html">skill matrix</a>. That page is Keep Learning and Apply (<a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434">#434</a>): each skill is an apply-artifact of historical pain.</p>
   </div>
   <div class="card">
     <h3>🚫 2. Correction Memory (Constraints)</h3>
-    <p>Hard rules learned from past mistakes: <code>docs/FINDINGS.md</code> logs every miss (CF-NNN). Upon recurrence &ge; 2, an automated sensor in CI or tests is mandatory.</p>
+    <p>Hard rules learned from past mistakes: <code>docs/FINDINGS.md</code> logs every miss (CF-NNN). Upon recurrence &ge; 2, an automated sensor in CI or tests is mandatory. That second-miss gate is Antifragility, not Keep Learning and Apply.</p>
   </div>
   <div class="card">
     <h3>🕸️ 3. Relationship Memory (Graph)</h3>
@@ -595,6 +650,15 @@ if (aeaMermaidCount < 3) {
 }
 if (/[┌┐└┘│─┬┴┼▼]/.test(aeaContent)) {
   throw new Error("knowledge build: AEA page still contains ASCII box-drawing diagrams");
+}
+if (!/Keep Learning and Apply/i.test(aeaContent)) {
+  throw new Error("knowledge build: AEA page must name Keep Learning and Apply");
+}
+if (!aeaContent.includes("work_items/434")) {
+  throw new Error("knowledge build: AEA page must cite AEA work item #434");
+}
+if (!aeaContent.includes("merge_requests/512") || !aeaContent.includes("merge_requests/513")) {
+  throw new Error("knowledge build: AEA page must cite AEA !512 and !513");
 }
 writeFileSync(join(distDir, "aea.html"), pageShell({ title: "AEA Harness", current: "aea", content: aeaContent }));
 

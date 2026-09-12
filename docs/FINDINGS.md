@@ -166,3 +166,34 @@ walk-then-shove because Z had not moved.
 Fix: encode `A:0@x,y`. Recurrence 1 — first sensor, not a second-miss gate.
 Does not invent Gunner duration or new shove rules.
 
+## CF-010: Skills written only after AFK rebase pain
+- Status: Open
+- Recurrence: 1
+- Linked: https://github.com/artofdream/zorg-dungeon/issues/50, https://github.com/artofdream/zorg-dungeon/issues/53, https://github.com/artofdream/zorg-dungeon/pull/54
+- Sensor added:
+
+Keep Learning and Apply
+([AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434))
+lagged in practice. Shared Grok skills
+(`pr-train-rebase`, `honesty-ledger-gate`, `companion-plain-docs`,
+`persona-journey-validation`) and the in-repo [[SKILL_MATRIX]] were
+written after the 2026-09 AFK PR train
+([#23](https://github.com/artofdream/zorg-dungeon/pull/23) /
+[#24](https://github.com/artofdream/zorg-dungeon/pull/24) /
+[#25](https://github.com/artofdream/zorg-dungeon/pull/25) CONFLICTING)
+and the first-timer audit, not into the harness before the next loop.
+That is a process discrepancy: Honesty and Knowledge First were already
+named; the apply write waited for a retrospective. This is not an
+Antifragility miss (Recurrence stays 1).
+
+This slice names [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
+in [[AGENTS]] (next to Honesty and Knowledge First — not §3) and maps
+each skill as an apply-artifact on [[SKILL_MATRIX]]. Status remains
+**Documented / Planned**. Knowledge Pages for this principle: **Unknown**
+until AEA probes. Not Live & Probed.
+
+CF-009 is reserved for in-flight journeys PR #44 (first-timer landing)
+so this entry skips that ID. Recurrence 1 — documenting the principle
+is not a second-miss gate. Do not promote [[STATUS_LEDGER]] rows. Do
+not invent `C`, Gunner duration, or [[FR-4]] gating.
+
