@@ -241,12 +241,12 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
   }
 
   return (
-    <main className="app">
+    <main className="app app-play">
       <div className="topbar">
         <button type="button" onClick={onBack}>
           ← Campaign
         </button>
-        <h1 style={{ margin: 0, fontSize: "1.35rem" }}>{entry.name}</h1>
+        <h1 className="play-title">{entry.name}</h1>
         {onRegenerate ? (
           <button type="button" onClick={onRegenerate}>
             Regenerate
@@ -274,7 +274,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
       </p>
 
       {entry.needsChoix ? (
-        <section className="panel setup" style={{ marginBottom: "1rem" }}>
+        <section className="panel setup">
           <h2>Choix setup (FR-2)</h2>
           <p className="hint">Defaults are the first legal picks. Changing a choice clears the board.</p>
           {(authored.variables ?? []).map((variable) => {
@@ -345,7 +345,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
       ) : null}
 
       <div className="layout">
-        <section className="panel">
+        <section className="panel panel-rooms">
           <h2>Rooms</h2>
           <p className="hint">
             Heroes: {level.heroes.map((h) => heroSlotLabel(h)).join(", ") || "(none)"}
@@ -391,12 +391,12 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
               </button>
             ))}
           </div>
-          <button type="button" disabled={playing} onClick={placeInALine}>
+          <button type="button" className="btn-block" disabled={playing} onClick={placeInALine}>
             Place rooms in a line
           </button>
         </section>
 
-        <section className="panel">
+        <section className="panel panel-board">
           <h2>Board</h2>
           <p className="hint">
             Click a cell to place the selected room. Click a placed room to pick it up. Shared
@@ -406,7 +406,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
           <div className="board-wrap">
             <div
               className="board"
-              style={{ gridTemplateColumns: `repeat(${extent.max - extent.min + 1}, 64px)` }}
+              style={{ gridTemplateColumns: `repeat(${extent.max - extent.min + 1}, var(--cell))` }}
             >
               {ys.flatMap((y) =>
                 xs.map((x) => {
@@ -424,10 +424,13 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
                       className={`cell${room ? " filled" : ""}${isHero ? " hero" : ""}${
                         isSelectedPlaced ? " selected-room" : ""
                       }${isPreview ? " preview" : ""}${isAnchor ? " anchor" : ""}`}
-                      style={{ width: 64, height: 64 }}
                       onClick={() => onCellClick(x, y)}
-                      onMouseEnter={() => setHoverCell({ x, y })}
-                      onMouseLeave={() => setHoverCell((cur) => (cur?.x === x && cur?.y === y ? null : cur))}
+                      onPointerEnter={(ev) => {
+                        if (ev.pointerType === "mouse") setHoverCell({ x, y });
+                      }}
+                      onPointerLeave={() =>
+                        setHoverCell((cur) => (cur?.x === x && cur?.y === y ? null : cur))
+                      }
                       data-hatch={room || isPreview ? hatch.cardinal : undefined}
                       aria-label={boardCellAriaLabel({
                         roomName: room ? roomLabel(room.def) : previewName,
@@ -461,7 +464,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
           </div>
         </section>
 
-        <section className="panel">
+        <section className="panel panel-play">
           <h2>Validation</h2>
           {report.ok ? (
             <p className="ok">FR-5–FR-7 hold. Extermination is allowed (FR-8).</p>
