@@ -361,10 +361,16 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
                 className={selectedId === spec.id ? "selected" : ""}
                 disabled={playing}
                 onClick={() => setSelectedId(spec.id)}
+                aria-label={selectedRoomHatchLabel(
+                  roomLabel(spec.def),
+                  orientation,
+                  spec.def.type === "A",
+                )}
               >
                 {roomLabel(spec.def)} {placedIds.has(spec.id) ? "· placed" : "· tray"}
                 <span className="tray-hatch">
-                  {selectedRoomHatchLabel(roomLabel(spec.def), orientation, spec.def.type === "A")}
+                  wall-hatch {hatch.shortLabel} ({orientation}°)
+                  {spec.def.type === "A" ? " · spawn-room anchor" : ""}
                 </span>
               </button>
             ))}
@@ -562,7 +568,11 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
               </pre>
             </>
           ) : (
-            <p className="hint">Start is disabled until the layout is a single valid dungeon.</p>
+            <p className="hint">
+              {gateOpen
+                ? "Layout is a valid dungeon. Start opens extermination."
+                : "Start is disabled until the layout is a single valid dungeon."}
+            </p>
           )}
         </section>
       </div>

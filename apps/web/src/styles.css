@@ -259,9 +259,10 @@ select {
 .hatch-arrow {
   position: absolute;
   color: var(--accent);
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   line-height: 1;
+  text-shadow: 0 0 4px #14110e;
 }
 
 .hatch-arrow.east {
