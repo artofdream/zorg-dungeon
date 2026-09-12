@@ -48,7 +48,7 @@ writing a table row, is not proof.
 | FR-16 | Simulated | packages/engine/src/gold.test.ts |
 | FR-17 | Simulated | packages/engine/src/tolls.test.ts |
 | FR-18 | Unknown | |
-| FR-19 | Unknown | |
+| FR-19 | Simulated | packages/engine/src/determinism.test.ts |
 | FR-20 | Simulated | packages/engine/src/warrior.test.ts |
 | FR-21 | Simulated | packages/engine/src/elf.test.ts |
 | FR-22 | Simulated | packages/engine/src/gunner.test.ts |
@@ -76,7 +76,7 @@ writing a table row, is not proof.
 | FR-44 | Unknown | |
 | FR-45 | Simulated | packages/engine/src/mirrors.test.ts |
 | FR-46 | Simulated | packages/engine/src/solvability.test.ts |
-| NFR-1 | Unknown | |
+| NFR-1 | Simulated | packages/engine/src/determinism.test.ts |
 | NFR-2 | Simulated | packages/engine/src/base-classic-corpus.test.ts |
 | NFR-3 | Unknown | |
 | NFR-4 | Simulated | packages/engine/src/solvability.test.ts |
@@ -85,13 +85,16 @@ writing a table row, is not proof.
 | NFR-7 | Unknown | |
 | NFR-8 | Unknown | |
 | NFR-9 | Simulated | packages/engine/src/base-classic-corpus.test.ts |
-| NFR-10 | Unknown | |
+| NFR-10 | Simulated | packages/engine/src/hero-layers.test.ts |
 
 ## Generator slice (2026-09-12)
 
 `generateLevel` is a post-campaign tool, not a new FR. Automated proof lives
 in `packages/engine/src/generator.test.ts` (parse, [[FR-5]]–[[FR-8]] placement,
-[[FR-46]] / [[NFR-4]] solvability, seed stability). **No row above is
-promoted.** The generator does not close [[FR-4]], [[FR-18]], [[FR-43]], or
-live-probe any NFR. Generated play is Simulated engine output, not Live &
-Probed. See [[0005-level-generator]] and [[2026-09-12]].
+[[FR-46]] / [[NFR-4]] solvability, seed stability). The generator itself does
+not close [[FR-4]], [[FR-18]], [[FR-43]], or live-probe any NFR. Generated
+play is Simulated engine output, not Live & Probed. See
+[[0005-level-generator]] and [[2026-09-12]].
+
+A later honesty slice promoted [[FR-19]], [[NFR-1]], and [[NFR-10]] to
+`Simulated` from chooser replay / per-layer tests — not from `generateLevel`.

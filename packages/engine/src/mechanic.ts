@@ -48,9 +48,10 @@ interface SearchState {
   firstType: "walk" | "shove" | undefined;
 }
 
-function layoutKeyOf(layout: DungeonLayout): string {
+/** Room ids are already `Type:n` (e.g. `A:0`). Do not split on `:`. */
+export function layoutKeyOf(layout: DungeonLayout): string {
   return layout.rooms
-    .map((r) => `${r.id}:${r.position.x},${r.position.y}`)
+    .map((r) => `${r.id}@${r.position.x},${r.position.y}`)
     .sort()
     .join("|");
 }
@@ -76,15 +77,15 @@ function parseShoveKey(key: string): Map<string, number> {
   return out;
 }
 
-function layoutFromKey(base: DungeonLayout, key: string): DungeonLayout {
+export function layoutFromKey(base: DungeonLayout, key: string): DungeonLayout {
   const next = cloneLayout(base);
   if (!key) return next;
   const pos = new Map<string, { x: number; y: number }>();
   for (const part of key.split("|")) {
-    const colon = part.indexOf(":");
-    if (colon < 0) continue;
-    const id = part.slice(0, colon);
-    const [xs, ys] = part.slice(colon + 1).split(",");
+    const at = part.lastIndexOf("@");
+    if (at < 0) continue;
+    const id = part.slice(0, at);
+    const [xs, ys] = part.slice(at + 1).split(",");
     pos.set(id, { x: Number(xs), y: Number(ys) });
   }
   for (const room of next.rooms) {
@@ -126,13 +127,30 @@ export function planShove(
   };
 }
 
-function better(a: SearchState, b: SearchState, dirs: readonly Cardinal[]): boolean {
+/** FR-24 scored-path layers. Exported so NFR-10 can probe the
+ *  power-as-tie-break clause without a full-level run. */
+export interface MechanicPathScore {
+  length: number;
+  unjustified: number;
+  firstIsShove: boolean;
+  firstDir?: Cardinal;
+}
+
+export function mechanicPriorityBetter(
+  a: MechanicPathScore,
+  b: MechanicPathScore,
+  dirs: readonly Cardinal[],
+): boolean {
   if (a.length !== b.length) return a.length < b.length;
   if (a.unjustified !== b.unjustified) return a.unjustified < b.unjustified;
   if (a.firstIsShove !== b.firstIsShove) return a.firstIsShove;
   const ai = a.firstDir ? dirs.indexOf(a.firstDir) : 99;
   const bi = b.firstDir ? dirs.indexOf(b.firstDir) : 99;
   return ai < bi;
+}
+
+function better(a: SearchState, b: SearchState, dirs: readonly Cardinal[]): boolean {
+  return mechanicPriorityBetter(a, b, dirs);
 }
 
 function applyWalkEconomy(
