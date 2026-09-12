@@ -12,9 +12,21 @@ AEA core principle. Cite [GitLab #434](https://gitlab.com/artof-group/adaptive-e
 
 Loop on this page: **historical pain → skill / matrix row / finding sensor**. Complements Honesty and Knowledge First. **Not** Antifragility (second-miss → CI/test gate). A chat note is not apply.
 
-Status: **Documented** pending a formal AEA ID. #434 is the cite, not a frozen principle number. Do not invent one. Do not treat !513 as merged. Knowledge Pages: **Unknown** until AEA probes. Not Live.
+[GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) is the **stable formal principle**. Honesty here: **Documented / Planned**. Do not treat !513 as merged. Knowledge Pages: **Unknown** until AEA probes. Not Live.
 
-Cross-project on this umbrella: Café App is **folding into** [#205](https://github.com/artofdream/aea-interactive-design/issues/205) (`knowledge/skills-matrix.md` / `skills-matrix.html`). **ctos** is **N/A** (docker smoke is a repo script).
+### Cross-project adopt links
+
+| Lane | Adopt | Honesty |
+|---|---|---|
+| AEA | [GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) formal principle (stable) | Documented / Planned |
+| zorg-dungeon | [#53](https://github.com/artofdream/zorg-dungeon/issues/53) | Documented / Planned |
+| Café Fausse Knowledge | [#213](https://github.com/artofdream/aea-interactive-design/issues/213) (+ [#203](https://github.com/artofdream/aea-interactive-design/issues/203) / [#204](https://github.com/artofdream/aea-interactive-design/issues/204)) | Documented / Planned |
+| Café Fausse App | Folding into [#205](https://github.com/artofdream/aea-interactive-design/issues/205) | Documented / Planned |
+| logify | [#24](https://github.com/artofdream/logify/issues/24) | Documented / Planned |
+| Café Fausse MRC | **COMMENT-only** | Not a skill creator |
+| ctos | **N/A** | Docker smoke is a repo script |
+
+**ctos** is **N/A**. Café App is **folding into** [#205](https://github.com/artofdream/aea-interactive-design/issues/205).
 
 ```mermaid
 flowchart LR
@@ -53,7 +65,7 @@ flowchart TB
 
 | Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
 |---|---|---|---|
-| Keep Learning and Apply | Umbrella · Documented pending formal AEA ID | Phases 0–7, AFK trains, first-play audits, cross-project repeats. Cites [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [#53](https://github.com/artofdream/zorg-dungeon/issues/53). Formal AEA ID still pending. | Historical pain → skill / matrix row / finding sensor. Write it before the next loop. Not Live. |
+| Keep Learning and Apply | Umbrella · [GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) formal (stable) · Documented / Planned | Phases 0–7, AFK trains, first-play audits. Adopt: zorg [#53](https://github.com/artofdream/zorg-dungeon/issues/53), Café Knowledge [#213](https://github.com/artofdream/aea-interactive-design/issues/213), logify [#24](https://github.com/artofdream/logify/issues/24). | Historical pain → skill / matrix row / finding sensor. Write it before the next loop. Not Live. |
 | `code-changes` | OOTB / managed | Used for every phase 0–7 slice, the Difficulté generator, campaign, and Maker UX. | Load for any cloud-first edit to this tree (engine, Maker, knowledge, docs, CI). |
 | `routines` | OOTB / managed | AFK parallel PRs went red with no one watching. | Babysit open PRs / CI after the producer steps away. |
 | `box-desktop` | OOTB / managed | 2026-09-12 first-play audit produced [#30](https://github.com/artofdream/zorg-dungeon/issues/30)–[#48](https://github.com/artofdream/zorg-dungeon/issues/48). | Live audit of [zorg.artof.link](https://zorg.artof.link). A knowledge screenshot is not that audit. |
@@ -77,11 +89,11 @@ Fit verdicts below are **assessments** unless a linked issue / work item says ot
 | Project | Ack | Note |
 |---|---|---|
 | ctos | **N/A** | No skill gap. Docker smoke is a repo script, not a shared Grok skill. |
-| Café Fausse MRC | **Agrees** | Skills belong on the Café train. MRC COMMENT. No self-merge on one-issue PRs. **New Bot** squash-merges Café skill PRs when MRC is **CLEAN**. |
+| Café Fausse MRC | **COMMENT-only** | Skills belong on the Café train. MRC COMMENT. No self-merge on one-issue PRs. **New Bot** squash-merges Café skill PRs when MRC is **CLEAN**. |
 | Café Fausse App | **Documented / Simulated** | Folding into [#205](https://github.com/artofdream/aea-interactive-design/issues/205) (`knowledge/skills-matrix.md` / `skills-matrix.html`, [PR #215](https://github.com/artofdream/aea-interactive-design/pull/215)). Shared four via [#206](https://github.com/artofdream/aea-interactive-design/issues/206). Created [#207](https://github.com/artofdream/aea-interactive-design/issues/207)–[#212](https://github.com/artofdream/aea-interactive-design/issues/212). Not Live. |
-| Café Fausse Knowledge | **Documented / Simulated** | `knowledge-pages-ratchet` + [#203](https://github.com/artofdream/aea-interactive-design/issues/203) / [#204](https://github.com/artofdream/aea-interactive-design/issues/204). Not Live. |
-| AEA agent | **Documented** | [AEA #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433). Shared four referenced (no dup). Created AEA skills below. Matrix vault MR Documented, not Live. Café-specific deferred. |
-| logify | **Created** | `pr-train-parallel-merge` [#22](https://github.com/artofdream/logify/issues/22), `tagged-release-cut` [#23](https://github.com/artofdream/logify/issues/23). Companion / personas **N/A**. Documented / Simulated, not Live. |
+| Café Fausse Knowledge | **Documented / Planned** | Adopt Keep Learning via [#213](https://github.com/artofdream/aea-interactive-design/issues/213) (+ [#203](https://github.com/artofdream/aea-interactive-design/issues/203) / [#204](https://github.com/artofdream/aea-interactive-design/issues/204) `knowledge-pages-ratchet`). Not Live. |
+| AEA agent | **Documented / Planned** | Formal principle [GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) (stable). Matrix vault [AEA #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433). Shared four referenced (no dup). Not Live. |
+| logify | **Documented / Planned** | Adopt Keep Learning via [#24](https://github.com/artofdream/logify/issues/24). Skills created: `pr-train-parallel-merge` [#22](https://github.com/artofdream/logify/issues/22), `tagged-release-cut` [#23](https://github.com/artofdream/logify/issues/23). Companion / personas **N/A**. Not Live. |
 | 3DX Lab | **In-flight** | Shared `pr-train-rebase` / `companion-plain-docs` / `persona-journey-validation` are **N/A**. Three candidates pending issue open after broadcast clarification. Not Live. |
 
 ### ctos (N/A)
@@ -107,9 +119,9 @@ Shared four — adopt by link via [#206](https://github.com/artofdream/aea-inter
 | `official-image-allowlist` | Created / Café App · [#211](https://github.com/artofdream/aea-interactive-design/issues/211) | Official four webps vs extras. | Official allowlist only. Documented / Simulated, not Live. |
 | `staging-keep-tear-honesty` | Created / Café App · [#212](https://github.com/artofdream/aea-interactive-design/issues/212) | Keep-until-scoring / #190. | Lock keep/tear the day decided. Documented / Simulated, not Live. |
 
-### Café Fausse Knowledge (Documented / Simulated; not Live)
+### Café Fausse Knowledge (Documented / Planned; not Live)
 
-Companion: [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Does not speak for the App row. Honesty matrix: [#203](https://github.com/artofdream/aea-interactive-design/issues/203) ([PR #216](https://github.com/artofdream/aea-interactive-design/pull/216)). Pages ratchet skill: [#204](https://github.com/artofdream/aea-interactive-design/issues/204). Shared four stay adopt-by-reference (same as [#206](https://github.com/artofdream/aea-interactive-design/issues/206)).
+Companion: [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Does not speak for the App row. Adopt Keep Learning: [#213](https://github.com/artofdream/aea-interactive-design/issues/213). Honesty matrix: [#203](https://github.com/artofdream/aea-interactive-design/issues/203) ([PR #216](https://github.com/artofdream/aea-interactive-design/pull/216)). Pages ratchet skill: [#204](https://github.com/artofdream/aea-interactive-design/issues/204). Shared four stay adopt-by-reference (same as [#206](https://github.com/artofdream/aea-interactive-design/issues/206)). Honesty: **Documented / Planned**.
 
 | Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
 |---|---|---|---|
@@ -117,11 +129,12 @@ Companion: [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Does 
 | `honesty-ledger-gate` | Shared · adopt (no dup) | Café Knowledge NFR-1 / NFR-2 gated until A36 stopwatches. | Status words need a probe. Do not invent Café FR-19. |
 | `companion-plain-docs` | Shared · adopt (no dup) | #191–#199 companion + mobile. | Companion + diagrams; formal App/SRS wins if English disagrees. |
 | `persona-journey-validation` | Shared · adopt (no dup) · Partial | J1–J8 + NFR matrix existed. | Named personas would have caught Gallery / PIP earlier. |
-| `knowledge-pages-ratchet` | Created / Café Knowledge · [#204](https://github.com/artofdream/aea-interactive-design/issues/204) | Green deploy is not a content probe (same class as zorg CF-004). Matrix row via [#203](https://github.com/artofdream/aea-interactive-design/issues/203). | One finding → one PR → MRC COMMENT → New Bot squash when CLEAN → HTTPS Pages probe before claiming live. Documented / Simulated, not Live. |
+| Keep Learning and Apply | Adopt · [#213](https://github.com/artofdream/aea-interactive-design/issues/213) · Documented / Planned | Formal principle [GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434). Matrix via [#203](https://github.com/artofdream/aea-interactive-design/issues/203). | Learn from CF history → skill/matrix update → next PR. Not Live. |
+| `knowledge-pages-ratchet` | Created / Café Knowledge · [#204](https://github.com/artofdream/aea-interactive-design/issues/204) | Green deploy is not a content probe (same class as zorg CF-004). Matrix row via [#203](https://github.com/artofdream/aea-interactive-design/issues/203). | One finding → one PR → MRC COMMENT-only → New Bot squash when CLEAN → HTTPS Pages probe before claiming live. Documented / Planned, not Live. |
 
 ### AEA agent (Documented; not Live)
 
-Work item: [AEA #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) (merged [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512)). Keep Learning stays [AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / open [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513). Matrix vault MR: **Documented**, not Live & Probed. Café-specific recipes stay on the Café rows (deferred here). Other-lane skills **Documented until probed**.
+Work item: [AEA #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) (merged [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512)). Keep Learning is the stable formal principle [AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) (open [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)). Matrix vault MR: **Documented / Planned**, not Live & Probed. Café-specific recipes stay on the Café rows (deferred here). Other-lane skills **Documented until probed**.
 
 Shared four — **referenced, not duplicated** as AEA-created skills: `pr-train-rebase`, `honesty-ledger-gate`, `companion-plain-docs`, `persona-journey-validation`.
 
@@ -134,9 +147,9 @@ Shared four — **referenced, not duplicated** as AEA-created skills: `pr-train-
 | `committed-vault-memory` | Created / AEA · Documented | Named on the #433 vault. | Vault memory is the committed file, not chat. Not Live. |
 | `process-coherence-mr-body` | Created / AEA · Documented | Named on the #433 vault. | MR body stays coherent with the process. Not Live. |
 
-### logify (created; Documented / Simulated, not Live)
+### logify (Documented / Planned; not Live)
 
-Repo: [artofdream/logify](https://github.com/artofdream/logify). Skills **created** after agree clarification. Companion / personas **N/A**. Other-lane skills **Documented / Simulated**, not Live.
+Repo: [artofdream/logify](https://github.com/artofdream/logify). Adopt Keep Learning: [#24](https://github.com/artofdream/logify/issues/24). Skills **created** after agree: [#22](https://github.com/artofdream/logify/issues/22) / [#23](https://github.com/artofdream/logify/issues/23). Companion / personas **N/A**. Honesty: **Documented / Planned**. Not Live.
 
 | Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
 |---|---|---|---|
@@ -207,7 +220,7 @@ Status: Planned. Document in docs/SKILL_MATRIX.md.
 1. Load **OOTB** for the job (edit / babysit / live audit / save a recipe).
 2. Load the **shared Grok** sand-workflow that matches the repeating miss.
 3. Read **project playbooks** on `main`. If it is not there, it did not happen.
-4. **Keep Learning and Apply** ([GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)): when the build teaches something, write it into the harness before the next loop. Umbrella: historical pain → skill / matrix row / finding sensor. **Documented** pending a formal AEA ID. Café App folds into [#205](https://github.com/artofdream/aea-interactive-design/issues/205). ctos is N/A.
-5. **Cross-project:** reuse where history matches. Café MRC **agrees**; New Bot squash-merges skill PRs when MRC is **CLEAN**. Café App is **Documented / Simulated** ([#205](https://github.com/artofdream/aea-interactive-design/issues/205)–[#212](https://github.com/artofdream/aea-interactive-design/issues/212); shared four via [#206](https://github.com/artofdream/aea-interactive-design/issues/206)). Café Knowledge is **Documented / Simulated** (`knowledge-pages-ratchet` + [#203](https://github.com/artofdream/aea-interactive-design/issues/203) / [#204](https://github.com/artofdream/aea-interactive-design/issues/204)). AEA [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) is **Documented**. logify skills are **created** ([#22](https://github.com/artofdream/logify/issues/22) / [#23](https://github.com/artofdream/logify/issues/23)); companion / personas N/A. 3DX Lab is **in-flight**. Other-lane skills **Documented / Simulated** until probed. Not Live.
+4. **Keep Learning and Apply** ([GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) formal, stable): when the build teaches something, write it into the harness before the next loop. Umbrella: historical pain → skill / matrix row / finding sensor. Honesty: **Documented / Planned**.
+5. **Cross-project adopt:** AEA [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434), zorg [#53](https://github.com/artofdream/zorg-dungeon/issues/53), Café Knowledge [#213](https://github.com/artofdream/aea-interactive-design/issues/213) (+ [#203](https://github.com/artofdream/aea-interactive-design/issues/203)/[#204](https://github.com/artofdream/aea-interactive-design/issues/204)), logify [#24](https://github.com/artofdream/logify/issues/24). Café App folds into [#205](https://github.com/artofdream/aea-interactive-design/issues/205). Café MRC is **COMMENT-only**. ctos is N/A. Not Live.
 
 This page does not close [[FR-4]], [[FR-18]], or Gunner duration.

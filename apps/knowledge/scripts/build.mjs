@@ -571,14 +571,25 @@ for (const name of [
 if (!/Keep Learning and Apply/i.test(skillsMd)) {
   throw new Error("knowledge build: SKILL_MATRIX.md must name Keep Learning and Apply");
 }
-if (!skillsMd.includes("pending formal AEA ID") || !skillsMd.includes("historical pain") || !skillsMd.includes("Finding sensor")) {
+if (!skillsMd.includes("historical pain") || !skillsMd.includes("Finding sensor")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must keep Keep Learning as the umbrella (pain → skill/matrix/finding sensor)");
 }
-if (!skillsMd.includes("When the build teaches something") || !skillsMd.includes("work_items/434")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must cite GitLab #434 with the official AEA one-liner");
+if (!skillsMd.includes("When the build teaches something") || !skillsMd.includes("work_items/434") || !skillsMd.includes("stable formal principle")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite GitLab #434 as the stable formal principle with the official one-liner");
 }
 if (!skillsMd.includes("folding into") || !skillsMd.includes("aea-interactive-design/issues/205")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must note Café App folding into #205");
+}
+if (
+  !skillsMd.includes("aea-interactive-design/issues/213") ||
+  !skillsMd.includes("artofdream/logify/issues/24") ||
+  !skillsMd.includes("zorg-dungeon/issues/53") ||
+  !skillsMd.includes("Documented / Planned")
+) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must link adopt #213 / logify #24 / zorg #53 as Documented / Planned");
+}
+if (!skillsMd.includes("COMMENT-only")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep Café MRC COMMENT-only");
 }
 if (!skillsMd.includes("work_items/434")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA work item #434");
@@ -619,12 +630,13 @@ if (!skillsMd.includes("Documented until probed") && !skillsMd.includes("Documen
   throw new Error("knowledge build: SKILL_MATRIX.md must keep other-lane skills Documented / Simulated until probed");
 }
 if (
-  !skillsMd.includes("Café Fausse Knowledge (Documented / Simulated; not Live)") ||
+  !skillsMd.includes("Café Fausse Knowledge (Documented / Planned; not Live)") ||
   !skillsMd.includes("knowledge-pages-ratchet") ||
   !skillsMd.includes("aea-interactive-design/issues/203") ||
-  !skillsMd.includes("aea-interactive-design/issues/204")
+  !skillsMd.includes("aea-interactive-design/issues/204") ||
+  !skillsMd.includes("aea-interactive-design/issues/213")
 ) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must link Café Knowledge #203/#204 and knowledge-pages-ratchet");
+  throw new Error("knowledge build: SKILL_MATRIX.md must link Café Knowledge #203/#204/#213 and knowledge-pages-ratchet");
 }
 if (
   !skillsMd.includes("Café Fausse App (Documented / Simulated; not Live)") ||
@@ -643,8 +655,8 @@ if (
 if (!skillsMd.includes("New Bot") || !skillsMd.includes("CLEAN")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must note New Bot squash-merge when MRC CLEAN");
 }
-if (!/Café Fausse MRC/i.test(skillsMd) || !/Agrees/i.test(skillsMd)) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must note Café MRC agrees");
+if (!/Café Fausse MRC/i.test(skillsMd) || !skillsMd.includes("COMMENT-only")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must note Café MRC COMMENT-only");
 }
 if (!/\bctos\b/i.test(skillsMd) || !skillsMd.includes("N/A")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must record ctos as N/A");
@@ -744,7 +756,7 @@ const aeaContent = `
 
 <div class="alert alert-note">
   <div class="alert-title">Keep Learning and Apply</div>
-  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">GitLab #434</a> (open <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a>): <em>When the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure.</em> Loop: historical pain → skill / matrix row / finding sensor. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a>. Apply map: <a href="skills.html">skill matrix</a>. Status: <strong>Documented</strong> pending a formal AEA ID. Café App folds into <a href="https://github.com/artofdream/aea-interactive-design/issues/205">#205</a>. ctos is N/A. Knowledge Pages: <span class="badge badge-unknown">Unknown</span> until AEA probes. Do not invent the formal ID. Do not treat !513 as merged.</p>
+  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">GitLab #434</a> (open <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a>): <em>When the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure.</em> Loop: historical pain → skill / matrix row / finding sensor. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a>. Apply map: <a href="skills.html">skill matrix</a>. Status: <strong>Documented / Planned</strong>. <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434">#434</a> is the stable formal principle. Adopt: zorg <a href="https://github.com/artofdream/zorg-dungeon/issues/53">#53</a>, Café Knowledge <a href="https://github.com/artofdream/aea-interactive-design/issues/213">#213</a>, logify <a href="https://github.com/artofdream/logify/issues/24">#24</a>. Café App folds into <a href="https://github.com/artofdream/aea-interactive-design/issues/205">#205</a>. Café MRC is COMMENT-only. ctos is N/A. Knowledge Pages: <span class="badge badge-unknown">Unknown</span> until AEA probes. Do not treat !513 as merged.</p>
 </div>
 
 <h2>1. The Core Formula in Everyday Terms</h2>
