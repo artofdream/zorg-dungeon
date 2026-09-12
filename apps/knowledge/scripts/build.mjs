@@ -585,8 +585,11 @@ if (!/Cross-project fit/i.test(skillsMd)) {
 if (!skillsMd.includes("Café Fausse App")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must record the Café Fausse App assessment");
 }
-if (!skillsMd.includes("AEA agent (waiting)") || !skillsMd.includes("Café Fausse Knowledge (waiting)")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must keep AEA agent and Café Fausse Knowledge placeholders");
+if (!skillsMd.includes("AEA agent (waiting)")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep the AEA agent placeholder until that assessment arrives");
+}
+if (!skillsMd.includes("Café Fausse Knowledge (received)")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must record the Café Fausse Knowledge assessment");
 }
 const skillsHtml = markdownToHtml(skillsMd);
 if (!skillsHtml.includes('class="mermaid"')) {

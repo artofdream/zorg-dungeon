@@ -56,9 +56,9 @@ Status in zorg-dungeon: **Documented / Planned**. Knowledge Pages
 content for this principle is **Unknown** until AEA probes it. Naming
 it in docs is not `Live & Probed`. Do not treat !513 as merged.
 
-Cross-project fit (Café Fausse App received; AEA agent and Café Fausse
-Knowledge waiting) lives in [[SKILL_MATRIX]]. Those rows are assessments,
-not a live probe and not a ledger promotion.
+Cross-project fit (Café Fausse App and Knowledge received; AEA agent
+waiting) lives in [[SKILL_MATRIX]]. Those rows are assessments, not a
+live probe and not a ledger promotion.
 
 ## 3. Antifragility
 
