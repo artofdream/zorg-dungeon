@@ -141,7 +141,8 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
   ([#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) /
   [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513);
   AEA matrix [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512))
-  (published as `skills.html`). See [[SKILL_MATRIX]].
+  (published as `skills.html`). See [[SKILL_MATRIX]]. Compose with
+  persona-journey / kid-rules pages; do not rewrite that copy here.
 - `scripts/*.mjs` — the governance checks, runnable locally
   (`pnpm governance`) exactly as CI runs them.
 

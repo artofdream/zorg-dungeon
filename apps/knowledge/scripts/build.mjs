@@ -237,6 +237,9 @@ function pageShell({ title, current, content }) {
     { id: "observability", label: "Observability", href: "observability.html" },
     { id: "aea", label: "AEA Harness", href: "aea.html" },
   ];
+  if (!navItems.some((item) => item.href === "skills.html")) {
+    throw new Error("knowledge build: nav must include skills.html so the matrix stays findable");
+  }
 
   return `<!DOCTYPE html>
 <html lang="en">

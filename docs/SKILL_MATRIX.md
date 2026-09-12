@@ -25,7 +25,7 @@ Three kinds:
 - **Shared Grok skill** — recipes saved to the Grok Bot library on 2026-09-12 after the build retrospective. They are not files in this repo; this page is the in-repo map.
 - **Project playbook** — committed files in this tree. Chat is not shared memory ([[AGENTS]], [[0003-multi-agent-collaboration]]).
 
-Kid-rules / persona-journey pages that land later should **compose** with this matrix. Do not rewrite them here.
+Kid-rules / persona-journey work (in-flight PR #44: `docs/PLAYER_JOURNEYS.md` → `journeys.html`, issue [#51](https://github.com/artofdream/zorg-dungeon/issues/51)) should **compose** with this matrix. This page does not rewrite that copy.
 
 ## Matrix
 
@@ -41,7 +41,7 @@ Kid-rules / persona-journey pages that land later should **compose** with this m
 | `persona-journey-validation` | Shared Grok skill (2026-09-12) | Live Maker audits and first-timer UX. | 8-year-old bar; standing personas (kid, grown-up helper, campaign, practice, honesty). Issues from the 2026-09-12 live audit. Compose with in-flight kid-rules work — do not stomp it. |
 | [[AGENTS]] | Project playbook | First file every agent reads, every session. | Multi-agent honesty: one codebase, no shared chat memory, producer does not merge (S7). |
 | [[GAME_SPEC]] | Project playbook | Before changing a rule or citing an FR/NFR. | Source of truth. IDs are frozen. A companion sentence never overrides it. |
-| [[STATUS_LEDGER]] | Project playbook | Before writing a status word; update only your rows. | Honesty gate. `Simulated` needs a test path; this matrix does not promote any row. |
+| [[STATUS_LEDGER]] | Project playbook | Before writing a status word; update only your rows. | Honesty gate. A test-backed row needs a test path; this matrix does not promote any row. |
 | [[FINDINGS]] | Project playbook | When docs and the system disagree; add a sensor if the same miss happens twice. | Antifragility. CF-004 Pages, CF-006 stale web CD, CF-007 stale guide, CF-008 Mechanic codec. |
 | `docs/journal/` | Project playbook | End of a slice: what shipped, what stayed open, what the next agent needs. | Second brain. See [[2026-09-10]], [[2026-09-11]], [[2026-09-12]]. |
 | `docs/adr/` | Project playbook | Before changing architecture, deploy, or generator shape. | Why the engine is UI-free ([[0002-typescript-monorepo-2d-to-3d]]), how agents collaborate ([[0003-multi-agent-collaboration]]), and later slices (generator, grounded constraints). |
