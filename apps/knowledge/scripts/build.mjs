@@ -471,6 +471,12 @@ if (!/Keep Learning and Apply/i.test(skillsMd)) {
 if (!skillsMd.includes("work_items/434")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA work item #434");
 }
+if (!skillsMd.includes("merge_requests/512") || !skillsMd.includes("merge_requests/513")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA !512 and !513");
+}
+if (!skillsMd.includes("2026-09-12-session-memory-log-aea-grok-skill-matrix.md")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite the AEA skill-matrix session log");
+}
 const skillsHtml = markdownToHtml(skillsMd);
 if (!skillsHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: SKILL_MATRIX.md produced no mermaid diagram");
@@ -546,7 +552,7 @@ const aeaContent = `
 
 <div class="alert alert-note">
   <div class="alert-title">Keep Learning and Apply</div>
-  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">AEA #434</a>: when the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure. Complements Honesty and Knowledge First. Not Antifragility. In this repo the apply map is the <a href="skills.html">skill matrix</a>. Status: <span class="badge badge-planned">Planned</span> / Documented. Knowledge Pages for this principle: <span class="badge badge-unknown">Unknown</span> until AEA probes.</p>
+  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">AEA #434</a> (open <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a>): when the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a> (closes <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433" target="_blank" rel="noreferrer">#433</a>). In this repo the apply map is the <a href="skills.html">skill matrix</a>. Status: <span class="badge badge-planned">Planned</span> / Documented. Knowledge Pages for this principle: <span class="badge badge-unknown">Unknown</span> until AEA probes. Do not treat !513 as merged.</p>
 </div>
 
 <h2>1. The Core Formula in Everyday Terms</h2>
@@ -650,6 +656,9 @@ if (!/Keep Learning and Apply/i.test(aeaContent)) {
 }
 if (!aeaContent.includes("work_items/434")) {
   throw new Error("knowledge build: AEA page must cite AEA work item #434");
+}
+if (!aeaContent.includes("merge_requests/512") || !aeaContent.includes("merge_requests/513")) {
+  throw new Error("knowledge build: AEA page must cite AEA !512 and !513");
 }
 writeFileSync(join(distDir, "aea.html"), pageShell({ title: "AEA Harness", current: "aea", content: aeaContent }));
 
