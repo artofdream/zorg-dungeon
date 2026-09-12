@@ -138,7 +138,7 @@ button:not(.cell):not(.level-card) {
   gap: 0.45rem;
 }
 
-button:not(.cell):not(.level-card) {
+:where(button:not(.cell):not(.level-card)) {
   background: var(--room);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -541,12 +541,12 @@ button:disabled {
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  margin: 0 0 0.75rem;
+  margin: calc(0px - env(safe-area-inset-top, 0px)) 0 0.75rem;
   position: sticky;
   top: 0;
   z-index: 8;
   background: var(--bg);
-  padding: 0.35rem 0 0.55rem;
+  padding: calc(0.35rem + env(safe-area-inset-top, 0px)) 0 0.55rem;
 }
 
 .play-title {
