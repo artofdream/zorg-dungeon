@@ -119,6 +119,10 @@ nav a.is-current {
   border: 1px solid var(--border);
 }
 
+.header-tools {
+  display: contents;
+}
+
 .external-links {
   display: flex;
   flex-wrap: wrap;
@@ -257,6 +261,7 @@ table {
 th, td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
 }
 
 th {
@@ -370,10 +375,27 @@ pre.mermaid {
     gap: 0.75rem;
   }
 
+  html {
+    scroll-padding-top: 7.5rem;
+  }
+
   .brand,
   nav,
-  .external-links {
+  .external-links,
+  .header-tools {
     min-width: 0;
+  }
+
+  .header-tools {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
 
   .brand .eyebrow {
@@ -385,13 +407,10 @@ pre.mermaid {
   }
 
   nav {
-    flex: 1 1 100%;
+    flex: 0 0 auto;
     flex-wrap: nowrap;
-    overflow-x: auto;
+    overflow: visible;
     gap: 0.35rem;
-    padding-bottom: 0.15rem;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
   }
 
   nav a {
@@ -402,7 +421,8 @@ pre.mermaid {
   }
 
   .external-links {
-    flex: 1 1 100%;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
   }
 
   .btn-external {

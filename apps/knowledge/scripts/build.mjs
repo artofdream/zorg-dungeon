@@ -260,6 +260,7 @@ function pageShell({ title, current, content }) {
         <p class="sub">Knowledge Base & Traceability Graph</p>
       </div>
     </div>
+    <div class="header-tools">
     <nav aria-label="Knowledge navigation">
       ${navItems.map(item => `
         <a href="${item.href}" class="${item.id === current ? "is-current" : ""}">
@@ -271,6 +272,7 @@ function pageShell({ title, current, content }) {
       <a href="https://zorg.artof.link" target="_blank" class="btn-external">Play Maker ↗</a>
       <a href="https://zorg.artof.link/grafana/" target="_blank" class="btn-external">Grafana ↗</a>
       <a href="https://github.com/artofdream/zorg-dungeon" target="_blank" class="btn-external">GitHub ↗</a>
+    </div>
     </div>
   </header>
   <main id="content">
