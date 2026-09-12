@@ -499,10 +499,8 @@ const aeaContent = `
 </div>
 
 <h2>1. The Core Formula in Everyday Terms</h2>
-<div class="card" style="margin: 1.5rem 0; border-color: var(--accent);">
-  <p style="font-size: 1.25rem; font-weight: 700; color: var(--accent-light); text-align: center; margin: 0.5rem 0;">
-    Adaptive Experience = Shared Understanding + Domain Services + Outer Harness
-  </p>
+<div class="card aea-formula">
+  <p>Adaptive Experience = Shared Understanding + Domain Services + Outer Harness</p>
 </div>
 
 <div class="mermaid-wrap"><pre class="mermaid">flowchart TB
