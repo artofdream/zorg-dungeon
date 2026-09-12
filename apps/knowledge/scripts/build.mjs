@@ -260,6 +260,7 @@ function pageShell({ title, current, content }) {
         <p class="sub">Knowledge Base & Traceability Graph</p>
       </div>
     </div>
+    <div class="header-tools">
     <nav aria-label="Knowledge navigation">
       ${navItems.map(item => `
         <a href="${item.href}" class="${item.id === current ? "is-current" : ""}">
@@ -271,6 +272,7 @@ function pageShell({ title, current, content }) {
       <a href="https://zorg.artof.link" target="_blank" class="btn-external">Play Maker ↗</a>
       <a href="https://zorg.artof.link/grafana/" target="_blank" class="btn-external">Grafana ↗</a>
       <a href="https://github.com/artofdream/zorg-dungeon" target="_blank" class="btn-external">GitHub ↗</a>
+    </div>
     </div>
   </header>
   <main id="content">
@@ -499,10 +501,8 @@ const aeaContent = `
 </div>
 
 <h2>1. The Core Formula in Everyday Terms</h2>
-<div class="card" style="margin: 1.5rem 0; border-color: var(--accent);">
-  <p style="font-size: 1.25rem; font-weight: 700; color: var(--accent-light); text-align: center; margin: 0.5rem 0;">
-    Adaptive Experience = Shared Understanding + Domain Services + Outer Harness
-  </p>
+<div class="card aea-formula">
+  <p>Adaptive Experience = Shared Understanding + Domain Services + Outer Harness</p>
 </div>
 
 <div class="mermaid-wrap"><pre class="mermaid">flowchart TB

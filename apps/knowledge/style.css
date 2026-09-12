@@ -22,6 +22,10 @@
   padding: 0;
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text);
@@ -31,6 +35,11 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  max-width: 100%;
+}
+
+body.is-wide main {
+  max-width: 1040px;
 }
 
 header {
@@ -45,12 +54,18 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
+  min-width: 0;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
+}
+
+.brand > div {
+  min-width: 0;
 }
 
 .brand-badge {
@@ -84,7 +99,11 @@ nav a {
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
-  padding: 0.4rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
   border-radius: 6px;
   transition: all 0.15s ease;
 }
@@ -100,19 +119,26 @@ nav a.is-current {
   border: 1px solid var(--border);
 }
 
+.header-tools {
+  display: contents;
+}
+
 .external-links {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
 .btn-external {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   background-color: var(--card-bg);
   border: 1px solid var(--border);
   color: var(--accent-light);
   font-size: 0.85rem;
   font-weight: 600;
-  padding: 0.35rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.5rem;
   border-radius: 6px;
   text-decoration: none;
   transition: all 0.15s ease;
@@ -126,9 +152,12 @@ nav a.is-current {
 main {
   max-width: 1040px;
   width: 100%;
+  min-width: 0;
   margin: 2rem auto;
   padding: 0 1.5rem;
   flex: 1;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 h1 {
@@ -177,7 +206,7 @@ a:hover {
 
 .grid-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17.5rem), 1fr));
   gap: 1.25rem;
   margin: 1.5rem 0 2.5rem 0;
 }
@@ -214,9 +243,12 @@ a:hover {
 
 .table-container {
   overflow-x: auto;
+  max-width: 100%;
   margin: 1.5rem 0;
   border-radius: 8px;
   border: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 table {
@@ -229,6 +261,7 @@ table {
 th, td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
 }
 
 th {
@@ -251,10 +284,13 @@ pre {
   border-radius: 6px;
   padding: 1rem;
   overflow-x: auto;
+  max-width: 100%;
   margin: 1rem 0;
   font-family: var(--font-mono);
   font-size: 0.85rem;
   line-height: 1.5;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 code {
@@ -263,6 +299,7 @@ code {
   background-color: var(--card-bg);
   padding: 0.2em 0.4em;
   border-radius: 4px;
+  overflow-wrap: anywhere;
 }
 
 pre code {
@@ -277,8 +314,10 @@ pre code {
   padding: 1.25rem 1rem;
   margin: 1.5rem 0;
   overflow-x: auto;
+  max-width: 100%;
   text-align: center;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .mermaid-wrap .mermaid,
@@ -316,7 +355,122 @@ pre.mermaid {
   margin: -0.5rem 0 1.25rem;
 }
 
+.aea-formula {
+  margin: 1.5rem 0;
+  border-color: var(--accent);
+}
+
+.aea-formula p {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-light);
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
 @media (max-width: 720px) {
+  header {
+    padding: 0.75rem 1rem;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  html {
+    scroll-padding-top: 7.5rem;
+  }
+
+  .brand,
+  nav,
+  .external-links,
+  .header-tools {
+    min-width: 0;
+  }
+
+  .header-tools {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .brand .eyebrow {
+    font-size: 1rem;
+  }
+
+  .brand .sub {
+    font-size: 0.75rem;
+  }
+
+  nav {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    overflow: visible;
+    gap: 0.35rem;
+  }
+
+  nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.85rem;
+  }
+
+  .external-links {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+
+  .btn-external {
+    min-height: 2.75rem;
+    padding: 0.55rem 0.85rem;
+  }
+
+  main,
+  body.is-wide main {
+    max-width: 100%;
+    margin: 1.25rem auto;
+    padding: 0 1rem;
+  }
+
+  h1 {
+    font-size: 1.65rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
+  p.lead {
+    font-size: 1.05rem;
+  }
+
+  .grid-cards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  th, td {
+    padding: 0.55rem 0.7rem;
+  }
+
+  pre {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+  }
+
   .mermaid-wrap {
     padding: 1rem 0.75rem;
   }
@@ -326,6 +480,47 @@ pre.mermaid {
     max-width: none;
     width: max(100%, 28rem);
     height: auto;
+  }
+
+  .aea-formula p {
+    font-size: 1.05rem;
+  }
+
+  footer {
+    padding: 1.25rem 1rem;
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  header {
+    padding: 0.65rem 0.75rem;
+  }
+
+  main,
+  body.is-wide main {
+    margin: 1rem auto;
+    padding: 0 0.85rem;
+  }
+
+  h1 {
+    font-size: 1.45rem;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  p.lead {
+    font-size: 1rem;
+  }
+
+  .aea-formula p {
+    font-size: 1rem;
+  }
+
+  .mermaid-wrap svg {
+    width: max(100%, 22rem);
   }
 }
 
@@ -410,6 +605,11 @@ blockquote {
   border: 1px solid rgba(210, 153, 34, 0.4);
 }
 
+img {
+  max-width: 100%;
+  height: auto;
+}
+
 footer {
   background-color: var(--bg-subtle);
   border-top: 1px solid var(--border);
@@ -418,6 +618,7 @@ footer {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin-top: 3rem;
+  overflow-wrap: break-word;
 }
 
 footer p {
