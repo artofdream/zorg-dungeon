@@ -72,8 +72,8 @@ writing a table row, is not proof.
 | FR-40 | Simulated | packages/engine/src/spells.test.ts |
 | FR-41 | Simulated | packages/engine/src/spells.test.ts |
 | FR-42 | Simulated | packages/engine/src/spells.test.ts |
-| FR-43 | Unknown | |
-| FR-44 | Unknown | |
+| FR-43 | Simulated | packages/engine/src/constraints.test.ts |
+| FR-44 | Simulated | packages/engine/src/constraints.test.ts |
 | FR-45 | Simulated | packages/engine/src/mirrors.test.ts |
 | FR-46 | Simulated | packages/engine/src/solvability.test.ts |
 | NFR-1 | Simulated | packages/engine/src/determinism.test.ts |
@@ -98,3 +98,7 @@ play is Simulated engine output, not Live & Probed. See
 
 A later honesty slice promoted [[FR-19]], [[NFR-1]], and [[NFR-10]] to
 `Simulated` from chooser replay / per-layer tests — not from `generateLevel`.
+
+A later `scoreLevel` slice promoted [[FR-43]] and [[FR-44]] to `Simulated`
+from grounded constraint tests — not from `generateLevel`. Opaque authored
+prose stays unevaluated. See [[0006-grounded-constraint-evaluation]].
