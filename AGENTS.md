@@ -65,12 +65,18 @@ adopted here — tracked by
 Quarantine evidence: [#52](https://github.com/artofdream/zorg-dungeon/issues/52).
 Kid learn page stays Planned: [#51](https://github.com/artofdream/zorg-dungeon/issues/51).
 Cross-project ack: Café MRC **agrees** (skills on the Café train;
-MRC COMMENT; no self-merge on one-issue PRs). Café App, Café Knowledge,
-and AEA stay **pending** until issue/PR URLs arrive. ctos is N/A (docker
-smoke is a repo script). Assessments are not a live probe, not a claim
-those repos created the skills, and not a ledger promotion. 3DX Lab is
-in-flight (honesty, infra-apply / sponsor-laptop Terraform, lab-vs-factory);
-shared PR-train / companion / personas are N/A there. Not Live.
+MRC COMMENT; no self-merge on one-issue PRs). Café App and Café Knowledge
+stay **pending** until issue/PR URLs arrive. AEA is **Documented**
+([#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433);
+shared four referenced, no dup; Café-specific deferred). logify is
+**creating** after agree clarification
+([#22](https://github.com/artofdream/logify/issues/22) PR train,
+[#23](https://github.com/artofdream/logify/issues/23) tagged release);
+companion / personas N/A. ctos is N/A (docker smoke is a repo script).
+3DX Lab is in-flight (honesty, infra-apply / sponsor-laptop Terraform,
+lab-vs-factory); shared PR-train / companion / personas are N/A there.
+Other-lane skills are **Documented until probed**. Not Live. Not a
+ledger promotion.
 
 ## 3. Antifragility
 

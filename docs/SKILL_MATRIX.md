@@ -22,7 +22,7 @@ flowchart TB
   ootb["OOTB — code-changes, routines, box-desktop, skill-authoring"]
   shared["Shared Grok — rebase, honesty, companion, persona, quarantine"]
   playbooks["Project playbooks — AGENTS, GAME_SPEC, ledgers"]
-  fit["Cross-project ack — Café MRC agrees; 3DX in-flight; URLs pending"]
+  fit["Cross-project ack — Café MRC agrees; AEA documented; logify creating; 3DX in-flight"]
   ootb --> shared
   shared --> playbooks
   shared --> fit
@@ -50,7 +50,7 @@ flowchart TB
 
 ## Cross-project fit
 
-Fit verdicts below are **assessments**. Formal ack / issue URLs stay **pending** until those teams paste them. Not a live probe, and **not** a claim those repos have created the skills.
+Fit verdicts below are **assessments** unless a linked issue / work item says otherwise. Other-lane skills are **Documented** until probed — not Live & Probed, and **not** a [[STATUS_LEDGER]] promotion. Café App / Knowledge issue URLs stay **pending**. Do not invent sand-workflow ids.
 
 | Project | Ack | Note |
 |---|---|---|
@@ -58,7 +58,8 @@ Fit verdicts below are **assessments**. Formal ack / issue URLs stay **pending**
 | Café Fausse MRC | **Agrees** | Skills belong on the Café train. MRC COMMENT. No self-merge on one-issue PRs. |
 | Café Fausse App | **Pending** | Assessment received (table below). Issue / PR URLs not in yet. |
 | Café Fausse Knowledge | **Pending** | Assessment received (table below). In progress: opening `aea-interactive-design` issues + honesty matrix PR. URLs not in yet. |
-| AEA agent | **Pending** | No assessment in yet. Do not invent a fit row. |
+| AEA agent | **Documented** | [AEA #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433). Shared four referenced (no dup). Created AEA skills below. Matrix vault MR Documented, not Live. Café-specific deferred. |
+| logify | **Creating** | After agree clarification. [#22](https://github.com/artofdream/logify/issues/22) PR train, [#23](https://github.com/artofdream/logify/issues/23) tagged release. Companion / personas **N/A**. Documented until probed. |
 | 3DX Lab | **In-flight** | Shared `pr-train-rebase` / `companion-plain-docs` / `persona-journey-validation` are **N/A**. Three candidates pending issue open after broadcast clarification. Not Live. |
 
 ### ctos (N/A)
@@ -87,9 +88,31 @@ Companion: [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Does 
 | `companion-plain-docs` | Fit: **Yes (late)** | #191–#199 companion + mobile. Earlier would have avoided the late pass. | Companion + diagrams; formal App/SRS wins if English disagrees. |
 | `persona-journey-validation` | Fit: **Partial** | J1–J8 + NFR matrix existed. | Named personas would have caught Gallery / PIP / Operator-as-not-FR-19 earlier. |
 
-### AEA agent (pending)
+### AEA agent (Documented; not Live)
 
-No assessment in yet. Do not invent a fit row. Keep [AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513) as the AEA cites.
+Work item: [AEA #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) (merged [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512)). Keep Learning stays [AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / open [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513). Matrix vault MR: **Documented**, not Live & Probed. Café-specific recipes stay on the Café rows (deferred here). Other-lane skills **Documented until probed**.
+
+Shared four — **referenced, not duplicated** as AEA-created skills: `pr-train-rebase`, `honesty-ledger-gate`, `companion-plain-docs`, `persona-journey-validation`.
+
+| Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
+|---|---|---|---|
+| Shared four (referenced, no dup) | Reference only · Documented | Same four already loaded on zorg-dungeon. #433 points at them. | Reuse the shared slugs. Do not create a second AEA copy. |
+| `one-finding-one-mr` | Created / AEA · Documented | Named on the #433 vault. | One finding → one MR. Not Live. |
+| `coordinator-merge-hats` | Created / AEA · Documented | Named on the #433 vault. | Coordinator hat and merge hat stay distinct. Not Live. |
+| `deploy-schema-honesty` | Created / AEA · Documented | Named on the #433 vault. | Do not claim deploy / schema live without a probe. Not Live. |
+| `committed-vault-memory` | Created / AEA · Documented | Named on the #433 vault. | Vault memory is the committed file, not chat. Not Live. |
+| `process-coherence-mr-body` | Created / AEA · Documented | Named on the #433 vault. | MR body stays coherent with the process. Not Live. |
+
+### logify (creating after agree; Documented until probed)
+
+Repo: [artofdream/logify](https://github.com/artofdream/logify). Skills created after agree clarification. Companion / personas **N/A**. Other-lane skills **Documented until probed**. Not Live.
+
+| Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
+|---|---|---|---|
+| `pr-train-parallel-merge` | Created after agree · [#22](https://github.com/artofdream/logify/issues/22) · Documented | AFK tracks #17–#19 CONFLICTING; ADR-0010 collisions, ledger / README churn. | Merge order, pre-assign free ADR numbers, rebase remaining PRs. Do not mark NFR Implemented from an agent summary. Not Live. |
+| `tagged-release-cut` | Created after agree · [#23](https://github.com/artofdream/logify/issues/23) · Documented | v0.1.0 last-mile ldflags + annotated tag. That release predates the skill. | Annotated `vX.Y.Z`, wait for `release.yml` assets. Leave Partial NFRs Partial. Not Live. |
+| `companion-plain-docs` | Fit: **N/A** | Out of scope on [#23](https://github.com/artofdream/logify/issues/23). | Do not load this skill for logify work. |
+| `persona-journey-validation` | Fit: **N/A** | Out of scope on [#23](https://github.com/artofdream/logify/issues/23). | Do not load this skill for logify work. |
 
 ### 3DX Lab (in-flight; not Live)
 
@@ -106,7 +129,7 @@ Shared `pr-train-rebase`, `companion-plain-docs`, and `persona-journey-validatio
 
 ## Proposed / other-repo (not Live)
 
-Café-proposed recipes. **Do not claim they exist** on those repos until those teams create them. Not loaded on zorg-dungeon. Not Live & Probed.
+Café-proposed recipes stay proposed until those teams create them. AEA / logify rows below are **Documented** on those lanes until probed — not loaded on zorg-dungeon, not Live & Probed.
 
 | Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
 |---|---|---|---|
@@ -120,6 +143,13 @@ Café-proposed recipes. **Do not claim they exist** on those repos until those t
 | honesty (3DX) | In-flight / 3DX Lab | Pending issue after broadcast clarification. | Not created here. Not Live. |
 | infra-apply (sponsor-laptop Terraform) | In-flight / 3DX Lab | Pending issue after broadcast clarification. | Not created here. Not Live. |
 | lab-vs-factory | In-flight / 3DX Lab | Pending issue after broadcast clarification. | Not created here. Not Live. |
+| `one-finding-one-mr` | Documented / AEA · [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) | Created on the AEA vault. | Other-lane. Documented until probed. Not Live. |
+| `coordinator-merge-hats` | Documented / AEA · [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) | Created on the AEA vault. | Other-lane. Documented until probed. Not Live. |
+| `deploy-schema-honesty` | Documented / AEA · [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) | Created on the AEA vault. | Other-lane. Documented until probed. Not Live. |
+| `committed-vault-memory` | Documented / AEA · [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) | Created on the AEA vault. | Other-lane. Documented until probed. Not Live. |
+| `process-coherence-mr-body` | Documented / AEA · [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) | Created on the AEA vault. | Other-lane. Documented until probed. Not Live. |
+| `pr-train-parallel-merge` | Documented / logify · [#22](https://github.com/artofdream/logify/issues/22) | Created after agree clarification. | Other-lane. Documented until probed. Not Live. |
+| `tagged-release-cut` | Documented / logify · [#23](https://github.com/artofdream/logify/issues/23) | Created after agree clarification. | Other-lane. Documented until probed. Not Live. |
 
 ## Planned (zorg-dungeon)
 
@@ -147,6 +177,6 @@ Status: Planned. Document in docs/SKILL_MATRIX.md.
 2. Load the **shared Grok** sand-workflow that matches the repeating miss.
 3. Read **project playbooks** on `main`. If it is not there, it did not happen.
 4. **Keep Learning and Apply** ([#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)): write the lesson into the harness before the next loop.
-5. **Cross-project:** reuse where history matches. Café MRC **agrees**. App, Knowledge, and AEA stay pending until URLs arrive. 3DX Lab is **in-flight** (honesty / infra-apply / lab-vs-factory); shared PR-train / companion / personas are N/A there. Do not claim another repo created the skill.
+5. **Cross-project:** reuse where history matches. Café MRC **agrees**. App and Knowledge stay pending until URLs arrive. AEA [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) is **Documented** (shared four referenced, no dup; Café-specific deferred). logify is **creating** after agree ([#22](https://github.com/artofdream/logify/issues/22) / [#23](https://github.com/artofdream/logify/issues/23)); companion / personas N/A. 3DX Lab is **in-flight**. Other-lane skills **Documented until probed**. Not Live.
 
 This page does not close [[FR-4]], [[FR-18]], or Gunner duration.

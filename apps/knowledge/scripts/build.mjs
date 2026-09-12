@@ -586,8 +586,28 @@ if (!/Cross-project fit/i.test(skillsMd)) {
 if (!skillsMd.includes("Café Fausse App")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must record the Café Fausse App assessment");
 }
-if (!skillsMd.includes("AEA agent (pending)")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must keep the AEA agent placeholder until URLs arrive");
+if (
+  !skillsMd.includes("AEA agent (Documented; not Live)") ||
+  !skillsMd.includes("work_items/433") ||
+  !skillsMd.includes("one-finding-one-mr") ||
+  !skillsMd.includes("coordinator-merge-hats") ||
+  !skillsMd.includes("deploy-schema-honesty") ||
+  !skillsMd.includes("committed-vault-memory") ||
+  !skillsMd.includes("process-coherence-mr-body")
+) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must record AEA #433 created skills as Documented, not Live");
+}
+if (
+  !skillsMd.includes("logify") ||
+  !skillsMd.includes("artofdream/logify/issues/22") ||
+  !skillsMd.includes("artofdream/logify/issues/23") ||
+  !skillsMd.includes("pr-train-parallel-merge") ||
+  !skillsMd.includes("tagged-release-cut")
+) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must link logify #22 and #23");
+}
+if (!skillsMd.includes("Documented until probed")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep other-lane skills Documented until probed");
 }
 if (!skillsMd.includes("Café Fausse Knowledge (assessment received; URLs pending)")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must keep Café Knowledge pending until URLs arrive");
