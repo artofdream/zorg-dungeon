@@ -874,3 +874,106 @@ button:disabled {
     font-size: 0.7rem;
   }
 }
+
+
+/* Kid UX — light room type colors (#37 light only; illustrated tiles deferred). */
+.cell.room-a {
+  box-shadow: inset 0 0 0 2px #7aa85a;
+}
+.cell.room-z {
+  box-shadow: inset 0 0 0 2px #c45a4c;
+}
+.cell.room-d {
+  box-shadow: inset 0 0 0 2px #d46a2e;
+}
+.cell.room-e {
+  box-shadow: inset 0 0 0 2px #5a8fc4;
+}
+.cell.room-p {
+  box-shadow: inset 0 0 0 2px #9b6bc4;
+}
+.cell.room-o {
+  box-shadow: inset 0 0 0 2px #c9a227;
+}
+.cell.room-t {
+  box-shadow: inset 0 0 0 2px #b5a896;
+}
+
+.btn-primary,
+button.btn-primary {
+  background: var(--accent);
+  color: #1a120c;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+.btn-primary:disabled,
+button.btn-primary:disabled {
+  opacity: 0.45;
+}
+
+.event-feed {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0 1rem;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.event-feed li {
+  margin: 0.2rem 0;
+  overflow-wrap: anywhere;
+}
+
+.technical-log {
+  margin-top: 0.5rem;
+}
+
+.more-filters {
+  margin: 0.75rem 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.more-filters summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.generate-top {
+  margin: 1rem 0 1.25rem;
+}
+
+.meta-id {
+  font-size: 0.85rem;
+  margin-top: -0.35rem;
+}
+
+/* #43 minor mobile wrap after #28 */
+@media (max-width: 390px) {
+  .start-here,
+  .controls,
+  .orient,
+  .filters {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .start-here .cta,
+  .controls button,
+  .orient button {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .board-wrap {
+    max-width: 100%;
+  }
+}
