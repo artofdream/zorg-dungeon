@@ -91,9 +91,9 @@ fail CI. Recurrence stays 1 — quarantine + skip is documentation, not a
 second-miss gate.
 
 ## CF-006: Production web image has no CD and went stale
-- Status: Open
+- Status: Resolved
 - Recurrence: 1
-- Linked: https://github.com/artofdream/zorg-dungeon/pull/9
+- Linked: https://github.com/artofdream/zorg-dungeon/pull/9, https://github.com/artofdream/zorg-dungeon/pull/19
 - Sensor added: .github/workflows/deploy-web.yml
 
 Lightsail `zorg.artof.link` (`54.152.172.19`) was still serving a
@@ -125,6 +125,14 @@ those files (CD and manual redeploy). Remote command now uses
 `sudo git fetch` and `sudo git reset --hard origin/main` before
 `sudo docker compose`. Recurrence stays 1 — same sensor, privilege
 alignment, not a second-miss gate.
+
+Resolution: PR #19 landed the `sudo git` privilege alignment on the
+Lightsail host command. After PR #21 merged to `main` (`4111d82`,
+2026-09-12), `deploy-web` ran on that push and completed success
+(Actions run
+[34687483872](https://github.com/artofdream/zorg-dungeon/actions/runs/34687483872)).
+That is CD evidence, not a production content probe — do not mark
+game FRs `Live & Probed` from this close.
 
 ## CF-007: Player guide still said only Warrior/Elf were encoded
 - Status: Resolved
