@@ -22,6 +22,32 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
+// mermaid@11.4.1 flowchart pitfalls that become "Syntax error in text" on
+// knowledge.zorg.artof.link (LEARN.md CF-011). Parse-only: this is not a
+// live probe of the published page.
+function extractMermaidFences(md) {
+  const blocks = [];
+  const re = /```mermaid\n([\s\S]*?)```/g;
+  let m;
+  while ((m = re.exec(md))) blocks.push(m[1].trim());
+  return blocks;
+}
+
+function assertMermaidSafe(source, label) {
+  const body = source
+    .replace(/^(?:flowchart|graph)\s+\w+\s*/i, "")
+    .replace(/^\s*end\s*$/gm, "");
+  if (/(?:^|[\s>|])end(?:\s|$|\[|\(|\{)/m.test(body)) {
+    throw new Error(`knowledge build: ${label} uses reserved mermaid node id "end"`);
+  }
+  if (/\|(?!["'])[^|\n]*,[^|\n]*\|/.test(source)) {
+    throw new Error(`knowledge build: ${label} has an unquoted mermaid edge label with a comma`);
+  }
+  if (/---[^\n]+---/.test(source)) {
+    throw new Error(`knowledge build: ${label} chains undirected mermaid links on one line`);
+  }
+}
+
 function markdownToHtml(md) {
   const lines = md.split("\n");
   const html = [];
@@ -252,8 +278,12 @@ function pageShell({ title, current, content }) {
     const nodes = [...document.querySelectorAll("pre.mermaid")];
     for (let i = 0; i < nodes.length; i++) {
       const source = nodes[i].textContent ?? "";
-      const { svg } = await mermaid.render("zorg-mermaid-" + i, source);
-      nodes[i].innerHTML = svg;
+      try {
+        const { svg } = await mermaid.render("zorg-mermaid-" + i, source);
+        nodes[i].innerHTML = svg;
+      } catch (err) {
+        nodes[i].setAttribute("data-mermaid-error", String(err && err.message ? err.message : err));
+      }
     }
   </script>
 </head>
@@ -414,6 +444,9 @@ if (/FR-\d+|Simulated|Gunner duration|extermination|ledger/i.test(learnKidBody))
 const learnHtml = markdownToHtml(learnMd);
 if ((learnHtml.match(/class="mermaid"/g) || []).length < 3) {
   throw new Error("knowledge build: LEARN.md produced too few mermaid diagrams");
+}
+for (const [i, src] of extractMermaidFences(learnMd).entries()) {
+  assertMermaidSafe(src, `LEARN.md mermaid #${i + 1}`);
 }
 writeFileSync(join(distDir, "learn.html"), pageShell({ title: "Learn the rules", current: "learn", content: learnHtml }));
 
@@ -740,6 +773,31 @@ for (const asset of ["favicon.svg", "favicon-32x32.png", "apple-touch-icon.png"]
     throw new Error(`knowledge build: missing ${asset} at ${src}`);
   }
   copyFileSync(src, join(distDir, asset));
+}
+
+function extractMermaidFromHtml(html) {
+  const blocks = [];
+  const re = /<pre class="mermaid">([\s\S]*?)<\/pre>/g;
+  let m;
+  while ((m = re.exec(html))) {
+    blocks.push(
+      m[1]
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&amp;/g, "&")
+        .trim(),
+    );
+  }
+  return blocks;
+}
+
+for (const file of readdirSync(distDir).filter((f) => f.endsWith(".html"))) {
+  const html = readFileSync(join(distDir, file), "utf8");
+  for (const [i, src] of extractMermaidFromHtml(html).entries()) {
+    assertMermaidSafe(src, `${file} mermaid #${i + 1}`);
+  }
 }
 
 console.log("✓ Knowledge website built successfully in apps/knowledge/dist/");

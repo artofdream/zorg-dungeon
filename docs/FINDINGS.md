@@ -221,3 +221,22 @@ so this entry skips that ID. Recurrence 1 — documenting the principle
 is not a second-miss gate. Do not promote [[STATUS_LEDGER]] rows. Do
 not invent `C`, Gunner duration, or [[FR-4]] gating.
 
+## CF-011: LEARN.md mermaid reserved node id `end`
+- Status: Resolved
+- Recurrence: 1
+- Linked: (this PR — learn.html mermaid 11.4.1 syntax error)
+- Sensor added: apps/knowledge/scripts/build.mjs
+
+[[LEARN]] (`learn.html` on knowledge.zorg.artof.link) showed mermaid 11.4.1
+“Syntax error in text” (red bomb). Rendered with `@mermaid-js/mermaid-cli@11.4.1`:
+the Two jobs diagram failed because `spell --> end["…"]` uses the reserved
+flowchart token `end`. The comma edge label and chained `A --- D --- Z`
+both rendered under 11.4.1; they are quoted/split anyway.
+
+Recurrence 1 — the knowledge build now rejects reserved `end` node ids,
+unquoted comma edge labels, and one-line chained undirected links in every
+shipped `<pre class="mermaid">`. Not a second-miss gate. Do not promote
+[[STATUS_LEDGER]] rows. Do not invent `C`, Gunner duration, or [[FR-4]]
+gating. [#51](https://github.com/artofdream/zorg-dungeon/issues/51) stays
+open until the learn page is live and probed.
+

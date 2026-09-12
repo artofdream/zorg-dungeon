@@ -29,10 +29,10 @@ Heroes walk by themselves. You watch. You may use a spell if you have one.
 ```mermaid
 flowchart TD
   pick["Pick an easy level"] --> place["Place rooms so A connects toward Z"]
-  place --> start["Press Start fight"]
-  start --> watch["Heroes walk one at a time"]
+  place --> press["Press Start fight"]
+  press --> watch["Heroes walk one at a time"]
   watch --> spell["Optional: use a spell once"]
-  spell --> end["Win if they fall before Z"]
+  spell --> finish["Win if they fall before Z"]
 ```
 
 ## How rooms stick together
@@ -43,7 +43,8 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-  A["A"] --- D["Damage"] --- Z["Z"]
+  A["A"] --- D["Damage"]
+  D --- Z["Z"]
 ```
 
 When the rooms make one connected dungeon, **Start fight** turns on.
@@ -109,7 +110,7 @@ flowchart TD
   z -->|Yes| lose["You lose"]
   z -->|No| hp{"Did they fall?"}
   hp -->|Not yet| live
-  hp -->|Yes, and no one is left| win["You win"]
+  hp -->|"Yes, and no one is left"| win["You win"]
 ```
 
 ## Ready?
