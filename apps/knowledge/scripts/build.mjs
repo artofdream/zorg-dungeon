@@ -327,6 +327,12 @@ if (!guideMd.trim()) {
 if (/two types have rules encoded/i.test(guideMd)) {
   throw new Error("knowledge build: PLAYER_GUIDE.md still claims only two hero types");
 }
+if (/not a random generator/i.test(guideMd)) {
+  throw new Error("knowledge build: PLAYER_GUIDE.md still denies the Difficulté generator");
+}
+if (!/generateLevel|practice dungeon/i.test(guideMd)) {
+  throw new Error("knowledge build: PLAYER_GUIDE.md must mention the Difficulté generator");
+}
 for (const id of ["FR-22", "FR-23", "FR-24", "FR-25", "FR-32", "FR-33", "NFR-5"]) {
   if (!guideMd.includes(`[[${id}]]`)) {
     throw new Error(`knowledge build: PLAYER_GUIDE.md must cite [[${id}]] so the companion tracks the engine`);

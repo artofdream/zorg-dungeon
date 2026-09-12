@@ -9,6 +9,7 @@ import {
   authoredCampaignContracts,
   bindNamedChoix,
   buildCampaignCatalog,
+  campaignPackFromPath,
   classifyCampaignPlayability,
   defaultNamedChoices,
   difficultyBand,
@@ -64,6 +65,11 @@ describe("Difficulté parsing", () => {
     expect(parseDifficultyFromText("id: deluxe-1.2\nSalles : A, Z\n")).toBeUndefined();
     expect(difficultyBand(undefined)).toBe(UNSPECIFIED_DIFFICULTY);
     expect(difficultyBand("")).toBe(UNSPECIFIED_DIFFICULTY);
+  });
+
+  it("labels generated/ paths as the generated pack (not authored)", () => {
+    expect(campaignPackFromPath("generated/generated-1-1.txt")).toBe("generated");
+    expect(campaignPackFromPath("base-classic/01-foundations.txt")).toBe("base-classic");
   });
 });
 

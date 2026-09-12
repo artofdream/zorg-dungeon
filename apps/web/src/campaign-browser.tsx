@@ -1,23 +1,27 @@
 import { useMemo, useState } from "react";
 import {
   authoredCampaignContracts,
+  GENERATION_BANDS,
   groupCampaignByDifficulty,
   unavailableReasonLabel,
   UNSPECIFIED_DIFFICULTY,
   type CampaignEntry,
+  type GenerationBand,
 } from "@zorg/engine";
 
 interface Props {
   catalog: CampaignEntry[];
   onPick: (entry: CampaignEntry) => void;
+  onGenerate: (band: GenerationBand) => void;
 }
 
-export function CampaignBrowser({ catalog, onPick }: Props) {
+export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
   const groups = useMemo(() => groupCampaignByDifficulty(catalog), [catalog]);
   const contracts = useMemo(() => authoredCampaignContracts(), []);
   const [band, setBand] = useState<string>(groups[0]?.band ?? "1");
   const [contractId, setContractId] = useState<string>("all");
   const [showUnavailable, setShowUnavailable] = useState(false);
+  const [generateBand, setGenerateBand] = useState<GenerationBand>("1");
 
   const visible = useMemo(() => {
     const group = groups.find((g) => g.band === band)?.entries ?? [];
@@ -34,13 +38,15 @@ export function CampaignBrowser({ catalog, onPick }: Props) {
     <main className="app">
       <h1>Zorg's Dungeon Maker</h1>
       <p className="lede">
-        Pick a <strong>Difficulté</strong>, open a level, place its rooms, then
-        start the fight. These are the authored levels — not a random generator.
+        Pick a <strong>Difficulté</strong>, open an authored level, place its
+        rooms, then start the fight. After the campaign, you can also generate
+        a practice dungeon for the same Difficulté bands.
       </p>
       <p className="honesty">
         Simulated engine tests — not a live production probe. Contract costs are
         labels only (FR-4 gating is not built). Levels with C rooms or Gunner
-        duration stay unavailable. See the honesty ledger.
+        duration stay unavailable. Generated levels are Simulated engine output,
+        not a live probe. See the honesty ledger.
       </p>
 
       <p className="hint">
@@ -136,6 +142,32 @@ export function CampaignBrowser({ catalog, onPick }: Props) {
       {visible.length === 0 ? (
         <p className="hint">No levels in this filter. Try another Difficulté or show unavailable.</p>
       ) : null}
+
+      <section className="panel" style={{ marginTop: "1.5rem" }}>
+        <h2>Generate a practice dungeon</h2>
+        <p className="hint">
+          Additive — the authored campaign above stays the default. The engine
+          builds a legal A–Z corridor for Difficulté 1–4 (the authored numeric
+          bands). No C rooms, no Gunner duration, no contract unlock.
+        </p>
+        <div className="filters" aria-label="Generate Difficulté">
+          {GENERATION_BANDS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={generateBand === item ? "selected" : ""}
+              onClick={() => setGenerateBand(item)}
+            >
+              Difficulté {item}
+            </button>
+          ))}
+        </div>
+        <div className="controls">
+          <button type="button" onClick={() => onGenerate(generateBand)}>
+            Generate Difficulté {generateBand}
+          </button>
+        </div>
+      </section>
     </main>
   );
 }

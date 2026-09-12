@@ -36,6 +36,9 @@ const HATCH_GLYPH: Record<string, string> = {
 interface Props {
   entry: CampaignEntry;
   onBack: () => void;
+  /** Generator-suggested FR-5–FR-8 line. Authored campaign leaves this unset. */
+  suggestedLayout?: DungeonLayout;
+  onRegenerate?: () => void;
 }
 
 function snapshot(state: SimulationState): SimulationState {
@@ -47,7 +50,7 @@ function gridExtent(roomCount: number): { min: number; max: number } {
   return { min: -1, max: span - 2 };
 }
 
-export function MakerPlay({ entry, onBack }: Props) {
+export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Props) {
   const authored = useMemo(() => parseLevel(entry.text), [entry.text]);
   const [named, setNamed] = useState(() => defaultNamedChoices(authored));
   const [inline, setInline] = useState<InlineChoixPicks>(() => defaultInlinePicks(authored));
@@ -58,7 +61,7 @@ export function MakerPlay({ entry, onBack }: Props) {
   const inlineSlots = useMemo(() => listInlineChoixSlots(authored), [authored]);
 
   const [orientation, setOrientation] = useState<Orientation>(0);
-  const [rooms, setRooms] = useState<PlacedRoom[]>([]);
+  const [rooms, setRooms] = useState<PlacedRoom[]>(() => suggestedLayout?.rooms ?? []);
   const [selectedId, setSelectedId] = useState<string | null>(supplied[0]?.id ?? null);
   const [run, setRun] = useState<SimulationState | null>(null);
   const [spellPick, setSpellPick] = useState<number | null>(null);
@@ -72,6 +75,16 @@ export function MakerPlay({ entry, onBack }: Props) {
   const placedIds = new Set(rooms.map((r) => r.id));
   const gateOpen = canStartExtermination(level, layout);
   const playing = run !== null;
+
+  useEffect(() => {
+    setRooms(suggestedLayout?.rooms ?? []);
+    setSelectedId(null);
+    setRun(null);
+    setSpellPick(null);
+    setCastError(null);
+    // Reset when the campaign card changes (authored pick or regenerate).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- suggested rooms follow entry.id
+  }, [entry.id, entry.text]);
 
   useEffect(() => {
     if (!playing && selectedId === null && supplied[0]) {
@@ -233,10 +246,16 @@ export function MakerPlay({ entry, onBack }: Props) {
           ← Campaign
         </button>
         <h1 style={{ margin: 0, fontSize: "1.35rem" }}>{entry.name}</h1>
+        {onRegenerate ? (
+          <button type="button" onClick={onRegenerate}>
+            Regenerate
+          </button>
+        ) : null}
       </div>
       <p className="lede">
         {entry.id}
         {entry.difficulty !== null ? ` · Difficulté ${entry.difficulty}` : ""}
+        {entry.pack === "generated" ? " · generated" : ""}
         {entry.contractName
           ? ` · ${entry.contractName} (cost ${entry.contractCost ?? "—"} flavour only)`
           : ""}
@@ -247,6 +266,9 @@ export function MakerPlay({ entry, onBack }: Props) {
         Simulated engine, not Live. The outcome here is heroes dead, Z reached,
         or stalemate. Extra constraints, bonuses, and mirror worlds are not
         scored in this view.
+        {entry.pack === "generated"
+          ? " This dungeon is generator output (parse + placement + FR-46 bounded search) — not a live production probe. FR-4 gating is still not built."
+          : ""}
       </p>
 
       {entry.needsChoix ? (

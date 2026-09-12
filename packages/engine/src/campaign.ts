@@ -2,6 +2,7 @@
 // Lists non-quarantine pack text, grouped by source Difficulté.
 // Does not implement FR-4 gating. C rooms (FR-18 / S2) and Gunner duration
 // (S3) stay unavailable — we do not invent those rules (NFR-8).
+// Pack "generated" is for generateLevel output (see generator.ts), not fixtures.
 
 import { authoredContracts, CONTRACTS, type ContractRecord } from "./contracts.js";
 import {
@@ -23,7 +24,7 @@ import { parseLevel } from "./loader.js";
 
 export const UNSPECIFIED_DIFFICULTY = "unspecified";
 
-export type CampaignPack = "base-classic" | "base-extras" | "contracts" | "other";
+export type CampaignPack = "base-classic" | "base-extras" | "contracts" | "generated" | "other";
 
 export type UnavailableReason = "parse_error" | "c_room" | "gunner_duration" | "unresolved";
 
@@ -78,6 +79,9 @@ export function campaignPackFromPath(path: string): CampaignPack {
   if (normalized.includes("base-extras")) return "base-extras";
   if (normalized.includes("/contracts/") || normalized.startsWith("contracts/")) {
     return "contracts";
+  }
+  if (normalized.includes("/generated/") || normalized.startsWith("generated/")) {
+    return "generated";
   }
   return "other";
 }
