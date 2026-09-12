@@ -77,15 +77,17 @@ type DistAtom = { left: RoomRef; right: RoomRef };
 
 type DistRhs = { kind: "number"; value: number } | { kind: "dist"; atom: DistAtom; plus?: number };
 
+type DistanceForm =
+  | { type: "compare"; left: DistAtom; op: CompareOp; right: DistRhs }
+  | { type: "exists_adj_az"; dist: number }
+  | { type: "exists_d_pair"; dist: number };
+
 type ParsedConstraint =
   | { kind: "unsupported"; reason: string }
   | {
       kind: "distance";
       worlds?: WorldId[];
-      form:
-        | { type: "compare"; left: DistAtom; op: CompareOp; right: DistRhs }
-        | { type: "exists_adj_az"; dist: number }
-        | { type: "exists_d_pair"; dist: number };
+      form: DistanceForm;
     }
   | { kind: "hp_floor"; worlds?: WorldId[]; mode: "none_negative" | "exactly_one_negative" }
   | { kind: "gold_at_death"; worlds?: WorldId[]; amount: "any" | number }
@@ -430,6 +432,50 @@ function heldOrFailed(ok: boolean): ConstraintStatus {
   return ok ? "held" : "failed";
 }
 
+/** Switch on `form.type` so `.dist` is never read on the compare arm. */
+function evaluateDistanceForm(
+  form: DistanceForm,
+  layout: DungeonLayout,
+): { status: ConstraintStatus; detail?: string } {
+  switch (form.type) {
+    case "exists_adj_az": {
+      const need = form.dist;
+      const a = uniqueRoom(layout, { type: "A" });
+      const z = uniqueRoom(layout, { type: "Z" });
+      if (a instanceof UnsupportedConstraint) return { status: "unsupported", detail: a.reason };
+      if (z instanceof UnsupportedConstraint) return { status: "unsupported", detail: z.reason };
+      const ok = layout.rooms.some(
+        (room) =>
+          manhattanDistance(room.position, a.position) === need &&
+          manhattanDistance(room.position, z.position) === need,
+      );
+      return { status: heldOrFailed(ok) };
+    }
+    case "exists_d_pair": {
+      const need = form.dist;
+      const ds = layout.rooms.filter((r) => r.def.type === "D");
+      for (let i = 0; i < ds.length; i += 1) {
+        for (let j = i + 1; j < ds.length; j += 1) {
+          const left = ds[i];
+          const right = ds[j];
+          if (!left || !right) continue;
+          if (manhattanDistance(left.position, right.position) === need) {
+            return { status: "held" };
+          }
+        }
+      }
+      return { status: "failed" };
+    }
+    case "compare": {
+      const left = distOf(layout, form.left);
+      if (left instanceof UnsupportedConstraint) return { status: "unsupported", detail: left.reason };
+      const right = rhsValue(layout, form.right);
+      if (right instanceof UnsupportedConstraint) return { status: "unsupported", detail: right.reason };
+      return { status: heldOrFailed(compare(left, form.op, right)) };
+    }
+  }
+}
+
 function evaluateParsed(parsed: ParsedConstraint, ctx: EvalContext): { status: ConstraintStatus; detail?: string } {
   if (parsed.kind === "unsupported") {
     return { status: "unsupported", detail: parsed.reason };
@@ -463,39 +509,7 @@ function evaluateParsed(parsed: ParsedConstraint, ctx: EvalContext): { status: C
     if (layout instanceof UnsupportedConstraint) {
       return { status: "unsupported", detail: layout.reason };
     }
-    if (parsed.form.type === "exists_adj_az") {
-      const need = parsed.form.dist;
-      const a = uniqueRoom(layout, { type: "A" });
-      const z = uniqueRoom(layout, { type: "Z" });
-      if (a instanceof UnsupportedConstraint) return { status: "unsupported", detail: a.reason };
-      if (z instanceof UnsupportedConstraint) return { status: "unsupported", detail: z.reason };
-      const ok = layout.rooms.some(
-        (room) =>
-          manhattanDistance(room.position, a.position) === need &&
-          manhattanDistance(room.position, z.position) === need,
-      );
-      return { status: heldOrFailed(ok) };
-    }
-    if (parsed.form.type === "exists_d_pair") {
-      const need = parsed.form.dist;
-      const ds = layout.rooms.filter((r) => r.def.type === "D");
-      for (let i = 0; i < ds.length; i += 1) {
-        for (let j = i + 1; j < ds.length; j += 1) {
-          const left = ds[i];
-          const right = ds[j];
-          if (!left || !right) continue;
-          if (manhattanDistance(left.position, right.position) === need) {
-            return { status: "held" };
-          }
-        }
-      }
-      return { status: "failed" };
-    }
-    const left = distOf(layout, parsed.form.left);
-    if (left instanceof UnsupportedConstraint) return { status: "unsupported", detail: left.reason };
-    const right = rhsValue(layout, parsed.form.right);
-    if (right instanceof UnsupportedConstraint) return { status: "unsupported", detail: right.reason };
-    return { status: heldOrFailed(compare(left, parsed.form.op, right)) };
+    return evaluateDistanceForm(parsed.form, layout);
   }
 
   const scoped = selectWorlds(ctx.worlds, parsed.worlds);
