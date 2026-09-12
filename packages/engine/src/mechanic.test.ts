@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { azdLevel, placeAll } from "./phase1-fixtures.js";
 import { mechanicSquare, shoveShortcut } from "./phase5-fixtures.js";
 import { simulate } from "./simulation.js";
+import { mechanicPriorityBetter } from "./mechanic.js";
 import { MECHANIC_TIE_BREAK_ORDER, orientedMechanicTieBreak } from "./tiles.js";
 
 function enteredRooms(events: { type: string; roomId?: string }[]): string[] {
@@ -58,6 +59,19 @@ describe("FR-24 Mechanic uses shove power to shorten the path", () => {
     const state = simulate(level, layout);
     expect(state.heroes[0]?.shoveLeft.get("A:0")).toBe(0);
     expect(shoves(state.events)).toHaveLength(1);
+  });
+});
+
+describe("FR-24 power as a tie-break (NFR-10 layer)", () => {
+  it("ranks a shove-first path above an equal-length walk-first path", () => {
+    const dirs = MECHANIC_TIE_BREAK_ORDER;
+    expect(
+      mechanicPriorityBetter(
+        { length: 3, unjustified: 0, firstIsShove: true, firstDir: "up" },
+        { length: 3, unjustified: 0, firstIsShove: false, firstDir: "right" },
+        dirs,
+      ),
+    ).toBe(true);
   });
 });
 

@@ -126,13 +126,30 @@ export function planShove(
   };
 }
 
-function better(a: SearchState, b: SearchState, dirs: readonly Cardinal[]): boolean {
+/** FR-24 scored-path layers. Exported so NFR-10 can probe the
+ *  power-as-tie-break clause without a full-level run. */
+export interface MechanicPathScore {
+  length: number;
+  unjustified: number;
+  firstIsShove: boolean;
+  firstDir?: Cardinal;
+}
+
+export function mechanicPriorityBetter(
+  a: MechanicPathScore,
+  b: MechanicPathScore,
+  dirs: readonly Cardinal[],
+): boolean {
   if (a.length !== b.length) return a.length < b.length;
   if (a.unjustified !== b.unjustified) return a.unjustified < b.unjustified;
   if (a.firstIsShove !== b.firstIsShove) return a.firstIsShove;
   const ai = a.firstDir ? dirs.indexOf(a.firstDir) : 99;
   const bi = b.firstDir ? dirs.indexOf(b.firstDir) : 99;
   return ai < bi;
+}
+
+function better(a: SearchState, b: SearchState, dirs: readonly Cardinal[]): boolean {
+  return mechanicPriorityBetter(a, b, dirs);
 }
 
 function applyWalkEconomy(
