@@ -16,6 +16,7 @@ import {
   type CampaignEntry,
   type CastRequest,
   type DungeonLayout,
+  type HeroSlot,
   type InlineChoixPicks,
   type Orientation,
   type PlacedRoom,
@@ -23,6 +24,8 @@ import {
   type SimulationState,
 } from "@zorg/engine";
 import { HatchCompass, RoomHatchMark } from "./hatch-mark.js";
+import { HeroFigurineLegend, HeroIcon } from "./hero-icon.js";
+import { collectHeroTypes } from "./hero-icons.js";
 import { heroSlotLabel, roomLabel, roomSlotLabel, spellLabel, spellSlotLabel } from "./labels.js";
 import {
   boardCellAriaLabel,
@@ -167,7 +170,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
   }
 
   const boardLayout = run?.layout ?? layout;
-  const heroRoomId = run?.heroes.find((h) => h.spawned && !h.dead)?.roomId ?? null;
+  const heroesOnBoard = (run?.heroes ?? []).filter((h) => h.spawned && !h.dead && h.roomId);
   const hatch = describeHatch(orientation);
   const selectedSpec = supplied.find((spec) => spec.id === selectedId);
   const active = run ? selectActiveHero(run.heroes) : undefined;
@@ -326,7 +329,16 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
             const kindKey = slot.kind === "room" ? "rooms" : slot.kind === "hero" ? "heroes" : "spells";
             return (
               <label key={`${slot.kind}-${slot.index}`}>
-                {slot.kind} choix
+                <span className="choix-label">
+                  {slot.kind} choix
+                  {slot.kind === "hero" ? (
+                    <span className="hero-type-row">
+                      {collectHeroTypes(slot.options as HeroSlot[]).map((type) => (
+                        <HeroIcon key={type} type={type} size="sm" decorative />
+                      ))}
+                    </span>
+                  ) : null}
+                </span>
                 <select
                   disabled={playing}
                   value={selected}
@@ -347,12 +359,27 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
       <div className="layout">
         <section className="panel panel-rooms">
           <h2>Rooms</h2>
-          <p className="hint">
-            Heroes: {level.heroes.map((h) => heroSlotLabel(h)).join(", ") || "(none)"}
-            {(level.spells?.length ?? 0) > 0
-              ? ` · Spells: ${level.spells!.map((s) => spellSlotLabel(s)).join(", ")}`
-              : ""}
-          </p>
+          <div className="hero-roster" aria-label="Hero roster">
+            {level.heroes.length === 0 ? (
+              <p className="hint">Heroes: (none)</p>
+            ) : (
+              level.heroes.map((slot, i) => {
+                const types = collectHeroTypes([slot]);
+                return (
+                  <span key={`${heroSlotLabel(slot)}-${i}`} className="hero-roster-item">
+                    {types.map((type) => (
+                      <HeroIcon key={type} type={type} size="sm" decorative />
+                    ))}
+                    <span>{heroSlotLabel(slot)}</span>
+                  </span>
+                );
+              })
+            )}
+          </div>
+          {(level.spells?.length ?? 0) > 0 ? (
+            <p className="hint">Spells: {level.spells!.map((s) => spellSlotLabel(s)).join(", ")}</p>
+          ) : null}
+          <HeroFigurineLegend />
           <div className="tray">
             {supplied.map((spec) => (
               <button
@@ -411,7 +438,10 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
               {ys.flatMap((y) =>
                 xs.map((x) => {
                   const room = boardLayout.rooms.find((r) => r.position.x === x && r.position.y === y);
-                  const isHero = Boolean(room && heroRoomId === room.id);
+                  const occupants = room
+                    ? heroesOnBoard.filter((h) => h.roomId === room.id)
+                    : [];
+                  const isHero = occupants.length > 0;
                   const isSelectedPlaced = Boolean(room && selectedId === room.id);
                   const isAnchor = room?.def.type === "A";
                   const isPreview =
@@ -432,17 +462,31 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
                         setHoverCell((cur) => (cur?.x === x && cur?.y === y ? null : cur))
                       }
                       data-hatch={room || isPreview ? hatch.cardinal : undefined}
-                      aria-label={boardCellAriaLabel({
-                        roomName: room ? roomLabel(room.def) : previewName,
-                        x,
-                        y,
-                        orientation,
-                        preview: isPreview,
-                        selected: isSelectedPlaced,
-                        isAnchor,
-                      })}
+                      aria-label={[
+                        boardCellAriaLabel({
+                          roomName: room ? roomLabel(room.def) : previewName,
+                          x,
+                          y,
+                          orientation,
+                          preview: isPreview,
+                          selected: isSelectedPlaced,
+                          isAnchor,
+                        }),
+                        occupants.length
+                          ? occupants.map((h) => h.def.type).join(", ")
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     >
                       {room || isPreview ? <RoomHatchMark orientation={orientation} /> : null}
+                      {occupants.length > 0 ? (
+                        <span className="cell-heroes">
+                          {occupants.map((h) => (
+                            <HeroIcon key={h.id} type={h.def.type} size="sm" />
+                          ))}
+                        </span>
+                      ) : null}
                       {room ? (
                         <>
                           <span className="kind">{roomLabel(room.def)}</span>
@@ -554,18 +598,27 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
                   <span>{castError}</span>
                 </p>
               ) : null}
-              <p className="hp">
-                Outcome: <strong>{run.outcome}</strong>
+              <div className="hp">
+                <p className="hp-head">
+                  Outcome: <strong>{run.outcome}</strong>
+                </p>
                 {run.heroes.map((h) => (
-                  <span key={h.id}>
-                    {" "}
-                    · {h.def.type} {h.id} HP {h.hp}
-                    {h.gold?.length ? ` gold ${h.gold.length}` : ""}
-                    {h.dead ? " (dead)" : h.sleeping ? " (asleep)" : h.spawned ? "" : " (waiting)"}
-                    {h.cell ? ` @ ${h.cell.x},${h.cell.y}` : ""}
+                  <span
+                    key={h.id}
+                    className={`hero-roster-item${h.dead ? " dead" : ""}${
+                      active?.id === h.id ? " active" : ""
+                    }`}
+                  >
+                    <HeroIcon type={h.def.type} size="sm" decorative />
+                    <span>
+                      {h.def.type} {h.id} HP {h.hp}
+                      {h.gold?.length ? ` gold ${h.gold.length}` : ""}
+                      {h.dead ? " (dead)" : h.sleeping ? " (asleep)" : h.spawned ? "" : " (waiting)"}
+                      {h.cell ? ` @ ${h.cell.x},${h.cell.y}` : ""}
+                    </span>
                   </span>
                 ))}
-              </p>
+              </div>
               <pre className="log">
                 {run.events.map((e) => JSON.stringify(e)).join("\n") || "(no events yet — press Step)"}
               </pre>

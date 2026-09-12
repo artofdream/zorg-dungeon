@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Elf">
+  <rect width="32" height="32" rx="6" fill="#0d1117"/>
+  <rect x="1" y="1" width="30" height="30" rx="5" fill="none" stroke="#c9a227" stroke-width="1.25"/>
+  <!-- bow -->
+  <path d="M21.2 7.6c4.4 3.2 4.4 13.6 0 16.8" fill="none" stroke="#d29922" stroke-width="1.45" stroke-linecap="round"/>
+  <path d="M21.4 8.2 21.4 23.6" stroke="#f3eadb" stroke-width="0.7" stroke-linecap="round"/>
+  <circle cx="21.4" cy="16" r="1.05" fill="#d46a2e"/>
+  <!-- hood -->
+  <path d="M16.1 6.2 10.4 12.4c-.35 1.7.15 3.6 1.7 4.5 1.1.65 2.5.7 3.8.35l.2-5.4z" fill="#1f1a16"/>
+  <path d="M16.1 6.2 21.4 13.1c.2 1.15-.35 2.3-1.25 2.85-.7.4-1.55.5-2.35.4l-.15-4.6z" fill="#2a241e"/>
+  <path d="M16.1 6.2 12.6 11.8" stroke="#c9a227" stroke-width="0.9" stroke-linecap="round"/>
+  <!-- face -->
+  <ellipse cx="15.6" cy="14.1" rx="2.55" ry="2.7" fill="#e8d5b5"/>
+  <path d="M17.9 13.4c1.15-.15 1.85.35 2.15 1.15" fill="none" stroke="#e8d5b5" stroke-width="1.05" stroke-linecap="round"/>
+  <circle cx="14.7" cy="13.85" r="0.45" fill="#14110e"/>
+  <circle cx="16.55" cy="13.85" r="0.45" fill="#14110e"/>
+  <!-- cloak / body -->
+  <path d="M11.8 17.6c1.6-.7 3.2-.95 4.8-.9 1.55.05 3.1.4 4.5 1.05l1.3 8.1H10.6z" fill="#1f1a16"/>
+  <path d="M13.4 18c1.4-.45 2.8-.55 4.15-.4l.35 3.3h-5z" fill="#2a241e"/>
+  <path d="M12.2 24.4c1.4-.55 2.7-.7 4.3-.65" stroke="#6e40c9" stroke-width="1" stroke-linecap="round"/>
+  <!-- legs / feet -->
+  <rect x="13.2" y="25.4" width="2.15" height="1.7" rx="0.6" fill="#14110e"/>
+  <rect x="16.7" y="25.4" width="2.15" height="1.7" rx="0.6" fill="#14110e"/>
+  <!-- drawing hand -->
+  <circle cx="20.2" cy="16.1" r="0.95" fill="#e8d5b5"/>
+</svg>
