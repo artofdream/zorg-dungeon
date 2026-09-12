@@ -35,7 +35,7 @@ flowchart TD
 **Honest limits of this slice** (see [[STATUS_LEDGER]]):
 
 - Engine proof is **Simulated** (automated tests). It is **not** Live & Probed.
-- Win/loss in the Maker is the scheduler result: every hero dead, a hero reached `Z`, or nothing further changes. Extra constraints, bonuses, and mirror-world scoring are **not** evaluated here ([[FR-43]], [[FR-44]] stay Unknown).
+- Win/loss in the Maker playback is still the **scheduler** result: every hero dead, a hero reached `Z`, or nothing further changes. The engine’s `scoreLevel` layer ([[FR-43]], [[FR-44]], Simulated) aggregates worlds and grounded constraints; this view does not call it. Opaque authored prose stays unevaluated ([[0006-grounded-constraint-evaluation]]).
 - Contract point costs are flavour text. [[FR-4]] gating (earn / spend points to unlock contracts) is **not** built.
 - **Unavailable** levels stay listed but not selectable: opaque `C` rooms ([[FR-18]]), Gunner with a third duration argument (parsed, not played — [[NFR-8]]), or unresolved authored tokens. Quarantine fixtures (including N11 Dream Trap and N18 Math Bath) and Blabla contracts 11–15 are omitted from the list entirely ([[FINDINGS]] CF-005).
 - **Generated** levels are Simulated engine output (`generateLevel`: parse + legal placement + bounded [[FR-46]] search). They are **not** a live production probe. They do not unlock contracts ([[FR-4]] still not gating). See [[0005-level-generator]].
@@ -79,7 +79,7 @@ What the gate actually checks before Extermination ([[FR-8]] wrapping [[FR-5]]�
 - Neighboring rooms share a **full side**, wall meeting wall and open cell meeting open cell ([[FR-6]]).
 - Every room shares one orientation, taken from the `A` rooms' common hatch direction ([[FR-7]], [[NFR-6]]).
 
-Win/loss is not “the last hero died” alone. Extra constraints and bonuses can sit on top ([[FR-43]], [[FR-44]]). Mirror worlds share the constructed room graph and swap rooms 1:1 by declaration order ([[FR-9]]). Worlds resolve normal → M′ → M″ and retire when idle or when that world's Z is reached ([[FR-45]]). Whether a world is solvable is a bounded engine search ([[FR-46]], [[NFR-4]]). The public campaign slice does **not** score those extras — only the scheduler outcome. If this paragraph and [[GAME_SPEC]] disagree, the spec wins.
+Win/loss is not “the last hero died” alone. Extra constraints and bonuses can sit on top ([[FR-43]], [[FR-44]]). Mirror worlds share the constructed room graph and swap rooms 1:1 by declaration order ([[FR-9]]). Worlds resolve normal → M′ → M″ and retire when idle or when that world's Z is reached ([[FR-45]]). Whether a world is solvable is a bounded engine search ([[FR-46]], [[NFR-4]]). The engine scores a grounded subset of those extras (`scoreLevel`: any-world Z is a loss; win needs every world’s heroes dead and every blocking constraint held; bonuses are tracked separately and never block). Authored lines the spec does not define stay `unsupported` and refuse a win claim — the engine does not invent a constraint language ([[0006-grounded-constraint-evaluation]], [[NFR-8]]). Maker playback still shows only the scheduler outcome. If this paragraph and [[GAME_SPEC]] disagree, the spec wins.
 
 ## Rooms A / Z / D / E / P / O / T
 

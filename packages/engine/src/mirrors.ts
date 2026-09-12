@@ -143,8 +143,8 @@ export function retirementOf(state: SimulationState): WorldRetirement {
 /**
  * FR-45: resolve worlds in declared order. Each world runs to a terminal
  * outcome (win / loss / stalemate) with its own heroes and spells, then
- * retires before the next world starts. This is sequential resolve, not
- * FR-43 cross-world win/loss.
+ * retires before the next world starts. Cross-world win/loss (FR-43)
+ * and constraint/bonus scoring (FR-44) live in constraints.ts `scoreLevel`.
  */
 export function resolveWorlds(
   level: LevelDef,

@@ -263,9 +263,10 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
         heroes and spells.
       </p>
       <p className="honesty">
-        Simulated engine, not Live. The outcome here is heroes dead, Z reached,
-        or stalemate. Extra constraints, bonuses, and mirror worlds are not
-        scored in this view.
+        Simulated engine, not Live. The outcome here is the scheduler result:
+        heroes dead, Z reached, or stalemate. Engine `scoreLevel` (FR-43 /
+        FR-44) is Simulated in tests; this view does not score extra
+        constraints, bonuses, or mirror-world aggregates.
         {entry.pack === "generated"
           ? " This dungeon is generator output (parse + placement + FR-46 bounded search) — not a live production probe. FR-4 gating is still not built."
           : ""}
