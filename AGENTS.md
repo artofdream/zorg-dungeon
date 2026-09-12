@@ -52,13 +52,14 @@ AEA cites (same GitLab project):
 - Skill matrix (merged [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512), closes [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433)): [`research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md`](https://gitlab.com/artof-group/adaptive-experience-architecture/-/blob/main/research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md)
 - Principle (open [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513), Closes [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434))
 
-Status in zorg-dungeon: **Documented / Planned**. [GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
-is the **stable formal principle**. Adopt trackers: zorg
-[#53](https://github.com/artofdream/zorg-dungeon/issues/53), Café
-Knowledge [#213](https://github.com/artofdream/aea-interactive-design/issues/213)
-(+ [#203](https://github.com/artofdream/aea-interactive-design/issues/203)
-/ [#204](https://github.com/artofdream/aea-interactive-design/issues/204)),
-logify [#24](https://github.com/artofdream/logify/issues/24). Café MRC
+Status in zorg-dungeon: **Documented until probed**. [GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
+is the **stable formal principle**. Café App cites #434 and filed
+[#214](https://github.com/artofdream/aea-interactive-design/issues/214)
+(`keep-learning-and-apply`). Café Knowledge cites #434 on
+[#213](https://github.com/artofdream/aea-interactive-design/issues/213)
+/ the matrix PR. Also zorg
+[#53](https://github.com/artofdream/zorg-dungeon/issues/53), logify
+[#24](https://github.com/artofdream/logify/issues/24). Café MRC
 is COMMENT-only. The apply map is [[SKILL_MATRIX]]: historical pain →
 skill / matrix row / finding sensor. Knowledge Pages content for this
 principle is **Unknown** until AEA probes it. Naming it in docs is not
@@ -74,15 +75,18 @@ Quarantine evidence: [#52](https://github.com/artofdream/zorg-dungeon/issues/52)
 Kid learn page stays Planned: [#51](https://github.com/artofdream/zorg-dungeon/issues/51).
 Cross-project ack: Café MRC is **COMMENT-only** (skills on the Café
 train; no self-merge on one-issue PRs). **New Bot** squash-merges
-Café skill PRs when MRC is **CLEAN**. Café App is **Documented /
-Planned** (shared four via
+Café skill PRs when MRC is **CLEAN**. Café App is **Documented
+until probed** (cites #434; Grok skill
+[#214](https://github.com/artofdream/aea-interactive-design/issues/214)
+(`keep-learning-and-apply`); shared four via
 [#206](https://github.com/artofdream/aea-interactive-design/issues/206);
 created [#207](https://github.com/artofdream/aea-interactive-design/issues/207)–[#212](https://github.com/artofdream/aea-interactive-design/issues/212);
 matrix [#205](https://github.com/artofdream/aea-interactive-design/issues/205)
 → `knowledge/skills-matrix.md` / `skills-matrix.html`). Café Knowledge
-is **Documented / Planned** (`knowledge-pages-ratchet` +
+is **Documented until probed** (cites #434 on
 [#213](https://github.com/artofdream/aea-interactive-design/issues/213)
-/ [#203](https://github.com/artofdream/aea-interactive-design/issues/203)
+/ the matrix PR + `knowledge-pages-ratchet`
+[#203](https://github.com/artofdream/aea-interactive-design/issues/203)
 / [#204](https://github.com/artofdream/aea-interactive-design/issues/204)).
 AEA is **Documented**
 ([#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433);
