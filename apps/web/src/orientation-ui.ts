@@ -90,10 +90,14 @@ export function boardCellAriaLabel(opts: {
   isAnchor?: boolean;
 }): string {
   const hatch = describeHatch(opts.orientation);
+  if (opts.preview) {
+    const bits = [`Empty ${opts.x},${opts.y}`, "preview wall-hatch " + hatch.shortLabel];
+    if (opts.roomName) bits.splice(1, 0, `placing ${opts.roomName}`);
+    if (opts.isAnchor) bits.push("spawn-room orientation anchor");
+    return bits.join(" · ");
+  }
   if (!opts.roomName) {
-    return opts.preview
-      ? `Empty ${opts.x},${opts.y} · preview wall-hatch ${hatch.shortLabel}`
-      : `Empty ${opts.x},${opts.y}`;
+    return `Empty ${opts.x},${opts.y}`;
   }
   const bits = [`${opts.roomName} at ${opts.x},${opts.y}`, `wall-hatch ${hatch.shortLabel}`];
   if (opts.isAnchor) bits.push("spawn-room orientation anchor");

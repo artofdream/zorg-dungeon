@@ -76,9 +76,12 @@ describe("NFR-6 hatch / orientation presentation", () => {
       y: 3,
       orientation: 0,
       preview: true,
-      roomName: undefined,
+      roomName: "A",
     });
+    expect(preview).toContain("Empty 2,3");
+    expect(preview).toContain("placing A");
     expect(preview).toContain("preview wall-hatch → right");
+    expect(preview).not.toContain("A at 2,3");
   });
 
   it("helper text names FR-7 and the spawn-room wall-hatch anchor", () => {
