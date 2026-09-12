@@ -18,6 +18,8 @@ import {
   KID_LEDE,
   KNOWLEDGE_GUIDE_HREF,
   KNOWLEDGE_JOURNEYS_HREF,
+  KNOWLEDGE_LEARN_HREF,
+  LEARN_THE_RULES_LABEL,
   START_HERE_CARD_BADGE,
   START_HERE_DIFFICULTY_LABEL,
   START_HERE_GENERATE_LABEL,
@@ -71,15 +73,15 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
             <li key={step}>{step}</li>
           ))}
         </ol>
-        <p className="hint">
-          More detail:{" "}
-          <a href={KNOWLEDGE_GUIDE_HREF} target="_blank" rel="noreferrer">
-            Player guide
-          </a>
-          {" · "}
-          <a href={KNOWLEDGE_JOURNEYS_HREF} target="_blank" rel="noreferrer">
-            Persona journeys
-          </a>
+        <p className="learn-link">
+          <a href={KNOWLEDGE_LEARN_HREF}>{LEARN_THE_RULES_LABEL}</a>
+          <span className="hint">
+            {" "}
+            — pictures and short sentences.{" "}
+            <a href={KNOWLEDGE_GUIDE_HREF}>Player guide</a>
+            {" · "}
+            <a href={KNOWLEDGE_JOURNEYS_HREF}>Persona journeys</a>
+          </span>
         </p>
       </section>
 

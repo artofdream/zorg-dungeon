@@ -37,6 +37,8 @@ import {
 import {
   HONESTY_SUMMARY,
   KNOWLEDGE_GUIDE_HREF,
+  KNOWLEDGE_LEARN_HREF,
+  LEARN_THE_RULES_LABEL,
   MAKER_GATE_BLOCKED,
   MAKER_GATE_OK,
   MAKER_GENERATED_HONESTY,
@@ -275,7 +277,12 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
           ? ` · ${entry.contractName} (cost ${entry.contractCost ?? "—"} flavour only)`
           : ""}
       </p>
-      <p className="hint">{MAKER_HOW_TO}{" "}
+      <p className="hint">
+        {MAKER_HOW_TO}{" "}
+        <a href={KNOWLEDGE_LEARN_HREF} target="_blank" rel="noreferrer">
+          {LEARN_THE_RULES_LABEL}
+        </a>
+        {" · "}
         <a href={KNOWLEDGE_GUIDE_HREF} target="_blank" rel="noreferrer">
           Player guide
         </a>

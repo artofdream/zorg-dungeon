@@ -7,7 +7,7 @@ These journeys are **validation use cases** for the Maker at [https://zorg.artof
 
 The authored campaign and the Difficulté / **Difficulty** bands are the same numbers the fixtures already use. **Difficulty** is the kid-facing English word; **Difficulté** is the source label (kept as a secondary / bilingual hint). Engine proof in [[STATUS_LEDGER]] is still Simulated, not Live & Probed.
 
-Companion how-to: [[PLAYER_GUIDE]]. First-timer gap that started this work: [[FINDINGS]] CF-009.
+Companion how-to: [[LEARN]] (kid pictures) and [[PLAYER_GUIDE]] (full companion). First-timer gap that started this work: [[FINDINGS]] CF-009.
 
 ## How to use these journeys
 
@@ -70,6 +70,7 @@ Play one easy dungeon and understand win vs loss without asking an adult to deco
 
 - [ ] Landing heading is the game name; lede is plain English.
 - [ ] How to play lists: pick easy / Generate → place A toward Z → Start fight → heroes die before Z.
+- [ ] **Learn the rules** opens the kid page (`learn.html`) with pictures and no FR soup on the first screen.
 - [ ] **Start here — Difficulty 1** opens a playable authored Difficulty 1 level.
 - [ ] **Start here — Generate Difficulty 1** opens a generated practice dungeon.
 - [ ] First playable Difficulty 1 card is marked Start here when that band is showing.
@@ -112,6 +113,7 @@ Coach a first run in under a minute: what to tap, what “winning” means, wher
 ### Validation checklist (manual)
 
 - [ ] Helper blurb is visible near How to play.
+- [ ] **Learn the rules** is the first extra link on How to play (pictures).
 - [ ] Knowledge guide link is on the landing How to play panel.
 - [ ] “Show unfinished levels” is off by default.
 - [ ] Place rooms in a line still exists on the Maker (helper rescue).

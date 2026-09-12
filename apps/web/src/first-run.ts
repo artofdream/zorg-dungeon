@@ -1,5 +1,10 @@
 import { UNSPECIFIED_DIFFICULTY, type CampaignEntry } from "@zorg/engine";
 
+/** Kid-facing rules page (published from docs/LEARN.md). */
+export const KNOWLEDGE_LEARN_HREF = "https://knowledge.zorg.artof.link/learn.html";
+
+export const LEARN_THE_RULES_LABEL = "Learn the rules";
+
 /** Knowledge companion (published from docs/PLAYER_GUIDE.md). */
 export const KNOWLEDGE_GUIDE_HREF = "https://knowledge.zorg.artof.link/guide.html";
 
@@ -54,6 +59,7 @@ export const KID_FACING_COPY = [
   ...HOW_TO_PLAY_STEPS,
   KID_LEDE,
   HELPER_BLURB,
+  LEARN_THE_RULES_LABEL,
   START_HERE_DIFFICULTY_LABEL,
   START_HERE_GENERATE_LABEL,
   START_HERE_CARD_BADGE,

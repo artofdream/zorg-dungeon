@@ -5,7 +5,7 @@ This page is a **plain-English companion** to [[GAME_SPEC]]. It is not the legal
 > [!IMPORTANT]
 > If this English or a diagram disagrees with [[GAME_SPEC]], the spec wins. Do not invent room `C`, Gunner shot-duration, or contract gating ([[FR-18]], [[FR-22]], [[FR-4]]).
 
-Play the authored campaign in the Maker: [https://zorg.artof.link](https://zorg.artof.link). The Maker landing now has a kid-facing **How to play** plus **Start here** (Difficulty 1 or Generate Difficulty 1). Persona checklists live in [[PLAYER_JOURNEYS]] — UX validation only; this guide and those journeys never override the spec.
+Play the authored campaign in the Maker: [https://zorg.artof.link](https://zorg.artof.link). First-timers can start from [[LEARN]] (short sentences + pictures). The Maker landing has **How to play**, **Learn the rules**, and **Start here** (Difficulty 1 or Generate Difficulty 1). Persona checklists live in [[PLAYER_JOURNEYS]] — UX validation only; this guide and those journeys never override the spec.
 
 ## How to play the campaign
 

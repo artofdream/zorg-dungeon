@@ -163,6 +163,7 @@ function inlineFormat(text) {
       agents: "architecture.html",
       player_guide: "guide.html",
       player_journeys: "journeys.html",
+      learn: "learn.html",
       skill_matrix: "skills.html",
     };
     if (pageAlias[cleanTarget]) {
@@ -197,6 +198,7 @@ function inlineFormat(text) {
 function pageShell({ title, current, content }) {
   const navItems = [
     { id: "home", label: "Home", href: "index.html" },
+    { id: "learn", label: "Learn the rules", href: "learn.html" },
     { id: "guide", label: "Guide", href: "guide.html" },
     { id: "journeys", label: "Journeys", href: "journeys.html" },
     { id: "spec", label: "Rules & Spec", href: "spec.html" },
@@ -297,6 +299,11 @@ const homeContent = `
 
 <div class="grid-cards">
   <div class="card">
+    <h3>🧒 Learn the rules</h3>
+    <p>Short sentences and pictures for a first-timer. Place rooms, start the fight, keep heroes off Zorg. Formal IDs stay in a grown-up note.</p>
+    <a href="learn.html">Learn the rules →</a>
+  </div>
+  <div class="card">
     <h3>🧭 Guide</h3>
     <p>How to play: pick Difficulty, place rooms, start the fight. Rooms, heroes, spells, and what is still unavailable — with diagrams. If English disagrees with the spec, the spec wins.</p>
     <a href="guide.html">Open the guide →</a>
@@ -382,6 +389,33 @@ if (!guideHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: PLAYER_GUIDE.md produced no mermaid diagrams");
 }
 writeFileSync(join(distDir, "guide.html"), pageShell({ title: "Player & builder guide", current: "guide", content: guideHtml }));
+
+// 1b2. Kid-facing learn page (companion — GAME_SPEC remains the legal voice)
+const learnMd = readDoc("docs/LEARN.md");
+if (!learnMd.trim()) {
+  throw new Error("knowledge build: missing docs/LEARN.md");
+}
+if (!/the spec wins/i.test(learnMd)) {
+  throw new Error("knowledge build: LEARN.md must say the spec wins");
+}
+if ((learnMd.match(/```mermaid/g) || []).length < 3) {
+  throw new Error("knowledge build: LEARN.md needs at least 3 mermaid diagrams");
+}
+if (!/Start fight/i.test(learnMd) || !/heroes start/i.test(learnMd)) {
+  throw new Error("knowledge build: LEARN.md must teach A, Start fight, and the win idea");
+}
+if (/C rooms? are now defined|Gunner duration is encoded|FR-4 gating is built/i.test(learnMd)) {
+  throw new Error("knowledge build: LEARN.md must not invent C / Gunner duration / FR-4");
+}
+const learnKidBody = learnMd.split("## Grown-up notes")[0] ?? learnMd;
+if (/FR-\d+|Simulated|Gunner duration|extermination|ledger/i.test(learnKidBody)) {
+  throw new Error("knowledge build: LEARN.md kid-facing body must stay free of FR / ledger jargon");
+}
+const learnHtml = markdownToHtml(learnMd);
+if ((learnHtml.match(/class="mermaid"/g) || []).length < 3) {
+  throw new Error("knowledge build: LEARN.md produced too few mermaid diagrams");
+}
+writeFileSync(join(distDir, "learn.html"), pageShell({ title: "Learn the rules", current: "learn", content: learnHtml }));
 
 // 1c. Persona journeys (UX validation — GAME_SPEC remains the legal voice)
 const journeysMd = readDoc("docs/PLAYER_JOURNEYS.md");

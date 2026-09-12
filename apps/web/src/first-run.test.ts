@@ -7,6 +7,8 @@ import {
   HOW_TO_PLAY_STEPS,
   KID_FACING_COPY,
   KNOWLEDGE_GUIDE_HREF,
+  KNOWLEDGE_LEARN_HREF,
+  LEARN_THE_RULES_LABEL,
   START_HERE_DIFFICULTY_LABEL,
   START_HERE_GENERATE_LABEL,
   difficultyChipLabel,
@@ -47,6 +49,8 @@ describe("first-run persona copy (J-KID / J-HELPER)", () => {
     expect(HOW_TO_PLAY_STEPS[3]).toMatch(/die before they reach Z/);
     expect(START_HERE_DIFFICULTY_LABEL).toBe("Start here — Difficulty 1");
     expect(START_HERE_GENERATE_LABEL).toBe("Start here — Generate Difficulty 1");
+    expect(KNOWLEDGE_LEARN_HREF).toMatch(/learn\.html/);
+    expect(LEARN_THE_RULES_LABEL).toBe("Learn the rules");
     expect(KNOWLEDGE_GUIDE_HREF).toMatch(/guide\.html/);
   });
 
