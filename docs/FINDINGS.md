@@ -169,7 +169,7 @@ Does not invent Gunner duration or new shove rules.
 ## CF-009: First-timer landing is engineer-first
 - Status: Resolved
 - Recurrence: 1
-- Linked: (this PR — persona journeys + first-run landing)
+- Linked: https://github.com/artofdream/zorg-dungeon/pull/44, https://github.com/artofdream/zorg-dungeon/issues/46, https://github.com/artofdream/zorg-dungeon/issues/47, https://github.com/artofdream/zorg-dungeon/issues/48
 - Sensor added: apps/web/src/first-run.test.ts
 
 Sponsor: the game should be reachable from about age 8. The live Maker
