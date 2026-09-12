@@ -394,6 +394,97 @@ button:disabled {
   margin: 0.4rem 0;
   font-size: 0.9rem;
   overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.hp-head {
+  margin: 0;
+}
+
+.hero-icon {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: #0d1117;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.hero-icon-sm {
+  width: 22px;
+  height: 22px;
+}
+
+.hero-icon-md {
+  width: 28px;
+  height: 28px;
+}
+
+.hero-icon-lg {
+  width: 40px;
+  height: 40px;
+}
+
+.hero-type-row,
+.hero-roster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.55rem;
+}
+
+.hero-roster {
+  margin: 0 0 0.55rem;
+}
+
+.hero-type-chip,
+.hero-roster-item,
+.choix-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.hero-roster-item {
+  font-size: 0.85rem;
+}
+
+.hero-roster-item.dead {
+  opacity: 0.5;
+}
+
+.hero-roster-item.active {
+  color: var(--accent);
+}
+
+.hero-legend {
+  margin: 0.65rem 0 0.75rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--line);
+}
+
+.hero-legend .hint {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cell-heroes {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  margin-bottom: 1px;
+  z-index: 1;
+}
+
+.cell .hero-icon {
+  width: min(20px, calc(var(--cell) * 0.38));
+  height: min(20px, calc(var(--cell) * 0.38));
 }
 
 .issues span {
@@ -464,6 +555,15 @@ button:disabled {
 
 .level-card .reason {
   color: var(--warn);
+}
+
+.level-card .hero-type-row {
+  margin-top: 0.15rem;
+}
+
+.level-card .hero-type-chip {
+  font-size: 0.78rem;
+  color: var(--muted);
 }
 
 .banner {

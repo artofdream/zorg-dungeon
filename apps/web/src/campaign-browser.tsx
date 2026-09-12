@@ -8,6 +8,8 @@ import {
   type CampaignEntry,
   type GenerationBand,
 } from "@zorg/engine";
+import { HeroTypeRow } from "./hero-icon.js";
+import { heroTypesFromLevelText } from "./hero-icons.js";
 
 interface Props {
   catalog: CampaignEntry[];
@@ -129,6 +131,7 @@ export function CampaignBrowser({ catalog, onPick, onGenerate }: Props) {
                 : ""}
               {entry.needsChoix ? " · choix setup" : ""}
             </span>
+            <HeroTypeRow types={heroTypesFromLevelText(entry.text)} labelled />
             {!entry.playable ? (
               <span className="reason">
                 Unavailable — {entry.unavailableReasons.map(unavailableReasonLabel).join(" · ")}
