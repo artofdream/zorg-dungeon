@@ -94,6 +94,8 @@ type ParsedConstraint =
 
 export function normalizeExpression(expression: string): string {
   return expression
+    .replace(/²/g, "^2")
+    .replace(/³/g, "^3")
     .normalize("NFKC")
     .replace(/[’′‛ʼ`]/g, "'")
     .replace(/[″ʺ]/g, "''")
@@ -462,25 +464,27 @@ function evaluateParsed(parsed: ParsedConstraint, ctx: EvalContext): { status: C
       return { status: "unsupported", detail: layout.reason };
     }
     if (parsed.form.type === "exists_adj_az") {
+      const need = parsed.form.dist;
       const a = uniqueRoom(layout, { type: "A" });
       const z = uniqueRoom(layout, { type: "Z" });
       if (a instanceof UnsupportedConstraint) return { status: "unsupported", detail: a.reason };
       if (z instanceof UnsupportedConstraint) return { status: "unsupported", detail: z.reason };
       const ok = layout.rooms.some(
         (room) =>
-          manhattanDistance(room.position, a.position) === parsed.form.dist &&
-          manhattanDistance(room.position, z.position) === parsed.form.dist,
+          manhattanDistance(room.position, a.position) === need &&
+          manhattanDistance(room.position, z.position) === need,
       );
       return { status: heldOrFailed(ok) };
     }
     if (parsed.form.type === "exists_d_pair") {
+      const need = parsed.form.dist;
       const ds = layout.rooms.filter((r) => r.def.type === "D");
       for (let i = 0; i < ds.length; i += 1) {
         for (let j = i + 1; j < ds.length; j += 1) {
           const left = ds[i];
           const right = ds[j];
           if (!left || !right) continue;
-          if (manhattanDistance(left.position, right.position) === parsed.form.dist) {
+          if (manhattanDistance(left.position, right.position) === need) {
             return { status: "held" };
           }
         }
