@@ -342,7 +342,10 @@ describe("NFR-10 Princess layers (FR-25 / FR-31)", () => {
     const { cell } = aSpawn(layout);
     const grid = buildWalkGrid(layout);
     const reachable = reachableRoomIds(layout, grid, cell);
-    const viewer = { id: 0, def: level.heroes[0]! };
+    const viewer = {
+      id: 0,
+      def: { type: "Princess" as const, hp: 5, weights: { D: 5, Z: 1 }, pull: 1 },
+    };
     expect(highestWeightRoomIds(layout, viewer, [], reachable)).toEqual(["D:0"]);
   });
 

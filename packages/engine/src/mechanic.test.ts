@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { azdLevel, placeAll } from "./phase1-fixtures.js";
 import { mechanicSquare, shoveShortcut } from "./phase5-fixtures.js";
 import { simulate } from "./simulation.js";
-import { mechanicPriorityBetter } from "./mechanic.js";
+import { layoutFromKey, layoutKeyOf, mechanicPriorityBetter, planShove } from "./mechanic.js";
 import { MECHANIC_TIE_BREAK_ORDER, orientedMechanicTieBreak } from "./tiles.js";
 
 function enteredRooms(events: { type: string; roomId?: string }[]): string[] {
@@ -32,6 +32,21 @@ describe("FR-24 Mechanic shortest path ignoring HP", () => {
     expect(enteredRooms(state.events)).toEqual(["A:0", "D:0"]);
     expect(state.outcome).toBe("win");
     expect(shoves(state.events)).toHaveLength(0);
+  });
+});
+
+describe("FR-24 Mechanic layout-key codec (CF-008)", () => {
+  it("round-trips room ids that contain a colon (A:0)", () => {
+    const { layout } = shoveShortcut([{ type: "Mechanic", hp: 5, powerSteps: { A: 1 } }]);
+    const shoved = planShove(layout, { x: 2, y: 2 }, "A:0", "up");
+    expect(shoved).toBeDefined();
+    if (!shoved) return;
+    const key = layoutKeyOf(shoved.layout);
+    expect(key).toContain("A:0@");
+    expect(key).not.toMatch(/(^|\|)A@/);
+    const restored = layoutFromKey(layout, key);
+    expect(restored.rooms.find((r) => r.id === "A:0")?.position).toEqual({ x: 0, y: 1 });
+    expect(restored.rooms.find((r) => r.id === "Z:0")?.position).toEqual({ x: 1, y: 1 });
   });
 });
 
