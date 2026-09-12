@@ -222,6 +222,26 @@ function pageShell({ title, current, content }) {
       startOnLoad: false,
       theme: "dark",
       securityLevel: "strict",
+      themeVariables: {
+        darkMode: true,
+        background: "#161b22",
+        primaryColor: "#1c2128",
+        primaryTextColor: "#e6edf3",
+        primaryBorderColor: "#d29922",
+        secondaryColor: "#161b22",
+        tertiaryColor: "#0d1117",
+        lineColor: "#8b949e",
+        fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+      },
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        padding: 16,
+        nodeSpacing: 28,
+        rankSpacing: 40,
+        wrappingWidth: 420,
+        curve: "basis",
+      },
     });
     const nodes = [...document.querySelectorAll("pre.mermaid")];
     for (let i = 0; i < nodes.length; i++) {
@@ -466,8 +486,8 @@ const aeaContent = `
 <div class="mermaid-wrap"><pre class="mermaid">flowchart LR
   spec["GAME_SPEC + docs"]
   engine["packages/engine"]
-  maker["apps/web Maker"]
-  site["apps/knowledge"]
+  maker["apps/web — Maker"]
+  site["apps/knowledge — this site"]
   spec --> engine
   spec --> site
   engine --> maker
@@ -485,34 +505,13 @@ const aeaContent = `
   </p>
 </div>
 
-<pre><code>
-┌────────────────────────────────────────────────────────────────────────┐
-│ 1. THE CUSTOMER / PLAYER INTERACTS                                     │
-│    Player lays out dungeon rooms, casts spells, inspects solvability   │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ 2. THE AI INTERPRETER & LIVE NOTEPAD (Shared Understanding)            │
-│    • Multi-Agent Team (Claude, Gemini, OpenAI, Grok, Copilot, Kimi)    │
-│    • Shared Memory: Committed docs, GAME_SPEC.md, Status Ledger        │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ 3. THE REAL-WORLD SERVICES (The Source of Truth)                       │
-│    • Simulation Engine (@zorg/engine): Pure TS rules, 100% deterministic│
-│    • Geometry & Border Validation: Side-adjacency, wall-hatch alignment│
-│    • Turn Scheduler & Pathfinding: Fail-closed verification            │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ 4. THE OUTER HARNESS (The Factory & Quality Inspectors)                │
-│    • Automated Governance Gates: Trace, Ledger, Findings, Docs-Graph   │
-│    • Independent Gatekeeper: No self-approval, required peer review    │
-└────────────────────────────────────────────────────────────────────────┘
-</code></pre>
+<div class="mermaid-wrap"><pre class="mermaid">flowchart TB
+  player["Layer 1 — Player interacts&lt;br/&gt;Places rooms, casts spells, inspects solvability"]
+  shared["Layer 2 — Shared Understanding&lt;br/&gt;Multi-agent team + committed docs, GAME_SPEC, Status Ledger"]
+  domain["Layer 3 — Domain Services&lt;br/&gt;@zorg/engine decides — geometry, scheduler, fail-closed checks"]
+  harness["Layer 4 — Outer Harness&lt;br/&gt;Governance gates + independent peer review, no self-approval"]
+  player --> shared --> domain --> harness
+</pre></div>
 
 <h3>The Three Golden Rules</h3>
 <ul>
@@ -522,33 +521,20 @@ const aeaContent = `
 </ul>
 
 <h2>2. The 5 Concentric Floors (Why AI Apps Break)</h2>
-<pre><code>
-┌────────────────────────────────────────────────────────────────────────┐
-│ 🏢 FLOOR 05: THE AGENT TEAM & GOVERNANCE (Graph Engineering)           │
-│    Specialized human/agent roles + Independent Reviewer (AGENTS.md §5) │
-│ ┌──────────────────────────────────────────────────────────────────┐   │
-│ │ 🔄 FLOOR 04: THE GOAL RUN & RETRIES (Loop Engineering)            │   │
-│ │    1 Issue → 1 Branch → 1 Pull Request with clean budgets        │   │
-│ │ ┌────────────────────────────────────────────────────────────┐   │   │
-│ │ │ ⚙️ FLOOR 03: THE MACHINE & TESTS (Harness Engineering)       │   │   │
-│ │ │    Real tools (Vitest, pnpm) + automated quality guards     │   │   │
-│ │ │ ┌──────────────────────────────────────────────────────┐   │   │   │
-│ │ │ │ 🧠 FLOOR 02: THE MEMORY CURATOR (Context Engineering)  │   │   │   │
-│ │ │ │    Filters noise, preserves lessons in 4 clean vaults│   │   │   │
-│ │ │ │ ┌────────────────────────────────────────────────┐   │   │   │   │
-│ │ │ │ │ 💬 FLOOR 01: THE MESSAGE (Prompt Engineering)   │   │   │   │   │
-│ │ │ │ │    Single objective, strict pointers to AGENTS.md│   │   │   │   │
-│ │ │ │ └────────────────────────────────────────────────┘   │   │   │   │
-│ │ │ └──────────────────────────────────────────────────────┘   │   │   │
-│ │ └────────────────────────────────────────────────────────────┘   │   │
-│ └──────────────────────────────────────────────────────────────────┘   │
-└────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼ Built On Real Infrastructure
-┌────────────────────────────────────────────────────────────────────────┐
-│ 🏛️ SOLID FOUNDATION: AWS Lightsail, Route 53, Docker, Prometheus & Grafana│
-└────────────────────────────────────────────────────────────────────────┘
-</code></pre>
+<div class="mermaid-wrap"><pre class="mermaid">flowchart TB
+  subgraph f05["05 Graph — agent team and governance"]
+    subgraph f04["04 Loop — 1 issue, 1 branch, 1 PR"]
+      subgraph f03["03 Harness — Vitest, pnpm, quality guards"]
+        subgraph f02["02 Context — memory curator, 4 vaults"]
+          f01["01 Prompt — the message&lt;br/&gt;One objective, pointers to AGENTS.md"]
+        end
+      end
+    end
+  end
+  found["Foundation — Lightsail, Route 53, Docker, Prometheus and Grafana"]
+  f05 -->|"built on"| found
+</pre></div>
+<p class="diagram-caption">Outer floors wrap inner ones: graph roles and independent review, then the 1-issue / 1-branch / 1-PR loop, then Vitest and pnpm guards, then the four memory vaults, then a single AGENTS.md-pointed prompt. The stack sits on the live host.</p>
 
 <ul>
   <li><strong>The Dependency Law:</strong> If your multi-agent team keeps failing, don't blame the agents—check your memory filter. Bad input on Floor 2 ruins everything above it.</li>
@@ -603,8 +589,12 @@ const aeaContent = `
   </div>
 </div>
 `;
-if (!aeaContent.includes('class="mermaid"')) {
-  throw new Error("knowledge build: AEA page produced no mermaid diagram");
+const aeaMermaidCount = (aeaContent.match(/<pre class="mermaid">/g) || []).length;
+if (aeaMermaidCount < 3) {
+  throw new Error(`knowledge build: AEA page expected at least 3 mermaid diagrams, found ${aeaMermaidCount}`);
+}
+if (/[┌┐└┘│─┬┴┼▼]/.test(aeaContent)) {
+  throw new Error("knowledge build: AEA page still contains ASCII box-drawing diagrams");
 }
 writeFileSync(join(distDir, "aea.html"), pageShell({ title: "AEA Harness", current: "aea", content: aeaContent }));
 
