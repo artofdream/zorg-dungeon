@@ -34,6 +34,19 @@ import {
   MAKER_ORIENTATIONS,
   selectedRoomHatchLabel,
 } from "./orientation-ui.js";
+import {
+  HONESTY_SUMMARY,
+  KNOWLEDGE_GUIDE_HREF,
+  KNOWLEDGE_LEARN_HREF,
+  LEARN_THE_RULES_LABEL,
+  MAKER_GATE_BLOCKED,
+  MAKER_GATE_OK,
+  MAKER_GENERATED_HONESTY,
+  MAKER_HONESTY_DETAILS,
+  MAKER_HOW_TO,
+  START_FIGHT_LABEL,
+  difficultyEntryLabel,
+} from "./first-run.js";
 
 interface Props {
   entry: CampaignEntry;
@@ -258,23 +271,29 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
       </div>
       <p className="lede">
         {entry.id}
-        {entry.difficulty !== null ? ` · Difficulté ${entry.difficulty}` : ""}
+        {difficultyEntryLabel(entry.difficulty)}
         {entry.pack === "generated" ? " · generated" : ""}
         {entry.contractName
           ? ` · ${entry.contractName} (cost ${entry.contractCost ?? "—"} flavour only)`
           : ""}
-        . Place every supplied room, then start the fight with this level's
-        heroes and spells.
       </p>
-      <p className="honesty">
-        Simulated engine, not Live. The outcome here is the scheduler result:
-        heroes dead, Z reached, or stalemate. Engine `scoreLevel` (FR-43 /
-        FR-44) is Simulated in tests; this view does not score extra
-        constraints, bonuses, or mirror-world aggregates.
-        {entry.pack === "generated"
-          ? " This dungeon is generator output (parse + placement + FR-46 bounded search) — not a live production probe. FR-4 gating is still not built."
-          : ""}
+      <p className="hint">
+        {MAKER_HOW_TO}{" "}
+        <a href={KNOWLEDGE_LEARN_HREF} target="_blank" rel="noreferrer">
+          {LEARN_THE_RULES_LABEL}
+        </a>
+        {" · "}
+        <a href={KNOWLEDGE_GUIDE_HREF} target="_blank" rel="noreferrer">
+          Player guide
+        </a>
       </p>
+      <details className="honesty">
+        <summary>{HONESTY_SUMMARY}</summary>
+        <p>
+          {MAKER_HONESTY_DETAILS}
+          {entry.pack === "generated" ? MAKER_GENERATED_HONESTY : ""}
+        </p>
+      </details>
 
       {entry.needsChoix ? (
         <section className="panel setup">
@@ -511,7 +530,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
         <section className="panel panel-play">
           <h2>Validation</h2>
           {report.ok ? (
-            <p className="ok">FR-5–FR-7 hold. Extermination is allowed (FR-8).</p>
+            <p className="ok">{MAKER_GATE_OK}</p>
           ) : (
             <ul className="issues">
               {report.issues.map((issue, i) => (
@@ -523,7 +542,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
           <h2 style={{ marginTop: "1rem" }}>Extermination</h2>
           <div className="controls">
             <button type="button" disabled={!gateOpen || playing} onClick={startRun}>
-              Start
+              {START_FIGHT_LABEL}
             </button>
             <button type="button" disabled={!run || run.outcome !== "in_progress"} onClick={stepPlayback}>
               Step
@@ -548,10 +567,10 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
               {run.outcome !== "in_progress" ? (
                 <p className={`banner ${run.outcome}`} role="status">
                   {run.outcome === "win"
-                    ? "Win — every hero is dead (Simulated scheduler)."
+                    ? "You win — every hero is dead."
                     : run.outcome === "loss"
-                      ? "Loss — a hero reached Z (Simulated scheduler)."
-                      : "Stalemate — nothing further changes (Simulated scheduler)."}
+                      ? "You lose — a hero reached Zorg."
+                      : "Stalemate — nothing further changes."}
                 </p>
               ) : null}
               <h2 style={{ marginTop: "1rem" }}>Spells (Φ)</h2>
@@ -625,9 +644,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate }: Prop
             </>
           ) : (
             <p className="hint">
-              {gateOpen
-                ? "Layout is a valid dungeon. Start opens extermination."
-                : "Start is disabled until the layout is a single valid dungeon."}
+              {gateOpen ? MAKER_GATE_OK : MAKER_GATE_BLOCKED}
             </p>
           )}
         </section>
