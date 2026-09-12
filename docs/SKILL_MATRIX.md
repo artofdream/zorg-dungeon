@@ -2,7 +2,22 @@
 
 One table shape everywhere: **Skill | Scope | Why? (historical evidence) | What (recipe / responsibility)**.
 
-This page is a map, not a new game rule and not a [[STATUS_LEDGER]] promotion. Formal IDs stay in [[GAME_SPEC]]. **Keep Learning and Apply** ([AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434), open [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)): when the build teaches something, write it into the harness before the next loop. Complements Honesty and Knowledge First; **not** Antifragility. Status here: **Documented / Planned**. Knowledge Pages: **Unknown** until AEA probes. Do not treat !513 as merged.
+This page is a map, not a new game rule and not a [[STATUS_LEDGER]] promotion. Formal game IDs stay in [[GAME_SPEC]].
+
+## Umbrella — Keep Learning and Apply
+
+Sponsor-added AEA core principle. Loop: **historical pain → skill / matrix row / finding sensor**. Complements Honesty and Knowledge First. **Not** Antifragility (second-miss → CI/test gate). A chat note is not apply.
+
+Cites [AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) and open [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513). Status: **Documented** pending a formal AEA ID. Do not treat !513 as merged. Do not invent a principle number. Knowledge Pages: **Unknown** until AEA probes. Not Live.
+
+```mermaid
+flowchart LR
+  pain["Historical pain"] --> skill["Skill"]
+  pain --> matrix["Matrix row"]
+  pain --> sensor["Finding sensor"]
+```
+
+[[AGENTS]] owns the playbook wording (sibling `bc-054efe6b` / PR #54). This page is the apply map. Compose — do not duplicate that section.
 
 AEA skill-matrix source (merged [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512), closes [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433)): [`research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md`](https://gitlab.com/artof-group/adaptive-experience-architecture/-/blob/main/research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md).
 
@@ -32,6 +47,7 @@ flowchart TB
 
 | Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
 |---|---|---|---|
+| Keep Learning and Apply | Umbrella · Documented pending formal AEA ID | Phases 0–7, AFK trains, first-play audits, cross-project repeats. Cites [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [#53](https://github.com/artofdream/zorg-dungeon/issues/53). Formal AEA ID still pending. | Historical pain → skill / matrix row / finding sensor. Write it before the next loop. Not Live. |
 | `code-changes` | OOTB / managed | Used for every phase 0–7 slice, the Difficulté generator, campaign, and Maker UX. | Load for any cloud-first edit to this tree (engine, Maker, knowledge, docs, CI). |
 | `routines` | OOTB / managed | AFK parallel PRs went red with no one watching. | Babysit open PRs / CI after the producer steps away. |
 | `box-desktop` | OOTB / managed | 2026-09-12 first-play audit produced [#30](https://github.com/artofdream/zorg-dungeon/issues/30)–[#48](https://github.com/artofdream/zorg-dungeon/issues/48). | Live audit of [zorg.artof.link](https://zorg.artof.link). A knowledge screenshot is not that audit. |
@@ -185,7 +201,7 @@ Status: Planned. Document in docs/SKILL_MATRIX.md.
 1. Load **OOTB** for the job (edit / babysit / live audit / save a recipe).
 2. Load the **shared Grok** sand-workflow that matches the repeating miss.
 3. Read **project playbooks** on `main`. If it is not there, it did not happen.
-4. **Keep Learning and Apply** ([#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)): write the lesson into the harness before the next loop.
+4. **Keep Learning and Apply** (umbrella; **Documented** pending formal AEA ID): historical pain → skill / matrix row / finding sensor. Cite [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513); do not invent the formal ID.
 5. **Cross-project:** reuse where history matches. Café MRC **agrees**; New Bot squash-merges skill PRs when MRC is **CLEAN**. Café App is **Documented / Simulated** ([#205](https://github.com/artofdream/aea-interactive-design/issues/205)–[#212](https://github.com/artofdream/aea-interactive-design/issues/212); shared four via [#206](https://github.com/artofdream/aea-interactive-design/issues/206)). Café Knowledge is **Documented / Simulated** (`knowledge-pages-ratchet` + [#203](https://github.com/artofdream/aea-interactive-design/issues/203) / [#204](https://github.com/artofdream/aea-interactive-design/issues/204)). AEA [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) is **Documented**. logify skills are **created** ([#22](https://github.com/artofdream/logify/issues/22) / [#23](https://github.com/artofdream/logify/issues/23)); companion / personas N/A. 3DX Lab is **in-flight**. Other-lane skills **Documented / Simulated** until probed. Not Live.
 
 This page does not close [[FR-4]], [[FR-18]], or Gunner duration.

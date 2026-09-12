@@ -388,7 +388,7 @@ const homeContent = `
   </div>
   <div class="card">
     <h3>🧰 Skills</h3>
-    <p>Which agent skills apply, who must load them, and why they were chosen after the 2026-09 build. Each row is an apply-artifact of historical pain (AEA Keep Learning and Apply, #434). A map, not a ledger promotion.</p>
+    <p>Umbrella: Keep Learning and Apply — historical pain → skill / matrix row / finding sensor. Documented pending a formal AEA ID (#434 is a cite, not the frozen number). A map, not a ledger promotion.</p>
     <a href="skills.html">Open the skill matrix →</a>
   </div>
 </div>
@@ -571,6 +571,9 @@ for (const name of [
 if (!/Keep Learning and Apply/i.test(skillsMd)) {
   throw new Error("knowledge build: SKILL_MATRIX.md must name Keep Learning and Apply");
 }
+if (!skillsMd.includes("pending formal AEA ID") || !skillsMd.includes("historical pain") || !skillsMd.includes("Finding sensor")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep Keep Learning as the umbrella (pain → skill/matrix/finding sensor)");
+}
 if (!skillsMd.includes("work_items/434")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA work item #434");
 }
@@ -735,7 +738,7 @@ const aeaContent = `
 
 <div class="alert alert-note">
   <div class="alert-title">Keep Learning and Apply</div>
-  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">AEA #434</a> (open <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a>): when the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a> (closes <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433" target="_blank" rel="noreferrer">#433</a>). In this repo the apply map is the <a href="skills.html">skill matrix</a>. Status: <span class="badge badge-planned">Planned</span> / Documented. Knowledge Pages for this principle: <span class="badge badge-unknown">Unknown</span> until AEA probes. Do not treat !513 as merged.</p>
+  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">AEA #434</a> (open <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a>): historical pain → skill / matrix row / finding sensor. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a>. In this repo the apply map is the <a href="skills.html">skill matrix</a>. Status: <strong>Documented</strong> pending a formal AEA ID. Knowledge Pages: <span class="badge badge-unknown">Unknown</span> until AEA probes. Do not invent the formal ID. Do not treat !513 as merged.</p>
 </div>
 
 <h2>1. The Core Formula in Everyday Terms</h2>

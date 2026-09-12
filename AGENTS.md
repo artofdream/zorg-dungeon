@@ -52,9 +52,12 @@ AEA cites (same GitLab project):
 - Skill matrix (merged [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512), closes [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433)): [`research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md`](https://gitlab.com/artof-group/adaptive-experience-architecture/-/blob/main/research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md)
 - Principle (open [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513), Closes [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434))
 
-Status in zorg-dungeon: **Documented / Planned**. Knowledge Pages
-content for this principle is **Unknown** until AEA probes it. Naming
-it in docs is not `Live & Probed`. Do not treat !513 as merged.
+Status in zorg-dungeon: **Documented** pending a formal AEA ID.
+Work item #434 / !513 are cites, not a frozen principle number. Do
+not invent one. The apply map is [[SKILL_MATRIX]]: historical pain →
+skill / matrix row / finding sensor. Knowledge Pages content for this
+principle is **Unknown** until AEA probes it. Naming it in docs is not
+`Live & Probed`. Do not treat !513 as merged.
 
 The skill map is [[SKILL_MATRIX]] (columns: Skill | Scope | Why? | What).
 Shared Grok skills (sand-workflow slugs `pr-train-rebase`,
