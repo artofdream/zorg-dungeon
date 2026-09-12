@@ -19,8 +19,9 @@ to the code.
   `serializeLevel` text + a suggested Maker layout. No UI dependency.
 - Difficulté targets are the authored numeric bands **1–4** (the values that
   actually appear on green fixtures). Knobs (room / hero / spell counts, E/O
-  flavour) stay inside those corpus envelopes. Unspecified deluxe contracts
-  are not a generation band.
+  flavour) stay inside those corpus envelopes (band 4 matches Stupidity
+  Award's 9-room board). Unspecified deluxe contracts are not a generation
+  band.
 - Typical generated worlds are **intended solvable** under [[FR-46]] / [[NFR-4]]:
   an A → lethal D → … → Z line, first D ≥ hero HP, empty cast sequence.
   This slice does **not** emit mirror worlds or not_solvable-mirror constraints.

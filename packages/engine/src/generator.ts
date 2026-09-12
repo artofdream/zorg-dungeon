@@ -66,7 +66,7 @@ export interface GenerationProfile {
  * - Band 1: typically 4–6 rooms, 1–2 heroes, 0–1 spells; A/Z/D/E (Foundations).
  * - Band 2: typically 5–7 rooms, 1–2 heroes, 0–2 spells; gold/toll/portals appear.
  * - Band 3: room count does not jump (often 5–8); more spells / constraints.
- * - Band 4: one authored level (Stupidity Award) — 8 rooms, 2 heroes, 3 spells.
+ * - Band 4: one authored level (Stupidity Award) — 9 rooms, 2 heroes, 3 spells.
  *
  * Generator stays inside those envelopes. It does **not** emit P / T / C /
  * Gunner / Mechanic / Princess: those are legal in the engine but break the
@@ -107,13 +107,13 @@ export const GENERATION_PROFILES: Record<GenerationBand, GenerationProfile> = {
   },
   "4": {
     band: "4",
-    roomCount: 8,
+    roomCount: 9,
     heroCount: 2,
     spellCount: 3,
     allowElemental: true,
     allowGold: true,
     allowElf: true,
-    corpusNote: "Stupidity Award envelope (8 rooms, 2 heroes, 3 spells) minus T / Gunner / Move.",
+    corpusNote: "Stupidity Award envelope (9 rooms, 2 heroes, 3 spells) minus T / Gunner / Move.",
   },
 };
 
