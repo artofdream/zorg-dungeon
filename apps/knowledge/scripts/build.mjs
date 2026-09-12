@@ -574,6 +574,12 @@ if (!/Keep Learning and Apply/i.test(skillsMd)) {
 if (!skillsMd.includes("pending formal AEA ID") || !skillsMd.includes("historical pain") || !skillsMd.includes("Finding sensor")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must keep Keep Learning as the umbrella (pain → skill/matrix/finding sensor)");
 }
+if (!skillsMd.includes("When the build teaches something") || !skillsMd.includes("work_items/434")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite GitLab #434 with the official AEA one-liner");
+}
+if (!skillsMd.includes("folding into") || !skillsMd.includes("aea-interactive-design/issues/205")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must note Café App folding into #205");
+}
 if (!skillsMd.includes("work_items/434")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA work item #434");
 }
@@ -738,7 +744,7 @@ const aeaContent = `
 
 <div class="alert alert-note">
   <div class="alert-title">Keep Learning and Apply</div>
-  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">AEA #434</a> (open <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a>): historical pain → skill / matrix row / finding sensor. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a>. In this repo the apply map is the <a href="skills.html">skill matrix</a>. Status: <strong>Documented</strong> pending a formal AEA ID. Knowledge Pages: <span class="badge badge-unknown">Unknown</span> until AEA probes. Do not invent the formal ID. Do not treat !513 as merged.</p>
+  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">GitLab #434</a> (open <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a>): <em>When the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure.</em> Loop: historical pain → skill / matrix row / finding sensor. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a>. Apply map: <a href="skills.html">skill matrix</a>. Status: <strong>Documented</strong> pending a formal AEA ID. Café App folds into <a href="https://github.com/artofdream/aea-interactive-design/issues/205">#205</a>. ctos is N/A. Knowledge Pages: <span class="badge badge-unknown">Unknown</span> until AEA probes. Do not invent the formal ID. Do not treat !513 as merged.</p>
 </div>
 
 <h2>1. The Core Formula in Everyday Terms</h2>
