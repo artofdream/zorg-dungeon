@@ -591,6 +591,18 @@ if (!skillsMd.includes("AEA agent (waiting)")) {
 if (!skillsMd.includes("Café Fausse Knowledge (received)")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must record the Café Fausse Knowledge assessment");
 }
+if (!skillsMd.includes("Skill | Scope | Why?")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must use Skill | Scope | Why? | What columns");
+}
+if (!skillsMd.includes("sand-workflow")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite sand-workflow ids for the shared Grok skills");
+}
+if (!skillsMd.includes("Proposed / other-repo")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep Café candidates as proposed / other-repo");
+}
+if (!skillsMd.includes("Spec-phased engine slice")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must list the spec-phased engine slice candidate");
+}
 const skillsHtml = markdownToHtml(skillsMd);
 if (!skillsHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: SKILL_MATRIX.md produced no mermaid diagram");
