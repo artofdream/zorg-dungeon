@@ -606,11 +606,33 @@ if (
 ) {
   throw new Error("knowledge build: SKILL_MATRIX.md must link logify #22 and #23");
 }
-if (!skillsMd.includes("Documented until probed")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must keep other-lane skills Documented until probed");
+if (!skillsMd.includes("Documented until probed") && !skillsMd.includes("Documented / Simulated")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep other-lane skills Documented / Simulated until probed");
 }
-if (!skillsMd.includes("Café Fausse Knowledge (assessment received; URLs pending)")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must keep Café Knowledge pending until URLs arrive");
+if (
+  !skillsMd.includes("Café Fausse Knowledge (Documented / Simulated; not Live)") ||
+  !skillsMd.includes("knowledge-pages-ratchet") ||
+  !skillsMd.includes("aea-interactive-design/issues/203") ||
+  !skillsMd.includes("aea-interactive-design/issues/204")
+) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must link Café Knowledge #203/#204 and knowledge-pages-ratchet");
+}
+if (
+  !skillsMd.includes("Café Fausse App (Documented / Simulated; not Live)") ||
+  !skillsMd.includes("aea-interactive-design/issues/205") ||
+  !skillsMd.includes("aea-interactive-design/issues/206") ||
+  !skillsMd.includes("freeze-first-generation") ||
+  !skillsMd.includes("fail-closed-missing-db") ||
+  !skillsMd.includes("probe-before-status-words") ||
+  !skillsMd.includes("optional-mail-after-store") ||
+  !skillsMd.includes("official-image-allowlist") ||
+  !skillsMd.includes("staging-keep-tear-honesty") ||
+  !skillsMd.includes("skills-matrix.html")
+) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must link Café App #205–#212 and skills-matrix.html");
+}
+if (!skillsMd.includes("New Bot") || !skillsMd.includes("CLEAN")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must note New Bot squash-merge when MRC CLEAN");
 }
 if (!/Café Fausse MRC/i.test(skillsMd) || !/Agrees/i.test(skillsMd)) {
   throw new Error("knowledge build: SKILL_MATRIX.md must note Café MRC agrees");

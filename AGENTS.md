@@ -65,18 +65,27 @@ adopted here — tracked by
 Quarantine evidence: [#52](https://github.com/artofdream/zorg-dungeon/issues/52).
 Kid learn page stays Planned: [#51](https://github.com/artofdream/zorg-dungeon/issues/51).
 Cross-project ack: Café MRC **agrees** (skills on the Café train;
-MRC COMMENT; no self-merge on one-issue PRs). Café App and Café Knowledge
-stay **pending** until issue/PR URLs arrive. AEA is **Documented**
+MRC COMMENT; no self-merge on one-issue PRs). **New Bot** squash-merges
+Café skill PRs when MRC is **CLEAN**. Café App is **Documented /
+Simulated** (shared four via
+[#206](https://github.com/artofdream/aea-interactive-design/issues/206);
+created [#207](https://github.com/artofdream/aea-interactive-design/issues/207)–[#212](https://github.com/artofdream/aea-interactive-design/issues/212);
+matrix [#205](https://github.com/artofdream/aea-interactive-design/issues/205)
+→ `knowledge/skills-matrix.md` / `skills-matrix.html`). Café Knowledge
+is **Documented / Simulated** (`knowledge-pages-ratchet` +
+[#203](https://github.com/artofdream/aea-interactive-design/issues/203)
+/ [#204](https://github.com/artofdream/aea-interactive-design/issues/204)).
+AEA is **Documented**
 ([#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433);
-shared four referenced, no dup; Café-specific deferred). logify is
-**creating** after agree clarification
-([#22](https://github.com/artofdream/logify/issues/22) PR train,
-[#23](https://github.com/artofdream/logify/issues/23) tagged release);
-companion / personas N/A. ctos is N/A (docker smoke is a repo script).
-3DX Lab is in-flight (honesty, infra-apply / sponsor-laptop Terraform,
-lab-vs-factory); shared PR-train / companion / personas are N/A there.
-Other-lane skills are **Documented until probed**. Not Live. Not a
-ledger promotion.
+shared four referenced, no dup). logify skills are **created**
+([#22](https://github.com/artofdream/logify/issues/22)
+`pr-train-parallel-merge`,
+[#23](https://github.com/artofdream/logify/issues/23)
+`tagged-release-cut`); companion / personas N/A. ctos is N/A (docker
+smoke is a repo script). 3DX Lab is in-flight (honesty, infra-apply /
+sponsor-laptop Terraform, lab-vs-factory); shared PR-train / companion /
+personas are N/A there. Other-lane skills are **Documented / Simulated**
+until probed. Not Live. Not a ledger promotion.
 
 ## 3. Antifragility
 

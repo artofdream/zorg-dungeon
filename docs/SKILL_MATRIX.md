@@ -22,7 +22,7 @@ flowchart TB
   ootb["OOTB — code-changes, routines, box-desktop, skill-authoring"]
   shared["Shared Grok — rebase, honesty, companion, persona, quarantine"]
   playbooks["Project playbooks — AGENTS, GAME_SPEC, ledgers"]
-  fit["Cross-project ack — Café MRC agrees; AEA documented; logify creating; 3DX in-flight"]
+  fit["Cross-project ack — Café documented; AEA documented; logify created; 3DX in-flight"]
   ootb --> shared
   shared --> playbooks
   shared --> fit
@@ -50,43 +50,52 @@ flowchart TB
 
 ## Cross-project fit
 
-Fit verdicts below are **assessments** unless a linked issue / work item says otherwise. Other-lane skills are **Documented** until probed — not Live & Probed, and **not** a [[STATUS_LEDGER]] promotion. Café App / Knowledge issue URLs stay **pending**. Do not invent sand-workflow ids.
+Fit verdicts below are **assessments** unless a linked issue / work item says otherwise. Other-lane skills are **Documented / Simulated**, not Live & Probed, and **not** a [[STATUS_LEDGER]] promotion. Do not invent sand-workflow ids.
 
 | Project | Ack | Note |
 |---|---|---|
 | ctos | **N/A** | No skill gap. Docker smoke is a repo script, not a shared Grok skill. |
-| Café Fausse MRC | **Agrees** | Skills belong on the Café train. MRC COMMENT. No self-merge on one-issue PRs. |
-| Café Fausse App | **Pending** | Assessment received (table below). Issue / PR URLs not in yet. |
-| Café Fausse Knowledge | **Pending** | Assessment received (table below). In progress: opening `aea-interactive-design` issues + honesty matrix PR. URLs not in yet. |
+| Café Fausse MRC | **Agrees** | Skills belong on the Café train. MRC COMMENT. No self-merge on one-issue PRs. **New Bot** squash-merges Café skill PRs when MRC is **CLEAN**. |
+| Café Fausse App | **Documented / Simulated** | Shared four via [#206](https://github.com/artofdream/aea-interactive-design/issues/206). Created [#207](https://github.com/artofdream/aea-interactive-design/issues/207)–[#212](https://github.com/artofdream/aea-interactive-design/issues/212). Matrix [#205](https://github.com/artofdream/aea-interactive-design/issues/205) → `knowledge/skills-matrix.md` / `skills-matrix.html` ([PR #215](https://github.com/artofdream/aea-interactive-design/pull/215), run `bc-b919b061`). Not Live. |
+| Café Fausse Knowledge | **Documented / Simulated** | `knowledge-pages-ratchet` + [#203](https://github.com/artofdream/aea-interactive-design/issues/203) / [#204](https://github.com/artofdream/aea-interactive-design/issues/204). Not Live. |
 | AEA agent | **Documented** | [AEA #433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433). Shared four referenced (no dup). Created AEA skills below. Matrix vault MR Documented, not Live. Café-specific deferred. |
-| logify | **Creating** | After agree clarification. [#22](https://github.com/artofdream/logify/issues/22) PR train, [#23](https://github.com/artofdream/logify/issues/23) tagged release. Companion / personas **N/A**. Documented until probed. |
+| logify | **Created** | `pr-train-parallel-merge` [#22](https://github.com/artofdream/logify/issues/22), `tagged-release-cut` [#23](https://github.com/artofdream/logify/issues/23). Companion / personas **N/A**. Documented / Simulated, not Live. |
 | 3DX Lab | **In-flight** | Shared `pr-train-rebase` / `companion-plain-docs` / `persona-journey-validation` are **N/A**. Three candidates pending issue open after broadcast clarification. Not Live. |
 
 ### ctos (N/A)
 
 No shared-skill gap. Docker smoke stays a ctos repo script. Do not add a skill row for it.
 
-### Café Fausse App (assessment received; URLs pending)
+### Café Fausse App (Documented / Simulated; not Live)
 
-App: [cafe.artof.link](https://cafe.artof.link). Knowledge is a separate site.
+App: [cafe.artof.link](https://cafe.artof.link). Knowledge is a separate site. Repo: [artofdream/aea-interactive-design](https://github.com/artofdream/aea-interactive-design). Matrix: [`knowledge/skills-matrix.md`](https://github.com/artofdream/aea-interactive-design/blob/main/knowledge/skills-matrix.md) → [`skills-matrix.html`](https://knowledge.cafe.artof.link/skills-matrix.html) via [#205](https://github.com/artofdream/aea-interactive-design/issues/205) / [PR #215](https://github.com/artofdream/aea-interactive-design/pull/215) (run `bc-b919b061`). A merged matrix PR is not a Pages probe. **New Bot** squash-merges skill PRs when MRC is **CLEAN**.
 
-| Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
-|---|---|---|---|
-| `pr-train-rebase` | Fit: **Yes** (reuse shared skill; not created on the App in this repo) | SES honesty #201 after Stack #199 / #202. Knowledge + App trains. | Rebase onto latest `main`. Do not rewrite a peer's rows. |
-| `honesty-ledger-gate` | Fit: **Yes** | Newsletter SES probe; NFR broadband evidence. Did not invent Café FR-19. | Status words need a probe. |
-| `companion-plain-docs` | Fit: **Partial** | Quantic pack helped. App SoT is **SRS + `freeze.json`**. Knowledge owns companion. | Keep App freeze as legal voice; do not treat App copy as a PLAYER_GUIDE twin. |
-| `persona-journey-validation` | Fit: **Yes / partial** | Diner book, Café FR-9 409, newsletter, Operator recording, ROG mobile. | Would have caught lightbox / mobile earlier. Not a full ~8yo matrix. |
-
-### Café Fausse Knowledge (assessment received; URLs pending)
-
-Companion: [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Does not speak for the App row.
+Shared four — adopt by link via [#206](https://github.com/artofdream/aea-interactive-design/issues/206), no dup.
 
 | Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
 |---|---|---|---|
-| `pr-train-rebase` | Fit: **Yes** | Cascade #108 → #111 → #115 → #116, then #201 after #202. | Land in order. Do not rewrite a peer's rows. |
-| `honesty-ledger-gate` | Fit: **Yes** | Café Knowledge NFR-1 / NFR-2 gated until A36 stopwatches. SES store-only after a probe. | Status words need a probe. Do not invent Café FR-19. |
-| `companion-plain-docs` | Fit: **Yes (late)** | #191–#199 companion + mobile. Earlier would have avoided the late pass. | Companion + diagrams; formal App/SRS wins if English disagrees. |
-| `persona-journey-validation` | Fit: **Partial** | J1–J8 + NFR matrix existed. | Named personas would have caught Gallery / PIP / Operator-as-not-FR-19 earlier. |
+| `pr-train-rebase` | Shared · adopt [#206](https://github.com/artofdream/aea-interactive-design/issues/206) | SES honesty #201 after Stack #199 / #202. | Rebase onto latest `main`. Do not rewrite a peer's rows. |
+| `honesty-ledger-gate` | Shared · adopt [#206](https://github.com/artofdream/aea-interactive-design/issues/206) | Newsletter SES probe; no invented Café FR-19. | Status words need a probe. |
+| `companion-plain-docs` | Shared · adopt [#206](https://github.com/artofdream/aea-interactive-design/issues/206) · Partial | App SoT is **SRS + `freeze.json`**. Knowledge owns companion. | Do not treat App copy as a PLAYER_GUIDE twin. |
+| `persona-journey-validation` | Shared · adopt [#206](https://github.com/artofdream/aea-interactive-design/issues/206) · Partial | Diner book, Café FR-9 409, ROG mobile. | Personas → journeys → issues. Not a full ~8yo matrix. |
+| `freeze-first-generation` | Created / Café App · [#207](https://github.com/artofdream/aea-interactive-design/issues/207) | Freeze-first MVP + CI freeze sensor. | Code follows SRS + `freeze.json`. No invented IDs. Documented / Simulated, not Live. |
+| `fail-closed-missing-db` | Created / Café App · [#208](https://github.com/artofdream/aea-interactive-design/issues/208) | Missing store must not look up. | Fail closed if Postgres is missing. Documented / Simulated, not Live. |
+| `probe-before-status-words` | Created / Café App · [#209](https://github.com/artofdream/aea-interactive-design/issues/209) | SES skipped; NFR timings. | This-session probe or Unknown. Documented / Simulated, not Live. |
+| `optional-mail-after-store` | Created / Café App · [#210](https://github.com/artofdream/aea-interactive-design/issues/210) | #135 / #138 SES; store-only honesty. | Store first; fail soft if mail misses. Not a new FR. Documented / Simulated, not Live. |
+| `official-image-allowlist` | Created / Café App · [#211](https://github.com/artofdream/aea-interactive-design/issues/211) | Official four webps vs extras. | Official allowlist only. Documented / Simulated, not Live. |
+| `staging-keep-tear-honesty` | Created / Café App · [#212](https://github.com/artofdream/aea-interactive-design/issues/212) | Keep-until-scoring / #190. | Lock keep/tear the day decided. Documented / Simulated, not Live. |
+
+### Café Fausse Knowledge (Documented / Simulated; not Live)
+
+Companion: [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Does not speak for the App row. Honesty matrix: [#203](https://github.com/artofdream/aea-interactive-design/issues/203) ([PR #216](https://github.com/artofdream/aea-interactive-design/pull/216)). Pages ratchet skill: [#204](https://github.com/artofdream/aea-interactive-design/issues/204). Shared four stay adopt-by-reference (same as [#206](https://github.com/artofdream/aea-interactive-design/issues/206)).
+
+| Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
+|---|---|---|---|
+| `pr-train-rebase` | Shared · adopt (no dup) | Cascade #108 → #111 → #115 → #116, then #201 after #202. | Land in order. Do not rewrite a peer's rows. |
+| `honesty-ledger-gate` | Shared · adopt (no dup) | Café Knowledge NFR-1 / NFR-2 gated until A36 stopwatches. | Status words need a probe. Do not invent Café FR-19. |
+| `companion-plain-docs` | Shared · adopt (no dup) | #191–#199 companion + mobile. | Companion + diagrams; formal App/SRS wins if English disagrees. |
+| `persona-journey-validation` | Shared · adopt (no dup) · Partial | J1–J8 + NFR matrix existed. | Named personas would have caught Gallery / PIP earlier. |
+| `knowledge-pages-ratchet` | Created / Café Knowledge · [#204](https://github.com/artofdream/aea-interactive-design/issues/204) | Green deploy is not a content probe (same class as zorg CF-004). Matrix row via [#203](https://github.com/artofdream/aea-interactive-design/issues/203). | One finding → one PR → MRC COMMENT → New Bot squash when CLEAN → HTTPS Pages probe before claiming live. Documented / Simulated, not Live. |
 
 ### AEA agent (Documented; not Live)
 
@@ -103,14 +112,14 @@ Shared four — **referenced, not duplicated** as AEA-created skills: `pr-train-
 | `committed-vault-memory` | Created / AEA · Documented | Named on the #433 vault. | Vault memory is the committed file, not chat. Not Live. |
 | `process-coherence-mr-body` | Created / AEA · Documented | Named on the #433 vault. | MR body stays coherent with the process. Not Live. |
 
-### logify (creating after agree; Documented until probed)
+### logify (created; Documented / Simulated, not Live)
 
-Repo: [artofdream/logify](https://github.com/artofdream/logify). Skills created after agree clarification. Companion / personas **N/A**. Other-lane skills **Documented until probed**. Not Live.
+Repo: [artofdream/logify](https://github.com/artofdream/logify). Skills **created** after agree clarification. Companion / personas **N/A**. Other-lane skills **Documented / Simulated**, not Live.
 
 | Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
 |---|---|---|---|
-| `pr-train-parallel-merge` | Created after agree · [#22](https://github.com/artofdream/logify/issues/22) · Documented | AFK tracks #17–#19 CONFLICTING; ADR-0010 collisions, ledger / README churn. | Merge order, pre-assign free ADR numbers, rebase remaining PRs. Do not mark NFR Implemented from an agent summary. Not Live. |
-| `tagged-release-cut` | Created after agree · [#23](https://github.com/artofdream/logify/issues/23) · Documented | v0.1.0 last-mile ldflags + annotated tag. That release predates the skill. | Annotated `vX.Y.Z`, wait for `release.yml` assets. Leave Partial NFRs Partial. Not Live. |
+| `pr-train-parallel-merge` | Created · [#22](https://github.com/artofdream/logify/issues/22) · Documented / Simulated | AFK tracks #17–#19 CONFLICTING; ADR-0010 collisions, ledger / README churn. | Merge order, pre-assign free ADR numbers, rebase remaining PRs. Do not mark NFR Implemented from an agent summary. Not Live. |
+| `tagged-release-cut` | Created · [#23](https://github.com/artofdream/logify/issues/23) · Documented / Simulated | v0.1.0 last-mile ldflags + annotated tag. That release predates the skill. | Annotated `vX.Y.Z`, wait for `release.yml` assets. Leave Partial NFRs Partial. Not Live. |
 | `companion-plain-docs` | Fit: **N/A** | Out of scope on [#23](https://github.com/artofdream/logify/issues/23). | Do not load this skill for logify work. |
 | `persona-journey-validation` | Fit: **N/A** | Out of scope on [#23](https://github.com/artofdream/logify/issues/23). | Do not load this skill for logify work. |
 
@@ -129,17 +138,17 @@ Shared `pr-train-rebase`, `companion-plain-docs`, and `persona-journey-validatio
 
 ## Proposed / other-repo (not Live)
 
-Café-proposed recipes stay proposed until those teams create them. AEA / logify rows below are **Documented** on those lanes until probed — not loaded on zorg-dungeon, not Live & Probed.
+Other-lane skills below are **Documented / Simulated** until probed — not loaded on zorg-dungeon, not Live & Probed. Café App / Knowledge rows now have issue URLs.
 
 | Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
 |---|---|---|---|
-| `freeze-first` | Proposed / Café App | App SoT is SRS + `freeze.json`. | Code follows the freeze. Do not invent unnamed fields. |
-| `fail-closed missing-DB` | Proposed / Café App | Missing store must not look up. | Fail closed if the database is missing. |
-| `probe-before-status-words` | Proposed / Café App | Same honesty habit as [[STATUS_LEDGER]]. | Probe, then write the status word. |
-| `optional SES after-store fail-soft` | Proposed / Café App | Newsletter SES after a good save. | Mail miss must not unwind the store write. |
-| `official-image allowlist only` | Proposed / Café App | Random remote art is a trust miss. | Official allowlist only. |
-| `staging keep/tear honesty` | Proposed / Café App | Zombie staging implied as live. | Say whether staging is kept or torn down. |
-| Knowledge freeze-first + fail-closed Pages probe | Proposed / Café Knowledge | Green deploy is not a content probe (same class as zorg CF-004). | One finding → one issue → one PR. Author does not merge. MRC COMMENT. New Bot squash. HTTPS Pages probe before claiming live. |
+| `freeze-first-generation` | Documented / Simulated · Café App · [#207](https://github.com/artofdream/aea-interactive-design/issues/207) | Created 2026-09-12. | Other-lane. Not Live. |
+| `fail-closed-missing-db` | Documented / Simulated · Café App · [#208](https://github.com/artofdream/aea-interactive-design/issues/208) | Created 2026-09-12. | Other-lane. Not Live. |
+| `probe-before-status-words` | Documented / Simulated · Café App · [#209](https://github.com/artofdream/aea-interactive-design/issues/209) | Created 2026-09-12. | Other-lane. Not Live. |
+| `optional-mail-after-store` | Documented / Simulated · Café App · [#210](https://github.com/artofdream/aea-interactive-design/issues/210) | Created 2026-09-12. | Other-lane. Not Live. |
+| `official-image-allowlist` | Documented / Simulated · Café App · [#211](https://github.com/artofdream/aea-interactive-design/issues/211) | Created 2026-09-12. | Other-lane. Not Live. |
+| `staging-keep-tear-honesty` | Documented / Simulated · Café App · [#212](https://github.com/artofdream/aea-interactive-design/issues/212) | Created 2026-09-12. | Other-lane. Not Live. |
+| `knowledge-pages-ratchet` | Documented / Simulated · Café Knowledge · [#204](https://github.com/artofdream/aea-interactive-design/issues/204) | Matrix via [#203](https://github.com/artofdream/aea-interactive-design/issues/203). | Other-lane. Not Live. |
 | honesty (3DX) | In-flight / 3DX Lab | Pending issue after broadcast clarification. | Not created here. Not Live. |
 | infra-apply (sponsor-laptop Terraform) | In-flight / 3DX Lab | Pending issue after broadcast clarification. | Not created here. Not Live. |
 | lab-vs-factory | In-flight / 3DX Lab | Pending issue after broadcast clarification. | Not created here. Not Live. |
@@ -177,6 +186,6 @@ Status: Planned. Document in docs/SKILL_MATRIX.md.
 2. Load the **shared Grok** sand-workflow that matches the repeating miss.
 3. Read **project playbooks** on `main`. If it is not there, it did not happen.
 4. **Keep Learning and Apply** ([#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)): write the lesson into the harness before the next loop.
-5. **Cross-project:** reuse where history matches. Café MRC **agrees**. App and Knowledge stay pending until URLs arrive. AEA [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) is **Documented** (shared four referenced, no dup; Café-specific deferred). logify is **creating** after agree ([#22](https://github.com/artofdream/logify/issues/22) / [#23](https://github.com/artofdream/logify/issues/23)); companion / personas N/A. 3DX Lab is **in-flight**. Other-lane skills **Documented until probed**. Not Live.
+5. **Cross-project:** reuse where history matches. Café MRC **agrees**; New Bot squash-merges skill PRs when MRC is **CLEAN**. Café App is **Documented / Simulated** ([#205](https://github.com/artofdream/aea-interactive-design/issues/205)–[#212](https://github.com/artofdream/aea-interactive-design/issues/212); shared four via [#206](https://github.com/artofdream/aea-interactive-design/issues/206)). Café Knowledge is **Documented / Simulated** (`knowledge-pages-ratchet` + [#203](https://github.com/artofdream/aea-interactive-design/issues/203) / [#204](https://github.com/artofdream/aea-interactive-design/issues/204)). AEA [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433) is **Documented**. logify skills are **created** ([#22](https://github.com/artofdream/logify/issues/22) / [#23](https://github.com/artofdream/logify/issues/23)); companion / personas N/A. 3DX Lab is **in-flight**. Other-lane skills **Documented / Simulated** until probed. Not Live.
 
 This page does not close [[FR-4]], [[FR-18]], or Gunner duration.
