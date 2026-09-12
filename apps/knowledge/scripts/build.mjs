@@ -598,6 +598,9 @@ if (!/Café Fausse MRC/i.test(skillsMd) || !/Agrees/i.test(skillsMd)) {
 if (!/\bctos\b/i.test(skillsMd) || !skillsMd.includes("N/A")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must record ctos as N/A");
 }
+if (!skillsMd.includes("3DX Lab") || !skillsMd.includes("lab-vs-factory") || !skillsMd.includes("infra-apply")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must record 3DX Lab in-flight candidates");
+}
 if (!skillsMd.includes("Skill | Scope | Why?")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must use Skill | Scope | Why? | What columns");
 }

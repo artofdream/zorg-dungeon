@@ -22,7 +22,7 @@ flowchart TB
   ootb["OOTB — code-changes, routines, box-desktop, skill-authoring"]
   shared["Shared Grok — rebase, honesty, companion, persona, quarantine"]
   playbooks["Project playbooks — AGENTS, GAME_SPEC, ledgers"]
-  fit["Cross-project ack — Café MRC agrees; App/Knowledge/AEA URLs pending"]
+  fit["Cross-project ack — Café MRC agrees; 3DX in-flight; URLs pending"]
   ootb --> shared
   shared --> playbooks
   shared --> fit
@@ -59,6 +59,7 @@ Fit verdicts below are **assessments**. Formal ack / issue URLs stay **pending**
 | Café Fausse App | **Pending** | Assessment received (table below). Issue / PR URLs not in yet. |
 | Café Fausse Knowledge | **Pending** | Assessment received (table below). In progress: opening `aea-interactive-design` issues + honesty matrix PR. URLs not in yet. |
 | AEA agent | **Pending** | No assessment in yet. Do not invent a fit row. |
+| 3DX Lab | **In-flight** | Shared `pr-train-rebase` / `companion-plain-docs` / `persona-journey-validation` are **N/A**. Three candidates pending issue open after broadcast clarification. Not Live. |
 
 ### ctos (N/A)
 
@@ -90,6 +91,19 @@ Companion: [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Does 
 
 No assessment in yet. Do not invent a fit row. Keep [AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513) as the AEA cites.
 
+### 3DX Lab (in-flight; not Live)
+
+Shared `pr-train-rebase`, `companion-plain-docs`, and `persona-journey-validation` are **N/A** for 3DX. Three candidates are **pending issue open** after broadcast clarification. Do not invent issue URLs. Not a loaded skill on this repo. Not Live & Probed.
+
+| Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
+|---|---|---|---|
+| `pr-train-rebase` | Fit: **N/A** | 3DX is not running a zorg-style PR train. | Do not load this skill for 3DX work. |
+| `companion-plain-docs` | Fit: **N/A** | No PLAYER_GUIDE twin on the lab. | Do not load this skill for 3DX work. |
+| `persona-journey-validation` | Fit: **N/A** | No first-timer persona matrix on the lab. | Do not load this skill for 3DX work. |
+| honesty (3DX) | In-flight candidate · pending issue | Broadcast clarification still open. | Honesty gate for lab claims. Issue URL when they file it. |
+| infra-apply (sponsor-laptop Terraform) | In-flight candidate · pending issue | Sponsor-laptop Terraform apply is lab-specific. | Apply infra from the sponsor laptop only as that recipe says. Issue URL when they file it. |
+| lab-vs-factory | In-flight candidate · pending issue | Lab must not be treated as the factory path. | Keep lab and factory scopes distinct. Issue URL when they file it. |
+
 ## Proposed / other-repo (not Live)
 
 Café-proposed recipes. **Do not claim they exist** on those repos until those teams create them. Not loaded on zorg-dungeon. Not Live & Probed.
@@ -103,6 +117,9 @@ Café-proposed recipes. **Do not claim they exist** on those repos until those t
 | `official-image allowlist only` | Proposed / Café App | Random remote art is a trust miss. | Official allowlist only. |
 | `staging keep/tear honesty` | Proposed / Café App | Zombie staging implied as live. | Say whether staging is kept or torn down. |
 | Knowledge freeze-first + fail-closed Pages probe | Proposed / Café Knowledge | Green deploy is not a content probe (same class as zorg CF-004). | One finding → one issue → one PR. Author does not merge. MRC COMMENT. New Bot squash. HTTPS Pages probe before claiming live. |
+| honesty (3DX) | In-flight / 3DX Lab | Pending issue after broadcast clarification. | Not created here. Not Live. |
+| infra-apply (sponsor-laptop Terraform) | In-flight / 3DX Lab | Pending issue after broadcast clarification. | Not created here. Not Live. |
+| lab-vs-factory | In-flight / 3DX Lab | Pending issue after broadcast clarification. | Not created here. Not Live. |
 
 ## Planned (zorg-dungeon)
 
@@ -130,6 +147,6 @@ Status: Planned. Document in docs/SKILL_MATRIX.md.
 2. Load the **shared Grok** sand-workflow that matches the repeating miss.
 3. Read **project playbooks** on `main`. If it is not there, it did not happen.
 4. **Keep Learning and Apply** ([#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)): write the lesson into the harness before the next loop.
-5. **Cross-project:** reuse where history matches. Café MRC **agrees** (MRC COMMENT / no self-merge). App, Knowledge, and AEA stay pending until URLs arrive. Do not claim another repo created the skill.
+5. **Cross-project:** reuse where history matches. Café MRC **agrees**. App, Knowledge, and AEA stay pending until URLs arrive. 3DX Lab is **in-flight** (honesty / infra-apply / lab-vs-factory); shared PR-train / companion / personas are N/A there. Do not claim another repo created the skill.
 
 This page does not close [[FR-4]], [[FR-18]], or Gunner duration.
