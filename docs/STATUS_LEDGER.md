@@ -86,3 +86,12 @@ writing a table row, is not proof.
 | NFR-8 | Unknown | |
 | NFR-9 | Simulated | packages/engine/src/base-classic-corpus.test.ts |
 | NFR-10 | Unknown | |
+
+## Generator slice (2026-09-12)
+
+`generateLevel` is a post-campaign tool, not a new FR. Automated proof lives
+in `packages/engine/src/generator.test.ts` (parse, [[FR-5]]–[[FR-8]] placement,
+[[FR-46]] / [[NFR-4]] solvability, seed stability). **No row above is
+promoted.** The generator does not close [[FR-4]], [[FR-18]], [[FR-43]], or
+live-probe any NFR. Generated play is Simulated engine output, not Live &
+Probed. See [[0005-level-generator]] and [[2026-09-12]].

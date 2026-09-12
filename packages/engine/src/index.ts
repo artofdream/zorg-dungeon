@@ -3,6 +3,7 @@ export * from "./campaign.js";
 export * from "./contracts.js";
 export * from "./elf.js";
 export * from "./elements.js";
+export * from "./generator.js";
 export * from "./geometry.js";
 export * from "./gold.js";
 export * from "./gunner.js";

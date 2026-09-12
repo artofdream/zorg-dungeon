@@ -9,17 +9,18 @@ Play the authored campaign in the Maker: [https://zorg.artof.link](https://zorg.
 
 ## How to play the campaign
 
-The public Maker is a **campaign browser**, not a random generator. You pick an authored level, place its rooms, then watch the fight.
+The public Maker is a **campaign browser first**. You pick an authored level, place its rooms, then watch the fight. After that, a **Generate** control can roll a practice dungeon for the same numeric Difficulté bands.
 
 1. Open the Maker at [https://zorg.artof.link](https://zorg.artof.link).
 2. Pick a **Difficulté** band (the author's difficulty number). Deluxe contract levels with no Difficulté line sit in a **No Difficulté** band; you can also filter by contract name.
-3. Open a **playable** level. Place every room that level supplies on the grid so they form one legal dungeon ([[FR-5]]–[[FR-8]]).
+3. Open a **playable** authored level. Place every room that level supplies on the grid so they form one legal dungeon ([[FR-5]]–[[FR-8]]).
 4. Start **extermination**. Heroes walk by their own fixed rules. You may spend leftover one-time spells between finished actions ([[FR-32]], [[FR-33]]).
+5. Optional: use **Generate a practice dungeon** (Difficulté 1–4) or **Regenerate** on a generated level. Authored campaign stays the default.
 
 ```mermaid
 flowchart TD
   open[Open Maker at zorg.artof.link] --> pick[Pick Difficulté]
-  pick --> level{"Level playable?"}
+  pick --> level{"Authored level playable?"}
   level -->|Yes| place[Place every supplied room]
   place --> gate{"FR-5 to FR-7 hold? FR-8 opens the gate"}
   gate -->|No| place
@@ -27,6 +28,8 @@ flowchart TD
   fight --> spells[Optional one-time spells between actions FR-33]
   spells --> outcome[Scheduler outcome: heroes dead / Z reached / stalemate]
   level -->|No: C / Gunner duration / unresolved| listed[Listed as unavailable — no invented rules]
+  pick --> gen[Optional: Generate practice dungeon]
+  gen --> place
 ```
 
 **Honest limits of this slice** (see [[STATUS_LEDGER]]):
@@ -35,6 +38,20 @@ flowchart TD
 - Win/loss in the Maker is the scheduler result: every hero dead, a hero reached `Z`, or nothing further changes. Extra constraints, bonuses, and mirror-world scoring are **not** evaluated here ([[FR-43]], [[FR-44]] stay Unknown).
 - Contract point costs are flavour text. [[FR-4]] gating (earn / spend points to unlock contracts) is **not** built.
 - **Unavailable** levels stay listed but not selectable: opaque `C` rooms ([[FR-18]]), Gunner with a third duration argument (parsed, not played — [[NFR-8]]), or unresolved authored tokens. Quarantine fixtures (including N11 Dream Trap and N18 Math Bath) and Blabla contracts 11–15 are omitted from the list entirely ([[FINDINGS]] CF-005).
+- **Generated** levels are Simulated engine output (`generateLevel`: parse + legal placement + bounded [[FR-46]] search). They are **not** a live production probe. They do not unlock contracts ([[FR-4]] still not gating). See [[0005-level-generator]].
+
+## Generated practice dungeons
+
+The generator is additive. It does not replace the authored pack ([[NFR-5]]).
+
+What it **does** guarantee (engine tests, not a live probe):
+
+- Only rooms / heroes / spells the engine already implements. No `C`, no Gunner (so no duration argument), no choix, no mirrors.
+- A connected Maker layout (A present, [[FR-5]]–[[FR-8]]).
+- Difficulté bands **1–4**, with room / hero / spell knobs inside the authored fixture envelopes for that number. Harder bands add more pieces and E/O flavour; they do not invent a new scale.
+- Typical output is **solvable** under the bounded [[FR-46]] search: an A → lethal D → Z corridor. This slice does not emit not-solvable mirror worlds.
+
+What it **does not** do: earn or spend contract points, encode Gunner duration, define room `C`, or claim Live & Probed. Formal IDs stay in [[GAME_SPEC]].
 
 ## Two phases: Construction, then Extermination
 
@@ -228,7 +245,7 @@ One shared model, two surfaces: a UI-free simulation library (`packages/engine`)
 | 6 | Mirror worlds and solvability search | [[FR-9]], [[FR-45]], [[FR-46]], [[NFR-4]] |
 | 7 | Content pack as fixtures; contract grouping as data (gating still open) | [[FR-4]], [[NFR-5]] |
 
-Engine work for phases 0–7 has landed on `main`. The authored pack is imported as fixtures; parse-regression covers the green corpus ([[NFR-5]]). The Maker campaigns those fixtures by Difficulté. [[FR-4]] point-gating, room `C`, and Gunner shot-duration stay open ([[NFR-8]]). Companion prose is not proof — the ledger is.
+Engine work for phases 0–7 has landed on `main`. The authored pack is imported as fixtures; parse-regression covers the green corpus ([[NFR-5]]). The Maker campaigns those fixtures by Difficulté, then offers an optional generator for bands 1–4 ([[0005-level-generator]]). [[FR-4]] point-gating, room `C`, and Gunner shot-duration stay open ([[NFR-8]]). Companion prose is not proof — the ledger is.
 
 ## Repo layout
 
