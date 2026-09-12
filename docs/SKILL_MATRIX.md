@@ -22,7 +22,7 @@ flowchart TB
   ootb["OOTB — code-changes, routines, box-desktop, skill-authoring"]
   shared["Shared Grok — rebase, honesty, companion, persona, quarantine"]
   playbooks["Project playbooks — AGENTS, GAME_SPEC, ledgers"]
-  fit["Cross-project fit — Café App + Knowledge received; AEA waiting"]
+  fit["Cross-project ack — Café MRC agrees; App/Knowledge/AEA URLs pending"]
   ootb --> shared
   shared --> playbooks
   shared --> fit
@@ -50,9 +50,21 @@ flowchart TB
 
 ## Cross-project fit
 
-Assessments **received** — not a live probe from this page, and **not** a claim that those repos have created the skills. Link their issue/PR URLs when the sponsor pastes them.
+Fit verdicts below are **assessments**. Formal ack / issue URLs stay **pending** until those teams paste them. Not a live probe, and **not** a claim those repos have created the skills.
 
-### Café Fausse App (received)
+| Project | Ack | Note |
+|---|---|---|
+| ctos | **N/A** | No skill gap. Docker smoke is a repo script, not a shared Grok skill. |
+| Café Fausse MRC | **Agrees** | Skills belong on the Café train. MRC COMMENT. No self-merge on one-issue PRs. |
+| Café Fausse App | **Pending** | Assessment received (table below). Issue / PR URLs not in yet. |
+| Café Fausse Knowledge | **Pending** | Assessment received (table below). In progress: opening `aea-interactive-design` issues + honesty matrix PR. URLs not in yet. |
+| AEA agent | **Pending** | No assessment in yet. Do not invent a fit row. |
+
+### ctos (N/A)
+
+No shared-skill gap. Docker smoke stays a ctos repo script. Do not add a skill row for it.
+
+### Café Fausse App (assessment received; URLs pending)
 
 App: [cafe.artof.link](https://cafe.artof.link). Knowledge is a separate site.
 
@@ -63,7 +75,7 @@ App: [cafe.artof.link](https://cafe.artof.link). Knowledge is a separate site.
 | `companion-plain-docs` | Fit: **Partial** | Quantic pack helped. App SoT is **SRS + `freeze.json`**. Knowledge owns companion. | Keep App freeze as legal voice; do not treat App copy as a PLAYER_GUIDE twin. |
 | `persona-journey-validation` | Fit: **Yes / partial** | Diner book, Café FR-9 409, newsletter, Operator recording, ROG mobile. | Would have caught lightbox / mobile earlier. Not a full ~8yo matrix. |
 
-### Café Fausse Knowledge (received)
+### Café Fausse Knowledge (assessment received; URLs pending)
 
 Companion: [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Does not speak for the App row.
 
@@ -74,7 +86,7 @@ Companion: [knowledge.cafe.artof.link](https://knowledge.cafe.artof.link). Does 
 | `companion-plain-docs` | Fit: **Yes (late)** | #191–#199 companion + mobile. Earlier would have avoided the late pass. | Companion + diagrams; formal App/SRS wins if English disagrees. |
 | `persona-journey-validation` | Fit: **Partial** | J1–J8 + NFR matrix existed. | Named personas would have caught Gallery / PIP / Operator-as-not-FR-19 earlier. |
 
-### AEA agent (waiting)
+### AEA agent (pending)
 
 No assessment in yet. Do not invent a fit row. Keep [AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513) as the AEA cites.
 
@@ -118,6 +130,6 @@ Status: Planned. Document in docs/SKILL_MATRIX.md.
 2. Load the **shared Grok** sand-workflow that matches the repeating miss.
 3. Read **project playbooks** on `main`. If it is not there, it did not happen.
 4. **Keep Learning and Apply** ([#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) / [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)): write the lesson into the harness before the next loop.
-5. **Cross-project:** reuse where history matches. Do not claim another repo created the skill. Fill AEA when they reply.
+5. **Cross-project:** reuse where history matches. Café MRC **agrees** (MRC COMMENT / no self-merge). App, Knowledge, and AEA stay pending until URLs arrive. Do not claim another repo created the skill.
 
 This page does not close [[FR-4]], [[FR-18]], or Gunner duration.

@@ -64,9 +64,11 @@ adopted here — tracked by
 [#50](https://github.com/artofdream/zorg-dungeon/issues/50).
 Quarantine evidence: [#52](https://github.com/artofdream/zorg-dungeon/issues/52).
 Kid learn page stays Planned: [#51](https://github.com/artofdream/zorg-dungeon/issues/51).
-Cross-project fit (Café Fausse App and Knowledge received; AEA agent
-waiting) is an assessment, not a live probe, not a claim those repos
-created the skills, and not a ledger promotion.
+Cross-project ack: Café MRC **agrees** (skills on the Café train;
+MRC COMMENT; no self-merge on one-issue PRs). Café App, Café Knowledge,
+and AEA stay **pending** until issue/PR URLs arrive. ctos is N/A (docker
+smoke is a repo script). Assessments are not a live probe, not a claim
+those repos created the skills, and not a ledger promotion.
 
 ## 3. Antifragility
 

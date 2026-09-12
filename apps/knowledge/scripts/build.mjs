@@ -586,11 +586,17 @@ if (!/Cross-project fit/i.test(skillsMd)) {
 if (!skillsMd.includes("Café Fausse App")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must record the Café Fausse App assessment");
 }
-if (!skillsMd.includes("AEA agent (waiting)")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must keep the AEA agent placeholder until that assessment arrives");
+if (!skillsMd.includes("AEA agent (pending)")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep the AEA agent placeholder until URLs arrive");
 }
-if (!skillsMd.includes("Café Fausse Knowledge (received)")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must record the Café Fausse Knowledge assessment");
+if (!skillsMd.includes("Café Fausse Knowledge (assessment received; URLs pending)")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep Café Knowledge pending until URLs arrive");
+}
+if (!/Café Fausse MRC/i.test(skillsMd) || !/Agrees/i.test(skillsMd)) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must note Café MRC agrees");
+}
+if (!/\bctos\b/i.test(skillsMd) || !skillsMd.includes("N/A")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must record ctos as N/A");
 }
 if (!skillsMd.includes("Skill | Scope | Why?")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must use Skill | Scope | Why? | What columns");
