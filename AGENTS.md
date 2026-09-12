@@ -39,8 +39,11 @@ that file for the exact rules. Closing an issue is not proof.
 > sensor, guide, matrix row, or ADR) before the next loop — so the next
 > agent inherits it instead of rediscovering the failure.
 > — AEA [Keep Learning and Apply](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
-> (GitLab work item #434; landing in open
-> [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513))
+> (GitLab work item #434; sponsor reports
+> [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)
+> merged and #434 closed — Documented on AEA main. Pages still
+> **Unknown** until probed. GitLab sign-in from this agent is not a
+> content probe.)
 
 This complements **Honesty** (§2) and **Knowledge First** (§1). It is
 **not** Antifragility (§3). Antifragility is the second-miss → sensor
@@ -50,7 +53,7 @@ the next agent starts — a chat note is not apply.
 
 AEA cites (same GitLab project):
 - Skill matrix (merged [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512), closes [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433)): [`research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md`](https://gitlab.com/artof-group/adaptive-experience-architecture/-/blob/main/research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md)
-- Principle (open [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513), Closes [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434))
+- Principle (sponsor reports merged [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513); [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) closed). Documented on AEA main. Pages **Unknown** until probed.
 
 Status in zorg-dungeon: **Documented until probed**. [GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
 is the **stable formal principle**. Café App cites #434 and filed
@@ -59,11 +62,13 @@ is the **stable formal principle**. Café App cites #434 and filed
 [#213](https://github.com/artofdream/aea-interactive-design/issues/213)
 / the matrix PR. Also zorg
 [#53](https://github.com/artofdream/zorg-dungeon/issues/53), logify
-[#24](https://github.com/artofdream/logify/issues/24). Café MRC
+[#24](https://github.com/artofdream/logify/issues/24)
+(closed; [PR #25](https://github.com/artofdream/logify/pull/25) merged
+on logify `main`, cites #434 — **Documented**). Café MRC
 is COMMENT-only. The apply map is [[SKILL_MATRIX]]: historical pain →
 skill / matrix row / finding sensor. Knowledge Pages content for this
 principle is **Unknown** until AEA probes it. Naming it in docs is not
-`Live & Probed`. Do not treat !513 as merged.
+`Live & Probed`. GitLab sign-in from this agent is not a merge probe.
 
 The skill map is [[SKILL_MATRIX]] (columns: Skill | Scope | Why? | What).
 Shared Grok skills (sand-workflow slugs `pr-train-rebase`,
@@ -88,15 +93,29 @@ is **Documented until probed** (cites #434 on
 / the matrix PR + `knowledge-pages-ratchet`
 [#203](https://github.com/artofdream/aea-interactive-design/issues/203)
 / [#204](https://github.com/artofdream/aea-interactive-design/issues/204)).
-AEA is **Documented**
-([#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433);
-shared four referenced, no dup). logify skills are **created**
+AEA is **Documented** on AEA main (skill matrix [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512)
+/ [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433);
+principle sponsor-reports [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513)
+merged / [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
+closed; Pages **Unknown**; shared four referenced, no dup). logify Keep
+Learning is **Documented** on logify `main`
+([#24](https://github.com/artofdream/logify/issues/24) closed,
+[PR #25](https://github.com/artofdream/logify/pull/25) merged, cites
+#434). logify skills stay **Documented / Simulated**
 ([#22](https://github.com/artofdream/logify/issues/22)
 `pr-train-parallel-merge`,
 [#23](https://github.com/artofdream/logify/issues/23)
 `tagged-release-cut`); companion / personas N/A. ctos is N/A (docker
-smoke is a repo script). 3DX Lab is in-flight (honesty, infra-apply /
-sponsor-laptop Terraform, lab-vs-factory); shared PR-train / companion /
+smoke is a repo script). 3DX Lab is **Documented until probed**
+([#7](https://github.com/artofdream/3dx-lab/issues/7) honesty,
+[#8](https://github.com/artofdream/3dx-lab/issues/8) infra-apply,
+[#9](https://github.com/artofdream/3dx-lab/issues/9) lab-vs-factory,
+[#10](https://github.com/artofdream/3dx-lab/issues/10) Keep Learning
+gap; skills `3dx-lab-honesty`, `3dx-lab-infra-apply`,
+`3dx-lab-lab-vs-factory`; draft
+[PR #11](https://github.com/artofdream/3dx-lab/pull/11) awaiting
+sponsor merge). This agent got 404 on that repo — URLs are
+sponsor-reported, not probed here. Shared PR-train / companion /
 personas are N/A there. Other-lane skills are **Documented / Simulated**
 until probed. Not Live. Not a ledger promotion.
 

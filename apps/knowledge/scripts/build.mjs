@@ -592,10 +592,11 @@ if (
 if (
   !skillsMd.includes("aea-interactive-design/issues/213") ||
   !skillsMd.includes("artofdream/logify/issues/24") ||
+  !skillsMd.includes("artofdream/logify/pull/25") ||
   !skillsMd.includes("zorg-dungeon/issues/53") ||
   !skillsMd.includes("Documented until probed")
 ) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must link adopt #213 / #214 / logify #24 / zorg #53 as Documented until probed");
+  throw new Error("knowledge build: SKILL_MATRIX.md must link adopt #213 / #214 / logify #24/#25 / zorg #53");
 }
 if (!skillsMd.includes("COMMENT-only")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must keep Café MRC COMMENT-only");
@@ -616,7 +617,7 @@ if (!skillsMd.includes("Café Fausse App")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must record the Café Fausse App assessment");
 }
 if (
-  !skillsMd.includes("AEA agent (Documented; not Live)") ||
+  !skillsMd.includes("AEA agent (Documented on AEA main; Pages Unknown)") ||
   !skillsMd.includes("work_items/433") ||
   !skillsMd.includes("one-finding-one-mr") ||
   !skillsMd.includes("coordinator-merge-hats") ||
@@ -630,10 +631,11 @@ if (
   !skillsMd.includes("logify") ||
   !skillsMd.includes("artofdream/logify/issues/22") ||
   !skillsMd.includes("artofdream/logify/issues/23") ||
+  !skillsMd.includes("artofdream/logify/pull/25") ||
   !skillsMd.includes("pr-train-parallel-merge") ||
   !skillsMd.includes("tagged-release-cut")
 ) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must link logify #22 and #23");
+  throw new Error("knowledge build: SKILL_MATRIX.md must link logify #22 / #23 / #25");
 }
 if (!skillsMd.includes("Documented until probed") && !skillsMd.includes("Documented / Simulated")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must keep other-lane skills Documented / Simulated until probed");
@@ -672,8 +674,18 @@ if (!/Café Fausse MRC/i.test(skillsMd) || !skillsMd.includes("COMMENT-only")) {
 if (!/\bctos\b/i.test(skillsMd) || !skillsMd.includes("N/A")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must record ctos as N/A");
 }
-if (!skillsMd.includes("3DX Lab") || !skillsMd.includes("lab-vs-factory") || !skillsMd.includes("infra-apply")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must record 3DX Lab in-flight candidates");
+if (
+  !skillsMd.includes("3DX Lab") ||
+  !skillsMd.includes("3dx-lab-honesty") ||
+  !skillsMd.includes("3dx-lab-infra-apply") ||
+  !skillsMd.includes("3dx-lab-lab-vs-factory") ||
+  !skillsMd.includes("3dx-lab/issues/7") ||
+  !skillsMd.includes("3dx-lab/issues/8") ||
+  !skillsMd.includes("3dx-lab/issues/9") ||
+  !skillsMd.includes("3dx-lab/issues/10") ||
+  !skillsMd.includes("3dx-lab/pull/11")
+) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must link 3DX #7–#10 / PR #11 and created skill slugs");
 }
 if (!skillsMd.includes("Skill | Scope | Why?")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must use Skill | Scope | Why? | What columns");
@@ -767,7 +779,7 @@ const aeaContent = `
 
 <div class="alert alert-note">
   <div class="alert-title">Keep Learning and Apply</div>
-  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">GitLab #434</a> (open <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a>): <em>When the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure.</em> Loop: historical pain → skill / matrix row / finding sensor. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a>. Apply map: <a href="skills.html">skill matrix</a>. Status: <strong>Documented until probed</strong>. <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434">#434</a> is the stable formal principle. Café App cites #434 and filed <a href="https://github.com/artofdream/aea-interactive-design/issues/214">#214</a> (<code>keep-learning-and-apply</code>); folds into <a href="https://github.com/artofdream/aea-interactive-design/issues/205">#205</a>. Café Knowledge cites #434 on <a href="https://github.com/artofdream/aea-interactive-design/issues/213">#213</a> / the matrix PR. Also zorg <a href="https://github.com/artofdream/zorg-dungeon/issues/53">#53</a>, logify <a href="https://github.com/artofdream/logify/issues/24">#24</a>. Café MRC is COMMENT-only. ctos is N/A. Knowledge Pages: <span class="badge badge-unknown">Unknown</span> until AEA probes. Do not treat !513 as merged.</p>
+  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">GitLab #434</a> (sponsor reports <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a> merged; #434 closed): <em>When the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure.</em> Loop: historical pain → skill / matrix row / finding sensor. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a>. Apply map: <a href="skills.html">skill matrix</a>. Principle: <strong>Documented on AEA main</strong>. Knowledge Pages: <span class="badge badge-unknown">Unknown</span> until AEA probes. GitLab sign-in from this agent is not a merge probe. Café App cites #434 and filed <a href="https://github.com/artofdream/aea-interactive-design/issues/214">#214</a> (<code>keep-learning-and-apply</code>); folds into <a href="https://github.com/artofdream/aea-interactive-design/issues/205">#205</a>. Café Knowledge cites #434 on <a href="https://github.com/artofdream/aea-interactive-design/issues/213">#213</a> / the matrix PR. logify <a href="https://github.com/artofdream/logify/issues/24">#24</a> / <a href="https://github.com/artofdream/logify/pull/25">PR #25</a> is <strong>Documented</strong> on logify main. 3DX <a href="https://github.com/artofdream/3dx-lab/issues/10">#10</a> / draft <a href="https://github.com/artofdream/3dx-lab/pull/11">PR #11</a> is Documented until probed. Also zorg <a href="https://github.com/artofdream/zorg-dungeon/issues/53">#53</a>. Café MRC is COMMENT-only. ctos is N/A.</p>
 </div>
 
 <h2>1. The Core Formula in Everyday Terms</h2>
@@ -876,9 +888,12 @@ if (
   !aeaContent.includes("aea-interactive-design/issues/214") ||
   !aeaContent.includes("keep-learning-and-apply") ||
   !aeaContent.includes("aea-interactive-design/issues/213") ||
-  !aeaContent.includes("Documented until probed")
+  !aeaContent.includes("Documented until probed") ||
+  !aeaContent.includes("Documented on AEA main") ||
+  !aeaContent.includes("artofdream/logify/pull/25") ||
+  !aeaContent.includes("3dx-lab/pull/11")
 ) {
-  throw new Error("knowledge build: AEA page must cite Café App #214 and Knowledge #213 as Documented until probed");
+  throw new Error("knowledge build: AEA page must cite Café #214/#213, logify #25, 3DX #11, Documented on AEA main");
 }
 if (!aeaContent.includes("merge_requests/512") || !aeaContent.includes("merge_requests/513")) {
   throw new Error("knowledge build: AEA page must cite AEA !512 and !513");
