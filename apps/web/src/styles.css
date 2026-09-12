@@ -44,10 +44,6 @@ input {
   font: inherit;
 }
 
-button:not(.cell):not(.level-card) {
-  touch-action: manipulation;
-}
-
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -138,7 +134,7 @@ button:not(.cell):not(.level-card) {
   gap: 0.45rem;
 }
 
-button:not(.cell):not(.level-card) {
+button {
   background: var(--room);
   color: var(--ink);
   border: 1px solid var(--line);
@@ -146,6 +142,7 @@ button:not(.cell):not(.level-card) {
   padding: 0.45rem 0.6rem;
   cursor: pointer;
   text-align: left;
+  touch-action: manipulation;
 }
 
 .tray button.selected,
@@ -541,12 +538,14 @@ button:disabled {
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  margin: 0 0 0.75rem;
   position: sticky;
   top: 0;
   z-index: 8;
   background: var(--bg);
-  padding: 0.35rem 0 0.55rem;
+  /* Pull into .app's top safe-area pad so the bar, not the page padding,
+     owns the notch once it sticks. */
+  margin: calc(-1 * env(safe-area-inset-top, 0px)) 0 0.75rem;
+  padding: max(0.35rem, env(safe-area-inset-top, 0px)) 0 0.55rem;
 }
 
 .play-title {
