@@ -140,6 +140,10 @@ select {
   cursor: pointer;
   padding: 0;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .cell.filled {
@@ -162,12 +166,126 @@ select {
   color: var(--muted);
 }
 
-.hatch {
-  position: absolute;
-  inset: 4px;
-  pointer-events: none;
+.cell.selected-room {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.cell.preview {
+  border-style: dashed;
+  border-color: var(--accent);
+  background: #2a2118;
+}
+
+.cell.anchor .kind {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 2px;
+}
+
+.tray-hatch {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
   color: var(--accent);
+  font-weight: 400;
+}
+
+.hatch-compass {
+  display: grid;
+  grid-template: 1.15rem 1.15rem 1.15rem / 1.15rem 1.15rem 1.15rem;
+  place-items: center;
+  width: fit-content;
+  margin: 0.35rem 0 0.55rem;
+  color: var(--muted);
   font-size: 0.85rem;
+}
+
+.hatch-compass .live {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.hatch-mark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hatch-notch {
+  position: absolute;
+  background: #181410;
+}
+
+.hatch-notch.east {
+  right: 0;
+  top: 50%;
+  width: 7px;
+  height: 12px;
+  transform: translateY(-50%);
+  border-radius: 2px 0 0 2px;
+}
+
+.hatch-notch.west {
+  left: 0;
+  top: 50%;
+  width: 7px;
+  height: 12px;
+  transform: translateY(-50%);
+  border-radius: 0 2px 2px 0;
+}
+
+.hatch-notch.north {
+  top: 0;
+  left: 50%;
+  width: 12px;
+  height: 7px;
+  transform: translateX(-50%);
+  border-radius: 0 0 2px 2px;
+}
+
+.hatch-notch.south {
+  bottom: 0;
+  left: 50%;
+  width: 12px;
+  height: 7px;
+  transform: translateX(-50%);
+  border-radius: 2px 2px 0 0;
+}
+
+.hatch-notch.primary {
+  background: var(--accent);
+}
+
+.hatch-arrow {
+  position: absolute;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hatch-arrow.east {
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.hatch-arrow.west {
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.hatch-arrow.north {
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.hatch-arrow.south {
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .issues {
