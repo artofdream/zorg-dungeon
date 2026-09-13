@@ -11,7 +11,7 @@
   --warn: #c9a227;
   --room: #2a241e;
   /* Board cell token — hero icons can scale with this; do not hard-code px in JSX. */
-  --cell: 64px;
+  --cell: 72px;
   --tap: 2.75rem;
   --page-pad-x: 1.5rem;
   --page-pad-y: 1.25rem;
@@ -277,7 +277,7 @@ button:disabled {
   min-width: var(--cell);
   min-height: var(--cell);
   border: 1px dashed var(--line);
-  border-radius: 6px;
+  border-radius: 8px;
   background: #181410;
   color: var(--ink);
   cursor: pointer;
@@ -286,7 +286,9 @@ button:disabled {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 0;
+  overflow: hidden;
   touch-action: manipulation;
 }
 
@@ -299,31 +301,116 @@ button:disabled {
   outline: 2px solid var(--accent);
 }
 
+.cell .room-tile {
+  position: absolute;
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 6px;
+  opacity: 0.92;
+}
+
 .cell .kind {
+  position: relative;
+  z-index: 2;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 0.78rem;
+  line-height: 1.1;
+  margin-bottom: 0.12rem;
+  padding: 0.08rem 0.28rem;
+  border-radius: 999px;
+  background: rgba(20, 17, 14, 0.72);
+  text-shadow: 0 0 3px #14110e;
 }
 
 .cell .meta {
+  position: relative;
+  z-index: 2;
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.58rem;
   color: var(--muted);
+  margin-bottom: 0.15rem;
+  opacity: 0.85;
+}
+
+.cell .meta.coords {
+  font-size: 0.55rem;
+  opacity: 0.45;
+  margin-bottom: 0;
+  align-self: center;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .cell.selected-room {
-  box-shadow: inset 0 0 0 2px var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  z-index: 1;
 }
 
 .cell.preview {
   border-style: dashed;
   border-color: var(--accent);
   background: #2a2118;
+  outline: 2px solid rgba(212, 106, 46, 0.65);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.cell.legal-next {
+  border-style: solid;
+  border-color: var(--ok);
+  background: #1c2418;
+  outline: 2px solid rgba(122, 168, 90, 0.85);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.cell.legal-next.preview {
+  border-color: var(--accent);
+  outline-color: var(--accent);
+}
+
+.cell.legal-next .room-tile {
+  opacity: 0.35;
+}
+
+.cell.preview .room-tile {
+  opacity: 0.55;
+}
+
+.cell .kind.legal-hint {
+  font-size: 0.68rem;
+  color: var(--ok);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cell .kind.preview-word {
+  color: var(--accent);
 }
 
 .cell.anchor .kind {
   text-decoration: underline;
   text-decoration-color: var(--accent);
   text-underline-offset: 2px;
+}
+
+.tray-room {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: left;
+}
+
+.tray-room .room-tile {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  border-radius: 5px;
 }
 
 .tray-hatch {
@@ -559,16 +646,21 @@ button:disabled {
 }
 
 .cell-heroes {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   gap: 2px;
   justify-content: center;
-  margin-bottom: 1px;
-  z-index: 1;
+  z-index: 3;
+  pointer-events: none;
 }
 
 .cell .hero-icon {
-  width: min(20px, calc(var(--cell) * 0.38));
-  height: min(20px, calc(var(--cell) * 0.38));
+  width: min(22px, calc(var(--cell) * 0.34));
+  height: min(22px, calc(var(--cell) * 0.34));
+  filter: drop-shadow(0 0 2px #14110e);
 }
 
 .issues span {
@@ -745,7 +837,7 @@ button:disabled {
   :root {
     --page-pad-x: 1rem;
     --page-pad-y: 1rem;
-    --cell: 56px;
+    --cell: 64px;
   }
 
   .app h1 {
@@ -802,7 +894,7 @@ button:disabled {
   }
 
   .cell .kind {
-    font-size: 1rem;
+    font-size: 0.72rem;
   }
 
   .board-wrap {
@@ -814,7 +906,7 @@ button:disabled {
   :root {
     --page-pad-x: 0.75rem;
     --page-pad-y: 0.85rem;
-    --cell: 48px;
+    --cell: 56px;
   }
 
   .app h1 {
@@ -841,11 +933,11 @@ button:disabled {
   }
 
   .cell .kind {
-    font-size: 0.92rem;
+    font-size: 0.66rem;
   }
 
   .cell .meta {
-    font-size: 0.62rem;
+    font-size: 0.52rem;
   }
 
   .hatch-arrow {
@@ -876,7 +968,7 @@ button:disabled {
 }
 
 
-/* Kid UX — light room type colors (#37 light only; illustrated tiles deferred). */
+/* Kid UX — room type tint rings + illustrated tiles (#37). */
 .cell.room-a {
   box-shadow: inset 0 0 0 2px #7aa85a;
 }
@@ -897,6 +989,9 @@ button:disabled {
 }
 .cell.room-t {
   box-shadow: inset 0 0 0 2px #b5a896;
+}
+.cell.filled .room-tile {
+  opacity: 1;
 }
 
 .btn-primary,

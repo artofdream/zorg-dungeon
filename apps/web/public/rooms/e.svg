@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Element">
+  <rect width="32" height="32" rx="6" fill="#0d1117"/>
+  <rect x="1" y="1" width="30" height="30" rx="5" fill="none" stroke="#5a8fc4" stroke-width="1.25"/>
+  <!-- crystal -->
+  <path d="M16 5.8 22.4 14.2 16 26.2 9.6 14.2z" fill="#1f1a16" stroke="#c9a227" stroke-width="1.15" stroke-linejoin="round"/>
+  <path d="M16 8.2 20.2 14.2 16 23.4 11.8 14.2z" fill="#2a241e"/>
+  <path d="M16 8.2 16 23.4" stroke="#5a8fc4" stroke-width="1.15" stroke-linecap="round"/>
+  <path d="M11.8 14.2h8.4" stroke="#5a8fc4" stroke-width="1" stroke-linecap="round"/>
+  <!-- sparkle -->
+  <circle cx="16" cy="14.2" r="1.35" fill="#d29922"/>
+  <path d="M7.6 18.8 9.2 19.4" stroke="#5a8fc4" stroke-width="1" stroke-linecap="round"/>
+  <path d="M24.4 18.8 22.8 19.4" stroke="#5a8fc4" stroke-width="1" stroke-linecap="round"/>
+</svg>
