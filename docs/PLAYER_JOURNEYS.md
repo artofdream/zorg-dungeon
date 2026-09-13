@@ -13,7 +13,7 @@ Companion how-to: [[LEARN]] (kid pictures) and [[PLAYER_GUIDE]] (full companion)
 
 1. Treat each `J-*` id as a stable checklist, not a feature request to invent rules.
 2. Run the **manual** checklist on the live Maker or a local `apps/web` build.
-3. Optional future **automated probes** (browser tests) should assert the same success criteria — they are not written yet.
+3. Optional **automated probes** (Playwright under `apps/web/e2e/journeys.spec.ts`, `pnpm probe:journeys`) assert the same success criteria. They are **Simulated** evidence for the journeys — not Live & Probed and not a [[STATUS_LEDGER]] promotion.
 4. A journey can fail UX and still be rules-correct. That is a Maker problem, not an engine FR.
 
 ```mermaid
@@ -78,7 +78,9 @@ Play one easy dungeon and understand win vs loss without asking an adult to deco
 - [ ] Maker reminder still says place A toward Z, then Start fight.
 - [ ] Loss/win banners are readable without “scheduler” as the first word.
 
-### Optional future automated probes
+### Automated probes (Simulated)
+
+Covered by `apps/web/e2e/journeys.spec.ts` (issue #46):
 
 - Query landing for How to play steps and both Start here labels.
 - Kid-facing copy blob contains no `FR-4`, `C room`, `Gunner duration`, or `ledger`.
@@ -119,7 +121,9 @@ Coach a first run in under a minute: what to tap, what “winning” means, wher
 - [ ] Place rooms in a line still exists on the Maker (helper rescue).
 - [ ] Guide / this journeys page say the spec wins if English disagrees.
 
-### Optional future automated probes
+### Automated probes (Simulated)
+
+Landing unfinished-toggle default is covered by the e2e suite. Still useful:
 
 - Landing contains the helper success sentence and the knowledge guide href.
 - Unavailable toggle default is unchecked.
@@ -156,7 +160,9 @@ Browse Difficulty 1 → 2 → 3 → 4, open a playable authored level, build a l
 - [ ] Contract filter does not lock levels.
 - [ ] Quarantine / Blabla contracts 11–15 stay omitted ([[FINDINGS]] CF-005).
 
-### Optional future automated probes
+### Automated probes (Simulated)
+
+Authored-default + unfinished-off are covered by the e2e suite. Still useful:
 
 - Default view is authored catalog, band 1 selected when present.
 - Generated pack is absent from the authored grid.
@@ -193,7 +199,9 @@ Roll a Difficulty 1–4 practice dungeon, place (or accept the suggested line), 
 - [ ] Maker shows a generated hint and a Regenerate control.
 - [ ] Honesty details still say generated = Simulated engine output.
 
-### Optional future automated probes
+### Automated probes (Simulated)
+
+Start-here Generate → `pack === "generated"` band 1 is covered by the e2e suite. Still useful:
 
 - Generate Difficulty 1 → `pack === "generated"` and `difficultyBand === "1"`.
 - Regenerating changes seed / layout without leaving the Maker.
@@ -227,7 +235,9 @@ Inspect Simulated vs live claims, unavailable reasons, and deferred rules withou
 - [ ] Unfinished toggle still exposes unavailable reason text.
 - [ ] Knowledge honesty ledger remains linked from the disclosure or the knowledge site.
 
-### Optional future automated probes
+### Automated probes (Simulated)
+
+Honesty disclosure contents (Simulated / FR-4 / C / Gunner) are covered by the e2e suite. Still useful:
 
 - Disclosure inner text matches the first-run honesty details string.
 - Kid-facing string blob still excludes those terms.

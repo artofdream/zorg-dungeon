@@ -5,3 +5,9 @@ build/
 *.log
 .DS_Store
 coverage/
+
+# Playwright journey probes
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/blob-report/
+apps/web/playwright/.cache/
