@@ -19,7 +19,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
-      # Persona-journey browser probes (#46) — Simulated evidence only.
+      # Persona-journey browser probes (#46) - Simulated evidence only.
       - name: Install Playwright Chromium
         run: pnpm --filter @zorg/web exec playwright install --with-deps chromium
       - name: Journey probes
