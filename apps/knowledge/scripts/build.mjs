@@ -652,6 +652,17 @@ if (!skillsMd.includes("Documented until probed") && !skillsMd.includes("Documen
   throw new Error("knowledge build: SKILL_MATRIX.md must keep other-lane skills Documented / Simulated until probed");
 }
 if (
+  !skillsMd.includes("Pages Probed") ||
+  !skillsMd.includes("knowledge.zorg.artof.link/skills.html") ||
+  !skillsMd.includes("Keep Learning and Apply") ||
+  !skillsMd.includes("work_items/434")
+) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep Keep Learning / #434 and zorg knowledge Pages Probed (CF-010)");
+}
+if (!skillsMd.includes("Pages Unknown")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep AEA Pages Unknown until AEA probes");
+}
+if (
   !skillsMd.includes("Café Fausse Knowledge (Documented until probed)") ||
   !skillsMd.includes("knowledge-pages-ratchet") ||
   !skillsMd.includes("aea-interactive-design/issues/203") ||

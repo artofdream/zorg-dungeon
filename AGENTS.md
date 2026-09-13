@@ -55,7 +55,12 @@ AEA cites (same GitLab project):
 - Skill matrix (merged [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512), closes [#433](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/433)): [`research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md`](https://gitlab.com/artof-group/adaptive-experience-architecture/-/blob/main/research/random-thoughts/2026-09-12-session-memory-log-aea-grok-skill-matrix.md)
 - Principle (sponsor reports merged [!513](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513); [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434) closed). Documented on AEA main. Pages **Unknown** until probed.
 
-Status in zorg-dungeon: **Documented until probed**. [GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
+Status in zorg-dungeon: **Documented; zorg knowledge Pages Probed**
+(2026-09-13 HTTP 200:
+[skills](https://knowledge.zorg.artof.link/skills.html),
+[aea](https://knowledge.zorg.artof.link/aea.html),
+[findings](https://knowledge.zorg.artof.link/findings.html)).
+[GitLab #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
 is the **stable formal principle**. Café App cites #434 and filed
 [#214](https://github.com/artofdream/aea-interactive-design/issues/214)
 (`keep-learning-and-apply`). Café Knowledge cites #434 on
@@ -66,9 +71,10 @@ is the **stable formal principle**. Café App cites #434 and filed
 (closed; [PR #25](https://github.com/artofdream/logify/pull/25) merged
 on logify `main`, cites #434 — **Documented**). Café MRC
 is COMMENT-only. The apply map is [[SKILL_MATRIX]]: historical pain →
-skill / matrix row / finding sensor. Knowledge Pages content for this
-principle is **Unknown** until AEA probes it. Naming it in docs is not
-`Live & Probed`. GitLab sign-in from this agent is not a merge probe.
+skill / matrix row / finding sensor. **AEA** Knowledge Pages for this
+principle remain **Unknown** until AEA probes them. Not `Live & Probed`
+for game FRs; not a [[STATUS_LEDGER]] promotion. GitLab sign-in from
+this agent is not a merge probe.
 
 The skill map is [[SKILL_MATRIX]] (columns: Skill | Scope | Why? | What).
 Shared Grok skills (sand-workflow slugs `pr-train-rebase`,
