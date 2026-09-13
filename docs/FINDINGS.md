@@ -71,10 +71,10 @@ Do not mark the knowledge site `Live & Probed` from this finding. A green
 deploy job is not a production content probe.
 
 ## CF-005: Base-classic N11 Dream Trap and N18 Math Bath are not green-corpus targets
-- Status: Open
+- Status: Resolved
 - Recurrence: 1
 - Linked: https://github.com/artofdream/zorg-dungeon/pull/5
-- Sensor added:
+- Sensor added: packages/engine/src/quarantine-index.test.ts (+ packages/engine/fixtures/quarantine-index.json; green exclusion in base-classic-corpus.test.ts / level-pack-corpus.test.ts)
 
 Sponsor resolution S5: Base N11 “Dream Trap” is author-flagged in the source
 (`euh y a un problème dans celui-ci à mon grand regret`). Base N18 “Math Bath”
@@ -87,8 +87,14 @@ N11, N18, and N23 live under
 `packages/engine/fixtures/base-classic/quarantine/`. Green corpus suites
 (`base-classic-corpus.test.ts`, `level-pack-corpus.test.ts`) assert these
 paths are excluded and `describe.skip` the quarantine folder so they cannot
-fail CI. Recurrence stays 1 — quarantine + skip is documentation, not a
-second-miss gate.
+fail CI.
+
+**Resolution:** S5 quarantine + `quarantine-index.json` honesty sensor
+(`quarantine-index.test.ts`) — index paths exist on disk, green globs never
+include them, expected ids stay base-classic 11/18/23 and contracts 8.2 /
+10.7. Does **not** invent author fixes for Dream Trap. Recurrence stays 1 —
+quarantine + skip + index sensor is documentation / first sensor, not a
+second-miss gate. Cite: `corpus-quarantine-honesty` / Keep Learning and Apply.
 
 ## CF-006: Production web image has no CD and went stale
 - Status: Resolved
@@ -191,10 +197,10 @@ Do not promote [[STATUS_LEDGER]] rows from landing copy. Do not invent
 `C`, Gunner duration, or [[FR-4]] gating.
 
 ## CF-010: Skills written only after AFK rebase pain
-- Status: Open
+- Status: Resolved
 - Recurrence: 1
 - Linked: https://github.com/artofdream/zorg-dungeon/issues/50, https://github.com/artofdream/zorg-dungeon/issues/53, https://github.com/artofdream/zorg-dungeon/pull/54
-- Sensor added:
+- Sensor added: AGENTS.md (Keep Learning and Apply section) + docs/SKILL_MATRIX.md + apps/knowledge/scripts/build.mjs (skills.html)
 
 Keep Learning and Apply
 ([AEA #434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434))
@@ -210,16 +216,23 @@ That is a process discrepancy: Honesty and Knowledge First were already
 named; the apply write waited for a retrospective. This is not an
 Antifragility miss (Recurrence stays 1).
 
-This slice names [#434](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)
-in [[AGENTS]] (next to Honesty and Knowledge First — not §3) and maps
-each skill as an apply-artifact on [[SKILL_MATRIX]]. Status remains
-**Documented / Planned**. Knowledge Pages for this principle: **Unknown**
-until AEA probes. Not Live & Probed.
+**Resolution:** Harness apply landed — [[AGENTS]] Keep Learning section,
+[[SKILL_MATRIX]], and knowledge `skills.html` build gate. [#50](https://github.com/artofdream/zorg-dungeon/issues/50)
+/ [#53](https://github.com/artofdream/zorg-dungeon/issues/53) closed; later
+cuts applied skills ([#58](https://github.com/artofdream/zorg-dungeon/pull/58)
+journeys, [#59](https://github.com/artofdream/zorg-dungeon/pull/59) CI,
+[#60](https://github.com/artofdream/zorg-dungeon/pull/60) tiles). **zorg
+knowledge Pages Probed** this session (2026-09-13): HTTP 200 for
+https://knowledge.zorg.artof.link/skills.html,
+https://knowledge.zorg.artof.link/aea.html, and
+https://knowledge.zorg.artof.link/findings.html. **AEA Pages remain
+Unknown** (not independently probed here). Not Live & Probed for game
+FRs; not a [[STATUS_LEDGER]] promotion.
 
 CF-009 is reserved for in-flight journeys PR #44 (first-timer landing)
-so this entry skips that ID. Recurrence 1 — documenting the principle
-is not a second-miss gate. Do not promote [[STATUS_LEDGER]] rows. Do
-not invent `C`, Gunner duration, or [[FR-4]] gating.
+so this entry skips that ID. Recurrence 1 — documenting + probing zorg
+knowledge Pages is not a second-miss gate. Do not invent `C`, Gunner
+duration, or [[FR-4]] gating.
 
 ## CF-011: LEARN.md mermaid reserved node id `end`
 - Status: Resolved
