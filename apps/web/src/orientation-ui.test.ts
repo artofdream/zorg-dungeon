@@ -86,10 +86,10 @@ describe("NFR-6 hatch / orientation presentation", () => {
   });
 
   it("keeps FR-7 in honesty helper only, not kid primary hatch copy", () => {
-    expect(HATCH_HELPER).not.toMatch(/FR-7/);
-    expect(HATCH_HELPER).toMatch(/doors face|Start \(A\)/i);
-    expect(HATCH_HONESTY).toMatch(/FR-7/);
-    expect(HATCH_HONESTY).toMatch(/FR-5–FR-7/);
+    expect(HATCH_HELPER()).not.toMatch(/FR-7/);
+    expect(HATCH_HELPER()).toMatch(/doors face|Start \(A\)/i);
+    expect(HATCH_HONESTY()).toMatch(/FR-7/);
+    expect(HATCH_HONESTY()).toMatch(/FR-5–FR-7/);
   });
 });
 

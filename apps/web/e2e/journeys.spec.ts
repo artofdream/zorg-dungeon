@@ -123,4 +123,21 @@ test.describe("persona journey probes (Simulated)", () => {
     }
     await expect(startFight).toBeEnabled({ timeout: 10_000 });
   });
+
+  test("FR smoke (?lang=fr): How to play + Start here labels in French", async ({ page }) => {
+    await page.goto("/?lang=fr");
+    await expect(page.getByRole("heading", { name: /Fabriquant de Donjon|Zorg/i })).toBeVisible();
+    const howTo = page.locator("section.how-to");
+    await expect(howTo.getByRole("heading", { name: "Comment jouer" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Commencer ici — Difficulté 1" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Commencer ici — Générer Difficulté 1" })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Langue" })).toBeVisible();
+    const kidBlob = [
+      await page.locator("p.lede").innerText(),
+      await howTo.innerText(),
+      await page.locator("div.start-here").innerText(),
+    ].join("\n");
+    expect(kidBlob).not.toMatch(KID_JARGON);
+    expect(kidBlob).toMatch(/Comment jouer|Commencer ici/i);
+  });
 });

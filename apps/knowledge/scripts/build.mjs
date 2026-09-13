@@ -221,28 +221,37 @@ function inlineFormat(text) {
   return out;
 }
 
-function pageShell({ title, current, content }) {
+function pageShell({ title, current, content, lang = "en", localeAlt = null }) {
+  const prefix = lang === "fr" ? "../" : "";
   const navItems = [
-    { id: "home", label: "Home", href: "index.html" },
-    { id: "learn", label: "Learn the rules", href: "learn.html" },
-    { id: "guide", label: "Guide", href: "guide.html" },
-    { id: "journeys", label: "Journeys", href: "journeys.html" },
-    { id: "spec", label: "Rules & Spec", href: "spec.html" },
-    { id: "honesty", label: "Honesty Ledger", href: "honesty.html" },
-    { id: "findings", label: "Findings", href: "findings.html" },
-    { id: "adr", label: "ADRs", href: "adr.html" },
-    { id: "journal", label: "Dev Journal", href: "journal.html" },
-    { id: "architecture", label: "Architecture", href: "architecture.html" },
-    { id: "skills", label: "Skills", href: "skills.html" },
-    { id: "observability", label: "Observability", href: "observability.html" },
-    { id: "aea", label: "AEA Harness", href: "aea.html" },
+    { id: "home", label: lang === "fr" ? "Accueil" : "Home", href: `${prefix}index.html` },
+    { id: "learn", label: lang === "fr" ? "Apprendre les règles" : "Learn the rules", href: lang === "fr" ? "learn.html" : "learn.html" },
+    { id: "guide", label: lang === "fr" ? "Guide" : "Guide", href: lang === "fr" ? "guide.html" : "guide.html" },
+    { id: "journeys", label: lang === "fr" ? "Parcours" : "Journeys", href: lang === "fr" ? "journeys.html" : "journeys.html" },
+    { id: "spec", label: lang === "fr" ? "Règles & Spec" : "Rules & Spec", href: `${prefix}spec.html` },
+    { id: "honesty", label: lang === "fr" ? "Ledger d'honnêteté" : "Honesty Ledger", href: `${prefix}honesty.html` },
+    { id: "findings", label: lang === "fr" ? "Findings" : "Findings", href: `${prefix}findings.html` },
+    { id: "adr", label: "ADRs", href: `${prefix}adr.html` },
+    { id: "journal", label: lang === "fr" ? "Journal" : "Dev Journal", href: `${prefix}journal.html` },
+    { id: "architecture", label: "Architecture", href: `${prefix}architecture.html` },
+    { id: "skills", label: "Skills", href: `${prefix}skills.html` },
+    { id: "observability", label: "Observability", href: `${prefix}observability.html` },
+    { id: "aea", label: "AEA Harness", href: `${prefix}aea.html` },
   ];
-  if (!navItems.some((item) => item.href === "skills.html")) {
+  // FR companion pages live under fr/; keep EN learn/guide/journeys at site root.
+  if (lang === "fr") {
+    for (const item of navItems) {
+      if (item.id === "learn") item.href = "learn.html";
+      if (item.id === "guide") item.href = "guide.html";
+      if (item.id === "journeys") item.href = "journeys.html";
+    }
+  }
+  if (!navItems.some((item) => item.href === "skills.html" || item.href.endsWith("/skills.html"))) {
     throw new Error("knowledge build: nav must include skills.html so the matrix stays findable");
   }
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -250,7 +259,7 @@ function pageShell({ title, current, content }) {
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="${prefix}style.css">
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
     mermaid.initialize({
@@ -307,6 +316,7 @@ function pageShell({ title, current, content }) {
         </a>
       `).join("")}
     </nav>
+    ${localeAlt ? `<div class="locale-switcher" role="group" aria-label="${lang === "fr" ? "Langue" : "Language"}"><a href="${localeAlt.en}" class="${lang === "en" ? "is-current" : ""}">EN</a><a href="${localeAlt.fr}" class="${lang === "fr" ? "is-current" : ""}">FR</a></div>` : ""}
     <div class="external-links">
       <a href="https://zorg.artof.link" target="_blank" class="btn-external">Play Maker ↗</a>
       <a href="https://zorg.artof.link/grafana/" target="_blank" class="btn-external">Grafana ↗</a>
@@ -424,7 +434,12 @@ const guideHtml = markdownToHtml(guideMd);
 if (!guideHtml.includes('class="mermaid"')) {
   throw new Error("knowledge build: PLAYER_GUIDE.md produced no mermaid diagrams");
 }
-writeFileSync(join(distDir, "guide.html"), pageShell({ title: "Player & builder guide", current: "guide", content: guideHtml }));
+writeFileSync(join(distDir, "guide.html"), pageShell({
+  title: "Player & builder guide",
+  current: "guide",
+  content: guideHtml,
+  localeAlt: { en: "guide.html", fr: "fr/guide.html" },
+}));
 
 // 1b2. Kid-facing learn page (companion — GAME_SPEC remains the legal voice)
 const learnMd = readDoc("docs/LEARN.md");
@@ -454,7 +469,12 @@ if ((learnHtml.match(/class="mermaid"/g) || []).length < 3) {
 for (const [i, src] of extractMermaidFences(learnMd).entries()) {
   assertMermaidSafe(src, `LEARN.md mermaid #${i + 1}`);
 }
-writeFileSync(join(distDir, "learn.html"), pageShell({ title: "Learn the rules", current: "learn", content: learnHtml }));
+writeFileSync(join(distDir, "learn.html"), pageShell({
+  title: "Learn the rules",
+  current: "learn",
+  content: learnHtml,
+  localeAlt: { en: "learn.html", fr: "fr/learn.html" },
+}));
 
 // 1c. Persona journeys (UX validation — GAME_SPEC remains the legal voice)
 const journeysMd = readDoc("docs/PLAYER_JOURNEYS.md");
@@ -478,7 +498,115 @@ if (/C rooms? are now defined|Gunner duration is encoded|FR-4 gating is built/i.
 const journeysHtml = markdownToHtml(journeysMd);
 writeFileSync(
   join(distDir, "journeys.html"),
-  pageShell({ title: "Persona journeys", current: "journeys", content: journeysHtml }),
+  pageShell({
+    title: "Persona journeys",
+    current: "journeys",
+    content: journeysHtml,
+    localeAlt: { en: "journeys.html", fr: "fr/journeys.html" },
+  }),
+);
+
+
+// 1d. French companions (ADR-0007 Phase B) — honesty/skills/spec stay EN (Phase C skipped)
+const frDist = join(distDir, "fr");
+mkdirSync(frDist, { recursive: true });
+
+function assertFrCompanion(md, label, { kidJargonSplit = null } = {}) {
+  if (!md.trim()) throw new Error(`knowledge build: missing ${label}`);
+  if (!/la spécification gagne|the spec wins/i.test(md)) {
+    throw new Error(`knowledge build: ${label} must say the spec wins (FR: la spécification gagne)`);
+  }
+  if (/C rooms? are now defined|Gunner duration is encoded|FR-4 gating is built|les salles C sont maintenant définies|la durée Gunner est encodée/i.test(md)) {
+    throw new Error(`knowledge build: ${label} must not invent C / Gunner duration / FR-4`);
+  }
+  if (kidJargonSplit) {
+    const kidBody = md.split(kidJargonSplit)[0] ?? md;
+    if (/FR-\d+|Simulated|Gunner duration|extermination|ledger/i.test(kidBody)) {
+      throw new Error(`knowledge build: ${label} kid-facing body must stay free of FR / ledger jargon`);
+    }
+  }
+}
+
+function frInlineFix(html) {
+  // From fr/*.html, root companions and honesty need ../
+  return html
+    .replace(/href="honesty\.html/g, 'href="../honesty.html')
+    .replace(/href="spec\.html/g, 'href="../spec.html')
+    .replace(/href="findings\.html/g, 'href="../findings.html')
+    .replace(/href="guide\.html/g, 'href="guide.html')
+    .replace(/href="learn\.html/g, 'href="learn.html')
+    .replace(/href="journeys\.html/g, 'href="journeys.html')
+    .replace(/href="adr\.html/g, 'href="../adr.html')
+    .replace(/href="journal\.html/g, 'href="../journal.html')
+    .replace(/href="skills\.html/g, 'href="../skills.html')
+    .replace(/href="architecture\.html/g, 'href="../architecture.html');
+}
+
+const frGuideMd = readDoc("docs/fr/PLAYER_GUIDE.md");
+assertFrCompanion(frGuideMd, "docs/fr/PLAYER_GUIDE.md");
+for (const id of ["FR-22", "FR-23", "FR-24", "FR-25", "FR-32", "FR-33", "NFR-5"]) {
+  if (!frGuideMd.includes(`[[${id}]]`)) {
+    throw new Error(`knowledge build: docs/fr/PLAYER_GUIDE.md must cite [[${id}]]`);
+  }
+}
+if (!/generateLevel|donjon d'entraînement|practice dungeon/i.test(frGuideMd)) {
+  throw new Error("knowledge build: docs/fr/PLAYER_GUIDE.md must mention the generator / practice dungeon");
+}
+const frGuideHtml = frInlineFix(markdownToHtml(frGuideMd));
+writeFileSync(
+  join(frDist, "guide.html"),
+  pageShell({
+    title: "Guide du joueur",
+    current: "guide",
+    content: frGuideHtml,
+    lang: "fr",
+    localeAlt: { en: "../guide.html", fr: "guide.html" },
+  }),
+);
+
+const frLearnMd = readDoc("docs/fr/LEARN.md");
+assertFrCompanion(frLearnMd, "docs/fr/LEARN.md", { kidJargonSplit: "## Notes pour les grands" });
+if ((frLearnMd.match(/```mermaid/g) || []).length < 3) {
+  throw new Error("knowledge build: docs/fr/LEARN.md needs at least 3 mermaid diagrams");
+}
+if (!/Lancer le combat/i.test(frLearnMd) || !/héros partent|héros apparaissent/i.test(frLearnMd)) {
+  throw new Error("knowledge build: docs/fr/LEARN.md must teach A, Lancer le combat, and the win idea");
+}
+const frLearnHtml = frInlineFix(markdownToHtml(frLearnMd));
+for (const [i, src] of extractMermaidFences(frLearnMd).entries()) {
+  assertMermaidSafe(src, `docs/fr/LEARN.md mermaid #${i + 1}`);
+}
+writeFileSync(
+  join(frDist, "learn.html"),
+  pageShell({
+    title: "Apprendre les règles",
+    current: "learn",
+    content: frLearnHtml,
+    lang: "fr",
+    localeAlt: { en: "../learn.html", fr: "learn.html" },
+  }),
+);
+
+const frJourneysMd = readDoc("docs/fr/PLAYER_JOURNEYS.md");
+assertFrCompanion(frJourneysMd, "docs/fr/PLAYER_JOURNEYS.md");
+if (!/validation UX|UX validation/i.test(frJourneysMd)) {
+  throw new Error("knowledge build: docs/fr/PLAYER_JOURNEYS.md must say UX validation");
+}
+for (const id of ["J-KID", "J-HELPER", "J-CAMPAIGN", "J-PRACTICE", "J-HONESTY"]) {
+  if (!frJourneysMd.includes(id)) {
+    throw new Error(`knowledge build: docs/fr/PLAYER_JOURNEYS.md must define ${id}`);
+  }
+}
+const frJourneysHtml = frInlineFix(markdownToHtml(frJourneysMd));
+writeFileSync(
+  join(frDist, "journeys.html"),
+  pageShell({
+    title: "Parcours personas",
+    current: "journeys",
+    content: frJourneysHtml,
+    lang: "fr",
+    localeAlt: { en: "../journeys.html", fr: "journeys.html" },
+  }),
 );
 
 // 2. Spec Page — companion banner only; GAME_SPEC.md body is not rewritten

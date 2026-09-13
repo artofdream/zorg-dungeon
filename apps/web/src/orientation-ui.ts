@@ -9,6 +9,7 @@ import {
   type Orientation,
   type Side,
 } from "@zorg/engine";
+import { t } from "./i18n/index.js";
 
 export const MAKER_ORIENTATIONS: Orientation[] = [0, 90, 180, 270];
 
@@ -25,6 +26,10 @@ export const HATCH_WORD: Record<Cardinal, string> = {
   left: "left",
   down: "down",
 };
+
+function hatchWord(cardinal: Cardinal): string {
+  return t(`hatch.${cardinal}` as "hatch.right" | "hatch.up" | "hatch.left" | "hatch.down");
+}
 
 export const HATCH_SIDE_WORD: Record<Cardinal, string> = {
   right: "east",
@@ -50,9 +55,9 @@ export function describeHatch(orientation: Orientation): HatchView {
   const cardinal = hatchDirection(orientation);
   const side = CARDINAL_TO_SIDE[cardinal];
   const glyph = HATCH_GLYPH[cardinal];
-  const word = HATCH_WORD[cardinal];
+  const word = hatchWord(cardinal);
   const sideWord = HATCH_SIDE_WORD[cardinal];
-  const doorsFaceLabel = `Doors face ${word}`;
+  const doorsFaceLabel = t("hatch.doorsFace", { word });
   return {
     orientation,
     cardinal,
@@ -74,7 +79,7 @@ export function selectedRoomHatchLabel(
   isAnchor = false,
 ): string {
   const hatch = describeHatch(orientation);
-  const anchor = isAnchor ? " · start-room doors" : "";
+  const anchor = isAnchor ? t("hatch.startDoors") : "";
   return `${roomName} · ${hatch.doorsFaceLabel}${anchor}`;
 }
 
@@ -109,9 +114,7 @@ export function boardCellAriaLabel(opts: {
 }
 
 /** Kid-facing doors helper — FR-7 lives in Maker honesty only (#38). */
-export const HATCH_HELPER =
-  "Every room’s doors face the same way, taken from the Start (A) rooms. The bright arrow shows that way. Change it here before you place.";
+export const HATCH_HELPER = () => t("hatch.helper");
 
 /** Honesty / engineer note (not shown in kid primary copy). */
-export const HATCH_HONESTY =
-  "Wall-hatch direction / orientation follows the spawn-room (A) anchor (FR-7). Start fight stays closed until FR-5–FR-7 hold.";
+export const HATCH_HONESTY = () => t("hatch.honesty");

@@ -1,31 +1,32 @@
 // Kid-facing fight log sentences. Raw SimEvent JSON stays behind a disclosure.
 import type { HeroRuntime, SimEvent } from "@zorg/engine";
+import { t } from "./i18n/index.js";
 
 function heroName(heroes: readonly HeroRuntime[] | undefined, heroId: number): string {
   const hero = heroes?.find((h) => h.id === heroId);
-  return hero?.def.type ?? `Hero ${heroId}`;
+  return hero?.def.type ?? t("hero.fallback", { id: heroId });
 }
 
 function roomKidWord(roomType: string): string {
   switch (roomType) {
     case "A":
-      return "the start room";
+      return t("room.feed.A");
     case "Z":
-      return "the exit (Zorg)";
+      return t("room.feed.Z");
     case "D":
-      return "a danger room";
+      return t("room.feed.D");
     case "E":
-      return "an element room";
+      return t("room.feed.E");
     case "P":
-      return "a portal room";
+      return t("room.feed.P");
     case "O":
-      return "a gold room";
+      return t("room.feed.O");
     case "T":
-      return "a toll room";
+      return t("room.feed.T");
     case "C":
-      return "a special room";
+      return t("room.feed.C");
     default:
-      return "the next room";
+      return t("room.feed.default");
   }
 }
 
@@ -36,49 +37,62 @@ export function formatSimEvent(
 ): string {
   switch (event.type) {
     case "spawn":
-      return `${heroName(heroes, event.heroId)} entered the dungeon.`;
+      return t("event.spawn", { hero: heroName(heroes, event.heroId) });
     case "move":
-      return `${heroName(heroes, event.heroId)} walked ${event.dir}.`;
+      return t("event.move", { hero: heroName(heroes, event.heroId), dir: event.dir });
     case "enter":
-      return `${heroName(heroes, event.heroId)} entered ${roomKidWord(event.roomType)}.`;
+      return t("event.enter", {
+        hero: heroName(heroes, event.heroId),
+        room: roomKidWord(event.roomType),
+      });
     case "damage":
-      return `${heroName(heroes, event.heroId)} took ${event.amount} damage (HP ${event.hp}).`;
+      return t("event.damage", {
+        hero: heroName(heroes, event.heroId),
+        amount: event.amount,
+        hp: event.hp,
+      });
     case "pickup":
-      return `${heroName(heroes, event.heroId)} picked up gold (${event.amount}).`;
+      return t("event.pickup", {
+        hero: heroName(heroes, event.heroId),
+        amount: event.amount,
+      });
     case "toll":
-      return `${heroName(heroes, event.heroId)} paid a toll (${event.amount} gold).`;
+      return t("event.toll", {
+        hero: heroName(heroes, event.heroId),
+        amount: event.amount,
+      });
     case "gold_drop":
-      return `${heroName(heroes, event.heroId)} dropped gold.`;
+      return t("event.goldDrop", { hero: heroName(heroes, event.heroId) });
     case "teleport":
-      return `${heroName(heroes, event.heroId)} teleported to another room.`;
+      return t("event.teleport", { hero: heroName(heroes, event.heroId) });
     case "wait_room":
-      return `${heroName(heroes, event.heroId)} is still waiting to enter.`;
+      return t("event.waitRoom", { hero: heroName(heroes, event.heroId) });
     case "death":
-      return `${heroName(heroes, event.heroId)} fell.`;
+      return t("event.death", { hero: heroName(heroes, event.heroId) });
     case "wait":
-      return `${heroName(heroes, event.heroId)} waited.`;
+      return t("event.wait", { hero: heroName(heroes, event.heroId) });
     case "cast":
-      return `You cast ${event.spellType}.`;
+      return t("event.cast", { spell: event.spellType });
     case "sleep":
-      return `${heroName(heroes, event.heroId)} fell asleep.`;
+      return t("event.sleep", { hero: heroName(heroes, event.heroId) });
     case "wake":
-      return `${heroName(heroes, event.heroId)} woke up.`;
+      return t("event.wake", { hero: heroName(heroes, event.heroId) });
     case "banality":
-      return `${heroName(heroes, event.heroId)} was hit by Banality.`;
+      return t("event.banality", { hero: heroName(heroes, event.heroId) });
     case "room_move":
-      return `A room slid to a new place.`;
+      return t("event.roomMove");
     case "shove":
-      return `${heroName(heroes, event.heroId)} shoved a room ${event.dir}.`;
+      return t("event.shove", { hero: heroName(heroes, event.heroId), dir: event.dir });
     case "fire":
-      return `${heroName(heroes, event.heroId)} fired ${event.dir}.`;
+      return t("event.fire", { hero: heroName(heroes, event.heroId), dir: event.dir });
     case "shell":
-      return `${heroName(heroes, event.heroId)} cleared a path with a shell.`;
+      return t("event.shell", { hero: heroName(heroes, event.heroId) });
     case "loss":
-      return `${heroName(heroes, event.heroId)} reached the exit.`;
+      return t("event.loss", { hero: heroName(heroes, event.heroId) });
     case "win":
-      return "You stopped them before they reached the exit.";
+      return t("event.win");
     case "stalemate":
-      return "Nothing further changes.";
+      return t("event.stalemate");
     default: {
       const _exhaustive: never = event;
       return JSON.stringify(_exhaustive);
@@ -93,6 +107,6 @@ export function formatEventFeed(
   return events.map((event) => formatSimEvent(event, heroes));
 }
 
-export const EVENT_FEED_EMPTY = "No events yet — press Step.";
-export const EVENT_FEED_TITLE = "What happened";
-export const EVENT_TECHNICAL_SUMMARY = "Technical log (raw events)";
+export const EVENT_FEED_EMPTY = () => t("event.feedEmpty");
+export const EVENT_FEED_TITLE = () => t("event.feedTitle");
+export const EVENT_TECHNICAL_SUMMARY = () => t("event.technical");

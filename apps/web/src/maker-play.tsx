@@ -34,6 +34,7 @@ import {
   EVENT_TECHNICAL_SUMMARY,
   formatEventFeed,
 } from "./event-copy.js";
+import { LocaleSwitcher, useLocale } from "./i18n/index.js";
 import {
   displayCampaignTitle,
   heroSlotLabel,
@@ -54,31 +55,10 @@ import {
   selectedRoomHatchLabel,
 } from "./orientation-ui.js";
 import {
-  BACK_TO_MAKER_LABEL,
-  DOORS_FACE_TITLE,
-  EMPTY_BOARD_HINT,
-  FIGHT_PANEL_TITLE,
-  FIGHT_TURN_HELP,
-  HONESTY_SUMMARY,
-  KNOWLEDGE_GUIDE_HREF,
-  KNOWLEDGE_LEARN_HREF,
-  LEARN_THE_RULES_LABEL,
-  MAKER_GATE_BLOCKED,
-  MAKER_GATE_OK,
-  MAKER_GENERATED_HONESTY,
-  MAKER_HONESTY_DETAILS,
-  MAKER_HOW_TO,
-  outcomeHeadline,
-  PLACE_IN_LINE_HINT,
-  PLACE_IN_LINE_LABEL,
-  RUN_LABEL,
-  SETUP_CHOICES_HINT,
-  SETUP_CHOICES_TITLE,
-  SPELLS_TITLE,
-  START_FIGHT_LABEL,
-  STEP_LABEL,
-  WIN_GOAL_HINT,
   difficultyEntryLabel,
+  getKnowledgeGuideHref,
+  getKnowledgeLearnHref,
+  outcomeHeadline,
 } from "./first-run.js";
 
 interface Props {
@@ -101,6 +81,7 @@ function gridExtent(roomCount: number): { min: number; max: number } {
 }
 
 export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginnerAssist = false }: Props) {
+  const { t } = useLocale();
   const authored = useMemo(() => parseLevel(entry.text), [entry.text]);
   const [named, setNamed] = useState(() => defaultNamedChoices(authored));
   const [inline, setInline] = useState<InlineChoixPicks>(() => defaultInlinePicks(authored));
@@ -325,44 +306,45 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
     >
       <div className="topbar">
         <button type="button" onClick={onBack}>
-          ← Campaign
+          {t("chrome.back")}
         </button>
         <h1 className="play-title">{displayCampaignTitle(entry)}</h1>
+        <LocaleSwitcher />
         {onRegenerate ? (
           <button type="button" onClick={onRegenerate}>
-            Regenerate
+            {t("chrome.regenerate")}
           </button>
         ) : null}
       </div>
       <p className="lede">
-        {WIN_GOAL_HINT}
+        {t("fight.winGoal")}
         {difficultyEntryLabel(entry.difficulty)}
-        {entry.pack === "generated" ? " · practice" : ""}
+        {entry.pack === "generated" ? ` · ${t("chrome.practiceTag")}` : ""}
         {entry.contractName ? ` · ${entry.contractName}` : ""}
       </p>
       <p className="hint meta-id">{displayCampaignTitle(entry)} · {entry.id}</p>
       <p className="hint">
-        {MAKER_HOW_TO}{" "}
-        <a href={KNOWLEDGE_LEARN_HREF} target="_blank" rel="noreferrer">
-          {LEARN_THE_RULES_LABEL}
+        {t("maker.howTo")}{" "}
+        <a href={getKnowledgeLearnHref()} target="_blank" rel="noreferrer">
+          {t("knowledge.learnLabel")}
         </a>
         {" · "}
-        <a href={KNOWLEDGE_GUIDE_HREF} target="_blank" rel="noreferrer">
-          Player guide
+        <a href={getKnowledgeGuideHref()} target="_blank" rel="noreferrer">
+          {t("knowledge.guideLabel")}
         </a>
       </p>
       <details className="honesty">
-        <summary>{HONESTY_SUMMARY}</summary>
+        <summary>{t("honesty.summary")}</summary>
         <p>
-          {MAKER_HONESTY_DETAILS} {HATCH_HONESTY}
-          {entry.pack === "generated" ? MAKER_GENERATED_HONESTY : ""}
+          {t("honesty.makerDetails")} {HATCH_HONESTY()}
+          {entry.pack === "generated" ? t("honesty.makerGenerated") : ""}
         </p>
       </details>
 
       {entry.needsChoix ? (
         <section className="panel setup">
-          <h2>{SETUP_CHOICES_TITLE}</h2>
-          <p className="hint">{SETUP_CHOICES_HINT}</p>
+          <h2>{t("setup.title")}</h2>
+          <p className="hint">{t("setup.hint")}</p>
           {(authored.variables ?? []).map((variable) => {
             const choice = named[variable.name];
             const current = choice?.selected[0];
@@ -413,7 +395,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
             return (
               <label key={`${slot.kind}-${slot.index}`}>
                 <span className="choix-label">
-                  {slot.kind} choice
+                  {t("maker.choixLabel", { kind: slot.kind })}
                   {slot.kind === "hero" ? (
                     <span className="hero-type-row">
                       {collectHeroTypes(slot.options as HeroSlot[]).map((type) => (
@@ -441,10 +423,10 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
 
       <div className="layout">
         <section className="panel panel-rooms">
-          <h2>Rooms</h2>
-          <div className="hero-roster" aria-label="Hero roster">
+          <h2>{t("maker.rooms")}</h2>
+          <div className="hero-roster" aria-label={t("maker.heroRoster")}>
             {level.heroes.length === 0 ? (
-              <p className="hint">Heroes: (none)</p>
+              <p className="hint">{t("maker.heroesNone")}</p>
             ) : (
               level.heroes.map((slot, i) => {
                 const types = collectHeroTypes([slot]);
@@ -460,7 +442,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
             )}
           </div>
           {(level.spells?.length ?? 0) > 0 ? (
-            <p className="hint">Spells: {level.spells!.map((s) => spellSlotLabel(s)).join(", ")}</p>
+            <p className="hint">{t("maker.spellsPrefix")}{level.spells!.map((s) => spellSlotLabel(s)).join(", ")}</p>
           ) : null}
           <HeroFigurineLegend />
           <div className="tray">
@@ -480,18 +462,18 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                 <span className="tray-room">
                   <RoomTile def={spec.def} />
                   <span>
-                    {roomKidLabel(spec.def)} {placedIds.has(spec.id) ? "· placed" : "· tray"}
+                    {roomKidLabel(spec.def)} {placedIds.has(spec.id) ? t("maker.placed") : t("maker.tray")}
                   </span>
                 </span>
                 <span className="tray-hatch">
                   {hatch.doorsFaceLabel}
-                  {spec.def.type === "A" ? " · start-room doors" : ""}
+                  {spec.def.type === "A" ? t("maker.startRoomDoors") : ""}
                 </span>
               </button>
             ))}
           </div>
-          <h2 style={{ marginTop: "1rem" }}>{DOORS_FACE_TITLE}</h2>
-          <p className="hint">{HATCH_HELPER}</p>
+          <h2 style={{ marginTop: "1rem" }}>{t("doors.faceTitle")}</h2>
+          <p className="hint">{HATCH_HELPER()}</p>
           <HatchCompass orientation={orientation} />
           <div className="orient">
             {MAKER_ORIENTATIONS.map((deg) => (
@@ -506,20 +488,19 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
               </button>
             ))}
           </div>
-          <p className="hint">{PLACE_IN_LINE_HINT}</p>
+          <p className="hint">{t("placeInLine.hint")}</p>
           <button type="button" className="btn-block btn-primary" disabled={playing} onClick={placeInALine}>
-            {PLACE_IN_LINE_LABEL}
+            {t("placeInLine.label")}
           </button>
         </section>
 
         <section className="panel panel-board">
-          <h2>Board</h2>
+          <h2>{t("maker.board")}</h2>
           <p className="hint">
-            {rooms.length === 0 && !playing ? EMPTY_BOARD_HINT + " " : ""}
-            Click a cell to place the selected room. Click a placed room to pick it up.{" "}
-            Green outline marks the next cells beside rooms already on the board.{" "}
+            {rooms.length === 0 && !playing ? t("board.emptyHint") + " " : ""}
+            {t("maker.boardHint")}{" "}
             {hatch.doorsFaceLabel}
-            {selectedSpec ? ` · placing ${roomKidLabel(selectedSpec.def)}` : ""}.
+            {selectedSpec ? t("maker.placing", { name: roomKidLabel(selectedSpec.def) }) : ""}.
           </p>
           <div className="board-wrap">
             <div
@@ -575,7 +556,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                           selected: isSelectedPlaced,
                           isAnchor,
                         }),
-                        isLegalNext && !isPreview ? "next legal cell" : "",
+                        isLegalNext && !isPreview ? t("maker.nextLegal") : "",
                         occupants.length
                           ? occupants.map((h) => h.def.type).join(", ")
                           : "",
@@ -602,7 +583,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                       ) : isPreview && selectedSpec ? (
                         <span className="kind preview-word">{roomKidWord(selectedSpec.def)}</span>
                       ) : isLegalNext ? (
-                        <span className="kind legal-hint">Next</span>
+                        <span className="kind legal-hint">{t("maker.nextHint")}</span>
                       ) : (
                         <span className="meta coords" aria-hidden="true">
                           {x},{y}
@@ -617,11 +598,11 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
         </section>
 
         <section className="panel panel-play">
-          <h2>Validation</h2>
+          <h2>{t("maker.validation")}</h2>
           {report.ok ? (
-            <p className="ok">{MAKER_GATE_OK}</p>
+            <p className="ok">{t("maker.gateOk")}</p>
           ) : rooms.length === 0 ? (
-            <p className="hint">{EMPTY_BOARD_HINT}</p>
+            <p className="hint">{t("board.emptyHint")}</p>
           ) : (
             <ul className="issues">
               {report.issues.map((issue, i) => (
@@ -630,18 +611,18 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
             </ul>
           )}
 
-          <h2 style={{ marginTop: "1rem" }}>{FIGHT_PANEL_TITLE}</h2>
-          <p className="hint">{WIN_GOAL_HINT}</p>
-          <p className="hint">{FIGHT_TURN_HELP}</p>
+          <h2 style={{ marginTop: "1rem" }}>{t("fight.title")}</h2>
+          <p className="hint">{t("fight.winGoal")}</p>
+          <p className="hint">{t("fight.turnHelp")}</p>
           <div className="controls">
             <button type="button" className="btn-primary" disabled={!gateOpen || playing} onClick={startRun}>
-              {START_FIGHT_LABEL}
+              {t("maker.startFight")}
             </button>
             <button type="button" disabled={!run || run.outcome !== "in_progress"} onClick={stepPlayback}>
-              {STEP_LABEL}
+              {t("maker.step")}
             </button>
             <button type="button" disabled={!run || run.outcome !== "in_progress"} onClick={runAll}>
-              {RUN_LABEL}
+              {t("maker.run")}
             </button>
             <button
               type="button"
@@ -652,7 +633,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                 setCastError(null);
               }}
             >
-              {BACK_TO_MAKER_LABEL}
+              {t("maker.backToMaker")}
             </button>
           </div>
           {run ? (
@@ -662,15 +643,15 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                   {outcomeHeadline(run.outcome)}
                 </p>
               ) : null}
-              <h2 style={{ marginTop: "1rem" }}>{SPELLS_TITLE}</h2>
+              <h2 style={{ marginTop: "1rem" }}>{t("spells.title")}</h2>
               <p className="hint">
                 {canCastNow(run)
                   ? pickedSpell?.def.type === "Move"
-                    ? "Click an empty cell to Move the active hero's room."
+                    ? t("maker.castMoveHint")
                     : pickedSpell?.def.type === "Swap"
-                      ? "Click another room to Swap with the active hero's room."
-                      : "You can cast between finished steps."
-                  : "Press Step at least once before casting."}
+                      ? t("maker.castSwapHint")
+                      : t("maker.castOkHint")
+                  : t("maker.castNeedStep")}
               </p>
               <div className="tray">
                 {run.spells.map((spell) => (
@@ -681,7 +662,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                     disabled={spell.consumed || !canCastNow(run)}
                     onClick={() => setSpellPick(spell.id)}
                   >
-                    {spellKidLabel(spell.def)} {spell.consumed ? "· spent" : "· ready"}
+                    {spellKidLabel(spell.def)} {spell.consumed ? t("maker.spellSpent") : t("maker.spellReady")}
                   </button>
                 ))}
               </div>
@@ -698,7 +679,9 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                   }
                   onClick={castPicked}
                 >
-                  Cast {pickedSpell ? spellKidLabel(pickedSpell.def) : "spell"}
+                  {pickedSpell
+                    ? t("maker.castSpell", { name: spellKidLabel(pickedSpell.def) })
+                    : t("maker.castSpellFallback")}
                 </button>
               </div>
               {castError ? (
@@ -708,11 +691,11 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
               ) : null}
               <div className="hp">
                 <p className="hp-head">
-                  Heroes
+                  {t("maker.heroesHead")}
                   {run.outcome !== "in_progress" ? (
                     <>
                       {" "}
-                      · <strong>{run.outcome === "win" ? "stopped" : run.outcome}</strong>
+                      · <strong>{run.outcome === "win" ? t("maker.stopped") : run.outcome}</strong>
                     </>
                   ) : null}
                 </p>
@@ -725,17 +708,18 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                   >
                     <HeroIcon type={h.def.type} size="sm" decorative />
                     <span>
-                      {h.def.type} · HP {h.hp}
-                      {h.gold?.length ? ` · gold ${h.gold.length}` : ""}
-                      {h.dead ? " (fell)" : h.sleeping ? " (asleep)" : h.spawned ? "" : " (waiting)"}
+                      {h.def.type}
+                      {t("maker.hp", { hp: h.hp })}
+                      {h.gold?.length ? t("maker.gold", { n: h.gold.length }) : ""}
+                      {h.dead ? t("maker.fell") : h.sleeping ? t("maker.asleep") : h.spawned ? "" : t("maker.waiting")}
                     </span>
                   </span>
                 ))}
               </div>
-              <h2 style={{ marginTop: "1rem" }}>{EVENT_FEED_TITLE}</h2>
+              <h2 style={{ marginTop: "1rem" }}>{t("event.feedTitle")}</h2>
               <ul className="event-feed" aria-live="polite">
                 {formatEventFeed(run.events, run.heroes).length === 0 ? (
-                  <li className="hint">{EVENT_FEED_EMPTY}</li>
+                  <li className="hint">{EVENT_FEED_EMPTY()}</li>
                 ) : (
                   formatEventFeed(run.events, run.heroes).map((line, i) => (
                     <li key={`${i}-${line}`}>{line}</li>
@@ -743,15 +727,15 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                 )}
               </ul>
               <details className="honesty technical-log">
-                <summary>{EVENT_TECHNICAL_SUMMARY}</summary>
+                <summary>{EVENT_TECHNICAL_SUMMARY()}</summary>
                 <pre className="log">
-                  {run.events.map((e) => JSON.stringify(e)).join("\n") || EVENT_FEED_EMPTY}
+                  {run.events.map((e) => JSON.stringify(e)).join("\n") || EVENT_FEED_EMPTY()}
                 </pre>
               </details>
             </>
           ) : (
             <p className="hint">
-              {gateOpen ? MAKER_GATE_OK : MAKER_GATE_BLOCKED}
+              {gateOpen ? t("maker.gateOk") : t("maker.gateBlocked")}
             </p>
           )}
         </section>

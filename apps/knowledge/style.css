@@ -637,3 +637,22 @@ footer {
 footer p {
   margin-bottom: 0.35rem;
 }
+
+.locale-switcher {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  margin: 0.25rem 0.5rem;
+}
+.locale-switcher a {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  color: inherit;
+}
+.locale-switcher a.is-current {
+  border-color: var(--accent, #d29922);
+  color: var(--accent, #d29922);
+}
