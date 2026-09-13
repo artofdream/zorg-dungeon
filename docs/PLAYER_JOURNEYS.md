@@ -13,7 +13,8 @@ Companion how-to: [[LEARN]] (kid pictures) and [[PLAYER_GUIDE]] (full companion)
 
 1. Treat each `J-*` id as a stable checklist, not a feature request to invent rules.
 2. Run the **manual** checklist on the live Maker or a local `apps/web` build.
-3. Optional **automated probes** (Playwright under `apps/web/e2e/journeys.spec.ts`, `pnpm probe:journeys`) assert the same success criteria. They are **Simulated** evidence for the journeys — not Live & Probed and not a [[STATUS_LEDGER]] promotion.
+
+3. Optional **automated probes** (Playwright under `apps/web/e2e/journeys.spec.ts`, `pnpm probe:journeys`) assert the same success criteria. They are **Simulated** evidence for the journeys — not Live & Probed and not a [[STATUS_LEDGER]] promotion. An optional **FR locale** smoke (`?lang=fr`) checks How to play / Start here labels in French; it is UX validation only — [[GAME_SPEC]] still wins on rules ([[0007-i18n-fr-en]]).
 4. A journey can fail UX and still be rules-correct. That is a Maker problem, not an engine FR.
 
 ```mermaid

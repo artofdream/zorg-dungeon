@@ -10,27 +10,14 @@ import {
 import { HeroTypeRow } from "./hero-icon.js";
 import { heroTypesFromLevelText } from "./hero-icons.js";
 import { displayCampaignTitle } from "./labels.js";
+import { LocaleSwitcher, useLocale } from "./i18n/index.js";
 import {
-  HELPER_BLURB,
-  HONESTY_DETAILS,
-  HONESTY_SUMMARY,
-  HOW_TO_PLAY_STEPS,
-  HOW_TO_PLAY_TITLE,
-  KID_LEDE,
-  KNOWLEDGE_GUIDE_HREF,
-  KNOWLEDGE_JOURNEYS_HREF,
-  KNOWLEDGE_LEARN_HREF,
-  LEARN_THE_RULES_LABEL,
-  MORE_FILTERS_HINT,
-  MORE_FILTERS_SUMMARY,
-  PRACTICE_SECTION_HINT,
-  PRACTICE_SECTION_TITLE,
-  START_HERE_CARD_BADGE,
-  START_HERE_DIFFICULTY_LABEL,
-  START_HERE_GENERATE_LABEL,
   difficultyChipLabel,
   difficultyEntryLabel,
   firstPlayableDifficulty1,
+  getKnowledgeGuideHref,
+  getKnowledgeJourneysHref,
+  getKnowledgeLearnHref,
 } from "./first-run.js";
 
 interface Props {
@@ -48,6 +35,7 @@ export function CampaignBrowser({
   onStartHereAuthored,
   onStartHereGenerate,
 }: Props) {
+  const { t, locale } = useLocale();
   const groups = useMemo(() => groupCampaignByDifficulty(catalog), [catalog]);
   const contracts = useMemo(() => authoredCampaignContracts(), []);
   const startHere = useMemo(() => firstPlayableDifficulty1(catalog), [catalog]);
@@ -66,6 +54,7 @@ export function CampaignBrowser({
   }, [groups, band, contractId, showUnavailable]);
 
   const playableCount = catalog.filter((e) => e.playable).length;
+  void locale; // re-render on locale change via useLocale
 
   function startAuthoredDifficulty1() {
     if (!startHere) return;
@@ -75,42 +64,46 @@ export function CampaignBrowser({
 
   return (
     <main className="app">
-      <h1>Zorg&apos;s Dungeon Maker</h1>
-      <p className="lede">{KID_LEDE}</p>
+      <div className="chrome-bar">
+        <h1>{t("chrome.makerTitle")}</h1>
+        <LocaleSwitcher />
+      </div>
+      <p className="lede">{t("landing.lede")}</p>
 
       <section className="how-to" aria-labelledby="how-to-play">
-        <h2 id="how-to-play">{HOW_TO_PLAY_TITLE}</h2>
-        <p className="hint">{HELPER_BLURB}</p>
+        <h2 id="how-to-play">{t("howTo.title")}</h2>
+        <p className="hint">{t("landing.helperBlurb")}</p>
         <ol>
-          {HOW_TO_PLAY_STEPS.map((step) => (
-            <li key={step}>{step}</li>
-          ))}
+          <li>{t("howTo.step1")}</li>
+          <li>{t("howTo.step2")}</li>
+          <li>{t("howTo.step3")}</li>
+          <li>{t("howTo.step4")}</li>
         </ol>
         <p className="learn-link">
-          <a href={KNOWLEDGE_LEARN_HREF}>{LEARN_THE_RULES_LABEL}</a>
+          <a href={getKnowledgeLearnHref()}>{t("knowledge.learnLabel")}</a>
           <span className="hint">
             {" "}
-            — pictures and short sentences.{" "}
-            <a href={KNOWLEDGE_GUIDE_HREF}>Player guide</a>
+            {t("knowledge.learnHint")}{" "}
+            <a href={getKnowledgeGuideHref()}>{t("knowledge.guideLabel")}</a>
             {" · "}
-            <a href={KNOWLEDGE_JOURNEYS_HREF}>Persona journeys</a>
+            <a href={getKnowledgeJourneysHref()}>{t("knowledge.journeysLabel")}</a>
           </span>
         </p>
       </section>
 
       <div className="start-here">
         <button type="button" className="cta" disabled={!startHere} onClick={startAuthoredDifficulty1}>
-          {START_HERE_DIFFICULTY_LABEL}
+          {t("landing.startHereDifficulty")}
         </button>
         <button type="button" className="cta cta-secondary" onClick={onStartHereGenerate}>
-          {START_HERE_GENERATE_LABEL}
+          {t("landing.startHereGenerate")}
         </button>
       </div>
 
       <section className="panel generate generate-top" aria-labelledby="practice-dungeon">
-        <h2 id="practice-dungeon">{PRACTICE_SECTION_TITLE}</h2>
-        <p className="hint">{PRACTICE_SECTION_HINT}</p>
-        <div className="filters" aria-label="Generate Difficulty">
+        <h2 id="practice-dungeon">{t("practice.title")}</h2>
+        <p className="hint">{t("practice.hint")}</p>
+        <div className="filters" aria-label={t("landing.generateAria")}>
           {GENERATION_BANDS.map((item) => (
             <button
               key={item}
@@ -118,7 +111,7 @@ export function CampaignBrowser({
               className={generateBand === item ? "selected" : ""}
               onClick={() => setGenerateBand(item)}
             >
-              Difficulty {item}
+              {t("landing.difficultyChip", { band: item })}
             </button>
           ))}
         </div>
@@ -128,22 +121,24 @@ export function CampaignBrowser({
             className="btn-primary"
             onClick={() => onGenerate(generateBand, false)}
           >
-            Generate Difficulty {generateBand}
+            {t("landing.generateButton", { band: generateBand })}
           </button>
         </div>
       </section>
 
       <details className="honesty">
-        <summary>{HONESTY_SUMMARY}</summary>
-        <p>{HONESTY_DETAILS}</p>
+        <summary>{t("honesty.summary")}</summary>
+        <p>{t("honesty.details")}</p>
         <p className="hint">
-          {playableCount} playable · {catalog.length - playableCount} unfinished · quarantine and
-          placeholder contracts 11–15 omitted
+          {t("landing.playableCounts", {
+            playable: playableCount,
+            unfinished: catalog.length - playableCount,
+          })}
         </p>
       </details>
 
-      <h2 className="section-label">Pick a level</h2>
-      <div className="filters" role="tablist" aria-label="Difficulty">
+      <h2 className="section-label">{t("landing.pickLevel")}</h2>
+      <div className="filters" role="tablist" aria-label={t("landing.difficultyAria")}>
         {groups.map((group) => (
           <button
             key={group.band}
@@ -157,15 +152,15 @@ export function CampaignBrowser({
       </div>
 
       <details className="more-filters">
-        <summary>{MORE_FILTERS_SUMMARY}</summary>
-        <p className="hint">{MORE_FILTERS_HINT}</p>
-        <div className="filters" aria-label="Contract flavour filter">
+        <summary>{t("filters.moreSummary")}</summary>
+        <p className="hint">{t("filters.moreHint")}</p>
+        <div className="filters" aria-label={t("landing.contractAria")}>
           <button
             type="button"
             className={contractId === "all" ? "selected" : ""}
             onClick={() => setContractId("all")}
           >
-            All contracts
+            {t("landing.allContracts")}
           </button>
           {contracts.map((contract) => (
             <button
@@ -181,14 +176,14 @@ export function CampaignBrowser({
         </div>
       </details>
 
-      <p className="hint">Every playable level in this list is open.</p>
+      <p className="hint">{t("landing.openHint")}</p>
       <label className="toggle">
         <input
           type="checkbox"
           checked={showUnavailable}
           onChange={(ev) => setShowUnavailable(ev.target.checked)}
         />
-        Show unfinished levels
+        {t("landing.showUnfinished")}
       </label>
 
       <div className="level-grid">
@@ -203,7 +198,7 @@ export function CampaignBrowser({
               onClick={() => onPick(entry)}
             >
               {startHere && entry.id === startHere.id ? (
-                <span className="badge-start">{START_HERE_CARD_BADGE}</span>
+                <span className="badge-start">{t("landing.startHereBadge")}</span>
               ) : null}
               <span className="title">{title}</span>
               <span className="meta">
@@ -213,21 +208,20 @@ export function CampaignBrowser({
               <span className="meta">
                 {entry.pack}
                 {entry.contractName ? ` · ${entry.contractName}` : ""}
-                {entry.needsChoix ? " · setup choices" : ""}
+                {entry.needsChoix ? t("landing.setupChoicesMeta") : ""}
               </span>
               <HeroTypeRow types={heroTypesFromLevelText(entry.text)} labelled />
               {!entry.playable ? (
                 <span className="reason">
-                  Unfinished — {entry.unavailableReasons.map(unavailableReasonLabel).join(" · ")}
+                  {t("landing.unfinishedPrefix")}
+                  {entry.unavailableReasons.map(unavailableReasonLabel).join(" · ")}
                 </span>
               ) : null}
             </button>
           );
         })}
       </div>
-      {visible.length === 0 ? (
-        <p className="hint">No levels in this filter. Try another Difficulty or show unfinished levels.</p>
-      ) : null}
+      {visible.length === 0 ? <p className="hint">{t("landing.emptyFilter")}</p> : null}
     </main>
   );
 }

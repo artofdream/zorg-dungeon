@@ -8,6 +8,7 @@ import {
   type SpellDef,
   type SpellSlot,
 } from "@zorg/engine";
+import { t } from "./i18n/index.js";
 
 /** Engineer / compact letter form (honesty / aria fallbacks). */
 export function roomLabel(def: RoomDef): string {
@@ -34,21 +35,21 @@ export function roomLabel(def: RoomDef): string {
 export function roomKidLabel(def: RoomDef): string {
   switch (def.type) {
     case "A":
-      return "Start (A)";
+      return t("room.A.label");
     case "Z":
-      return "Exit (Z)";
+      return t("room.Z.label");
     case "D":
-      return `Danger (${def.damage})`;
+      return t("room.D.label", { damage: def.damage });
     case "E":
-      return `Element (${def.element})`;
+      return t("room.E.label", { element: def.element });
     case "P":
-      return `Portal (${def.entries})`;
+      return t("room.P.label", { entries: def.entries });
     case "O":
-      return `Gold (${def.gold})`;
+      return t("room.O.label", { gold: def.gold });
     case "T":
-      return `Toll (${def.cost})`;
+      return t("room.T.label", { cost: def.cost });
     case "C":
-      return `Special (C)`;
+      return t("room.C.label");
   }
 }
 
@@ -56,21 +57,21 @@ export function roomKidLabel(def: RoomDef): string {
 export function roomKidWord(def: RoomDef): string {
   switch (def.type) {
     case "A":
-      return "Start";
+      return t("room.A.word");
     case "Z":
-      return "Exit";
+      return t("room.Z.word");
     case "D":
-      return "Danger";
+      return t("room.D.word");
     case "E":
       return def.element;
     case "P":
-      return "Portal";
+      return t("room.P.word");
     case "O":
-      return "Gold";
+      return t("room.O.word");
     case "T":
-      return "Toll";
+      return t("room.T.word");
     case "C":
-      return "Special";
+      return t("room.C.word");
   }
 }
 
@@ -98,15 +99,15 @@ export function heroLabel(def: HeroDef): string {
 export function heroKidLabel(def: HeroDef): string {
   switch (def.type) {
     case "Warrior":
-      return `Warrior · ${def.hp} HP`;
+      return t("hero.Warrior", { hp: def.hp });
     case "Elf":
-      return `Elf · ${def.hp} HP`;
+      return t("hero.Elf", { hp: def.hp });
     case "Gunner":
-      return `Gunner · ${def.hp} HP · ${def.shots} shots`;
+      return t("hero.Gunner", { hp: def.hp, shots: def.shots });
     case "Mechanic":
-      return `Mechanic · ${def.hp} HP`;
+      return t("hero.Mechanic", { hp: def.hp });
     case "Princess":
-      return `Princess · ${def.hp} HP`;
+      return t("hero.Princess", { hp: def.hp });
   }
 }
 
@@ -126,36 +127,36 @@ export function spellLabel(def: SpellDef): string {
 export function spellKidLabel(def: SpellDef): string {
   switch (def.type) {
     case "Attack":
-      return `Attack · ${def.damage} damage`;
+      return t("spell.Attack", { damage: def.damage });
     case "Teleport":
-      return `Teleport · ${def.steps} steps`;
+      return t("spell.Teleport", { steps: def.steps });
     case "Selection":
-      return "Selection";
+      return t("spell.Selection");
     case "Move":
-      return "Move";
+      return t("spell.Move");
     case "Swap":
-      return "Swap";
+      return t("spell.Swap");
     case "Sleep":
-      return "Sleep";
+      return t("spell.Sleep");
     case "Wake":
-      return "Wake";
+      return t("spell.Wake");
     case "Banality":
-      return "Banality";
+      return t("spell.Banality");
   }
 }
 
 export function roomSlotLabel(slot: RoomSlot): string {
-  if (isChoixDef(slot)) return `choice(${slot.n}, {${slot.options.map(roomSlotLabel).join(", ")}})`;
+  if (isChoixDef(slot)) return `${t("choice.prefix")}(${slot.n}, {${slot.options.map(roomSlotLabel).join(", ")}})`;
   return roomKidLabel(slot);
 }
 
 export function heroSlotLabel(slot: HeroSlot): string {
-  if (isChoixDef(slot)) return `choice(${slot.n}, {${slot.options.map(heroSlotLabel).join(", ")}})`;
+  if (isChoixDef(slot)) return `${t("choice.prefix")}(${slot.n}, {${slot.options.map(heroSlotLabel).join(", ")}})`;
   return heroKidLabel(slot);
 }
 
 export function spellSlotLabel(slot: SpellSlot): string {
-  if (isChoixDef(slot)) return `choice(${slot.n}, {${slot.options.map(spellSlotLabel).join(", ")}})`;
+  if (isChoixDef(slot)) return `${t("choice.prefix")}(${slot.n}, {${slot.options.map(spellSlotLabel).join(", ")}})`;
   if (isSpellRepeat(slot)) return `${slot.count}× ${spellSlotLabel(slot.spell)}`;
   return spellKidLabel(slot);
 }
@@ -165,7 +166,7 @@ export function displayCampaignTitle(entry: { name?: string | null; id: string }
   const raw = (entry.name ?? "").trim().replace(/^["“”']+|["“”']+$/g, "").trim();
   if (raw) return raw;
   const id = entry.id.trim();
-  if (!id) return "Untitled level";
+  if (!id) return t("campaign.untitled");
   return id
     .replace(/^base-classic-/i, "Classic ")
     .replace(/[-_]+/g, " ")

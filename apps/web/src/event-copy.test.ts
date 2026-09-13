@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type { SimEvent } from "@zorg/engine";
+import { DEFAULT_LOCALE, setLocale } from "./i18n/index.js";
 import { formatEventFeed, formatSimEvent } from "./event-copy.js";
+
+afterEach(() => {
+  setLocale(DEFAULT_LOCALE);
+});
 
 describe("event-copy sentence feed (J-KID)", () => {
   it("turns common fight events into plain sentences", () => {
@@ -22,5 +27,13 @@ describe("event-copy sentence feed (J-KID)", () => {
 
   it("keeps loss readable without raw JSON", () => {
     expect(formatSimEvent({ type: "loss", heroId: 1 })).toMatch(/reached the exit/i);
+  });
+
+  it("translates win / enter feed lines in FR", () => {
+    setLocale("fr");
+    expect(formatSimEvent({ type: "win" })).toMatch(/arrêtés avant/i);
+    expect(formatSimEvent({ type: "enter", heroId: 0, roomId: "D:0", roomType: "D" })).toMatch(
+      /salle danger/i,
+    );
   });
 });

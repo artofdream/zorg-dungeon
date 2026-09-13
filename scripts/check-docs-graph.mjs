@@ -20,7 +20,14 @@ const docFiles = [...walk(`${root}/docs`).filter((f) => extname(f) === ".md"), .
 const byName = new Map(); // normalized basename -> path
 for (const f of docFiles) {
   const name = basename(f, ".md").toLowerCase();
-  byName.set(name, f);
+  const rel = f.replace(root + "/", "").replace(/\\/g, "/");
+  // Prefer root docs/ over docs/fr/ for bare [[LEARN]] etc. (ADR-0007).
+  if (rel.includes("/fr/")) {
+    byName.set(`fr/${name}`, f);
+    if (!byName.has(name)) byName.set(name, f);
+  } else {
+    byName.set(name, f);
+  }
 }
 
 const specPath = `${root}/GAME_SPEC.md`;
