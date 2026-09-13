@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Danger">
+  <rect width="32" height="32" rx="6" fill="#0d1117"/>
+  <rect x="1" y="1" width="30" height="30" rx="5" fill="none" stroke="#d46a2e" stroke-width="1.25"/>
+  <!-- warning triangle -->
+  <path d="M16 6.4 26.2 24.6H5.8z" fill="#1f1a16" stroke="#c9a227" stroke-width="1.2" stroke-linejoin="round"/>
+  <path d="M16 9.6 23.4 23.2H8.6z" fill="#2a241e"/>
+  <!-- bang -->
+  <rect x="15.1" y="12.2" width="1.8" height="6.4" rx="0.7" fill="#d46a2e"/>
+  <circle cx="16" cy="21.1" r="1.15" fill="#d46a2e"/>
+  <!-- sparks -->
+  <path d="M7.2 9.4 8.6 10.2" stroke="#d29922" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M24.8 9.4 23.4 10.2" stroke="#d29922" stroke-width="1.1" stroke-linecap="round"/>
+</svg>

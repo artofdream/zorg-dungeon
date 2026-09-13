@@ -26,6 +26,8 @@ import {
 import { HatchCompass, RoomHatchMark } from "./hatch-mark.js";
 import { HeroFigurineLegend, HeroIcon } from "./hero-icon.js";
 import { collectHeroTypes } from "./hero-icons.js";
+import { RoomTile } from "./room-tile.js";
+import { legalNextCells } from "./room-icons.js";
 import {
   EVENT_FEED_EMPTY,
   EVENT_FEED_TITLE,
@@ -125,6 +127,10 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
   const placedIds = new Set(rooms.map((r) => r.id));
   const gateOpen = canStartExtermination(level, layout);
   const playing = run !== null;
+  const legalNext = useMemo(() => {
+    if (playing || selectedId === null) return new Set<string>();
+    return legalNextCells(rooms);
+  }, [playing, selectedId, rooms]);
 
   useEffect(() => {
     setRooms(suggestedLayout?.rooms ?? []);
@@ -471,7 +477,12 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                   spec.def.type === "A",
                 )}
               >
-                {roomKidLabel(spec.def)} {placedIds.has(spec.id) ? "· placed" : "· tray"}
+                <span className="tray-room">
+                  <RoomTile def={spec.def} />
+                  <span>
+                    {roomKidLabel(spec.def)} {placedIds.has(spec.id) ? "· placed" : "· tray"}
+                  </span>
+                </span>
                 <span className="tray-hatch">
                   {hatch.doorsFaceLabel}
                   {spec.def.type === "A" ? " · start-room doors" : ""}
@@ -506,6 +517,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
           <p className="hint">
             {rooms.length === 0 && !playing ? EMPTY_BOARD_HINT + " " : ""}
             Click a cell to place the selected room. Click a placed room to pick it up.{" "}
+            Green outline marks the next cells beside rooms already on the board.{" "}
             {hatch.doorsFaceLabel}
             {selectedSpec ? ` · placing ${roomKidLabel(selectedSpec.def)}` : ""}.
           </p>
@@ -525,15 +537,24 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                   const isAnchor = room?.def.type === "A";
                   const isPreview =
                     !playing && !room && Boolean(selectedSpec) && hoverCell?.x === x && hoverCell?.y === y;
+                  const isLegalNext =
+                    !playing && !room && Boolean(selectedSpec) && legalNext.has(`${x},${y}`);
                   const previewName = isPreview && selectedSpec ? roomKidLabel(selectedSpec.def) : undefined;
+                  const tileDef = room?.def ?? (isPreview || isLegalNext ? selectedSpec?.def : undefined);
                   return (
                     <button
                       key={`${x},${y}`}
                       type="button"
                       className={`cell${room ? " filled" : ""}${isHero ? " hero" : ""}${
                         isSelectedPlaced ? " selected-room" : ""
-                      }${isPreview ? " preview" : ""}${isAnchor ? " anchor" : ""}${
-                        room ? ` ${roomTypeCss(room.def)}` : isPreview && selectedSpec ? ` ${roomTypeCss(selectedSpec.def)}` : ""
+                      }${isPreview ? " preview" : ""}${isLegalNext ? " legal-next" : ""}${
+                        isAnchor ? " anchor" : ""
+                      }${
+                        room
+                          ? ` ${roomTypeCss(room.def)}`
+                          : (isPreview || isLegalNext) && selectedSpec
+                            ? ` ${roomTypeCss(selectedSpec.def)}`
+                            : ""
                       }`}
                       onClick={() => onCellClick(x, y)}
                       onPointerEnter={(ev) => {
@@ -542,7 +563,8 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                       onPointerLeave={() =>
                         setHoverCell((cur) => (cur?.x === x && cur?.y === y ? null : cur))
                       }
-                      data-hatch={room || isPreview ? hatch.cardinal : undefined}
+                      data-hatch={room || isPreview || isLegalNext ? hatch.cardinal : undefined}
+                      data-coords={`${x},${y}`}
                       aria-label={[
                         boardCellAriaLabel({
                           roomName: room ? roomKidLabel(room.def) : previewName,
@@ -553,6 +575,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                           selected: isSelectedPlaced,
                           isAnchor,
                         }),
+                        isLegalNext && !isPreview ? "next legal cell" : "",
                         occupants.length
                           ? occupants.map((h) => h.def.type).join(", ")
                           : "",
@@ -560,7 +583,8 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                         .filter(Boolean)
                         .join(" · ")}
                     >
-                      {room || isPreview ? <RoomHatchMark orientation={orientation} /> : null}
+                      {tileDef ? <RoomTile def={tileDef} /> : null}
+                      {room || isPreview || isLegalNext ? <RoomHatchMark orientation={orientation} /> : null}
                       {occupants.length > 0 ? (
                         <span className="cell-heroes">
                           {occupants.map((h) => (
@@ -571,15 +595,17 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
                       {room ? (
                         <>
                           <span className="kind">{roomKidWord(room.def)}</span>
-                          <span className="meta">
+                          <span className="meta" aria-hidden="true">
                             {roomLabel(room.def)} · {hatch.glyph}
                           </span>
                         </>
+                      ) : isPreview && selectedSpec ? (
+                        <span className="kind preview-word">{roomKidWord(selectedSpec.def)}</span>
+                      ) : isLegalNext ? (
+                        <span className="kind legal-hint">Next</span>
                       ) : (
-                        <span className="meta">
-                          {isPreview && selectedSpec
-                            ? `${roomKidWord(selectedSpec.def)} · ${roomLabel(selectedSpec.def)}`
-                            : `${x},${y}`}
+                        <span className="meta coords" aria-hidden="true">
+                          {x},{y}
                         </span>
                       )}
                     </button>

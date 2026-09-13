@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Gold">
+  <rect width="32" height="32" rx="6" fill="#0d1117"/>
+  <rect x="1" y="1" width="30" height="30" rx="5" fill="none" stroke="#c9a227" stroke-width="1.25"/>
+  <!-- stacked coins -->
+  <ellipse cx="16" cy="21.6" rx="8.2" ry="3.1" fill="#1f1a16" stroke="#c9a227" stroke-width="1.1"/>
+  <ellipse cx="16" cy="18.4" rx="8.2" ry="3.1" fill="#2a241e" stroke="#d29922" stroke-width="1.1"/>
+  <ellipse cx="16" cy="15.2" rx="8.2" ry="3.1" fill="#2a241e" stroke="#c9a227" stroke-width="1.15"/>
+  <ellipse cx="16" cy="12.2" rx="8.2" ry="3.1" fill="#d29922" stroke="#c9a227" stroke-width="1.15"/>
+  <!-- coin face -->
+  <circle cx="16" cy="12.2" r="2.1" fill="#1f1a16"/>
+  <path d="M16 10.7v3" stroke="#c9a227" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M14.7 12.2h2.6" stroke="#c9a227" stroke-width="1.1" stroke-linecap="round"/>
+</svg>
