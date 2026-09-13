@@ -312,7 +312,11 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
   }
 
   return (
-    <main className="app app-play">
+    <main
+      className="app app-play"
+      data-pack={entry.pack}
+      data-difficulty-band={entry.difficultyBand}
+    >
       <div className="topbar">
         <button type="button" onClick={onBack}>
           ← Campaign
