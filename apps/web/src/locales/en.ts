@@ -9,6 +9,7 @@ export const en = {
   "chrome.regenerate": "Regenerate",
   "chrome.practiceTag": "practice dungeon",
   "chrome.clearBoard": "Clear board",
+  "chrome.skipToContent": "Skip to content",
 
   // Knowledge links
   "knowledge.learnLabel": "Learn the rules",

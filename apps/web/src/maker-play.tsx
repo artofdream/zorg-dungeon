@@ -300,6 +300,7 @@ export function MakerPlay({ entry, onBack, suggestedLayout, onRegenerate, beginn
 
   return (
     <main
+      id="main-content"
       className="app app-play"
       data-pack={entry.pack}
       data-difficulty-band={entry.difficultyBand}
