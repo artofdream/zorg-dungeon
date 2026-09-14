@@ -10,6 +10,7 @@ export const fr: Messages = {
   "chrome.regenerate": "Regénérer",
   "chrome.practiceTag": "donjon d'entraînement",
   "chrome.clearBoard": "Vider le plateau",
+  "chrome.skipToContent": "Aller au contenu",
 
   "knowledge.learnLabel": "Apprendre les règles",
   "knowledge.guideLabel": "Guide du joueur",

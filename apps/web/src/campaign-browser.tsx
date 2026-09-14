@@ -63,7 +63,7 @@ export function CampaignBrowser({
   }
 
   return (
-    <main className="app">
+    <main id="main-content" className="app">
       <div className="chrome-bar">
         <h1>{t("chrome.makerTitle")}</h1>
         <LocaleSwitcher />

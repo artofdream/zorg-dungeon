@@ -9,6 +9,7 @@ import {
 import { CampaignBrowser } from "./campaign-browser.js";
 import { loadCampaignCatalog } from "./fixtures.js";
 import { MakerPlay } from "./maker-play.js";
+import { SkipToContent } from "./skip-to-content.js";
 
 export function App() {
   const catalog = useMemo(() => loadCampaignCatalog(), []);
@@ -35,32 +36,38 @@ export function App() {
   if (selected?.playable) {
     const generated = selected.pack === "generated";
     return (
-      <MakerPlay
-        entry={selected}
-        suggestedLayout={suggestedLayout}
-        beginnerAssist={beginnerAssist}
-        onBack={() => {
-          setSelected(null);
-          setSuggestedLayout(undefined);
-          setGeneratedSeed(undefined);
-          setBeginnerAssist(false);
-        }}
-        onRegenerate={
-          generated
-            ? () => openGenerated(selected.difficultyBand as GenerationBand, (generatedSeed ?? 0) + 1, beginnerAssist)
-            : undefined
-        }
-      />
+      <>
+        <SkipToContent />
+        <MakerPlay
+          entry={selected}
+          suggestedLayout={suggestedLayout}
+          beginnerAssist={beginnerAssist}
+          onBack={() => {
+            setSelected(null);
+            setSuggestedLayout(undefined);
+            setGeneratedSeed(undefined);
+            setBeginnerAssist(false);
+          }}
+          onRegenerate={
+            generated
+              ? () => openGenerated(selected.difficultyBand as GenerationBand, (generatedSeed ?? 0) + 1, beginnerAssist)
+              : undefined
+          }
+        />
+      </>
     );
   }
 
   return (
-    <CampaignBrowser
-      catalog={catalog}
-      onPick={(entry) => openAuthored(entry, false)}
-      onGenerate={(band, assist) => openGenerated(band, undefined, assist ?? false)}
-      onStartHereAuthored={(entry) => openAuthored(entry, true)}
-      onStartHereGenerate={() => openGenerated("1", undefined, true)}
-    />
+    <>
+      <SkipToContent />
+      <CampaignBrowser
+        catalog={catalog}
+        onPick={(entry) => openAuthored(entry, false)}
+        onGenerate={(band, assist) => openGenerated(band, undefined, assist ?? false)}
+        onStartHereAuthored={(entry) => openAuthored(entry, true)}
+        onStartHereGenerate={() => openGenerated("1", undefined, true)}
+      />
+    </>
   );
 }

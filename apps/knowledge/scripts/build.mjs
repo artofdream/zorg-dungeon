@@ -254,7 +254,7 @@ function pageShell({ title, current, content, lang = "en", localeAlt = null }) {
 <html lang="${lang}">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>${title} — Zorg's Dungeon Knowledge</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
@@ -300,6 +300,7 @@ function pageShell({ title, current, content, lang = "en", localeAlt = null }) {
   </script>
 </head>
 <body class="is-wide page-${current}">
+  <a class="skip-link" href="#content">${lang === "fr" ? "Aller au contenu" : "Skip to content"}</a>
   <header>
     <div class="brand">
       <img class="brand-badge" src="/favicon.svg" width="36" height="36" alt="Zorg Knowledge">
@@ -1086,6 +1087,32 @@ for (const file of readdirSync(distDir).filter((f) => f.endsWith(".html"))) {
   const html = readFileSync(join(distDir, file), "utf8");
   for (const [i, src] of extractMermaidFromHtml(html).entries()) {
     assertMermaidSafe(src, `${file} mermaid #${i + 1}`);
+  }
+}
+
+// UX smoke: viewport-fit, lang=fr on FR companions, skip link
+for (const file of readdirSync(distDir).filter((f) => f.endsWith(".html"))) {
+  const html = readFileSync(join(distDir, file), "utf8");
+  if (!html.includes('name="viewport"') || !html.includes("viewport-fit=cover")) {
+    throw new Error(`knowledge build: ${file} missing viewport-fit=cover`);
+  }
+  if (!html.includes('class="skip-link"') || !html.includes('href="#content"')) {
+    throw new Error(`knowledge build: ${file} missing skip-to-content link`);
+  }
+  if (!html.includes('id="content"')) {
+    throw new Error(`knowledge build: ${file} missing #content landmark`);
+  }
+}
+for (const file of readdirSync(frDist).filter((f) => f.endsWith(".html"))) {
+  const html = readFileSync(join(frDist, file), "utf8");
+  if (!html.includes('<html lang="fr">')) {
+    throw new Error(`knowledge build: fr/${file} must set lang="fr"`);
+  }
+  if (!html.includes("viewport-fit=cover")) {
+    throw new Error(`knowledge build: fr/${file} missing viewport-fit=cover`);
+  }
+  if (!html.includes('class="skip-link"') || !html.includes('href="#content"')) {
+    throw new Error(`knowledge build: fr/${file} missing skip-to-content link`);
   }
 }
 
