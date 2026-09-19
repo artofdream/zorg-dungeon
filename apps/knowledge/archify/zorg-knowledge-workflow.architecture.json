@@ -1,0 +1,406 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zorg Knowledge \u2014 Pages + Archify (Documented aid)",
+    "output": "zorg-knowledge-workflow.architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "Happy path",
+        "focus": [
+          "freeze",
+          "issue",
+          "author",
+          "pr",
+          "mrc",
+          "mergebot",
+          "build",
+          "pages",
+          "probe"
+        ],
+        "note": "GAME_SPEC / docs \u2192 PR \u2192 merge \u2192 build.mjs \u2192 Pages \u2192 this-session probe."
+      },
+      {
+        "id": "hosts",
+        "label": "Two hosts",
+        "focus": [
+          "local",
+          "cafe",
+          "knowledge",
+          "pages"
+        ],
+        "note": "Maker zorg.artof.link + knowledge.zorg.artof.link. Separate origins."
+      },
+      {
+        "id": "honesty",
+        "label": "Honesty boundary",
+        "focus": [
+          "honesty",
+          "probe",
+          "archify",
+          "knowledge"
+        ],
+        "note": "Documented aid \u2014 not Live. C / Gunner / FR-4 author-deferred."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "freeze",
+      "type": "security",
+      "label": "GAME_SPEC / docs",
+      "sublabel": "FR \u00b7 NFR \u00b7 companions",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        140,
+        52
+      ],
+      "tag": "SoT"
+    },
+    {
+      "id": "issue",
+      "type": "external",
+      "label": "GitHub issue",
+      "sublabel": "finding / gap",
+      "pos": [
+        220,
+        50
+      ],
+      "size": [
+        120,
+        52
+      ]
+    },
+    {
+      "id": "author",
+      "type": "backend",
+      "label": "Agent author",
+      "sublabel": "branch + PR",
+      "pos": [
+        380,
+        50
+      ],
+      "size": [
+        120,
+        52
+      ],
+      "tag": "no invent"
+    },
+    {
+      "id": "pr",
+      "type": "cloud",
+      "label": "Pull request",
+      "sublabel": "vs main",
+      "pos": [
+        540,
+        50
+      ],
+      "size": [
+        120,
+        52
+      ]
+    },
+    {
+      "id": "mrc",
+      "type": "security",
+      "label": "Review / CI",
+      "sublabel": "governance green",
+      "pos": [
+        700,
+        50
+      ],
+      "size": [
+        130,
+        52
+      ],
+      "tag": "gate"
+    },
+    {
+      "id": "mergebot",
+      "type": "backend",
+      "label": "Merge to main",
+      "sublabel": "sponsor / bot",
+      "pos": [
+        880,
+        50
+      ],
+      "size": [
+        130,
+        52
+      ]
+    },
+    {
+      "id": "local",
+      "type": "backend",
+      "label": "Local (dev)",
+      "sublabel": "pnpm \u00b7 Vite",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        140,
+        52
+      ]
+    },
+    {
+      "id": "cafe",
+      "type": "cloud",
+      "label": "Maker host",
+      "sublabel": "zorg.artof.link",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        140,
+        52
+      ],
+      "tag": "Lightsail"
+    },
+    {
+      "id": "archify",
+      "type": "messagebus",
+      "label": "/archify/",
+      "sublabel": "same-origin HTML",
+      "pos": [
+        260,
+        220
+      ],
+      "size": [
+        130,
+        52
+      ],
+      "tag": "Documented"
+    },
+    {
+      "id": "knowledge",
+      "type": "cloud",
+      "label": "Knowledge host",
+      "sublabel": "knowledge.zorg.artof.link",
+      "pos": [
+        440,
+        220
+      ],
+      "size": [
+        170,
+        52
+      ],
+      "tag": "map"
+    },
+    {
+      "id": "pages",
+      "type": "cloud",
+      "label": "GitHub Pages",
+      "sublabel": "from main",
+      "pos": [
+        670,
+        220
+      ],
+      "size": [
+        130,
+        52
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "build.mjs",
+      "sublabel": "md \u2192 dist/",
+      "pos": [
+        880,
+        220
+      ],
+      "size": [
+        130,
+        52
+      ]
+    },
+    {
+      "id": "honesty",
+      "type": "security",
+      "label": "Honesty ledger",
+      "sublabel": "STATUS_LEDGER",
+      "pos": [
+        440,
+        380
+      ],
+      "size": [
+        150,
+        52
+      ]
+    },
+    {
+      "id": "probe",
+      "type": "external",
+      "label": "This-session probe",
+      "sublabel": "HTTPS GET",
+      "pos": [
+        670,
+        380
+      ],
+      "size": [
+        130,
+        52
+      ],
+      "tag": "gate"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Zorg Knowledge Pages pipeline",
+      "wraps": [
+        "freeze",
+        "issue",
+        "author",
+        "pr",
+        "mrc",
+        "mergebot",
+        "build",
+        "pages",
+        "knowledge",
+        "archify",
+        "probe",
+        "honesty"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Restaurant (separate)",
+      "wraps": [
+        "local",
+        "cafe"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Documented aid only",
+      "wraps": [
+        "honesty",
+        "probe",
+        "archify"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "freeze",
+      "to": "issue",
+      "label": "finding",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2",
+      "from": "issue",
+      "to": "author"
+    },
+    {
+      "id": "c3",
+      "from": "author",
+      "to": "pr",
+      "label": "open"
+    },
+    {
+      "id": "c4",
+      "from": "pr",
+      "to": "mrc"
+    },
+    {
+      "id": "c5",
+      "from": "mrc",
+      "to": "mergebot",
+      "label": "COMMENT",
+      "variant": "security"
+    },
+    {
+      "id": "c6",
+      "from": "mergebot",
+      "to": "build",
+      "label": "main",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 55
+    },
+    {
+      "id": "c7",
+      "from": "build",
+      "to": "pages",
+      "label": "deploy"
+    },
+    {
+      "id": "c8",
+      "from": "pages",
+      "to": "knowledge"
+    },
+    {
+      "id": "c9",
+      "from": "knowledge",
+      "to": "archify",
+      "label": "serve",
+      "variant": "dashed"
+    },
+    {
+      "id": "c10",
+      "from": "pages",
+      "to": "probe",
+      "label": "GET",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 55
+    },
+    {
+      "id": "c11",
+      "from": "probe",
+      "to": "honesty",
+      "label": "record",
+      "variant": "dashed"
+    },
+    {
+      "id": "c13",
+      "from": "local",
+      "to": "cafe",
+      "label": "same stack",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 55
+    },
+    {
+      "id": "c14",
+      "from": "archify",
+      "to": "honesty",
+      "label": "cite",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 55
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Documented aid \u2014 not Live",
+      "items": [
+        "/archify/ HTML is a readable map, not a production status claim",
+        "Probe https://knowledge.zorg.artof.link/archify/ after Pages deploy before claiming GET 200",
+        "GAME_SPEC wins; do not invent C / Gunner duration / FR-4"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Same-origin",
+      "items": [
+        "Served under knowledge.zorg.artof.link/archify/ via apps/knowledge/dist/archify/",
+        "Sister pattern: knowledge.cafe.artof.link/archify/ and ctos.artof.link/archify/"
+      ]
+    }
+  ]
+}

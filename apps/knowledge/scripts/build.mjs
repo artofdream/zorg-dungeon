@@ -372,6 +372,12 @@ const homeContent = `
     <p>One row per requirement. Only five status words. Simulated means a test exists — not a live probe. A page is not proof.</p>
     <a href="honesty.html">Open the ledger →</a>
   </div>
+
+  <div class="card">
+    <h3>Archify diagrams</h3>
+    <p><span class="badge badge-planned">Documented</span> same-origin map under <code>/archify/</code> — readable aid, not Live. Sister pattern to Café Knowledge / ctos.</p>
+    <a href="archify/">Open /archify/ →</a>
+  </div>
   <div class="card">
     <h3>🛡️ Findings</h3>
     <p>Misses between docs and code (CF-NNN). The second time the same miss happens, CI or a test must change.</p>
@@ -1113,6 +1119,29 @@ for (const file of readdirSync(frDist).filter((f) => f.endsWith(".html"))) {
   }
   if (!html.includes('class="skip-link"') || !html.includes('href="#content"')) {
     throw new Error(`knowledge build: fr/${file} missing skip-to-content link`);
+  }
+}
+
+
+// Archify same-origin aids (Documented — not Live). Sister: knowledge.cafe / ctos /archify/
+const archifySrc = join(knowledgeRoot, "archify");
+const archifyDist = join(distDir, "archify");
+if (existsSync(archifySrc)) {
+  mkdirSync(archifyDist, { recursive: true });
+  for (const name of readdirSync(archifySrc)) {
+    const src = join(archifySrc, name);
+    const dest = join(archifyDist, name);
+    if (existsSync(src) && !src.endsWith("/")) {
+      // skip directories for now — flat folder only
+    }
+    copyFileSync(src, dest);
+  }
+  const idx = readFileSync(join(archifyDist, "index.html"), "utf8");
+  if (!idx.includes("Documented") || !idx.includes("not Live")) {
+    throw new Error("knowledge build: archify/index.html must declare Documented aid — not Live");
+  }
+  if (!existsSync(join(archifyDist, "zorg-knowledge-workflow.architecture.html"))) {
+    throw new Error("knowledge build: missing archify architecture HTML");
   }
 }
 
