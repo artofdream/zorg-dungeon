@@ -377,6 +377,9 @@ const homeContent = `
     <h3>Archify diagrams</h3>
     <p><span class="badge badge-planned">Documented</span> same-origin map under <code>/archify/</code> — readable aid, not Live. Sister pattern to Café Knowledge / ctos.</p>
     <a href="archify/">Open /archify/ →</a>
+    <h3>Chronify timeline</h3>
+    <p><span class="badge badge-planned">Documented</span> same-origin evolution rail under <code>/chronify/</code> — dated aid, not Live. Sister to Archify / ctos.</p>
+    <a href="chronify/">Open /chronify/ →</a>
   </div>
   <div class="card">
     <h3>🛡️ Findings</h3>
@@ -1142,6 +1145,25 @@ if (existsSync(archifySrc)) {
   }
   if (!existsSync(join(archifyDist, "zorg-knowledge-workflow.architecture.html"))) {
     throw new Error("knowledge build: missing archify architecture HTML");
+  }
+}
+
+// Chronify same-origin rails (Documented — not Live). Sister: AEA / ctos /chronify/
+const chronifySrc = join(knowledgeRoot, "chronify");
+const chronifyDist = join(distDir, "chronify");
+if (existsSync(chronifySrc)) {
+  mkdirSync(chronifyDist, { recursive: true });
+  for (const name of readdirSync(chronifySrc)) {
+    const src = join(chronifySrc, name);
+    const dest = join(chronifyDist, name);
+    copyFileSync(src, dest);
+  }
+  const cidx = readFileSync(join(chronifyDist, "index.html"), "utf8");
+  if (!/Documented/i.test(cidx)) {
+    throw new Error("knowledge build: chronify/index.html must declare Documented aid — not Live");
+  }
+  if (!existsSync(join(chronifyDist, "zorg-evolution-rail.svg"))) {
+    throw new Error("knowledge build: missing chronify rail SVG");
   }
 }
 
