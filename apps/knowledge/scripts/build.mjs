@@ -225,11 +225,11 @@ function pageShell({ title, current, content, lang = "en", localeAlt = null }) {
   const prefix = lang === "fr" ? "../" : "";
   const navItems = [
     { id: "home", label: lang === "fr" ? "Accueil" : "Home", href: `${prefix}index.html` },
-    { id: "learn", label: lang === "fr" ? "Apprendre les règles" : "Learn the rules", href: lang === "fr" ? "learn.html" : "learn.html" },
+    { id: "learn", label: lang === "fr" ? "Apprendre les rÃ¨gles" : "Learn the rules", href: lang === "fr" ? "learn.html" : "learn.html" },
     { id: "guide", label: lang === "fr" ? "Guide" : "Guide", href: lang === "fr" ? "guide.html" : "guide.html" },
     { id: "journeys", label: lang === "fr" ? "Parcours" : "Journeys", href: lang === "fr" ? "journeys.html" : "journeys.html" },
-    { id: "spec", label: lang === "fr" ? "Règles & Spec" : "Rules & Spec", href: `${prefix}spec.html` },
-    { id: "honesty", label: lang === "fr" ? "Ledger d'honnêteté" : "Honesty Ledger", href: `${prefix}honesty.html` },
+    { id: "spec", label: lang === "fr" ? "RÃ¨gles & Spec" : "Rules & Spec", href: `${prefix}spec.html` },
+    { id: "honesty", label: lang === "fr" ? "Ledger d'honnÃªtetÃ©" : "Honesty Ledger", href: `${prefix}honesty.html` },
     { id: "findings", label: lang === "fr" ? "Findings" : "Findings", href: `${prefix}findings.html` },
     { id: "adr", label: "ADRs", href: `${prefix}adr.html` },
     { id: "journal", label: lang === "fr" ? "Journal" : "Dev Journal", href: `${prefix}journal.html` },
@@ -255,7 +255,7 @@ function pageShell({ title, current, content, lang = "en", localeAlt = null }) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>${title} — Zorg's Dungeon Knowledge</title>
+  <title>${title} â€” Zorg's Dungeon Knowledge</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
@@ -319,9 +319,9 @@ function pageShell({ title, current, content, lang = "en", localeAlt = null }) {
     </nav>
     ${localeAlt ? `<div class="locale-switcher" role="group" aria-label="${lang === "fr" ? "Langue" : "Language"}"><a href="${localeAlt.en}" class="${lang === "en" ? "is-current" : ""}">EN</a><a href="${localeAlt.fr}" class="${lang === "fr" ? "is-current" : ""}">FR</a></div>` : ""}
     <div class="external-links">
-      <a href="https://zorg.artof.link" target="_blank" class="btn-external">Play Maker ↗</a>
-      <a href="https://zorg.artof.link/grafana/" target="_blank" class="btn-external">Grafana ↗</a>
-      <a href="https://github.com/artofdream/zorg-dungeon" target="_blank" class="btn-external">GitHub ↗</a>
+      <a href="https://zorg.artof.link" target="_blank" class="btn-external">Play Maker â†—</a>
+      <a href="https://zorg.artof.link/grafana/" target="_blank" class="btn-external">Grafana â†—</a>
+      <a href="https://github.com/artofdream/zorg-dungeon" target="_blank" class="btn-external">GitHub â†—</a>
     </div>
     </div>
   </header>
@@ -329,7 +329,7 @@ function pageShell({ title, current, content, lang = "en", localeAlt = null }) {
     ${content}
   </main>
   <footer>
-    <p>Zorg's Dungeon Maker Knowledge Map · Built on the <a href="https://architecture.artof.link">Adaptive Experience Architecture (AEA)</a> framework.</p>
+    <p>Zorg's Dungeon Maker Knowledge Map Â· Built on the <a href="https://architecture.artof.link">Adaptive Experience Architecture (AEA)</a> framework.</p>
     <p>All functional requirements (FR-xx) and non-functional requirements (NFR-xx) verified via honest, deterministic testing.</p>
   </footer>
 </body>
@@ -339,74 +339,74 @@ function pageShell({ title, current, content, lang = "en", localeAlt = null }) {
 // 1. Home Page
 const homeContent = `
 <h1>Zorg's Dungeon Maker</h1>
-<p class="lead">You place the rooms a level gives you. Scripted heroes then try to reach Zorg. This site is the plain-English guide, the formal rules, and the honesty ledger — not a claim that every rule is proven live.</p>
+<p class="lead">You place the rooms a level gives you. Scripted heroes then try to reach Zorg. This site is the plain-English guide, the formal rules, and the honesty ledger â€” not a claim that every rule is proven live.</p>
 
 <div class="grid-cards">
   <div class="card">
-    <h3>🧒 Learn the rules</h3>
+    <h3>ðŸ§’ Learn the rules</h3>
     <p>Short sentences and pictures for a first-timer. Place rooms, start the fight, keep heroes off Zorg. Formal IDs stay in a grown-up note.</p>
-    <a href="learn.html">Learn the rules →</a>
+    <a href="learn.html">Learn the rules â†’</a>
   </div>
   <div class="card">
-    <h3>🧭 Guide</h3>
-    <p>How to play: pick Difficulty, place rooms, start the fight. Rooms, heroes, spells, and what is still unavailable — with diagrams. If English disagrees with the spec, the spec wins.</p>
-    <a href="guide.html">Open the guide →</a>
+    <h3>ðŸ§­ Guide</h3>
+    <p>How to play: pick Difficulty, place rooms, start the fight. Rooms, heroes, spells, and what is still unavailable â€” with diagrams. If English disagrees with the spec, the spec wins.</p>
+    <a href="guide.html">Open the guide â†’</a>
   </div>
   <div class="card">
-    <h3>🚶 Journeys</h3>
-    <p>Five personas (kid, helper, campaign, practice, honesty) used as UX validation cases. Not new rules — the spec wins.</p>
-    <a href="journeys.html">Open persona journeys →</a>
+    <h3>ðŸš¶ Journeys</h3>
+    <p>Five personas (kid, helper, campaign, practice, honesty) used as UX validation cases. Not new rules â€” the spec wins.</p>
+    <a href="journeys.html">Open persona journeys â†’</a>
   </div>
   <div class="card">
-    <h3>▶️ Play Maker</h3>
-    <p>Open the campaign on the live Maker. Filter authored levels by Difficulté, place the rooms, then run extermination.</p>
-    <a href="https://zorg.artof.link" target="_blank" rel="noreferrer">Play at zorg.artof.link ↗</a>
+    <h3>â–¶ï¸ Play Maker</h3>
+    <p>Open the campaign on the live Maker. Filter authored levels by DifficultÃ©, place the rooms, then run extermination.</p>
+    <a href="https://zorg.artof.link" target="_blank" rel="noreferrer">Play at zorg.artof.link â†—</a>
   </div>
   <div class="card">
-    <h3>📜 Spec</h3>
-    <p>The formal rulebook: FR-1–46 and NFR-1–10. This is the legal voice. A companion sentence never overrides it.</p>
-    <a href="spec.html">Read the game spec →</a>
+    <h3>ðŸ“œ Spec</h3>
+    <p>The formal rulebook: FR-1â€“46 and NFR-1â€“10. This is the legal voice. A companion sentence never overrides it.</p>
+    <a href="spec.html">Read the game spec â†’</a>
   </div>
   <div class="card">
-    <h3>⚖️ Honesty</h3>
-    <p>One row per requirement. Only five status words. Simulated means a test exists — not a live probe. A page is not proof.</p>
-    <a href="honesty.html">Open the ledger →</a>
+    <h3>âš–ï¸ Honesty</h3>
+    <p>One row per requirement. Only five status words. Simulated means a test exists â€” not a live probe. A page is not proof.</p>
+    <a href="honesty.html">Open the ledger â†’</a>
   </div>
 
   <div class="card">
     <h3>Archify diagrams</h3>
-    <p><span class="badge badge-planned">Documented</span> same-origin map under <code>/archify/</code> — readable aid, not Live. Sister pattern to Café Knowledge / ctos.</p>
-    <a href="archify/">Open /archify/ →</a>
+    <p><span class="badge badge-planned">Documented</span> same-origin map under <code>/archify/</code> â€” readable aid, not Live. Sister pattern to CafÃ© Knowledge / ctos.</p>
+    <a href="archify/">Open /archify/ â†’</a>
   </div>
   <div class="card">
-    <h3>🛡️ Findings</h3>
+    <h3>ðŸ›¡ï¸ Findings</h3>
     <p>Misses between docs and code (CF-NNN). The second time the same miss happens, CI or a test must change.</p>
-    <a href="findings.html">Read findings →</a>
+    <a href="findings.html">Read findings â†’</a>
   </div>
   <div class="card">
-    <h3>🏛️ Decisions</h3>
+    <h3>ðŸ›ï¸ Decisions</h3>
     <p>Why the engine is UI-free TypeScript, why the Maker is 2D first, and how agents share memory on the default branch.</p>
-    <a href="adr.html">Read ADRs →</a>
+    <a href="adr.html">Read ADRs â†’</a>
   </div>
   <div class="card">
-    <h3>🏗️ Architecture</h3>
+    <h3>ðŸ—ï¸ Architecture</h3>
     <p>Monorepo split: engine vs Maker vs this knowledge site. Agent rules live in one file.</p>
-    <a href="architecture.html">View architecture →</a>
+    <a href="architecture.html">View architecture â†’</a>
   </div>
   <div class="card">
-    <h3>📊 Observability</h3>
+    <h3>ðŸ“Š Observability</h3>
     <p>Host metrics on Prometheus and Grafana. A green dashboard is not a game-rule probe.</p>
-    <a href="observability.html">Observability →</a>
+    <a href="observability.html">Observability â†’</a>
   </div>
   <div class="card">
-    <h3>⚙️ AEA harness</h3>
-    <p>Shared memory, fail-closed honesty, no self-merge, and Keep Learning and Apply (AEA #434) — the same rules this repo uses.</p>
-    <a href="aea.html">Explore AEA →</a>
+    <h3>âš™ï¸ AEA harness</h3>
+    <p>Shared memory, fail-closed honesty, no self-merge, and Keep Learning and Apply (AEA #434) â€” the same rules this repo uses.</p>
+    <a href="aea.html">Explore AEA â†’</a>
   </div>
   <div class="card">
-    <h3>🧰 Skills</h3>
-    <p>Umbrella: Keep Learning and Apply — historical pain → skill / matrix row / finding sensor. GitLab #434 is the stable formal principle. Café App #214 and Knowledge #213 cite it. Documented until probed. A map, not a ledger promotion.</p>
-    <a href="skills.html">Open the skill matrix →</a>
+    <h3>ðŸ§° Skills</h3>
+    <p>Umbrella: Keep Learning and Apply â€” historical pain â†’ skill / matrix row / finding sensor. GitLab #434 is the stable formal principle. CafÃ© App #214 and Knowledge #213 cite it. Documented until probed. A map, not a ledger promotion.</p>
+    <a href="skills.html">Open the skill matrix â†’</a>
   </div>
 </div>
 `;
@@ -414,11 +414,11 @@ if (!homeContent.includes("skills.html")) {
   throw new Error("knowledge build: home page must link the skill matrix");
 }
 if (!homeContent.includes("#214") || !homeContent.includes("#213") || !homeContent.includes("Documented until probed")) {
-  throw new Error("knowledge build: home Skills card must cite Café App #214 / Knowledge #213 as Documented until probed");
+  throw new Error("knowledge build: home Skills card must cite CafÃ© App #214 / Knowledge #213 as Documented until probed");
 }
 writeFileSync(join(distDir, "index.html"), pageShell({ title: "Home", current: "home", content: homeContent }));
 
-// 1b. Player & builder guide (companion — GAME_SPEC remains the legal voice)
+// 1b. Player & builder guide (companion â€” GAME_SPEC remains the legal voice)
 const guideMd = readDoc("docs/PLAYER_GUIDE.md");
 if (!guideMd.trim()) {
   throw new Error("knowledge build: missing docs/PLAYER_GUIDE.md");
@@ -427,10 +427,10 @@ if (/two types have rules encoded/i.test(guideMd)) {
   throw new Error("knowledge build: PLAYER_GUIDE.md still claims only two hero types");
 }
 if (/not a random generator/i.test(guideMd)) {
-  throw new Error("knowledge build: PLAYER_GUIDE.md still denies the Difficulté generator");
+  throw new Error("knowledge build: PLAYER_GUIDE.md still denies the DifficultÃ© generator");
 }
 if (!/generateLevel|practice dungeon/i.test(guideMd)) {
-  throw new Error("knowledge build: PLAYER_GUIDE.md must mention the Difficulté generator");
+  throw new Error("knowledge build: PLAYER_GUIDE.md must mention the DifficultÃ© generator");
 }
 for (const id of ["FR-22", "FR-23", "FR-24", "FR-25", "FR-32", "FR-33", "NFR-5"]) {
   if (!guideMd.includes(`[[${id}]]`)) {
@@ -448,7 +448,7 @@ writeFileSync(join(distDir, "guide.html"), pageShell({
   localeAlt: { en: "guide.html", fr: "fr/guide.html" },
 }));
 
-// 1b2. Kid-facing learn page (companion — GAME_SPEC remains the legal voice)
+// 1b2. Kid-facing learn page (companion â€” GAME_SPEC remains the legal voice)
 const learnMd = readDoc("docs/LEARN.md");
 if (!learnMd.trim()) {
   throw new Error("knowledge build: missing docs/LEARN.md");
@@ -483,7 +483,7 @@ writeFileSync(join(distDir, "learn.html"), pageShell({
   localeAlt: { en: "learn.html", fr: "fr/learn.html" },
 }));
 
-// 1c. Persona journeys (UX validation — GAME_SPEC remains the legal voice)
+// 1c. Persona journeys (UX validation â€” GAME_SPEC remains the legal voice)
 const journeysMd = readDoc("docs/PLAYER_JOURNEYS.md");
 if (!journeysMd.trim()) {
   throw new Error("knowledge build: missing docs/PLAYER_JOURNEYS.md");
@@ -514,16 +514,16 @@ writeFileSync(
 );
 
 
-// 1d. French companions (ADR-0007 Phase B) — honesty/skills/spec stay EN (Phase C skipped)
+// 1d. French companions (ADR-0007 Phase B) â€” honesty/skills/spec stay EN (Phase C skipped)
 const frDist = join(distDir, "fr");
 mkdirSync(frDist, { recursive: true });
 
 function assertFrCompanion(md, label, { kidJargonSplit = null } = {}) {
   if (!md.trim()) throw new Error(`knowledge build: missing ${label}`);
-  if (!/la spécification gagne|the spec wins/i.test(md)) {
-    throw new Error(`knowledge build: ${label} must say the spec wins (FR: la spécification gagne)`);
+  if (!/la spÃ©cification gagne|the spec wins/i.test(md)) {
+    throw new Error(`knowledge build: ${label} must say the spec wins (FR: la spÃ©cification gagne)`);
   }
-  if (/C rooms? are now defined|Gunner duration is encoded|FR-4 gating is built|les salles C sont maintenant définies|la durée Gunner est encodée/i.test(md)) {
+  if (/C rooms? are now defined|Gunner duration is encoded|FR-4 gating is built|les salles C sont maintenant dÃ©finies|la durÃ©e Gunner est encodÃ©e/i.test(md)) {
     throw new Error(`knowledge build: ${label} must not invent C / Gunner duration / FR-4`);
   }
   if (kidJargonSplit) {
@@ -556,7 +556,7 @@ for (const id of ["FR-22", "FR-23", "FR-24", "FR-25", "FR-32", "FR-33", "NFR-5"]
     throw new Error(`knowledge build: docs/fr/PLAYER_GUIDE.md must cite [[${id}]]`);
   }
 }
-if (!/generateLevel|donjon d'entraînement|practice dungeon/i.test(frGuideMd)) {
+if (!/generateLevel|donjon d'entraÃ®nement|practice dungeon/i.test(frGuideMd)) {
   throw new Error("knowledge build: docs/fr/PLAYER_GUIDE.md must mention the generator / practice dungeon");
 }
 const frGuideHtml = frInlineFix(markdownToHtml(frGuideMd));
@@ -576,7 +576,7 @@ assertFrCompanion(frLearnMd, "docs/fr/LEARN.md", { kidJargonSplit: "## Notes pou
 if ((frLearnMd.match(/```mermaid/g) || []).length < 3) {
   throw new Error("knowledge build: docs/fr/LEARN.md needs at least 3 mermaid diagrams");
 }
-if (!/Lancer le combat/i.test(frLearnMd) || !/héros partent|héros apparaissent/i.test(frLearnMd)) {
+if (!/Lancer le combat/i.test(frLearnMd) || !/hÃ©ros partent|hÃ©ros apparaissent/i.test(frLearnMd)) {
   throw new Error("knowledge build: docs/fr/LEARN.md must teach A, Lancer le combat, and the win idea");
 }
 const frLearnHtml = frInlineFix(markdownToHtml(frLearnMd));
@@ -586,7 +586,7 @@ for (const [i, src] of extractMermaidFences(frLearnMd).entries()) {
 writeFileSync(
   join(frDist, "learn.html"),
   pageShell({
-    title: "Apprendre les règles",
+    title: "Apprendre les rÃ¨gles",
     current: "learn",
     content: frLearnHtml,
     lang: "fr",
@@ -616,7 +616,7 @@ writeFileSync(
   }),
 );
 
-// 2. Spec Page — companion banner only; GAME_SPEC.md body is not rewritten
+// 2. Spec Page â€” companion banner only; GAME_SPEC.md body is not rewritten
 const specBanner = `
 <div class="alert alert-note spec-companion-banner">
   <div class="alert-title">Formal rules</div>
@@ -658,7 +658,7 @@ for (const file of readdirSync(journalDir).sort().reverse()) {
 }
 writeFileSync(join(distDir, "journal.html"), pageShell({ title: "Dev Journal", current: "journal", content: markdownToHtml(journalCombined) }));
 
-// 7. Architecture Page — visual split first; AGENTS.md body is not rewritten
+// 7. Architecture Page â€” visual split first; AGENTS.md body is not rewritten
 const architectureOverviewMd = `
 # Architecture & Agent Framework
 
@@ -668,11 +668,11 @@ Plain English: the spec is the rulebook. The engine is the referee ([[NFR-1]], [
 
 \`\`\`mermaid
 flowchart TB
-  spec["GAME_SPEC.md — formal rules"]
-  engine["packages/engine — simulation NFR-1 / NFR-10"]
-  maker["apps/web — Maker on zorg.artof.link"]
-  knowledge["apps/knowledge — this site"]
-  docs["docs/ — guide, ledger, ADRs, journal"]
+  spec["GAME_SPEC.md â€” formal rules"]
+  engine["packages/engine â€” simulation NFR-1 / NFR-10"]
+  maker["apps/web â€” Maker on zorg.artof.link"]
+  knowledge["apps/knowledge â€” this site"]
+  docs["docs/ â€” guide, ledger, ADRs, journal"]
   spec --> engine
   spec --> knowledge
   docs --> knowledge
@@ -686,7 +686,7 @@ if (!architectureHtml.includes('class="mermaid"')) {
 }
 writeFileSync(join(distDir, "architecture.html"), pageShell({ title: "Architecture & Agent Framework", current: "architecture", content: architectureHtml }));
 
-// 7b. Skill matrix — dedicated page so the retrospective stays findable
+// 7b. Skill matrix â€” dedicated page so the retrospective stays findable
 const skillsMd = readDoc("docs/SKILL_MATRIX.md");
 if (!skillsMd.trim()) {
   throw new Error("knowledge build: missing docs/SKILL_MATRIX.md");
@@ -710,19 +710,19 @@ if (!/Keep Learning and Apply/i.test(skillsMd)) {
   throw new Error("knowledge build: SKILL_MATRIX.md must name Keep Learning and Apply");
 }
 if (!skillsMd.includes("historical pain") || !skillsMd.includes("Finding sensor")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must keep Keep Learning as the umbrella (pain → skill/matrix/finding sensor)");
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep Keep Learning as the umbrella (pain â†’ skill/matrix/finding sensor)");
 }
 if (!skillsMd.includes("When the build teaches something") || !skillsMd.includes("work_items/434") || !skillsMd.includes("stable formal principle")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite GitLab #434 as the stable formal principle with the official one-liner");
 }
 if (!skillsMd.includes("folding into") || !skillsMd.includes("aea-interactive-design/issues/205")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must note Café App folding into #205");
+  throw new Error("knowledge build: SKILL_MATRIX.md must note CafÃ© App folding into #205");
 }
 if (
   !skillsMd.includes("aea-interactive-design/issues/214") ||
   !skillsMd.includes("keep-learning-and-apply")
 ) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must cite Café App #214 keep-learning-and-apply");
+  throw new Error("knowledge build: SKILL_MATRIX.md must cite CafÃ© App #214 keep-learning-and-apply");
 }
 if (
   !skillsMd.includes("aea-interactive-design/issues/213") ||
@@ -734,7 +734,7 @@ if (
   throw new Error("knowledge build: SKILL_MATRIX.md must link adopt #213 / #214 / logify #24/#25 / zorg #53");
 }
 if (!skillsMd.includes("COMMENT-only")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must keep Café MRC COMMENT-only");
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep CafÃ© MRC COMMENT-only");
 }
 if (!skillsMd.includes("work_items/434")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite AEA work item #434");
@@ -759,8 +759,8 @@ if (!skillsMd.includes("2026-09-12-session-memory-log-aea-grok-skill-matrix.md")
 if (!/Cross-project fit/i.test(skillsMd)) {
   throw new Error("knowledge build: SKILL_MATRIX.md must keep the Cross-project fit section");
 }
-if (!skillsMd.includes("Café Fausse App")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must record the Café Fausse App assessment");
+if (!skillsMd.includes("CafÃ© Fausse App")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must record the CafÃ© Fausse App assessment");
 }
 if (
   !skillsMd.includes("AEA agent (Documented on AEA main; Pages Unknown)") ||
@@ -798,16 +798,16 @@ if (!skillsMd.includes("Pages Unknown")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must keep AEA Pages Unknown until AEA probes");
 }
 if (
-  !skillsMd.includes("Café Fausse Knowledge (Documented until probed)") ||
+  !skillsMd.includes("CafÃ© Fausse Knowledge (Documented until probed)") ||
   !skillsMd.includes("knowledge-pages-ratchet") ||
   !skillsMd.includes("aea-interactive-design/issues/203") ||
   !skillsMd.includes("aea-interactive-design/issues/204") ||
   !skillsMd.includes("aea-interactive-design/issues/213")
 ) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must link Café Knowledge #203/#204/#213 and knowledge-pages-ratchet");
+  throw new Error("knowledge build: SKILL_MATRIX.md must link CafÃ© Knowledge #203/#204/#213 and knowledge-pages-ratchet");
 }
 if (
-  !skillsMd.includes("Café Fausse App (Documented until probed)") ||
+  !skillsMd.includes("CafÃ© Fausse App (Documented until probed)") ||
   !skillsMd.includes("aea-interactive-design/issues/205") ||
   !skillsMd.includes("aea-interactive-design/issues/206") ||
   !skillsMd.includes("aea-interactive-design/issues/214") ||
@@ -820,13 +820,13 @@ if (
   !skillsMd.includes("staging-keep-tear-honesty") ||
   !skillsMd.includes("skills-matrix.html")
 ) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must link Café App #205–#212/#214 and skills-matrix.html");
+  throw new Error("knowledge build: SKILL_MATRIX.md must link CafÃ© App #205â€“#212/#214 and skills-matrix.html");
 }
 if (!skillsMd.includes("New Bot") || !skillsMd.includes("CLEAN")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must note New Bot squash-merge when MRC CLEAN");
 }
-if (!/Café Fausse MRC/i.test(skillsMd) || !skillsMd.includes("COMMENT-only")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must note Café MRC COMMENT-only");
+if (!/CafÃ© Fausse MRC/i.test(skillsMd) || !skillsMd.includes("COMMENT-only")) {
+  throw new Error("knowledge build: SKILL_MATRIX.md must note CafÃ© MRC COMMENT-only");
 }
 if (!/\bctos\b/i.test(skillsMd) || !skillsMd.includes("N/A")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must record ctos as N/A");
@@ -842,7 +842,7 @@ if (
   !skillsMd.includes("3dx-lab/issues/10") ||
   !skillsMd.includes("3dx-lab/pull/11")
 ) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must link 3DX #7–#10 / PR #11 and created skill slugs");
+  throw new Error("knowledge build: SKILL_MATRIX.md must link 3DX #7â€“#10 / PR #11 and created skill slugs");
 }
 if (!skillsMd.includes("Skill | Scope | Why?")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must use Skill | Scope | Why? | What columns");
@@ -851,7 +851,7 @@ if (!skillsMd.includes("sand-workflow")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must cite sand-workflow ids for the shared Grok skills");
 }
 if (!skillsMd.includes("Proposed / other-repo")) {
-  throw new Error("knowledge build: SKILL_MATRIX.md must keep Café candidates as proposed / other-repo");
+  throw new Error("knowledge build: SKILL_MATRIX.md must keep CafÃ© candidates as proposed / other-repo");
 }
 if (!skillsMd.includes("Spec-phased engine slice")) {
   throw new Error("knowledge build: SKILL_MATRIX.md must list the spec-phased engine slice candidate");
@@ -877,12 +877,12 @@ const obsContent = `
 
 <div class="grid-cards">
   <div class="card">
-    <h3>📈 Live Grafana Dashboard</h3>
+    <h3>ðŸ“ˆ Live Grafana Dashboard</h3>
     <p>Access the live monitoring interface directly under the subpath:</p>
-    <a href="https://zorg.artof.link/grafana/" target="_blank" class="btn-external">Open zorg.artof.link/grafana/ ↗</a>
+    <a href="https://zorg.artof.link/grafana/" target="_blank" class="btn-external">Open zorg.artof.link/grafana/ â†—</a>
   </div>
   <div class="card">
-    <h3>🔍 Metrics Collection</h3>
+    <h3>ðŸ” Metrics Collection</h3>
     <p><strong>Prometheus</strong> polls metrics from Node Exporter (CPU, Memory, Disk, I/O) and reverse proxy traffic stats with local TSDB persistence.</p>
   </div>
 </div>
@@ -890,25 +890,25 @@ const obsContent = `
 <h2>Architecture Overview</h2>
 <pre><code>
                 Internet (HTTPS)
-                       │
-       ┌───────────────┴───────────────┐
-       │     Caddy (Auto TLS / Proxy)  │
-       └───────┬───────────────┬───────┘
-               │               │
-      /*       │     /grafana/ │
-       ┌───────▼───────┐       ┌───────▼───────┐
-       │   Zorg Web    │       │    Grafana    │
-       │   (Nginx/SPA) │       │   (Port 3000) │
-       └───────────────┘       └───────▲───────┘
-                                       │ Scrapes
-                               ┌───────┴───────┐
-                               │   Prometheus  │
-                               └───────▲───────┘
-                                       │ Scrapes
-                               ┌───────┴───────┐
-                               │ Node Exporter │
-                               │ (Host Metrics)│
-                               └───────────────┘
+                       â”‚
+       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+       â”‚     Caddy (Auto TLS / Proxy)  â”‚
+       â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
+               â”‚               â”‚
+      /*       â”‚     /grafana/ â”‚
+       â”Œâ”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”
+       â”‚   Zorg Web    â”‚       â”‚    Grafana    â”‚
+       â”‚   (Nginx/SPA) â”‚       â”‚   (Port 3000) â”‚
+       â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”€â–²â”€â”€â”€â”€â”€â”€â”€â”˜
+                                       â”‚ Scrapes
+                               â”Œâ”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”
+                               â”‚   Prometheus  â”‚
+                               â””â”€â”€â”€â”€â”€â”€â”€â–²â”€â”€â”€â”€â”€â”€â”€â”˜
+                                       â”‚ Scrapes
+                               â”Œâ”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”
+                               â”‚ Node Exporter â”‚
+                               â”‚ (Host Metrics)â”‚
+                               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 </code></pre>
 `;
 writeFileSync(join(distDir, "observability.html"), pageShell({ title: "Observability", current: "observability", content: obsContent }));
@@ -922,8 +922,8 @@ const aeaContent = `
 <div class="mermaid-wrap"><pre class="mermaid">flowchart LR
   spec["GAME_SPEC + docs"]
   engine["packages/engine"]
-  maker["apps/web — Maker"]
-  site["apps/knowledge — this site"]
+  maker["apps/web â€” Maker"]
+  site["apps/knowledge â€” this site"]
   spec --> engine
   spec --> site
   engine --> maker
@@ -936,7 +936,7 @@ const aeaContent = `
 
 <div class="alert alert-note">
   <div class="alert-title">Keep Learning and Apply</div>
-  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">GitLab #434</a> (sponsor reports <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a> merged; #434 closed): <em>When the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop — so the next agent inherits it instead of rediscovering the failure.</em> Loop: historical pain → skill / matrix row / finding sensor. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a>. Apply map: <a href="skills.html">skill matrix</a>. Principle: <strong>Documented on AEA main</strong>. Knowledge Pages: <span class="badge badge-unknown">Unknown</span> until AEA probes. GitLab sign-in from this agent is not a merge probe. Café App cites #434 and filed <a href="https://github.com/artofdream/aea-interactive-design/issues/214">#214</a> (<code>keep-learning-and-apply</code>); folds into <a href="https://github.com/artofdream/aea-interactive-design/issues/205">#205</a>. Café Knowledge cites #434 on <a href="https://github.com/artofdream/aea-interactive-design/issues/213">#213</a> / the matrix PR. logify <a href="https://github.com/artofdream/logify/issues/24">#24</a> / <a href="https://github.com/artofdream/logify/pull/25">PR #25</a> is <strong>Documented</strong> on logify main. 3DX <a href="https://github.com/artofdream/3dx-lab/issues/10">#10</a> / draft <a href="https://github.com/artofdream/3dx-lab/pull/11">PR #11</a> is Documented until probed. Also zorg <a href="https://github.com/artofdream/zorg-dungeon/issues/53">#53</a>. Café MRC is COMMENT-only. ctos is N/A.</p>
+  <p><a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434" target="_blank" rel="noreferrer">GitLab #434</a> (sponsor reports <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/513" target="_blank" rel="noreferrer">!513</a> merged; #434 closed): <em>When the build teaches something, write it into the harness (skill, sensor, guide, matrix row, or ADR) before the next loop â€” so the next agent inherits it instead of rediscovering the failure.</em> Loop: historical pain â†’ skill / matrix row / finding sensor. Complements Honesty and Knowledge First. Not Antifragility. Skill-matrix source: merged <a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512" target="_blank" rel="noreferrer">!512</a>. Apply map: <a href="skills.html">skill matrix</a>. Principle: <strong>Documented on AEA main</strong>. Knowledge Pages: <span class="badge badge-unknown">Unknown</span> until AEA probes. GitLab sign-in from this agent is not a merge probe. CafÃ© App cites #434 and filed <a href="https://github.com/artofdream/aea-interactive-design/issues/214">#214</a> (<code>keep-learning-and-apply</code>); folds into <a href="https://github.com/artofdream/aea-interactive-design/issues/205">#205</a>. CafÃ© Knowledge cites #434 on <a href="https://github.com/artofdream/aea-interactive-design/issues/213">#213</a> / the matrix PR. logify <a href="https://github.com/artofdream/logify/issues/24">#24</a> / <a href="https://github.com/artofdream/logify/pull/25">PR #25</a> is <strong>Documented</strong> on logify main. 3DX <a href="https://github.com/artofdream/3dx-lab/issues/10">#10</a> / draft <a href="https://github.com/artofdream/3dx-lab/pull/11">PR #11</a> is Documented until probed. Also zorg <a href="https://github.com/artofdream/zorg-dungeon/issues/53">#53</a>. CafÃ© MRC is COMMENT-only. ctos is N/A.</p>
 </div>
 
 <h2>1. The Core Formula in Everyday Terms</h2>
@@ -945,10 +945,10 @@ const aeaContent = `
 </div>
 
 <div class="mermaid-wrap"><pre class="mermaid">flowchart TB
-  player["Layer 1 — Player interacts&lt;br/&gt;Places rooms, casts spells, inspects solvability"]
-  shared["Layer 2 — Shared Understanding&lt;br/&gt;Multi-agent team + committed docs, GAME_SPEC, Status Ledger"]
-  domain["Layer 3 — Domain Services&lt;br/&gt;@zorg/engine decides — geometry, scheduler, fail-closed checks"]
-  harness["Layer 4 — Outer Harness&lt;br/&gt;Governance gates + independent peer review, no self-approval"]
+  player["Layer 1 â€” Player interacts&lt;br/&gt;Places rooms, casts spells, inspects solvability"]
+  shared["Layer 2 â€” Shared Understanding&lt;br/&gt;Multi-agent team + committed docs, GAME_SPEC, Status Ledger"]
+  domain["Layer 3 â€” Domain Services&lt;br/&gt;@zorg/engine decides â€” geometry, scheduler, fail-closed checks"]
+  harness["Layer 4 â€” Outer Harness&lt;br/&gt;Governance gates + independent peer review, no self-approval"]
   player --> shared --> domain --> harness
 </pre></div>
 
@@ -961,41 +961,41 @@ const aeaContent = `
 
 <h2>2. The 5 Concentric Floors (Why AI Apps Break)</h2>
 <div class="mermaid-wrap"><pre class="mermaid">flowchart TB
-  subgraph f05["05 Graph — agent team and governance"]
-    subgraph f04["04 Loop — 1 issue, 1 branch, 1 PR"]
-      subgraph f03["03 Harness — Vitest, pnpm, quality guards"]
-        subgraph f02["02 Context — memory curator, 4 vaults"]
-          f01["01 Prompt — the message&lt;br/&gt;One objective, pointers to AGENTS.md"]
+  subgraph f05["05 Graph â€” agent team and governance"]
+    subgraph f04["04 Loop â€” 1 issue, 1 branch, 1 PR"]
+      subgraph f03["03 Harness â€” Vitest, pnpm, quality guards"]
+        subgraph f02["02 Context â€” memory curator, 4 vaults"]
+          f01["01 Prompt â€” the message&lt;br/&gt;One objective, pointers to AGENTS.md"]
         end
       end
     end
   end
-  found["Foundation — Lightsail, Route 53, Docker, Prometheus and Grafana"]
+  found["Foundation â€” Lightsail, Route 53, Docker, Prometheus and Grafana"]
   f05 -->|"built on"| found
 </pre></div>
 <p class="diagram-caption">Outer floors wrap inner ones: graph roles and independent review, then the 1-issue / 1-branch / 1-PR loop, then Vitest and pnpm guards, then the four memory vaults, then a single AGENTS.md-pointed prompt. The stack sits on the live host.</p>
 
 <ul>
-  <li><strong>The Dependency Law:</strong> If your multi-agent team keeps failing, don't blame the agents—check your memory filter. Bad input on Floor 2 ruins everything above it.</li>
+  <li><strong>The Dependency Law:</strong> If your multi-agent team keeps failing, don't blame the agentsâ€”check your memory filter. Bad input on Floor 2 ruins everything above it.</li>
   <li><strong>The Economic Law:</strong> Swapping the AI model (switching between Claude, Gemini, DeepSeek, or OpenAI) takes 1 afternoon. Rebuilding your 5-floor operational harness takes 3 months. The harness is your real intellectual property.</li>
 </ul>
 
 <h2>3. The "Second Brain": 4 Clean Memory Vaults</h2>
 <div class="grid-cards">
   <div class="card">
-    <h3>📖 1. Procedure Memory (Skills)</h3>
-    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands. Which ones apply — and why they were chosen after the 2026-09 build — is on the <a href="skills.html">skill matrix</a>. That page is Keep Learning and Apply (<a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434">#434</a>): each skill is an apply-artifact of historical pain.</p>
+    <h3>ðŸ“– 1. Procedure Memory (Skills)</h3>
+    <p>Step-by-step playbooks for repeatable workflows: build scripts, governance validation gates, and Docker launch commands. Which ones apply â€” and why they were chosen after the 2026-09 build â€” is on the <a href="skills.html">skill matrix</a>. That page is Keep Learning and Apply (<a href="https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434">#434</a>): each skill is an apply-artifact of historical pain.</p>
   </div>
   <div class="card">
-    <h3>🚫 2. Correction Memory (Constraints)</h3>
+    <h3>ðŸš« 2. Correction Memory (Constraints)</h3>
     <p>Hard rules learned from past mistakes: <code>docs/FINDINGS.md</code> logs every miss (CF-NNN). Upon recurrence &ge; 2, an automated sensor in CI or tests is mandatory. That second-miss gate is Antifragility, not Keep Learning and Apply.</p>
   </div>
   <div class="card">
-    <h3>🕸️ 3. Relationship Memory (Graph)</h3>
+    <h3>ðŸ•¸ï¸ 3. Relationship Memory (Graph)</h3>
     <p>Bidirectional traceability linking <code>GAME_SPEC.md</code> requirement IDs (FR-xx) to engine code, Vitest suites, and <code>docs/STATUS_LEDGER.md</code> via <code>[[wikilinks]]</code>.</p>
   </div>
   <div class="card">
-    <h3>📅 4. Daily Brief (Handoff)</h3>
+    <h3>ðŸ“… 4. Daily Brief (Handoff)</h3>
     <p>A clean 1-page summary of exactly where the team left off: <code>docs/journal/YYYY-MM-DD.md</code> records shipped changes, probes, and pending decisions.</p>
   </div>
 </div>
@@ -1012,7 +1012,7 @@ const aeaContent = `
   </div>
   <div class="card">
     <h3>3. The Loop (The Factory Line)</h3>
-    <p>Disciplined workflow: 1 task → <code>agent/&lt;family&gt;/&lt;slug&gt;</code> branch → PR template.</p>
+    <p>Disciplined workflow: 1 task â†’ <code>agent/&lt;family&gt;/&lt;slug&gt;</code> branch â†’ PR template.</p>
   </div>
   <div class="card">
     <h3>4. Memory (The Vault)</h3>
@@ -1032,7 +1032,7 @@ const aeaMermaidCount = (aeaContent.match(/<pre class="mermaid">/g) || []).lengt
 if (aeaMermaidCount < 3) {
   throw new Error(`knowledge build: AEA page expected at least 3 mermaid diagrams, found ${aeaMermaidCount}`);
 }
-if (/[┌┐└┘│─┬┴┼▼]/.test(aeaContent)) {
+if (/[â”Œâ”â””â”˜â”‚â”€â”¬â”´â”¼â–¼]/.test(aeaContent)) {
   throw new Error("knowledge build: AEA page still contains ASCII box-drawing diagrams");
 }
 if (!/Keep Learning and Apply/i.test(aeaContent)) {
@@ -1050,7 +1050,7 @@ if (
   !aeaContent.includes("artofdream/logify/pull/25") ||
   !aeaContent.includes("3dx-lab/pull/11")
 ) {
-  throw new Error("knowledge build: AEA page must cite Café #214/#213, logify #25, 3DX #11, Documented on AEA main");
+  throw new Error("knowledge build: AEA page must cite CafÃ© #214/#213, logify #25, 3DX #11, Documented on AEA main");
 }
 if (!aeaContent.includes("merge_requests/512") || !aeaContent.includes("merge_requests/513")) {
   throw new Error("knowledge build: AEA page must cite AEA !512 and !513");
@@ -1123,7 +1123,7 @@ for (const file of readdirSync(frDist).filter((f) => f.endsWith(".html"))) {
 }
 
 
-// Archify same-origin aids (Documented — not Live). Sister: knowledge.cafe / ctos /archify/
+// Archify same-origin aids (Documented â€” not Live). Sister: knowledge.cafe / ctos /archify/
 const archifySrc = join(knowledgeRoot, "archify");
 const archifyDist = join(distDir, "archify");
 if (existsSync(archifySrc)) {
@@ -1132,17 +1132,37 @@ if (existsSync(archifySrc)) {
     const src = join(archifySrc, name);
     const dest = join(archifyDist, name);
     if (existsSync(src) && !src.endsWith("/")) {
-      // skip directories for now — flat folder only
+      // skip directories for now â€” flat folder only
     }
     copyFileSync(src, dest);
   }
   const idx = readFileSync(join(archifyDist, "index.html"), "utf8");
   if (!idx.includes("Documented") || !idx.includes("not Live")) {
-    throw new Error("knowledge build: archify/index.html must declare Documented aid — not Live");
+    throw new Error("knowledge build: archify/index.html must declare Documented aid â€” not Live");
   }
   if (!existsSync(join(archifyDist, "zorg-knowledge-workflow.architecture.html"))) {
     throw new Error("knowledge build: missing archify architecture HTML");
   }
+
+ // Chronify same-origin rails (Documented — not Live). Sister: AEA / ctos /chronify/
+ const chronifySrc = join(knowledgeRoot, "chronify");
+ const chronifyDist = join(distDir, "chronify");
+ if (existsSync(chronifySrc)) {
+   mkdirSync(chronifyDist, { recursive: true });
+   for (const name of readdirSync(chronifySrc)) {
+     const src = join(chronifySrc, name);
+     const dest = join(chronifyDist, name);
+     if (!existsSync(src)) continue;
+     copyFileSync(src, dest);
+   }
+   const cidx = readFileSync(join(chronifyDist, "index.html"), "utf8");
+   if (!/Documented/i.test(cidx)) {
+     throw new Error("knowledge build: chronify/index.html must declare Documented aid — not Live");
+   }
+   if (!existsSync(join(chronifyDist, "zorg-evolution-rail.svg"))) {
+     throw new Error("knowledge build: missing chronify rail SVG");
+   }
+ }
 }
 
-console.log("✓ Knowledge website built successfully in apps/knowledge/dist/");
+console.log("âœ“ Knowledge website built successfully in apps/knowledge/dist/");

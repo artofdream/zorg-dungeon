@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "diagram_type": "timeline",
+  "meta": {
+    "title": "Zorg Knowledge — evolution rail",
+    "output": "zorg-evolution.timeline.html",
+    "quality_profile": "showcase",
+    "orientation": "horizontal",
+    "honesty": "Documented aid until knowledge.zorg.artof.link probe; C rooms / Gunner duration / FR-4 stay author-deferred"
+  },
+  "eras": [
+    { "id": "boot", "label": "Boot + journal", "from": "2026-09-10", "to": "2026-09-12" },
+    { "id": "engine", "label": "Engine phases", "from": "2026-09-12", "to": "2026-09-14" },
+    { "id": "knowledge", "label": "Knowledge site", "from": "2026-09-14", "to": "2026-09-21" }
+  ],
+  "milestones": [
+    {
+      "id": "m-journal-start",
+      "date": "2026-09-10",
+      "era": "boot",
+      "title": "Dev journal starts",
+      "summary": "Second-brain day logs",
+      "href": "../journal.html",
+      "tag": "origin"
+    },
+    {
+      "id": "m-monorepo",
+      "date": "2026-09-11",
+      "era": "boot",
+      "title": "TS monorepo ADR",
+      "summary": "2D→3D path recorded",
+      "href": "../learn.html",
+      "tag": "adr"
+    },
+    {
+      "id": "m-phases",
+      "date": "2026-09-12",
+      "era": "engine",
+      "title": "Phase burst",
+      "summary": "Portals · spells · heroes",
+      "href": "../player-guide.html",
+      "tag": "engine"
+    },
+    {
+      "id": "m-i18n",
+      "date": "2026-09-13",
+      "era": "engine",
+      "title": "FR/EN i18n",
+      "summary": "ADR-0007",
+      "href": "../learn.html",
+      "tag": "i18n"
+    },
+    {
+      "id": "m-knowledge",
+      "date": "2026-09-14",
+      "era": "knowledge",
+      "title": "Knowledge Pages",
+      "summary": "Same-origin docs site",
+      "href": "../index.html",
+      "tag": "docs"
+    },
+    {
+      "id": "m-archify",
+      "date": "2026-09-20",
+      "era": "knowledge",
+      "title": "Archify embed",
+      "summary": "Workflow map Documented",
+      "href": "../archify/index.html",
+      "tag": "docs"
+    },
+    {
+      "id": "m-chronify",
+      "date": "2026-09-21",
+      "era": "knowledge",
+      "title": "Chronify rail",
+      "summary": "Dated evolution IR",
+      "href": "./index.html",
+      "tag": "docs"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "How to read",
+      "items": [
+        "Curated journal eras — not every commit",
+        "GAME_SPEC wins on conflict",
+        "Documented ≠ Live playability"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Deferred",
+      "items": [
+        "C rooms · Gunner duration · FR-4 author-wait",
+        "Probe knowledge.zorg.artof.link after Pages",
+        "No vendor SDK / TimelineJS default"
+      ]
+    }
+  ]
+}
