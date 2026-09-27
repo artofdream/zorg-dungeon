@@ -1,7 +1,8 @@
 # Caddy configuration for zorg.artof.link
 {
     admin :2019
-    email claude.tsarafidy@gmail.com
+    # ACME contact email intentionally not committed (public repo).
+    # Optionally add `email <ops-contact>` on the host for expiry notices.
 }
 
 # Production domain

@@ -9,7 +9,7 @@
         "TTL": 60,
         "ResourceRecords": [
           {
-            "Value": "54.152.172.19"
+            "Value": "<LIGHTSAIL_STATIC_IP>"
           }
         ]
       }

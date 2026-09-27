@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${LIGHTSAIL_SSH_KEY:-}" ]; then
-            echo "::error::LIGHTSAIL_SSH_KEY is not set. Add the Lightsail private key PEM under Settings → Secrets and variables → Actions. Optional secrets: LIGHTSAIL_HOST (default 54.152.172.19), LIGHTSAIL_USER (default ubuntu). Do not invent or commit credentials."
+            echo "::error::LIGHTSAIL_SSH_KEY is not set. Add the Lightsail private key PEM under Settings → Secrets and variables → Actions. Optional secrets: LIGHTSAIL_HOST (default zorg.artof.link), LIGHTSAIL_USER (default ubuntu). Do not invent or commit credentials."
             exit 1
           fi
 
@@ -44,7 +44,7 @@ jobs:
           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
         run: |
           set -euo pipefail
-          SSH_HOST="${LIGHTSAIL_HOST:-54.152.172.19}"
+          SSH_HOST="${LIGHTSAIL_HOST:-zorg.artof.link}"
           SSH_USER="${LIGHTSAIL_USER:-ubuntu}"
           KEY_FILE="${RUNNER_TEMP}/lightsail_ssh_key"
           printf '%s\n' "$LIGHTSAIL_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
