@@ -2,9 +2,9 @@
 
 - **Status**: Completed / Applied
 - **Date**: 2026-09-10
-- **AWS Account**: 737290977112
-- **Hosted Zone**: `/hostedzone/Z1178AFMV41RWP` (`artof.link.`)
-- **Author**: Antigravity (AGY) / CTS
+- **AWS Account**: `<AWS_ACCOUNT_ID>`
+- **Hosted Zone**: `/hostedzone/<HOSTED_ZONE_ID>` (`artof.link.`)
+- **Author**: Antigravity (AGY) / project owner
 
 ---
 
@@ -21,14 +21,14 @@ In accordance with the dual-site architecture established for AEA framework site
 
 | Record Name | Type | Routing / Target | TTL | Purpose |
 |---|---|---|---|---|
-| `zorg.artof.link.` | `A` | `54.152.172.19` | 60s | Points to the AWS Lightsail production cluster (`zorg-dungeon-prod`, `small_3_0` in `us-east-1a`), hosting the Maker SPA, Caddy auto-TLS proxy, and Prometheus/Grafana observability stack at `/grafana/`. |
+| `zorg.artof.link.` | `A` | `<LIGHTSAIL_STATIC_IP>` | 60s | Points to the AWS Lightsail production cluster (`zorg-dungeon-prod`, `small_3_0` in `us-east-1a`), hosting the Maker SPA, Caddy auto-TLS proxy, and Prometheus/Grafana observability stack at `/grafana/`. |
 | `knowledge.zorg.artof.link.` | `CNAME` | `artofdream.github.io.` | 300s | Points to GitHub Pages hosting the static knowledge site generated from `docs/` and `GAME_SPEC.md`. |
 
 ---
 
 ## 3. Route 53 Change Batch Execution
 
-Submitted and applied to Route 53 via Change ID: `/change/C0623464W4RXX8MUUEVD`.
+Submitted and applied to Route 53 via Change ID: `/change/<CHANGE_ID>`.
 
 ```json
 {
@@ -41,7 +41,7 @@ Submitted and applied to Route 53 via Change ID: `/change/C0623464W4RXX8MUUEVD`.
         "Type": "A",
         "TTL": 60,
         "ResourceRecords": [
-          { "Value": "54.152.172.19" }
+          { "Value": "<LIGHTSAIL_STATIC_IP>" }
         ]
       }
     },
@@ -64,5 +64,5 @@ Submitted and applied to Route 53 via Change ID: `/change/C0623464W4RXX8MUUEVD`.
 
 ## 4. Verification
 
-- `aws route53 list-resource-record-sets` confirms both records active in zone `/hostedzone/Z1178AFMV41RWP`.
+- `aws route53 list-resource-record-sets` confirms both records active in zone `/hostedzone/<HOSTED_ZONE_ID>`.
 - DNS resolution propagation in progress.

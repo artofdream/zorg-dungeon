@@ -102,7 +102,7 @@ second-miss gate. Cite: `corpus-quarantine-honesty` / Keep Learning and Apply.
 - Linked: https://github.com/artofdream/zorg-dungeon/pull/9, https://github.com/artofdream/zorg-dungeon/pull/19
 - Sensor added: .github/workflows/deploy-web.yml
 
-Lightsail `zorg.artof.link` (`54.152.172.19`) was still serving a
+Lightsail `zorg.artof.link` (`<LIGHTSAIL_STATIC_IP>`) was still serving a
 pre–Phase-1 bundle until a manual SSH redeploy on 2026-09-11 to `2217dd5`.
 The knowledge site auto-deploys via Pages; the game web image did not.
 

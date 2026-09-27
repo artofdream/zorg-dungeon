@@ -16,7 +16,7 @@ Evaluation between AWS ECS Fargate + ALB vs. AWS Lightsail + Docker Compose reve
 
 ## Decision
 
-1. **Implementation Compute:** Deploy `zorg.artof.link` on AWS Lightsail instance `zorg-dungeon-prod` (Ubuntu 24.04, `small_3_0`) in `us-east-1a` with static IP `54.152.172.19`.
+1. **Implementation Compute:** Deploy `zorg.artof.link` on AWS Lightsail instance `zorg-dungeon-prod` (Ubuntu 24.04, `small_3_0`) in `us-east-1a` with static IP `<LIGHTSAIL_STATIC_IP>`.
 2. **Implementation Stack:** Use Docker Compose running:
    - `web`: Multi-stage build of `@zorg/engine` and `@zorg/web` served by Nginx.
    - `caddy`: Reverse proxy providing automated Let's Encrypt TLS and reverse proxying `/grafana/*` to Grafana and `/*` to the web app.
@@ -24,8 +24,8 @@ Evaluation between AWS ECS Fargate + ALB vs. AWS Lightsail + Docker Compose reve
    - `grafana`: Served at `/grafana/` with anonymous viewer access enabled, pre-provisioned Prometheus datasource, and system dashboards.
    - `node-exporter`: Exposes host CPU, RAM, disk, and network metrics.
 3. **Knowledge Site:** Host `knowledge.zorg.artof.link` on GitHub Pages (`artofdream.github.io.`) built via GitHub Actions (`.github/workflows/knowledge.yml`) from markdown files in `docs/` and `GAME_SPEC.md`.
-4. **DNS Management:** Manage records in Route 53 zone `Z1178AFMV41RWP` (`artof.link.`):
-   - `zorg.artof.link.` $\rightarrow$ `A` `54.152.172.19` (TTL: 60)
+4. **DNS Management:** Manage records in Route 53 zone `<HOSTED_ZONE_ID>` (`artof.link.`):
+   - `zorg.artof.link.` $\rightarrow$ `A` `<LIGHTSAIL_STATIC_IP>` (TTL: 60)
    - `knowledge.zorg.artof.link.` $\rightarrow$ `CNAME` `artofdream.github.io.` (TTL: 300)
 
 ## Consequences
