@@ -33,4 +33,5 @@ Evaluation between AWS ECS Fargate + ALB vs. AWS Lightsail + Docker Compose reve
 - Hosting costs are minimized to \$12/mo flat with zero load balancer idle fees.
 - The knowledge site is decoupled from compute and globally distributed via GitHub CDN at zero cost.
 - Full observability is publicly visible under `/grafana/` without credentials required for inspection.
+- Grafana's admin password is never committed: it lives in the `GRAFANA_ADMIN_PASSWORD` repo secret, is written by `deploy-web` to a root-only host env file (`/etc/zorg/grafana.env`), and is re-applied to Grafana's DB on every deploy (the env var alone only applies when the DB is first created).
 - The production stack can be run verbatim on local development machines using Docker Desktop.

@@ -35,7 +35,7 @@ settings. Set them once:
     "producer doesn't merge its own change" rule to actually hold.
 - **Settings → General → Pull Requests**: disable "Allow auto-merge" unless
   you want it, and consider requiring linear history.
-- **Settings → Secrets and variables → Actions** (production web CD, `.github/workflows/deploy-web.yml`): required `LIGHTSAIL_SSH_KEY` (private key PEM); optional `LIGHTSAIL_HOST` (Lightsail static IP or hostname; falls back to `zorg.artof.link`) and `LIGHTSAIL_USER` (default `ubuntu`). Do not invent or commit credentials.
+- **Settings → Secrets and variables → Actions** (production web CD, `.github/workflows/deploy-web.yml`): required `LIGHTSAIL_SSH_KEY` (private key PEM); optional `LIGHTSAIL_HOST` (Lightsail static IP or hostname; falls back to `zorg.artof.link`) and `LIGHTSAIL_USER` (default `ubuntu`); required `GRAFANA_ADMIN_PASSWORD` (Grafana admin password — the deploy writes it to a root-only env file on the host, `/etc/zorg/grafana.env`, and resets the admin password in Grafana's DB; rotate by updating the secret and re-running `deploy-web`). Do not invent or commit credentials.
 
 ## Running the gates locally
 
