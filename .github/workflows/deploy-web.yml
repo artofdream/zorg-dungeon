@@ -27,21 +27,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Require Lightsail SSH key
+      - name: Require deploy secrets
         env:
           LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
           set -euo pipefail
           if [ -z "${LIGHTSAIL_SSH_KEY:-}" ]; then
             echo "::error::LIGHTSAIL_SSH_KEY is not set. Add the Lightsail private key PEM under Settings → Secrets and variables → Actions. Optional secrets: LIGHTSAIL_HOST (default zorg.artof.link), LIGHTSAIL_USER (default ubuntu). Do not invent or commit credentials."
             exit 1
           fi
+          if [ -z "${GRAFANA_ADMIN_PASSWORD:-}" ]; then
+            echo "::error::GRAFANA_ADMIN_PASSWORD is not set. Add a strong random Grafana admin password under Settings → Secrets and variables → Actions. Do not commit it."
+            exit 1
+          fi
 
-      - name: Redeploy web on Lightsail
+      - name: Redeploy web and Grafana on Lightsail
         env:
           LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
         run: |
           set -euo pipefail
           SSH_HOST="${LIGHTSAIL_HOST:-zorg.artof.link}"
@@ -52,11 +58,26 @@ jobs:
           mkdir -p "${HOME}/.ssh"
           chmod 700 "${HOME}/.ssh"
           ssh-keyscan -H "$SSH_HOST" >> "${HOME}/.ssh/known_hosts" 2>/dev/null || true
-          echo "Redeploying web on ${SSH_USER}@${SSH_HOST}"
-          ssh -i "$KEY_FILE" \
-            -o IdentitiesOnly=yes \
-            -o BatchMode=yes \
-            -o ConnectTimeout=20 \
-            -o StrictHostKeyChecking=accept-new \
-            "${SSH_USER}@${SSH_HOST}" \
-            'cd /opt/zorg && sudo git fetch && sudo git reset --hard origin/main && sudo docker compose -f deploy/compose.prod.yaml up -d --build web'
+          remote() {
+            ssh -i "$KEY_FILE" \
+              -o IdentitiesOnly=yes \
+              -o BatchMode=yes \
+              -o ConnectTimeout=20 \
+              -o StrictHostKeyChecking=accept-new \
+              "${SSH_USER}@${SSH_HOST}" "$@"
+          }
+          echo "Redeploying on ${SSH_USER}@${SSH_HOST}"
+
+          # 1. Deliver the Grafana admin password over SSH stdin (never on a
+          #    command line, never echoed) into a root-only env file that
+          #    compose.prod.yaml reads via env_file.
+          printf 'GF_SECURITY_ADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" \
+            | remote 'sudo install -d -m 700 -o root -g root /etc/zorg && sudo sh -c "umask 077; cat > /etc/zorg/grafana.env" && sudo chown root:root /etc/zorg/grafana.env && sudo chmod 600 /etc/zorg/grafana.env'
+
+          # 2. Update checkout; rebuild web; recreate Grafana so it picks up env_file.
+          remote 'cd /opt/zorg && sudo git fetch && sudo git reset --hard origin/main && sudo docker compose -f deploy/compose.prod.yaml up -d --build web && sudo docker compose -f deploy/compose.prod.yaml up -d grafana'
+
+          # 3. GF_SECURITY_ADMIN_PASSWORD only applies when Grafana's DB is first
+          #    created, so re-apply it to the existing DB. Password is read from
+          #    the root-only env file on the host and piped via stdin.
+          remote 'cd /opt/zorg && for i in $(seq 1 30); do sudo docker compose -f deploy/compose.prod.yaml exec -T grafana wget -q -O /dev/null http://localhost:3000/api/health && break; sleep 2; done && sudo sh -c ". /etc/zorg/grafana.env && printf \"%s\n\" \"\$GF_SECURITY_ADMIN_PASSWORD\" | docker compose -f deploy/compose.prod.yaml exec -T grafana grafana cli admin reset-admin-password --password-from-stdin"'
