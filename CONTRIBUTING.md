@@ -73,7 +73,8 @@ ssh -N -L 3000:127.0.0.1:3000 <LIGHTSAIL_USER>@<LIGHTSAIL_HOST>
   revert the image pin, then on the host
   `sudo docker compose -f deploy/compose.prod.yaml stop grafana`, copy the
   `.pre-*` backup over `grafana.db` in the `deploy_grafana_data` volume
-  (keep owner `472:0`, mode 0640), and re-run `deploy-web`.
+  (keep the current file's owner and mode, check with `stat` first), and re-run
+  `deploy-web`.
 
 ## Production logs (short retention: they contain client IPs)
 
