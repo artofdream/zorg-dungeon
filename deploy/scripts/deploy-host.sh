@@ -13,6 +13,18 @@ echo "==> validate Caddyfile before applying it"
 "${C[@]}" run --rm --no-deps -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1 \
   || { echo "::error::Caddyfile failed validation; not applying"; exit 1; }
 
+echo "==> back up grafana.db before applying changes (Grafana upgrades migrate the DB)"
+GF_ID="$("${C[@]}" ps -q grafana 2>/dev/null || true)"
+if [ -n "$GF_ID" ]; then
+  GF_RUNNING_IMAGE="$(docker inspect -f '{{.Config.Image}}' "$GF_ID")"
+  GF_DATA_DIR="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/lib/grafana"}}{{.Source}}{{end}}{{end}}' "$GF_ID")"
+else
+  GF_RUNNING_IMAGE=""
+  GF_DATA_DIR="$(docker volume inspect -f '{{.Mountpoint}}' deploy_grafana_data 2>/dev/null || true)"
+fi
+GF_TARGET_IMAGE="$(sed -n 's/^[[:space:]]*image:[[:space:]]*\(grafana\/grafana:[^[:space:]]*\).*/\1/p' deploy/compose.prod.yaml | head -n1)"
+python3 deploy/scripts/backup-grafana-db.py "${GF_DATA_DIR:-/nonexistent}/grafana.db" "$GF_RUNNING_IMAGE" "$GF_TARGET_IMAGE"
+
 echo "==> apply compose changes (recreates only services whose config changed)"
 "${C[@]}" up -d
 
@@ -34,6 +46,7 @@ echo "admin password re-applied"
 
 echo "==> verify admin login over the host-local port (tunnel path)"
 python3 deploy/scripts/grafana_admin.py login-check
+echo "grafana_version=$(curl -s http://127.0.0.1:3000/grafana/api/health | python3 -c 'import json,sys; print(json.load(sys.stdin).get("version"))')"
 
 echo "==> persisted logs grow and survive recreation (counts only; logs hold IPs)"
 mount_src() { # service, container path -> host dir of its volume

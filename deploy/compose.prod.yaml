@@ -37,7 +37,9 @@ services:
       - "9090"
 
   grafana:
-    image: grafana/grafana:11.2.0
+    # Pinned exact patched stable release (13.2.2, 2026-09-15). Bump deliberately:
+    # deploy-host.sh backs up grafana.db (pre-upgrade copy) before the switch.
+    image: grafana/grafana:13.2.2
     restart: unless-stopped
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
