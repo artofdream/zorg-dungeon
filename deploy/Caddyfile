@@ -5,12 +5,44 @@
     # Optionally add `email <ops-contact>` on the host for expiry notices.
 }
 
+# Public Grafana is anonymous and read-only (ADR-0004). The login form, the
+# admin UI and credentialed API calls are NOT reachable through Caddy; admins
+# use an SSH tunnel to Grafana's host-local port 127.0.0.1:3000 instead
+# (CONTRIBUTING.md -> "Grafana admin access").
+(grafana_public) {
+    handle /grafana* {
+        route {
+            # Login, admin UI and admin APIs: answer as if they don't exist.
+            @gf_admin path /grafana/login /grafana/login/* /grafana/admin /grafana/admin/* /grafana/api/admin/* /grafana/api/serviceaccounts /grafana/api/serviceaccounts/* /grafana/api/auth/keys /grafana/api/auth/keys/* /grafana/user/password/* /grafana/api/user/password/*
+            respond @gf_admin 404
+
+            # Any credential (basic auth, bearer/API token, session cookie) is
+            # refused publicly, so nothing but the anonymous Viewer gets through.
+            @gf_auth_header header Authorization *
+            respond @gf_auth_header 403
+            @gf_session_cookie header_regexp Cookie (^|;\s*)grafana_session=
+            respond @gf_session_cookie 403
+
+            # Anonymous viewers only read. The one write-shaped call a dashboard
+            # needs is POST /api/ds/query (plus harmless frontend metrics).
+            @gf_write {
+                not method GET HEAD OPTIONS
+                not {
+                    method POST
+                    path /grafana/api/ds/query /grafana/api/frontend-metrics
+                }
+            }
+            respond @gf_write 403
+
+            reverse_proxy grafana:3000
+        }
+    }
+}
+
 # Production domain
 zorg.artof.link {
-    # Observability: Grafana under /grafana/
-    handle /grafana* {
-        reverse_proxy grafana:3000
-    }
+    # Observability: Grafana under /grafana/ (anonymous, read-only)
+    import grafana_public
 
     # Application: Web app
     handle /* {
@@ -18,11 +50,9 @@ zorg.artof.link {
     }
 }
 
-# Local / fallback entrypoint
+# Local / fallback entrypoint (plain HTTP on :80, e.g. by IP): same guards.
 :80 {
-    handle /grafana* {
-        reverse_proxy grafana:3000
-    }
+    import grafana_public
 
     handle /* {
         reverse_proxy web:80
