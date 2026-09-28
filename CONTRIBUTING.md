@@ -37,6 +37,28 @@ settings. Set them once:
   you want it, and consider requiring linear history.
 - **Settings → Secrets and variables → Actions** (production web CD, `.github/workflows/deploy-web.yml`): required `LIGHTSAIL_SSH_KEY` (private key PEM); optional `LIGHTSAIL_HOST` (Lightsail static IP or hostname; falls back to `zorg.artof.link`) and `LIGHTSAIL_USER` (default `ubuntu`); required `GRAFANA_ADMIN_PASSWORD` (Grafana admin password — the deploy writes it to a root-only env file on the host, `/etc/zorg/grafana.env`, and resets the admin password in Grafana's DB; rotate by updating the secret and re-running `deploy-web`). Do not invent or commit credentials.
 
+## Grafana admin access (SSH tunnel only)
+
+Public `https://zorg.artof.link/grafana/` is **anonymous and read-only**.
+Caddy answers `/grafana/login`, the admin UI and admin APIs with 404, and
+refuses any request that carries credentials (basic auth, bearer token, or a
+Grafana session cookie) with 403. Grafana's basic auth is disabled. Admins sign
+in over an SSH tunnel to Grafana's host-local port, which is published on
+`127.0.0.1:3000` only:
+
+```
+ssh -N -L 3000:127.0.0.1:3000 <LIGHTSAIL_USER>@<LIGHTSAIL_HOST>
+# then open http://localhost:3000/grafana/login and sign in as admin
+```
+
+- Use the existing deploy access; do not open port 3000 in the Lightsail
+  firewall or publish it on `0.0.0.0`.
+- The admin password is the `GRAFANA_ADMIN_PASSWORD` repo secret (re-applied on
+  every deploy). Sign out when done; sessions are revocable in Grafana.
+- `deploy-web` checks this path on every deploy (`deploy/scripts/grafana_admin.py
+  login-check` on the host) and probes the public surface
+  (`deploy/scripts/probe-public-grafana.sh`).
+
 ## Running the gates locally
 
 ```

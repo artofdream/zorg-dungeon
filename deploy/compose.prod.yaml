@@ -46,7 +46,12 @@ services:
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      # The login form stays enabled for admins on the SSH tunnel; Caddy
+      # refuses /grafana/login and any credentialed request publicly.
       - GF_AUTH_DISABLE_LOGIN_FORM=false
+      # No basic-auth API logins at all (public or tunnel). The deploy's
+      # `grafana cli admin reset-admin-password` does not use HTTP.
+      - GF_AUTH_BASIC_ENABLED=false
       - GF_USERS_ALLOW_SIGN_UP=false
     # Admin password is NOT committed. deploy-web writes it from the
     # GRAFANA_ADMIN_PASSWORD repo secret to a root-only env file on the host
@@ -58,6 +63,10 @@ services:
         required: false
     expose:
       - "3000"
+    # Host-local only, for admin access over an SSH tunnel
+    # (ssh -L 3000:127.0.0.1:3000 ...). Never publish on 0.0.0.0.
+    ports:
+      - "127.0.0.1:3000:3000"
 
   node-exporter:
     image: quay.io/prometheus/node-exporter:v1.8.2
