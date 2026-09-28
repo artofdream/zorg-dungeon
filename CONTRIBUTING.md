@@ -35,7 +35,7 @@ settings. Set them once:
     "producer doesn't merge its own change" rule to actually hold.
 - **Settings → General → Pull Requests**: disable "Allow auto-merge" unless
   you want it, and consider requiring linear history.
-- **Settings → Secrets and variables → Actions** (production web CD, `.github/workflows/deploy-web.yml`): required `LIGHTSAIL_SSH_KEY` (private key PEM); optional `LIGHTSAIL_HOST` (Lightsail static IP or hostname; falls back to `zorg.artof.link`) and `LIGHTSAIL_USER` (default `ubuntu`); required `GRAFANA_ADMIN_PASSWORD` (Grafana admin password — the deploy writes it to a root-only env file on the host, `/etc/zorg/grafana.env`, and resets the admin password in Grafana's DB; rotate by updating the secret and re-running `deploy-web`). Do not invent or commit credentials.
+- **Settings → Secrets and variables → Actions** (production web CD, `.github/workflows/deploy-web.yml`): required `LIGHTSAIL_SSH_KEY` (private key PEM); optional `LIGHTSAIL_HOST` (Lightsail static IP or hostname; falls back to `zorg.artof.link`) and `LIGHTSAIL_USER` (default `ubuntu`); required `GRAFANA_ADMIN_PASSWORD` (Grafana admin password — the deploy writes it to a root-only env file on the host, `/etc/zorg/grafana.env`, and resets the admin password in Grafana's DB; rotate by updating the secret and re-running `deploy-web`); required `GRAFANA_SECRET_KEY` (Grafana `secret_key`, a random 64-hex value, e.g. `openssl rand -hex 32 | tr -d '\n' | gh secret set GRAFANA_SECRET_KEY`; delivered the same way into `/etc/zorg/grafana.env`. On a change the deploy first verifies Grafana stores no secrets encrypted with the old key (`grafana_admin.py stored-secrets`) and refuses to switch otherwise, then rotates the envelope data keys and re-encrypts). Per-project credentials via the sponsor's 3DX Lab secrets method will replace these repo secrets later. Do not invent or commit credentials.
 
 ## Grafana admin access (SSH tunnel only)
 
@@ -58,6 +58,15 @@ ssh -N -L 3000:127.0.0.1:3000 <LIGHTSAIL_USER>@<LIGHTSAIL_HOST>
 - `deploy-web` checks this path on every deploy (`deploy/scripts/grafana_admin.py
   login-check` on the host) and probes the public surface
   (`deploy/scripts/probe-public-grafana.sh`).
+
+## Caddy admin API and metrics
+
+- Caddy's admin API listens on `localhost:2019` **inside the Caddy container**
+  only (`docker compose exec caddy caddy reload ...` still works); other
+  containers cannot reach it. `deploy-web` checks this from the Grafana
+  container on every deploy.
+- Prometheus scrapes Caddy's HTTP metrics from a dedicated listener,
+  `caddy:9180/metrics`, which is not published on the host.
 
 ## Grafana upgrades and DB backups
 
