@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Host-side deploy steps for deploy-web. Runs as root in /opt/zorg AFTER the
-# checkout was reset to origin/main and /etc/zorg/grafana.env was written.
+# checkout was reset to origin/main and deploy-web staged the Grafana env file
+# at /etc/zorg/grafana.env.new (root 0600).
 # Prints status only; never prints secrets.
 set -euo pipefail
 cd /opt/zorg
@@ -98,13 +99,16 @@ echo "==> Caddy admin API (:2019) not reachable from other containers"
 # Read-only probes from inside the Grafana container: the metrics listener must
 # answer (proves the client works), the admin API must not.
 "${C[@]}" exec -T grafana sh -c '
-  get() { if command -v wget >/dev/null 2>&1; then wget -q -T 5 -O /dev/null "$1";
-          elif command -v curl >/dev/null 2>&1; then curl -sf -m 5 -o /dev/null "$1";
-          else echo "no-http-client"; return 2; fi; }
-  get http://caddy:9180/metrics; m=$?
-  get http://caddy:2019/config/; a=$?
-  echo "from_grafana: caddy:9180/metrics exit=$m caddy:2019/config exit=$a"
-  [ "$m" = 0 ] && [ "$a" != 0 ] && [ "$a" != 2 ]' \
+  get() { # host:port/path; HTTP via wget/curl, else a TCP connect via bash
+    if command -v wget >/dev/null 2>&1; then c=wget; wget -q -T 5 -O /dev/null "http://$1"
+    elif command -v curl >/dev/null 2>&1; then c=curl; curl -sf -m 5 -o /dev/null "http://$1"
+    elif command -v bash >/dev/null 2>&1; then c=bash-tcp; hp=${1%%/*}
+      timeout 5 bash -c "exec 3<>/dev/tcp/${hp%%:*}/${hp##*:}" 2>/dev/null
+    else c=none; return 2; fi; }
+  get caddy:9180/metrics; m=$?
+  get caddy:2019/config/; a=$?
+  echo "from_grafana ($c): caddy:9180/metrics exit=$m caddy:2019/config exit=$a"
+  [ "$m" = 0 ] && [ "$a" != 0 ]' \
   && echo "caddy_admin_isolated=yes" \
   || { echo "::error::Caddy admin API reachable from Grafana (or probe inconclusive)"; exit 1; }
 
