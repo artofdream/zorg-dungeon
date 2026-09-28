@@ -9,6 +9,8 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+      # Access logs (rotated by Caddy, <=14 days; contain client IPs)
+      - caddy_logs:/var/log/caddy
     depends_on:
       - web
       - grafana
@@ -41,6 +43,8 @@ services:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/etc/grafana/dashboards:ro
       - grafana_data:/var/lib/grafana
+      # Server + request logs (daily rotation, <=14 days; contain client IPs)
+      - grafana_logs:/var/log/grafana
     environment:
       - GF_SERVER_ROOT_URL=https://zorg.artof.link/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
@@ -53,6 +57,13 @@ services:
       # `grafana cli admin reset-admin-password` does not use HTTP.
       - GF_AUTH_BASIC_ENABLED=false
       - GF_USERS_ALLOW_SIGN_UP=false
+      # Logs to stdout AND /var/log/grafana/grafana.log (grafana_logs volume),
+      # rotated daily, 14 days kept. Router logging records every request,
+      # including admin traffic over the SSH tunnel that bypasses Caddy.
+      - GF_LOG_MODE=console file
+      - GF_LOG_FILE_DAILY_ROTATE=true
+      - GF_LOG_FILE_MAX_DAYS=14
+      - GF_SERVER_ROUTER_LOGGING=true
     # Admin password is NOT committed. deploy-web writes it from the
     # GRAFANA_ADMIN_PASSWORD repo secret to a root-only env file on the host
     # (GF_SECURITY_ADMIN_PASSWORD=...) and resets the admin password in
@@ -89,3 +100,5 @@ volumes:
   caddy_config:
   prometheus_data:
   grafana_data:
+  caddy_logs:
+  grafana_logs:

@@ -59,6 +59,23 @@ ssh -N -L 3000:127.0.0.1:3000 <LIGHTSAIL_USER>@<LIGHTSAIL_HOST>
   login-check` on the host) and probes the public surface
   (`deploy/scripts/probe-public-grafana.sh`).
 
+## Production logs (short retention: they contain client IPs)
+
+- **Caddy access log** (whole site, `/grafana` included): JSON at
+  `/var/log/caddy/access.log` in the `caddy_logs` volume. Caddy rolls it at
+  20 MiB and keeps at most 14 rolled files, none older than 14 days
+  (`roll_keep_for 336h`). Cookie and Authorization headers are redacted.
+- **Grafana log** (server log + one line per request, including tunnel/admin
+  traffic that bypasses Caddy): `/var/log/grafana/grafana.log` in the
+  `grafana_logs` volume, rotated daily, 14 days kept.
+- Both volumes survive container recreation and redeploys. `deploy-web` prints
+  counts only (files, lines, oldest/newest timestamp) and checks that both logs
+  grow after a probe request (`deploy/scripts/log-stats.py`).
+- Read them on the host, e.g.
+  `sudo docker compose -f deploy/compose.prod.yaml exec caddy tail -n 50 /var/log/caddy/access.log`.
+  Do not paste log lines (IPs) into issues, PRs or public CI logs; do not
+  extend retention beyond 14 days without a reason recorded in ADR-0004.
+
 ## Running the gates locally
 
 ```

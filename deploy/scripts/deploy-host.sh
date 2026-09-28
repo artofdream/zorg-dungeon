@@ -34,3 +34,10 @@ echo "admin password re-applied"
 
 echo "==> verify admin login over the host-local port (tunnel path)"
 python3 deploy/scripts/grafana_admin.py login-check
+
+echo "==> persisted logs grow and survive recreation (counts only; logs hold IPs)"
+mount_src() { # service, container path -> host dir of its volume
+  docker inspect -f "{{range .Mounts}}{{if eq .Destination \"$2\"}}{{.Source}}{{end}}{{end}}" "$("${C[@]}" ps -q "$1")"
+}
+python3 deploy/scripts/log-stats.py check \
+  caddy="$(mount_src caddy /var/log/caddy)" grafana="$(mount_src grafana /var/log/grafana)"
