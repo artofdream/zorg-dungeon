@@ -39,8 +39,24 @@
     }
 }
 
+# Access log (JSON) for the whole site, /grafana included. Holds client IPs,
+# so retention is short: roll at 20 MiB, keep at most 14 files and nothing
+# older than 14 days. Caddy redacts Cookie/Authorization headers by default.
+# Stored in the caddy_logs volume (survives container recreation).
+(access_log) {
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 20MiB
+            roll_keep 14
+            roll_keep_for 336h
+        }
+        format json
+    }
+}
+
 # Production domain
 zorg.artof.link {
+    import access_log
     # Observability: Grafana under /grafana/ (anonymous, read-only)
     import grafana_public
 
@@ -52,6 +68,7 @@ zorg.artof.link {
 
 # Local / fallback entrypoint (plain HTTP on :80, e.g. by IP): same guards.
 :80 {
+    import access_log
     import grafana_public
 
     handle /* {
