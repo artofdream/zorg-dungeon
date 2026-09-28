@@ -59,6 +59,22 @@ ssh -N -L 3000:127.0.0.1:3000 <LIGHTSAIL_USER>@<LIGHTSAIL_HOST>
   login-check` on the host) and probes the public surface
   (`deploy/scripts/probe-public-grafana.sh`).
 
+## Grafana upgrades and DB backups
+
+- The Grafana image is pinned to an exact patched release in
+  `deploy/compose.prod.yaml` (never `latest`). Check
+  https://github.com/grafana/grafana/releases and bump deliberately.
+- Every `deploy-web` run first backs up `grafana.db` on the host with SQLite's
+  online backup API (`deploy/scripts/backup-grafana-db.py`) to
+  `/var/backups/zorg-grafana/` (root, 0600): `grafana.db.<UTC ts>` (newest 5
+  kept) and, when the image tag changes, `grafana.db.<UTC ts>.pre-<old>-to-<new>`
+  (newest 3 kept).
+- Major upgrades migrate the DB, so a downgrade needs the pre-upgrade copy:
+  revert the image pin, then on the host
+  `sudo docker compose -f deploy/compose.prod.yaml stop grafana`, copy the
+  `.pre-*` backup over `grafana.db` in the `deploy_grafana_data` volume
+  (keep owner `472:0`, mode 0640), and re-run `deploy-web`.
+
 ## Production logs (short retention: they contain client IPs)
 
 - **Caddy access log** (whole site, `/grafana` included): JSON at
