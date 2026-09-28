@@ -1,0 +1,226 @@
+name: ssh-key-maintenance
+
+# One-off, manual-only tool for rotating the deploy SSH key (PX0, 2026-09-28).
+# Prints fingerprints / types / comments only; never keys or private material.
+# To be removed by a follow-up PR once the rotation is complete.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "inspect | add | verify | remove"
+        required: true
+        type: choice
+        options: [inspect, add, verify, remove]
+      key_source:
+        description: "Which private-key secret to connect with"
+        required: true
+        default: main
+        type: choice
+        options: [main, candidate]
+      new_pubkey:
+        description: "add: the NEW public key line (public, safe to pass)"
+        required: false
+        default: ""
+      old_fingerprint:
+        description: "remove: SHA256 fingerprint of the OLD key to remove"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate inputs and prepare key
+        id: prep
+        env:
+          ACTION: ${{ inputs.action }}
+          NEW_PUBKEY: ${{ inputs.new_pubkey }}
+          OLD_FP: ${{ inputs.old_fingerprint }}
+          SSH_KEY: ${{ inputs.key_source == 'candidate' && secrets.LIGHTSAIL_SSH_KEY_CANDIDATE || secrets.LIGHTSAIL_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          [ -n "${SSH_KEY:-}" ] || { echo "::error::selected private-key secret is empty"; exit 1; }
+          KEY_FILE="${RUNNER_TEMP}/k"
+          ( umask 077; printf '%s\n' "$SSH_KEY" | tr -d '\r' > "$KEY_FILE" )
+          IN_USE_FP="$(ssh-keygen -y -f "$KEY_FILE" | ssh-keygen -lf - | awk '{print $2}')"
+          echo "in-use key: $(ssh-keygen -y -f "$KEY_FILE" | ssh-keygen -lf - | awk '{print $1, $2, $NF}')"
+          echo "in_use_fp=$IN_USE_FP" >> "$GITHUB_OUTPUT"
+          NEW_B64=""
+          if [ "$ACTION" = add ]; then
+            printf '%s\n' "$NEW_PUBKEY" | grep -Eq '^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(256|384|521)) [A-Za-z0-9+/=]+( [A-Za-z0-9@._:-]+)?$' \
+              || { echo "::error::new_pubkey is not a single public key line"; exit 1; }
+            echo "new key to add: $(printf '%s\n' "$NEW_PUBKEY" | ssh-keygen -lf -)"
+            NEW_B64="$(printf '%s' "$NEW_PUBKEY" | base64 -w0)"
+          fi
+          if [ -n "$OLD_FP" ]; then
+            printf '%s' "$OLD_FP" | grep -Eq '^SHA256:[A-Za-z0-9+/]{43}$' || { echo "::error::old_fingerprint must be SHA256:<43 chars>"; exit 1; }
+          fi
+          if [ "$ACTION" = remove ]; then
+            [ -n "$OLD_FP" ] || { echo "::error::remove needs old_fingerprint"; exit 1; }
+            [ "$OLD_FP" != "$IN_USE_FP" ] || { echo "::error::refusing to remove the key this job is connected with"; exit 1; }
+          fi
+          echo "new_b64=$NEW_B64" >> "$GITHUB_OUTPUT"
+
+      - name: Run on the Lightsail host
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          ACTION: ${{ inputs.action }}
+          OLD_FP: ${{ inputs.old_fingerprint }}
+          NEW_B64: ${{ steps.prep.outputs.new_b64 }}
+          IN_USE_FP: ${{ steps.prep.outputs.in_use_fp }}
+        run: |
+          set -euo pipefail
+          SSH_HOST="${LIGHTSAIL_HOST:-zorg.artof.link}"
+          SSH_USER="${LIGHTSAIL_USER:-ubuntu}"
+          mkdir -p "${HOME}/.ssh" && chmod 700 "${HOME}/.ssh"
+          ssh-keyscan -H "$SSH_HOST" >> "${HOME}/.ssh/known_hosts" 2>/dev/null || true
+          ssh -i "${RUNNER_TEMP}/k" -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=20 \
+              -o StrictHostKeyChecking=accept-new "${SSH_USER}@${SSH_HOST}" \
+              "bash -s -- '$ACTION' '${NEW_B64:-none}' '${OLD_FP:-none}' '$IN_USE_FP'" <<'REMOTE'
+          set -euo pipefail
+          ACTION=$1; NEW_B64=$2; OLD_FP=$3; IN_USE_FP=$4
+          AK="$HOME/.ssh/authorized_keys"
+          TS=$(date -u +%Y%m%dT%H%M%SZ)
+          fp_of() { local t; t=$(mktemp); printf '%s\n' "$1" > "$t"; ssh-keygen -lf "$t" 2>/dev/null | awk '{print $2}'; rm -f "$t"; }
+          list() { # prints: line N: bits fingerprint comment (type)
+            local n=0 line t out
+            while IFS= read -r line || [ -n "$line" ]; do
+              n=$((n+1))
+              case "$line" in ''|'#'*) echo "  line $n: (blank or comment line)"; continue;; esac
+              t=$(mktemp); printf '%s\n' "$line" > "$t"
+              out=$(ssh-keygen -lf "$t" 2>/dev/null || echo "unparseable line")
+              rm -f "$t"; echo "  line $n: $out"
+            done
+          }
+          has_fp() { local line; while IFS= read -r line || [ -n "$line" ]; do
+              case "$line" in ''|'#'*) continue;; esac
+              [ "$(fp_of "$line")" = "$1" ] && return 0; done < "$AK"; return 1; }
+          meta() { stat -c '%A %U:%G %i' "$1"; }
+          echo "host user: $(id -un); ~/.ssh: $(meta "$HOME/.ssh"); authorized_keys: $(meta "$AK") lines=$(wc -l < "$AK")"
+          [ "$(stat -c %U "$AK")" = "$(id -un)" ] || { echo "::error::authorized_keys not owned by $(id -un); aborting"; exit 1; }
+          has_fp "$IN_USE_FP" && echo "in-use key present in authorized_keys: yes" || echo "in-use key present in authorized_keys: NO"
+          backup() { cp -p "$AK" "$AK.bak-rotate-$TS"; echo "backup: ~/.ssh/authorized_keys.bak-rotate-$TS ($(meta "$AK.bak-rotate-$TS"))"; }
+
+          case "$ACTION" in
+          inspect)
+            echo "== ~/.ssh entries: $(ls -A "$HOME/.ssh" | tr '\n' ' ')"
+            echo "== sshd effective auth settings (read-only)"
+            sudo -n sshd -T 2>/dev/null | grep -iE '^(authorizedkeysfile|authorizedkeyscommand|trustedusercakeys|pubkeyauthentication|passwordauthentication|permitrootlogin|kbdinteractiveauthentication) ' || echo "  (sshd -T unavailable)"
+            [ -f /etc/ssh/lightsail_instance_ca.pub ] && echo "  /etc/ssh/lightsail_instance_ca.pub: present (Lightsail browser SSH uses CA-signed certs)" || echo "  /etc/ssh/lightsail_instance_ca.pub: absent"
+            echo "== other authorized_keys files on the host (read-only; fingerprint/type/comment)"
+            for f in /root/.ssh/authorized_keys /root/.ssh/authorized_keys2 /home/*/.ssh/authorized_keys /home/*/.ssh/authorized_keys2; do
+              [ "$f" = "$AK" ] && continue
+              sudo -n test -f "$f" 2>/dev/null || continue
+              echo " $f:"; sudo -n cat "$f" | list
+            done
+            echo "== accepted SSH logins 2026-09-10 22:00Z .. 2026-09-12 22:00Z (Sep 11-12 CEST); IPs masked to /16"
+            sudo -n python3 - <<'PY'
+          import glob, gzip, re, datetime as dt
+          lines = []
+          for f in sorted(glob.glob('/var/log/auth.log*')):
+              op = gzip.open if f.endswith('.gz') else open
+              with op(f, 'rt', errors='replace') as fh:
+                  lines += fh.read().splitlines()
+          def ts(l):
+              m = re.match(r'(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.\d+)?([+-]\d\d:\d\d|Z)?', l)
+              if m:
+                  t = dt.datetime.fromisoformat(m.group(1) + (m.group(2) or '+00:00').replace('Z', '+00:00'))
+                  return t.astimezone(dt.timezone.utc)
+              m = re.match(r'([A-Z][a-z]{2} +\d+ \d\d:\d\d:\d\d)', l)
+              if m:
+                  return dt.datetime.strptime('2026 ' + m.group(1), '%Y %b %d %H:%M:%S').replace(tzinfo=dt.timezone.utc)
+              return None
+          lo = dt.datetime(2026, 9, 10, 22, tzinfo=dt.timezone.utc); hi = dt.datetime(2026, 9, 12, 22, tzinfo=dt.timezone.utc)
+          acc = re.compile(r'sshd\[(\d+)\]: Accepted (\S+) for (\S+) from (\S+) port \d+ ssh2(?:: (.*))?')
+          sessions = []
+          for i, l in enumerate(lines):
+              m = acc.search(l); t = ts(l)
+              if m and t and lo <= t < hi:
+                  pid, meth, user, ip, key = m.groups()
+                  o = ip.split('.')
+                  sessions.append((t, pid, meth, user, '.'.join(o[:2]) + '.x.x' if len(o) == 4 else 'v6', key or ''))
+          def closed(pid, t0):
+              for l in lines:
+                  if f'sshd[{pid}]' in l and ('session closed' in l or 'Disconnected from user' in l):
+                      t = ts(l)
+                      if t and t >= t0: return t
+              return None
+          tok = re.compile(r'^[A-Za-z0-9._/:=,@%+-]{1,48}$')
+          def clean(cmd):
+              parts = cmd.split()[:3]
+              if not parts: return '?'
+              out = [parts[0].rsplit('/', 1)[-1]]
+              for p in parts[1:]:
+                  bad = re.search(r'(?i)pass|secret|token|key', p) or re.fullmatch(r'[A-Za-z0-9+/=]{16,}', p)
+                  out.append(p if tok.match(p) and not bad else '<arg>')
+              return ' '.join(out)
+          sud = re.compile(r'sudo: +(\S+) : (?:.*?TTY=(\S+) ; )?.*?COMMAND=(.*)$')
+          print(f'  {len(sessions)} accepted logins in window')
+          for t, pid, meth, user, net, key in sessions:
+              c = closed(pid, t)
+              dur = f'{int((c - t).total_seconds())}s' if c else 'unknown'
+              kt = key.split()
+              print(f'  {t:%Y-%m-%d %H:%M:%S}Z user={user} method={meth} key={kt[0] if kt else "?"} {kt[1] if len(kt) > 1 else ""} from={net} duration={dur}' + (' CERT(' + ' '.join(kt[2:6]) + ')' if kt and 'CERT' in kt[0] else ''))
+              if c:
+                  cmds = []
+                  for l in lines:
+                      tl = ts(l)
+                      if tl and t <= tl <= c:
+                          m = sud.search(l)
+                          if m and m.group(1) == user: cmds.append(f'{clean(m.group(3))} [tty={m.group(2) or "none"}]')
+                  for x in cmds[:25]: print(f'      sudo: {x}')
+                  if len(cmds) > 25: print(f'      ... {len(cmds) - 25} more sudo commands')
+          PY
+            ;;
+          add)
+            [ "$NEW_B64" != none ] || { echo "::error::no new key"; exit 1; }
+            NEW=$(printf '%s' "$NEW_B64" | base64 -d)
+            NEW_FP=$(fp_of "$NEW"); [ -n "$NEW_FP" ] || { echo "::error::new key unparseable"; exit 1; }
+            if has_fp "$NEW_FP"; then echo "new key $NEW_FP already present: no change (idempotent)"
+            else
+              backup
+              if [ -s "$AK" ] && [ -n "$(tail -c1 "$AK")" ]; then printf '\n' >> "$AK"; fi
+              printf '%s\n' "$NEW" >> "$AK"
+              echo "appended new key $NEW_FP"
+            fi
+            ;;
+          verify)
+            has_fp "$IN_USE_FP" || { echo "::error::connected key not found in authorized_keys"; exit 1; }
+            echo "verify: SSH access with the in-use key works"
+            ;;
+          remove)
+            [ "$OLD_FP" != none ] || { echo "::error::no old fingerprint"; exit 1; }
+            has_fp "$IN_USE_FP" || { echo "::error::in-use key not in authorized_keys; refusing"; exit 1; }
+            if ! has_fp "$OLD_FP"; then echo "old key $OLD_FP not present: no change"; else
+              backup
+              TMP=$(mktemp "$HOME/.ssh/.ak.XXXXXX")
+              removed=0
+              while IFS= read -r line || [ -n "$line" ]; do
+                case "$line" in ''|'#'*) printf '%s\n' "$line" >> "$TMP"; continue;; esac
+                if [ "$(fp_of "$line")" = "$OLD_FP" ]; then removed=$((removed+1)); else printf '%s\n' "$line" >> "$TMP"; fi
+              done < "$AK"
+              keep_ok=0; while IFS= read -r line; do case "$line" in ''|'#'*) continue;; esac; [ "$(fp_of "$line")" = "$IN_USE_FP" ] && keep_ok=1; done < "$TMP"
+              [ "$removed" -ge 1 ] && [ "$keep_ok" = 1 ] || { rm -f "$TMP"; echo "::error::safety check failed (removed=$removed keep_in_use=$keep_ok); unchanged"; exit 1; }
+              chmod --reference="$AK" "$TMP"
+              chgrp --reference="$AK" "$TMP" 2>/dev/null || true
+              mv -f "$TMP" "$AK"
+              echo "removed $removed line(s) with $OLD_FP"
+            fi
+            ;;
+          esac
+          echo "== authorized_keys read-back ($(meta "$AK"))"
+          list < "$AK"
+          REMOTE
+
+      - name: Clean up key file
+        if: always()
+        run: shred -u "${RUNNER_TEMP}/k" 2>/dev/null || rm -f "${RUNNER_TEMP}/k"
