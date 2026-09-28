@@ -1,0 +1,98 @@
+name: grafana-audit
+
+# READ-ONLY security audit of the Grafana instance behind /grafana
+# (sponsor-approved 2026-09-28). Manual dispatch only.
+#
+# - Reuses the existing deploy SSH secrets; adds no keys, users or routes.
+# - .github/grafana-audit/collect.sh runs read-only on the host (docker
+#   logs/inspect, journalctl, a sqlite snapshot via mode=ro, Grafana API GETs)
+#   and streams a tar.gz to stdout. It is piped straight into `age` on the
+#   runner, so plaintext never touches the runner disk; the host-side temp
+#   dir is deleted on exit.
+# - Only the age ciphertext is uploaded (retention 1 day). The public log
+#   shows counts/status only. The age input is a PUBLIC recipient key.
+# - Temporary: remove this workflow after the audit.
+
+on:
+  workflow_dispatch:
+    inputs:
+      age_recipient:
+        description: "age PUBLIC recipient (age1...) to encrypt the bundle to"
+        required: true
+        default: "age1xkwnsgej7f2mvjuzwfkc7kngd8fda25ksgmsc3lqtnlwd3c3sfgscd57ru"
+
+permissions:
+  contents: read
+
+concurrency:
+  # Never overlap a deploy (deploys recreate the Grafana container).
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install age
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq >/dev/null
+          sudo apt-get install -y -qq age >/dev/null
+          age --version
+
+      - name: Collect (read-only) and encrypt in-stream
+        env:
+          LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          AGE_RECIPIENT: ${{ inputs.age_recipient }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$AGE_RECIPIENT" =~ ^age1[02-9ac-hj-np-z]{58}$ ]]; then
+            echo "::error::age_recipient is not a valid age public key"; exit 1
+          fi
+          if [ -z "${LIGHTSAIL_SSH_KEY:-}" ]; then
+            echo "::error::LIGHTSAIL_SSH_KEY is not set"; exit 1
+          fi
+          SSH_HOST="${LIGHTSAIL_HOST:-zorg.artof.link}"
+          SSH_USER="${LIGHTSAIL_USER:-ubuntu}"
+          KEY_FILE="${RUNNER_TEMP}/lightsail_ssh_key"
+          trap 'rm -f "$KEY_FILE"' EXIT
+          printf '%s\n' "$LIGHTSAIL_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          mkdir -p "${HOME}/.ssh" && chmod 700 "${HOME}/.ssh"
+          ssh-keyscan -H "$SSH_HOST" >> "${HOME}/.ssh/known_hosts" 2>/dev/null || true
+          OUT="${RUNNER_TEMP}/out"
+          mkdir -p "$OUT"
+          set +e
+          ssh -i "$KEY_FILE" \
+            -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=20 \
+            -o StrictHostKeyChecking=accept-new -o LogLevel=ERROR \
+            "${SSH_USER}@${SSH_HOST}" \
+            'd=$(mktemp -d) && cat > "$d/collect.sh" && sudo bash "$d/collect.sh"; rc=$?; rm -rf "$d"; exit $rc' \
+            < .github/grafana-audit/collect.sh \
+            | age -r "$AGE_RECIPIENT" -o "$OUT/grafana-audit.tar.gz.age"
+          rcs=("${PIPESTATUS[@]}")
+          set -e
+          echo "collector_exit=${rcs[0]} age_exit=${rcs[1]}"
+          [ "${rcs[1]}" -eq 0 ] || { echo "::error::age failed"; exit 1; }
+          # Sanity: output must be age ciphertext, never plaintext.
+          head -c 21 "$OUT/grafana-audit.tar.gz.age" | grep -q '^age-encryption.org/v1' \
+            || { echo "::error::output is not age ciphertext; refusing to upload"; rm -rf "$OUT"; exit 1; }
+          echo "ciphertext_bytes=$(stat -c %s "$OUT/grafana-audit.tar.gz.age")"
+          [ "${rcs[0]}" -eq 0 ] || echo "::warning::collector exited ${rcs[0]}; bundle may be partial"
+
+      - name: Upload encrypted bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: grafana-audit-encrypted
+          path: ${{ runner.temp }}/out/grafana-audit.tar.gz.age
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Remove local ciphertext
+        if: always()
+        run: rm -rf "${RUNNER_TEMP}/out" "${RUNNER_TEMP}/lightsail_ssh_key"
