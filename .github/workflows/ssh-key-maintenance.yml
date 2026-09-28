@@ -1,7 +1,8 @@
 name: ssh-key-maintenance
 
 # One-off, manual-only tool for rotating the deploy SSH key (PX0, 2026-09-28).
-# Prints fingerprints / types / comments only; never keys or private material.
+# Prints fingerprints / types / comments (and option names) only; never keys
+# or private material.
 # To be removed by a follow-up PR once the rotation is complete.
 on:
   workflow_dispatch:
@@ -98,8 +99,24 @@ jobs:
               case "$line" in ''|'#'*) echo "  line $n: (blank or comment line)"; continue;; esac
               t=$(mktemp); printf '%s\n' "$line" > "$t"
               out=$(ssh-keygen -lf "$t" 2>/dev/null || echo "unparseable line")
-              rm -f "$t"; echo "  line $n: $out"
+              rm -f "$t"; echo "  line $n: $out$(optnames "$line")"
             done
+          }
+          optnames() { # authorized_keys option NAMES only (values such as command="..." are not printed)
+            python3 -c '
+          import re, sys
+          line = sys.argv[1]
+          m = re.search(r"(^|\s)(ssh-(rsa|ed25519|dss)|ecdsa-sha2-\S+|sk-\S+) AAAA", line)
+          pre = line[:m.start()].strip() if m else ""
+          if pre:
+              parts, cur, q = [], "", False
+              for ch in pre:
+                  if ch == "\"": q = not q
+                  if ch == "," and not q: parts.append(cur); cur = ""
+                  else: cur += ch
+              parts.append(cur)
+              print(" [options: " + ",".join(p.split("=", 1)[0].strip() for p in parts if p.strip()) + "]", end="")
+          ' "$1"
           }
           has_fp() { local line; while IFS= read -r line || [ -n "$line" ]; do
               case "$line" in ''|'#'*) continue;; esac
