@@ -12,5 +12,7 @@ scrape_configs:
       - targets: ["node-exporter:9100"]
 
   - job_name: "caddy"
+    # Caddy's dedicated metrics listener (internal network only); the admin
+    # API on :2019 is bound to localhost inside the Caddy container.
     static_configs:
-      - targets: ["caddy:2019"]
+      - targets: ["caddy:9180"]

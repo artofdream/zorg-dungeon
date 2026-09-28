@@ -33,6 +33,7 @@ jobs:
         env:
           LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          GRAFANA_SECRET_KEY: ${{ secrets.GRAFANA_SECRET_KEY }}
         run: |
           set -euo pipefail
           if [ -z "${LIGHTSAIL_SSH_KEY:-}" ]; then
@@ -43,6 +44,10 @@ jobs:
             echo "::error::GRAFANA_ADMIN_PASSWORD is not set. Add a strong random Grafana admin password under Settings → Secrets and variables → Actions. Do not commit it."
             exit 1
           fi
+          if [ -z "${GRAFANA_SECRET_KEY:-}" ]; then
+            echo "::error::GRAFANA_SECRET_KEY is not set. Add a random Grafana secret_key (e.g. 64 hex chars) under Settings → Secrets and variables → Actions. Do not commit it."
+            exit 1
+          fi
 
       - name: Redeploy web and Grafana on Lightsail
         env:
@@ -50,6 +55,7 @@ jobs:
           LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          GRAFANA_SECRET_KEY: ${{ secrets.GRAFANA_SECRET_KEY }}
         run: |
           set -euo pipefail
           SSH_HOST="${LIGHTSAIL_HOST:-zorg.artof.link}"
@@ -70,15 +76,18 @@ jobs:
           }
           echo "Redeploying on ${SSH_USER}@${SSH_HOST}"
 
-          # 1. Deliver the Grafana admin password over SSH stdin (never on a
-          #    command line, never echoed) into a root-only env file that
-          #    compose.prod.yaml reads via env_file.
-          printf 'GF_SECURITY_ADMIN_PASSWORD=%s\n' "$GRAFANA_ADMIN_PASSWORD" \
-            | remote 'sudo install -d -m 700 -o root -g root /etc/zorg && sudo sh -c "umask 077; cat > /etc/zorg/grafana.env" && sudo chown root:root /etc/zorg/grafana.env && sudo chmod 600 /etc/zorg/grafana.env'
+          # 1. Deliver the Grafana admin password and secret_key over SSH stdin
+          #    (never on a command line, never echoed) into a root-only staging
+          #    file. deploy-host.sh moves it to /etc/zorg/grafana.env (read by
+          #    compose.prod.yaml via env_file) after checking that a changed
+          #    secret_key is safe to apply.
+          printf 'GF_SECURITY_ADMIN_PASSWORD=%s\nGF_SECURITY_SECRET_KEY=%s\n' "$GRAFANA_ADMIN_PASSWORD" "$GRAFANA_SECRET_KEY" \
+            | remote 'sudo install -d -m 700 -o root -g root /etc/zorg && sudo sh -c "umask 077; cat > /etc/zorg/grafana.env.new" && sudo chown root:root /etc/zorg/grafana.env.new && sudo chmod 600 /etc/zorg/grafana.env.new'
 
           # 2. Update the checkout, then run the host-side deploy steps from it
-          #    (deploy/scripts/deploy-host.sh): build web, validate + apply the
-          #    Caddyfile/compose changes, wait for Grafana on 127.0.0.1:3000,
+          #    (deploy/scripts/deploy-host.sh): build web, validate the
+          #    Caddyfile, back up grafana.db, stage the env file, apply the
+          #    compose changes, wait for Grafana on 127.0.0.1:3000,
           #    re-apply the admin password from the env file (stdin only), and
           #    verify an admin login over the host-local (SSH-tunnel) path.
           remote 'cd /opt/zorg && sudo git fetch && sudo git reset --hard origin/main && sudo bash deploy/scripts/deploy-host.sh'

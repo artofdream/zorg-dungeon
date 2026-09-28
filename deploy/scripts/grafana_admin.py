@@ -7,7 +7,13 @@ The admin password is read from /etc/zorg/grafana.env and is never printed.
 Output is status only.
 
 Subcommands:
-  login-check   form-login as admin, confirm Grafana-admin rights, log out
+  login-check     form-login as admin, confirm Grafana-admin rights, log out
+  stored-secrets  count secrets Grafana stores encrypted with secret_key
+                  (datasource/app-plugin secureJsonFields, contact-point secure
+                  settings); exits 1 if any exist or the check is incomplete.
+                  Run BEFORE switching GF_SECURITY_SECRET_KEY.
+  rotate-keys     after a secret_key switch: rotate the envelope data keys and
+                  re-encrypt stored secrets with the new key
 """
 import http.cookiejar
 import json
@@ -69,7 +75,71 @@ def login_check():
     return 0 if is_admin else 1
 
 
-COMMANDS = {"login-check": login_check}
+def _admin_session():
+    s = Session()
+    status = s.login()
+    if status != 200:
+        raise SystemExit(f"admin_login=FAIL http={status}")
+    return s
+
+
+def stored_secrets():
+    """Counts only; never prints secret values or field contents."""
+    s = _admin_session()
+    counts, incomplete = {}, []
+    try:
+        st, dss = s.call("GET", "/api/datasources")
+        if st != 200 or dss is None:
+            incomplete.append(f"datasources:{st}")
+            dss = []
+        n = 0
+        for ds in dss:
+            st, full = s.call("GET", f"/api/datasources/uid/{ds['uid']}")
+            if st != 200 or full is None:
+                incomplete.append(f"datasource:{st}")
+                continue
+            n += sum(1 for v in (full.get("secureJsonFields") or {}).values() if v)
+        counts["datasource_secure_fields"] = n
+        counts["datasources"] = len(dss)
+
+        st, cps = s.call("GET", "/api/v1/provisioning/contact-points")
+        if st != 200 or cps is None:
+            incomplete.append(f"contact-points:{st}")
+            cps = []
+        counts["contact_point_secure_fields"] = sum(
+            1 for cp in cps for v in (cp.get("settings") or {}).values() if v == "[REDACTED]")
+
+        st, plugins = s.call("GET", "/api/plugins?type=app")
+        if st != 200 or plugins is None:
+            incomplete.append(f"plugins:{st}")
+            plugins = []
+        n = 0
+        for p in plugins:
+            st, ps = s.call("GET", f"/api/plugins/{p['id']}/settings")
+            if st == 200 and ps:
+                n += sum(1 for v in (ps.get("secureJsonFields") or {}).values() if v)
+        counts["app_plugin_secure_fields"] = n
+    finally:
+        s.logout()
+    total = sum(v for k, v in counts.items() if k.endswith("_secure_fields"))
+    print("stored_secrets " + " ".join(f"{k}={v}" for k, v in sorted(counts.items()))
+          + f" total={total}" + (f" incomplete={','.join(incomplete)}" if incomplete else ""))
+    return 0 if total == 0 and not incomplete else 1
+
+
+def rotate_keys():
+    s = _admin_session()
+    try:
+        r1, _ = s.call("POST", "/api/admin/encryption/rotate-data-keys")
+        r2, _ = s.call("POST", "/api/admin/encryption/reencrypt-secrets")
+    finally:
+        s.logout()
+    ok = r1 in (200, 204) and r2 in (200, 204)
+    print(f"rotate_data_keys_http={r1} reencrypt_secrets_http={r2} result={'ok' if ok else 'FAIL'}")
+    return 0 if ok else 1
+
+
+COMMANDS = {"login-check": login_check, "stored-secrets": stored_secrets, "rotate-keys": rotate_keys}
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 or sys.argv[1] not in COMMANDS:

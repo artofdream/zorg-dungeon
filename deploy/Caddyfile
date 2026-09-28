@@ -1,6 +1,11 @@
 # Caddy configuration for zorg.artof.link
 {
-    admin :2019
+    # Admin API only on localhost INSIDE the Caddy container (e.g. for
+    # `docker compose exec caddy caddy reload`); not reachable from other
+    # containers. Prometheus scrapes the separate :9180 metrics site below.
+    admin localhost:2019
+    # HTTP request metrics (caddy_http_*), served on :9180/metrics.
+    metrics
     # ACME contact email intentionally not committed (public repo).
     # Optionally add `email <ops-contact>` on the host for expiry notices.
 }
@@ -73,5 +78,16 @@ zorg.artof.link {
 
     handle /* {
         reverse_proxy web:80
+    }
+}
+
+# Prometheus scrape endpoint. Port 9180 is NOT published in compose, so it is
+# reachable only on the internal Docker network. Not access-logged.
+http://:9180 {
+    handle /metrics {
+        metrics
+    }
+    handle {
+        respond 404
     }
 }
