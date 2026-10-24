@@ -7,7 +7,12 @@ on:
 # The AEA-derived gates (AGENTS.md §2-4): honesty ledger, antifragility
 # findings ledger, requirements traceability graph, docs wikilink graph.
 # Pure Node scripts, no dependencies to install — fast on purpose so nobody
-# is tempted to skip them.
+# is tempted to skip them. The Archify honesty guard fails when status wording
+# lives only in a diagram's retired `meta.views` chapter notes (Archify 3.x
+# drops them); it is read-only, uses no secrets and deploys nothing.
+permissions:
+  contents: read
+
 jobs:
   governance:
     runs-on: ubuntu-latest
@@ -22,3 +27,7 @@ jobs:
       - run: node scripts/check-honesty-ledger.mjs
       - run: node scripts/check-findings-ledger.mjs
       - run: node scripts/check-docs-graph.mjs
+      - name: Archify honesty guard self-test (passing and failing synthetic IR)
+        run: node scripts/check-archify-honesty.test.mjs
+      - name: Archify honesty guard (committed diagrams)
+        run: node scripts/check-archify-honesty.mjs

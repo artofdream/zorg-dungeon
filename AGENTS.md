@@ -33,6 +33,11 @@ CI) can check. Use `docs/STATUS_LEDGER.md`'s five-word vocabulary
 (`Unknown`, `Planned`, `Simulated`, `Probed (date)`, `Live & Probed`) — see
 that file for the exact rules. Closing an issue is not proof.
 
+Archify 3.x ignores `meta.views`, so status wording must live in a diagram's
+components or cards, never only in its chapter notes. The `governance` check
+runs `scripts/check-archify-honesty.mjs` (word list:
+`scripts/archify-honesty.config.json`) to enforce that.
+
 ## Keep Learning and Apply
 
 > When the build teaches something, write it into the harness (skill,
