@@ -15,3 +15,7 @@ apps/web/playwright/.cache/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Archify receipts / sidecars (local paths; never published under /archify/)
+*.delivery.json
+*.browser-check.json

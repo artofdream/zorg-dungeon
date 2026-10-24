@@ -22,11 +22,20 @@ Cite `GAME_SPEC.md` / companion docs. Do not invent room `C`, Gunner duration, o
 
 ### Regenerate
 
+Generated with Archify **v3.2.0** (`archify/package.json` version 3.2.0). Render in a scratch directory, validate, then copy **only** the `.json` and `.html` back into this folder:
+
 ```bash
-node /path/to/archify/bin/archify.mjs deliver architecture \
-  apps/knowledge/archify/zorg-knowledge-workflow.architecture.json \
-  apps/knowledge/archify/zorg-knowledge-workflow.architecture.html \
+export ARCHIFY_UPDATE_CHECK_DISABLED=1
+node /path/to/archify/archify/bin/archify.mjs validate architecture zorg-knowledge-workflow.architecture.json
+node /path/to/archify/archify/bin/archify.mjs deliver architecture \
+  zorg-knowledge-workflow.architecture.json \
+  zorg-knowledge-workflow.architecture.html \
   --quality showcase
+node /path/to/archify/archify/bin/archify.mjs browser-check zorg-knowledge-workflow.architecture.html --summary --out-dir ./receipts
 ```
+
+- Do **not** commit `*.delivery.json` or `*.browser-check.json` receipts: they hold local absolute paths and `build.mjs` would publish them under `/archify/` (the root `.gitignore` ignores them).
+- Archify 3.x has **no guided views / "Play story" / press-`P` chapters**: `meta.views` is retired and ignored. Former chapter notes live in the diagram's **cards**; use the viewer's **Route** and **Lens** controls for paths and roles.
+- Boundary rule (3.x): a boundary's `wraps` list must match the components its frame encloses. Keep non-members outside the frame (see the Restaurant region below the pipeline).
 
 `apps/knowledge/scripts/build.mjs` copies this directory to `dist/archify/` so GitHub Pages serves `/archify/`.
