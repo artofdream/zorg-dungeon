@@ -16,7 +16,7 @@ contributors alike.
 4. Open a PR using the template. CI runs two required workflows:
    - **`ci`** — install, build, typecheck, test across all workspaces.
    - **`governance`** — requirements-trace, honesty-ledger, findings-ledger,
-     docs-graph (see `AGENTS.md` §4 and `scripts/*.mjs`).
+     docs-graph, archify-honesty (see `AGENTS.md` §2, §4 and `scripts/*.mjs`).
 5. A PR needs a green `ci` + `governance` and one review before merge. The
    author does not self-approve.
 
@@ -110,5 +110,5 @@ pnpm build && pnpm test
 pnpm governance
 ```
 
-`pnpm governance` runs the exact four scripts CI runs, so a red CI run
+`pnpm governance` runs the exact five scripts CI runs, so a red CI run
 should never be a surprise.

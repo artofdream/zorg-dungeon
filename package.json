@@ -12,7 +12,8 @@
     "ledger": "node scripts/check-honesty-ledger.mjs",
     "findings": "node scripts/check-findings-ledger.mjs",
     "docs-graph": "node scripts/check-docs-graph.mjs",
-    "governance": "npm run trace && npm run ledger && npm run findings && npm run docs-graph",
+    "archify-honesty": "node scripts/check-archify-honesty.test.mjs && node scripts/check-archify-honesty.mjs",
+    "governance": "npm run trace && npm run ledger && npm run findings && npm run docs-graph && npm run archify-honesty",
     "test:e2e": "pnpm --filter @zorg/web test:e2e",
     "probe:journeys": "pnpm --filter @zorg/web probe:journeys"
   }
