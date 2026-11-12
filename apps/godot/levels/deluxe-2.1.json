@@ -1,0 +1,71 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/2.1-fire-immunity.txt",
+  "sourceSha256": "26ee183ade91e449db77904c5a669fa4a7dfef159b31e0157b0e6314191baf6d",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "E:0",
+      "def": {
+        "type": "E",
+        "element": "fire"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-2.1",
+    "name": "Fire Immunity",
+    "contractId": "2",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "fire"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Elf",
+        "hp": 1,
+        "immunities": [
+          "fire"
+        ]
+      },
+      {
+        "type": "Warrior",
+        "hp": 1
+      }
+    ],
+    "spells": [
+      {
+        "type": "Attack",
+        "damage": 1
+      }
+    ]
+  }
+}

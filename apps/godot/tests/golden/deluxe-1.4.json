@@ -1,0 +1,510 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "levelId": "deluxe-1.4",
+  "levelFile": "apps/godot/levels/deluxe-1.4.json",
+  "cases": [
+    {
+      "name": "win-attack-after-spawn",
+      "note": "A–D(2)–Z in a row. Attack(3) right after the spawn leaves 1 HP, and D(2) finishes the Warrior.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "id": "D:0",
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "casts": [
+        {
+          "afterSteps": 1,
+          "spellId": 0
+        }
+      ],
+      "castLog": [
+        {
+          "afterSteps": 1,
+          "spellId": 0,
+          "result": "ok"
+        }
+      ],
+      "castWindow": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "runOutcome": "win",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "cast",
+            "spellId": 0,
+            "spellType": "Attack",
+            "heroIds": [
+              0
+            ]
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 3,
+            "hp": 1
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 2,
+            "hp": -1
+          },
+          {
+            "type": "death",
+            "heroId": 0
+          },
+          {
+            "type": "win"
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "win",
+        "constraints": []
+      }
+    },
+    {
+      "name": "loss-no-cast",
+      "note": "Same row without the spell: D(2) leaves 2 HP and the Warrior walks into Z.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "id": "D:0",
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 2,
+            "hp": 2
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 5
+            },
+            "to": {
+              "x": 2,
+              "y": 6
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 6
+            },
+            "to": {
+              "x": 2,
+              "y": 7
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 7
+            },
+            "to": {
+              "x": 2,
+              "y": 8
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 8
+            },
+            "to": {
+              "x": 2,
+              "y": 9
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 9
+            },
+            "to": {
+              "x": 2,
+              "y": 10
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    },
+    {
+      "name": "refused-casts",
+      "note": "FR-33/FR-32: a cast before any action is refused; the real cast works; casting the same spell again is refused (consumed); Z next to A still loses.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "D:0",
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "casts": [
+        {
+          "afterSteps": 0,
+          "spellId": 0
+        },
+        {
+          "afterSteps": 1,
+          "spellId": 0
+        },
+        {
+          "afterSteps": 2,
+          "spellId": 0
+        }
+      ],
+      "castLog": [
+        {
+          "afterSteps": 0,
+          "spellId": 0,
+          "result": "before_first_action"
+        },
+        {
+          "afterSteps": 1,
+          "spellId": 0,
+          "result": "ok"
+        },
+        {
+          "afterSteps": 2,
+          "spellId": 0,
+          "result": "consumed"
+        }
+      ],
+      "castWindow": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "cast",
+            "spellId": 0,
+            "spellType": "Attack",
+            "heroIds": [
+              0
+            ]
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 3,
+            "hp": 1
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    }
+  ]
+}

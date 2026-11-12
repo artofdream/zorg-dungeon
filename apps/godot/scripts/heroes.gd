@@ -75,6 +75,20 @@ func apply_turn(events: Array) -> String:
 				lines.append("%s dies" % _name(id))
 			"wait":
 				lines.append("waits")
+			"cast":
+				lines.append("spell %s cast" % String(e["spellType"]))
+			"teleport":
+				var f: Node3D = _figures.get(id)
+				if f:
+					f.position = cell_to_world(e["to"])
+				lines.append("%s teleports to %s" % [_name(id), e["toRoomId"]])
+			"wait_room":
+				var f: Node3D = _figures.get(id)
+				if f:
+					f.queue_free()
+					_figures.erase(id)
+					_hp_labels.erase(id)
+				lines.append("%s goes back to the waiting room" % _name(id))
 			"loss":
 				lines.append("reaches Zorg!")
 			"win":

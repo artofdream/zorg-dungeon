@@ -1,7 +1,8 @@
 extends Node3D
 ## Level screen: pick a level, build the dungeon (tap or drag rooms, with a
-## green/orange/red ghost preview), then Play/Step a replay of the engine's
-## recording. Plain boxes on purpose.
+## green/orange/red ghost preview), then Play/Step the engine one action at
+## a time and cast spells from the spell bar between actions (FR-33).
+## Plain boxes on purpose.
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
@@ -35,7 +36,7 @@ var drag_origin := Vector2.ZERO
 var ghost: MeshInstance3D
 var ghost_mat: StandardMaterial3D
 
-var recording: Dictionary = {}
+var recording: Dictionary = {}   # {"turns": [...]} once a run has started
 var turn_index := 0
 var playing := false
 var play_timer := 0.0
@@ -52,13 +53,16 @@ var cam_tween: Tween
 # ui
 var title: Label
 var goal: Label
-var picker: HBoxContainer
+var picker: GridContainer
 var tray: HBoxContainer
 var status: Label
 var result: Label
 var log_label: Label
 var play_btn: Button
 var step_btn: Button
+var spell_bar: HBoxContainer
+const REFUSALS := {"before_first_action": "wait for the first hero action", "run_over": "the run is over",
+	"no_active_hero": "no hero is active", "consumed": "that spell is used up", "no_spell": "no such spell"}
 
 func _ready() -> void:
 	_build_ui()
@@ -94,6 +98,7 @@ func _open_level(i: int) -> void:
 		b.modulate = Color(1, 1, 0.5) if b.get_index() == i else Color.WHITE
 	_refresh_tray()
 	_refresh_validation()
+	_refresh_spells()
 	_snap_camera()
 
 func _build_picker() -> void:
@@ -101,6 +106,7 @@ func _build_picker() -> void:
 		var idx: int = i
 		var e: Dictionary = engine.levels[i]
 		var b := _btn(String(e["id"]).replace("deluxe-", ""), func(): _open_level(idx))
+		b.custom_minimum_size = Vector2(78, 56)
 		b.tooltip_text = String(e["name"])
 		picker.add_child(b)
 
@@ -138,14 +144,15 @@ func _build_ui() -> void:
 	log_label.custom_minimum_size = Vector2(700, 0)
 	top.add_child(log_label)
 
-	picker = HBoxContainer.new()
+	picker = GridContainer.new()
+	picker.columns = 5
 	picker.anchor_left = 1.0
 	picker.anchor_right = 1.0
-	picker.offset_left = -660
+	picker.offset_left = -436
 	picker.offset_top = 12
 	picker.offset_right = -16
-	picker.alignment = BoxContainer.ALIGNMENT_END
-	picker.add_theme_constant_override("separation", 8)
+	picker.add_theme_constant_override("h_separation", 6)
+	picker.add_theme_constant_override("v_separation", 6)
 	ui.add_child(picker)
 
 	var bottom := HBoxContainer.new()
@@ -168,6 +175,61 @@ func _build_ui() -> void:
 	bottom.add_child(play_btn)
 	bottom.add_child(step_btn)
 	bottom.add_child(_btn("Build", _on_reset))
+
+	# Spell bar (FR-32/FR-33): one button per spell, usable by tap or mouse,
+	# enabled only between completed actions while the run is going.
+	spell_bar = HBoxContainer.new()
+	spell_bar.anchor_top = 1.0
+	spell_bar.anchor_bottom = 1.0
+	spell_bar.anchor_left = 1.0
+	spell_bar.anchor_right = 1.0
+	spell_bar.offset_top = -160
+	spell_bar.offset_bottom = -92
+	spell_bar.offset_left = -700
+	spell_bar.offset_right = -16
+	spell_bar.alignment = BoxContainer.ALIGNMENT_END
+	spell_bar.add_theme_constant_override("separation", 8)
+	ui.add_child(spell_bar)
+
+func _spell_label(def: Dictionary) -> String:
+	match String(def["type"]):
+		"Attack": return "Attack(%d)" % int(def["damage"])
+		"Teleport": return "Teleport(%d)" % int(def["steps"])
+	return String(def["type"])
+
+func _refresh_spells() -> void:
+	for c in spell_bar.get_children():
+		c.queue_free()
+	var list: Array = engine.spells()
+	var allowed: bool = engine.can_cast()
+	for i in list.size():
+		var idx: int = i
+		var sp: Dictionary = list[i]
+		var b := _btn(_spell_label(sp["def"]), func(): cast_spell(idx))
+		b.custom_minimum_size = Vector2(150, 64)
+		b.disabled = sp["consumed"] or not allowed
+		if sp["consumed"]:
+			b.text += " ✓"
+		spell_bar.add_child(b)
+
+## Cast spell `id` now (between actions). Public so the smoke test can use it.
+func cast_spell(id: int) -> bool:
+	if not _ensure_recording():
+		return false
+	playing = false
+	play_btn.text = "Play"
+	var r: Dictionary = engine.cast(id)
+	if not r["ok"]:
+		status.text = "Can't cast now: %s." % REFUSALS.get(r["error"], r["error"])
+		_refresh_spells()
+		return false
+	recording["turns"].append(r["events"])
+	turn_index += 1
+	log_label.text = "Turn %d: %s" % [turn_index, heroes.apply_turn(r["events"])]
+	_refresh_spells()
+	if engine.over():
+		_show_result()
+	return true
 
 func _label_for(def: Dictionary) -> String:
 	match String(def["type"]):
@@ -542,11 +604,11 @@ func camera_settled() -> bool:
 func _ensure_recording() -> bool:
 	if not recording.is_empty():
 		return true
-	var r: Dictionary = engine.run(_layout())
-	if r.has("error"):
-		status.text = r["error"]
+	var err: String = engine.start(_layout())
+	if err != "":
+		status.text = err
 		return false
-	recording = r
+	recording = {"turns": []}
 	turn_index = 0
 	heroes.clear()
 	heroes.names = engine.hero_names()
@@ -554,27 +616,34 @@ func _ensure_recording() -> bool:
 	ghost.visible = false
 	_refresh_tray()
 	tray.visible = false
-	status.text = "Extermination: %d turns recorded by the engine." % recording["turns"].size()
+	status.text = "Extermination: Step or Play; cast spells between actions."
+	_refresh_spells()
 	return true
 
+## Run one hero action live. Returns false once the run is over.
 func _advance() -> bool:
-	if recording.is_empty() or turn_index >= recording["turns"].size():
+	if recording.is_empty() or engine.over():
 		return false
-	var events: Array = recording["turns"][turn_index]
+	var events: Array = engine.step()
+	recording["turns"].append(events)
 	turn_index += 1
 	var line: String = heroes.apply_turn(events)
 	for e in events:
 		if e["type"] == "spawn":
-			var hp := int(engine.loaded["level"]["heroes"][int(e["heroId"])]["hp"])
-			heroes.set_start_hp(int(e["heroId"]), hp)
+			heroes.set_start_hp(int(e["heroId"]), engine.hero_hp(int(e["heroId"])))
 	log_label.text = "Turn %d: %s" % [turn_index, line]
-	if turn_index >= recording["turns"].size():
+	_refresh_spells()
+	if engine.over():
 		_show_result()
 		return false
 	return true
 
+func run_over() -> bool:
+	return not recording.is_empty() and engine.over()
+
 func _show_result() -> void:
-	var sc: Dictionary = recording["score"]
+	var sc: Dictionary = engine.score()
+	recording["outcome"] = engine.state["outcome"]
 	match String(sc["outcome"]):
 		"win":
 			result.text = "You win! Every hero died and the rules hold."
@@ -606,6 +675,7 @@ func _on_step() -> void:
 
 func _on_reset() -> void:
 	recording = {}
+	engine.state = {}
 	playing = false
 	if play_btn:
 		play_btn.text = "Play"
@@ -615,3 +685,5 @@ func _on_reset() -> void:
 	tray.visible = true
 	_refresh_tray()
 	_refresh_validation()
+	if spell_bar:
+		_refresh_spells()

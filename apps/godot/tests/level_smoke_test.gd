@@ -69,12 +69,25 @@ func _initialize() -> void:
 		for p in case0["placements"]:
 			level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
 		_check(not level.play_btn.disabled, "%s: Play unlocks for a valid layout" % engine.levels[i]["id"])
+		var casts: Array = case0.get("casts", [])
+		if not casts.is_empty():
+			_check(level.spell_bar.get_child_count() > 0, "%s: spell bar shows the level's spells" % engine.levels[i]["id"])
+			_check(level.spell_bar.get_children().all(func(b): return b.disabled), "%s: spells are disabled before the first action (FR-33)" % engine.levels[i]["id"])
 		var guard := 0
-		level._on_step()
-		while level.turn_index < level.recording["turns"].size() and guard < 1000:
+		while not level.run_over() and guard < 1000:
 			level._on_step()
 			guard += 1
+			await process_frame
+			for c in casts:
+				if int(c["afterSteps"]) == int(engine.state["stepCount"]) and not level.run_over():
+					var btn: Button = level.spell_bar.get_child(int(c["spellId"]))
+					_check(not btn.disabled, "%s: spell button %d is enabled between actions" % [engine.levels[i]["id"], int(c["spellId"])])
+					btn.pressed.emit()          # same path as a tap or click
+					await process_frame
 		_check(level.result.text.begins_with("You win"), "%s: win banner (%s)" % [engine.levels[i]["id"], level.result.text])
+		if not casts.is_empty():
+			await process_frame
+			_check(level.spell_bar.get_children().all(func(b): return b.disabled), "%s: no spell can be cast after the run ends" % engine.levels[i]["id"])
 
 	# Drag from the tray onto the board, then onto an occupied spot.
 	level._open_level(0)
@@ -121,12 +134,15 @@ func _initialize() -> void:
 		if a.begins_with("--shot="):
 			shot = a.substr(7)
 	if shot != "":
-		level._place("Z:0", Vector2i(2, 0))
-		level.drag_id = "D:0"
-		level.drag_from_tray = true
-		level.drag_active = true
-		level._show_ghost("D:0", target)
-		for i in 20:
+		# Last spell level mid-run, spell bar live, so the shot shows casting.
+		var last: int = engine.levels.size() - 1
+		level._open_level(last)
+		var g = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[last]["golden"]))
+		for p in g["cases"][0]["placements"]:
+			level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+		for i in 4:
+			level._on_step()
+		for i in 30:
 			await process_frame
 		root.get_viewport().get_texture().get_image().save_png(shot)
 	print("level smoke: %s" % ("PASS" if failures == 0 else "%d failure(s)" % failures))

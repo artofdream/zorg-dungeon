@@ -13,10 +13,12 @@ extends RefCounted
 ##   weights.ts    reachable rooms + default {Z:1} weights
 ##   simulation.ts createRun / stepRun for A, Z, D, E (FR-11–FR-14, FR-26–FR-31)
 ##   elements.ts   fire, water, ice, poison + immunities (FR-14)
-##   constraints.ts dist(r, s) compare and "∃s ∈ Π, dist(s,A) = dist(s,Z) = n"
-##                 (FR-10, FR-43)
+##   constraints.ts dist(r, s) compare, "∃s ∈ Π, dist(s,A) = dist(s,Z) = n"
+##                 and the "no hero below 0 HP" floor (FR-10, FR-43)
+##   simulation.ts castSpell / canCastNow for Attack(x) and Teleport(n)
+##                 (FR-32–FR-35)
 ## Everything else fails closed (NFR-8): other room types, other heroes,
-## spells, variables, mirror worlds -> load_level() returns an error.
+## other spells, variables, mirror worlds -> load_level() returns an error.
 ## Room C, the Gunner duration and FR-4 gating are not touched here.
 
 const ROOM_SIZE := 5
@@ -25,6 +27,7 @@ const DELTA := {"right": Vector2i(1, 0), "up": Vector2i(0, 1), "left": Vector2i(
 const SUPPORTED_ROOMS := ["A", "Z", "D", "E"]
 const SUPPORTED_ELEMENTS := ["fire", "water", "ice", "poison"]
 const SUPPORTED_HEROES := ["Warrior", "Elf"]
+const SUPPORTED_SPELLS := ["Attack", "Teleport"]
 
 # ---------------------------------------------------------------- level
 
@@ -33,9 +36,12 @@ const SUPPORTED_HEROES := ["Warrior", "Elf"]
 static func load_level(data: Dictionary) -> Dictionary:
 	var level: Dictionary = data.get("level", {})
 	var supplied: Array = data.get("supplied", [])
-	for key in ["spells", "variables", "mirrorWorlds", "opaqueAssignments"]:
+	for key in ["variables", "mirrorWorlds", "opaqueAssignments"]:
 		if level.has(key) and not (level[key] as Array).is_empty():
-			return _fail("Milestone 1 engine has no support for '%s' (NFR-8 fail-closed)." % key)
+			return _fail("The Godot engine has no support for '%s' yet (NFR-8 fail-closed)." % key)
+	var spells = expand_spells(level.get("spells", []))
+	if spells is String:
+		return _fail(spells)
 	for s in supplied:
 		var t: String = s["def"]["type"]
 		if not SUPPORTED_ROOMS.has(t):
@@ -49,7 +55,31 @@ static func load_level(data: Dictionary) -> Dictionary:
 			return _fail("Only Warrior and Elf heroes are ported yet (NFR-8 fail-closed).")
 		if not (h["hp"] is float or h["hp"] is int):
 			return _fail("Hero HP is unresolved.")
-	return {"ok": true, "error": "", "level": level, "supplied": supplied}
+	return {"ok": true, "error": "", "level": level, "supplied": supplied, "spells": spells}
+
+## spells.ts expandSpells: "2*Teleport(2)" arrives as {type: Repeat, count,
+## spell}. Returns the flat list (index = spell id) or an error string.
+static func expand_spells(slots: Array) -> Variant:
+	var out: Array = []
+	for slot in slots:
+		if typeof(slot) != TYPE_DICTIONARY:
+			return "Spell slot is unresolved (NFR-8 fail-closed)."
+		var count := 1
+		var def: Dictionary = slot
+		if slot.get("type", "") == "Repeat":
+			if not (slot.get("count") is float or slot.get("count") is int):
+				return "Spell repeat count is unresolved (NFR-8 fail-closed)."
+			count = int(slot["count"])
+			def = slot["spell"]
+		var t := String(def.get("type", ""))
+		if not SUPPORTED_SPELLS.has(t):
+			return "Spell %s is not ported yet (NFR-8 fail-closed)." % t
+		var arg = def.get("damage" if t == "Attack" else "steps")
+		if not (arg is float or arg is int):
+			return "Spell %s has a non-numeric argument." % t
+		for i in count:
+			out.append(def)
+	return out
 
 static func _fail(msg: String) -> Dictionary:
 	return {"ok": false, "error": msg, "level": {}, "supplied": []}
@@ -514,7 +544,7 @@ static func create_run(loaded: Dictionary, rooms: Array) -> Dictionary:
 	var heroes: Array = []
 	var i := 0
 	for h in loaded["level"]["heroes"]:
-		heroes.append({"id": i, "type": h["type"], "immunities": hero_immunities(h), "hp": int(h["hp"]),
+		heroes.append({"id": i, "type": h["type"], "immunities": hero_immunities(h), "hp": int(h["hp"]), "visits": [],
 			"spawned": false, "dead": false, "stuck": false, "cell": null, "roomId": null})
 		i += 1
 	var main_a := ""
@@ -525,7 +555,8 @@ static func create_run(loaded: Dictionary, rooms: Array) -> Dictionary:
 			orientation = int(r["orientation"])
 			break
 	return {"rooms": rooms.duplicate(true), "heroes": heroes, "mainAId": main_a, "orientation": orientation,
-		"outcome": "in_progress", "stepCount": 0, "events": [], "poisonVisits": {}}
+		"outcome": "in_progress", "stepCount": 0, "events": [], "poisonVisits": {},
+		"spells": loaded.get("spells", []).map(func(d): return {"def": d, "consumed": false})}
 
 static func _cell(v: Vector2i) -> Dictionary:
 	return {"x": v.x, "y": v.y}
@@ -553,7 +584,8 @@ static func _check_death(state: Dictionary, hero: Dictionary, events: Array) -> 
 			state["outcome"] = "win"
 			events.append({"type": "win"})
 
-static func _enter_room(state: Dictionary, hero: Dictionary, room_id: String, events: Array) -> void:
+static func _enter_room(state: Dictionary, hero: Dictionary, room_id: String, first_cell: Vector2i, events: Array) -> void:
+	hero["visits"].append({"roomId": room_id, "firstCell": first_cell})   # FR-15 / FR-35 history
 	hero["roomId"] = room_id
 	var def := _room_def(state, room_id)
 	events.append({"type": "enter", "heroId": hero["id"], "roomId": room_id, "roomType": def["type"]})
@@ -624,7 +656,7 @@ static func step_run(state: Dictionary) -> Array:
 		hero["cell"] = cell
 		hero["roomId"] = spawn["id"]
 		events.append({"type": "spawn", "heroId": hero["id"], "cell": _cell(cell), "roomId": spawn["id"]})
-		_enter_room(state, hero, spawn["id"], events)
+		_enter_room(state, hero, spawn["id"], cell, events)
 		_apply_elemental_cell(state, hero, cell, grid, events)
 		state["events"].append_array(events)
 		return events
@@ -653,7 +685,7 @@ static func step_run(state: Dictionary) -> Array:
 		events.append({"type": "move", "heroId": hero["id"], "from": _cell(from), "to": _cell(to), "dir": dir})
 		var next_room = _room_at(grid, to)
 		if next_room != hero["roomId"]:
-			_enter_room(state, hero, next_room, events)
+			_enter_room(state, hero, next_room, to, events)
 		if state["outcome"] != "in_progress" or hero["dead"]:
 			break
 		_apply_elemental_cell(state, hero, to, grid, events)
@@ -662,18 +694,118 @@ static func step_run(state: Dictionary) -> Array:
 	state["events"].append_array(events)
 	return events
 
-## Same loop as packages/engine/scripts/godot-golden.mjs runTurns().
-static func run_turns(state: Dictionary, max_steps: int = 10000) -> Array:
+# ---------------------------------------------------------------- spells (FR-32–FR-35)
+
+## FR-33 (simulation.ts canCastNow): only between completed actions, after
+## the first one, while the run is going and some hero is active. step_run
+## is synchronous, so there is never a mid-action moment to cast in.
+static func can_cast_now(state: Dictionary) -> bool:
+	return state["outcome"] == "in_progress" and state["stepCount"] > 0 and select_active_hero(state["heroes"]) != null
+
+## castSpell for Attack(x) and Teleport(n). Returns {ok, events, error}; the
+## error codes are the ones godot-golden.mjs derives from the TS messages.
+## A refused cast changes nothing and consumes nothing.
+static func cast_spell(state: Dictionary, spell_id: int) -> Dictionary:
+	if state["outcome"] != "in_progress":
+		return _refuse("run_over")
+	if state["stepCount"] <= 0:
+		return _refuse("before_first_action")
+	var active = select_active_hero(state["heroes"])
+	if active == null:
+		return _refuse("no_active_hero")
+	var spells: Array = state["spells"]
+	if spell_id < 0 or spell_id >= spells.size():
+		return _refuse("no_spell")
+	var spell: Dictionary = spells[spell_id]
+	if spell["consumed"]:
+		return _refuse("consumed")
+	var events: Array = []
+	match String(spell["def"]["type"]):
+		"Attack":
+			# FR-34: x damage to every living hero (spawned or still waiting).
+			var living: Array = state["heroes"].filter(func(h): return not h["dead"])
+			events.append({"type": "cast", "spellId": spell_id, "spellType": "Attack", "heroIds": living.map(func(h): return h["id"])})
+			var damage := int(spell["def"]["damage"])
+			for hero in living:
+				if hero["dead"]:
+					continue
+				hero["hp"] -= damage
+				events.append({"type": "damage", "heroId": hero["id"], "amount": damage, "hp": hero["hp"]})
+				_check_death(state, hero, events)
+				if state["outcome"] != "in_progress":
+					break
+		"Teleport":
+			events.append({"type": "cast", "spellId": spell_id, "spellType": "Teleport", "heroIds": [active["id"]]})
+			_teleport(state, active, int(spell["def"]["steps"]), events)
+	spell["consumed"] = true
+	_maybe_settle(state, events)
+	state["events"].append_array(events)
+	return {"ok": true, "events": events, "error": ""}
+
+static func _refuse(code: String) -> Dictionary:
+	return {"ok": false, "events": [], "error": code}
+
+## FR-35: to the first cell of the n-th most recent room visit (n = 1 is
+## the current room). No room effect fires. Too short a history sends the
+## hero back to the waiting room; it spawns again on its next action.
+static func _teleport(state: Dictionary, hero: Dictionary, n: int, events: Array) -> void:
+	var from_room: String = "" if hero["roomId"] == null else hero["roomId"]
+	var visits: Array = hero["visits"]
+	if n < 1 or n > visits.size():
+		hero["spawned"] = false
+		hero["stuck"] = false
+		hero["cell"] = null
+		hero["roomId"] = null
+		events.append({"type": "wait_room", "heroId": hero["id"]})
+		return
+	var dest: Dictionary = visits[visits.size() - n]
+	hero["spawned"] = true
+	hero["stuck"] = false
+	hero["cell"] = dest["firstCell"]
+	hero["roomId"] = dest["roomId"]
+	if _room_def(state, dest["roomId"])["type"] == "A":
+		state["mainAId"] = dest["roomId"]
+	events.append({"type": "teleport", "heroId": hero["id"], "fromRoomId": from_room, "toRoomId": dest["roomId"], "to": _cell(dest["firstCell"])})
+
+## Same loop as packages/engine/scripts/godot-golden.mjs runTurns(): after
+## each action, the scripted casts for that step count are tried in order.
+## A cast is its own turn (its first event is "cast"). Returns
+## {turns, castLog, castWindow}.
+static func run_turns(state: Dictionary, casts: Array = [], max_steps: int = 10000) -> Dictionary:
 	var turns: Array = []
+	var log: Array = []
+	var window: Array = [can_cast_now(state)]
+	for c in casts:
+		if c["afterSteps"] == 0:
+			log.append(_try_cast(state, c, turns, window))
 	while state["outcome"] == "in_progress" and state["stepCount"] < max_steps:
+		var before: int = state["stepCount"]
 		var ev := step_run(state)
+		if not ev.is_empty():
+			turns.append(ev)
+			window.append(can_cast_now(state))
+		var due := 0
+		if state["stepCount"] > before:
+			for c in casts:
+				if int(c["afterSteps"]) == state["stepCount"]:
+					due += 1
+					log.append(_try_cast(state, c, turns, window))
+		if due > 0:
+			continue
 		if ev.is_empty():
 			break
-		turns.append(ev)
 	if state["outcome"] == "in_progress":
 		state["outcome"] = "stalemate"
 		turns.append([{"type": "stalemate"}])
-	return turns
+		window.append(false)
+	return {"turns": turns, "castLog": log, "castWindow": window}
+
+static func _try_cast(state: Dictionary, c: Dictionary, turns: Array, window: Array) -> Dictionary:
+	var r := cast_spell(state, int(c["spellId"]))
+	if r["ok"]:
+		turns.append(r["events"])
+		window.append(can_cast_now(state))
+	return {"afterSteps": c["afterSteps"], "spellId": c["spellId"], "result": "ok" if r["ok"] else r["error"]}
 
 # ---------------------------------------------------------------- scoring (FR-10, FR-43)
 
@@ -725,8 +857,20 @@ static func _manhattan(a: Dictionary, b: Dictionary) -> int:
 
 ## Only `dist(r, s) <op> n | dist(...)` is grounded; any other prose is
 ## "unsupported" and refuses a win, as in constraints.ts.
-static func evaluate_constraint(rooms: Array, expression: String) -> Dictionary:
+static func evaluate_constraint(rooms: Array, expression: String, state: Dictionary = {}, hero_defs: Array = []) -> Dictionary:
 	var n := _normalize(expression)
+	# "No hero may reach strictly negative HP" (constraints.ts hp_floor).
+	if RegEx.create_from_string("(?i)^(?:aucun héros|le héros) ne peut(?: pas)? atteindre un nombre de points de vie strictement négatif$").search(n) != null:
+		if state.is_empty():
+			return {"kind": "hp_floor", "status": "unsupported"}
+		for h in state["heroes"]:
+			var low := int(hero_defs[h["id"]]["hp"])
+			for e in state["events"]:
+				if e["type"] == "damage" and e["heroId"] == h["id"]:
+					low = mini(low, int(e["hp"]))
+			if low < 0:
+				return {"kind": "hp_floor", "status": "failed"}
+		return {"kind": "hp_floor", "status": "held"}
 	var also := RegEx.create_from_string("(?i)^on doit également avoir\\s+(.+)$").search(n)
 	if also != null:
 		n = also.get_string(1)
@@ -772,7 +916,7 @@ static func evaluate_constraint(rooms: Array, expression: String) -> Dictionary:
 static func score(loaded: Dictionary, state: Dictionary) -> Dictionary:
 	var constraints: Array = []
 	for c in loaded["level"].get("constraints", []):
-		var ev := evaluate_constraint(state["rooms"], c["expression"])
+		var ev := evaluate_constraint(state["rooms"], c["expression"], state, loaded["level"]["heroes"])
 		constraints.append({"id": c["id"], "kind": ev["kind"], "status": ev["status"]})
 	var outcome := "win"
 	if state["outcome"] == "loss":

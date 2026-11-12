@@ -1,0 +1,94 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/4.3-fake-reset.txt",
+  "sourceSha256": "b9d58aff8a69b59f4313b1b354fa3f9f18d1412f64d5627173b8c91a098141c7",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "D:0",
+      "def": {
+        "type": "D",
+        "damage": 11
+      }
+    },
+    {
+      "id": "E:0",
+      "def": {
+        "type": "E",
+        "element": "poison"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-4.3",
+    "name": "Fake Reset",
+    "contractId": "4",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "D",
+          "damage": 11
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "poison"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Warrior",
+        "hp": 20
+      }
+    ],
+    "spells": [
+      {
+        "type": "Repeat",
+        "count": 2,
+        "spell": {
+          "type": "Teleport",
+          "steps": 2
+        }
+      }
+    ],
+    "constraints": [
+      {
+        "id": "c-1",
+        "expression": "Aucun héros ne peut atteindre un nombre de points de vie strictement négatif."
+      }
+    ],
+    "bonuses": [
+      {
+        "id": "b-1",
+        "expression": "Le Guerrier doit être téléporté deux fois dans la salle d’attente."
+      }
+    ]
+  }
+}

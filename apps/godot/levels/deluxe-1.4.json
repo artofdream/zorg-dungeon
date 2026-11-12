@@ -1,0 +1,64 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/1.4-low-blow.txt",
+  "sourceSha256": "f5289141df904e86f6e4f6dd089c42e93841f416f75bb01a0fc630b247fb2c72",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "D:0",
+      "def": {
+        "type": "D",
+        "damage": 2
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-1.4",
+    "name": "Low Blow",
+    "contractId": "1",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "D",
+          "damage": 2
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Warrior",
+        "hp": 4
+      }
+    ],
+    "spells": [
+      {
+        "type": "Attack",
+        "damage": 3
+      }
+    ]
+  }
+}

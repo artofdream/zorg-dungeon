@@ -4,7 +4,8 @@
 // a turn-by-turn recording the GDScript engine must reproduce exactly.
 // Covers FR-5–FR-8 (placement), FR-11–FR-13 (A/Z/D), FR-20 (Warrior),
 // FR-26–FR-31 (scheduler), FR-14 (fire, water, ice, poison + immunity),
-// FR-21 (Elf), FR-10 / FR-43 (dist constraints + win/loss).
+// FR-21 (Elf), FR-10 / FR-43 (dist + HP-floor constraints, win/loss),
+// FR-32–FR-35 (Attack / Teleport casts and the FR-33 casting window).
 //
 // Usage (after `pnpm --filter @zorg/engine build`):
 //   node packages/engine/scripts/godot-golden.mjs          # write files
@@ -14,6 +15,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  canCastNow,
+  castSpell,
   createRun,
   elementalTick,
   enumerateSuppliedRooms,
@@ -179,22 +182,136 @@ const LEVELS = [
       },
     ],
   },
+  {
+    source: "packages/engine/fixtures/contracts/1.4-low-blow.txt",
+    why: "Smallest spell level: A, Z, D(2), Warrior(4), one Attack(3), no rule.",
+    cases: [
+      {
+        name: "win-attack-after-spawn",
+        note: "A–D(2)–Z in a row. Attack(3) right after the spawn leaves 1 HP, and D(2) finishes the Warrior.",
+        positions: { "A:0": [0, 0], "D:0": [0, 1], "Z:0": [0, 2] },
+        casts: [{ afterSteps: 1, spellId: 0 }],
+      },
+      {
+        name: "loss-no-cast",
+        note: "Same row without the spell: D(2) leaves 2 HP and the Warrior walks into Z.",
+        positions: { "A:0": [0, 0], "D:0": [0, 1], "Z:0": [0, 2] },
+      },
+      {
+        name: "refused-casts",
+        note: "FR-33/FR-32: a cast before any action is refused; the real cast works; casting the same spell again is refused (consumed); Z next to A still loses.",
+        positions: { "A:0": [0, 0], "Z:0": [0, 1], "D:0": [0, 2] },
+        casts: [
+          { afterSteps: 0, spellId: 0 },
+          { afterSteps: 1, spellId: 0 },
+          { afterSteps: 2, spellId: 0 },
+        ],
+      },
+    ],
+  },
+  {
+    source: "packages/engine/fixtures/contracts/2.1-fire-immunity.txt",
+    why: "A, Z, fire room; Elf(1, {fire}) then Warrior(1); one Attack(1). Attack also hits heroes still in the waiting room.",
+    cases: [
+      {
+        name: "win-last-moment",
+        note: "A–E(fire)–Z. The fire-immune Elf walks through the fire; Attack(1) one action before Z kills it and the Warrior still waiting.",
+        positions: { "A:0": [0, 0], "E:0": [0, 1], "Z:0": [0, 2] },
+        casts: [{ afterSteps: 8, spellId: 0 }],
+      },
+      {
+        name: "refused-too-late",
+        note: "The same cast one action later: the Elf is already in Z, so the cast is refused (run over).",
+        positions: { "A:0": [0, 0], "E:0": [0, 1], "Z:0": [0, 2] },
+        casts: [{ afterSteps: 9, spellId: 0 }],
+      },
+      {
+        name: "loss-no-cast",
+        note: "Z next to A and no spell: the Elf walks straight in.",
+        positions: { "A:0": [0, 0], "Z:0": [0, 1], "E:0": [0, 2] },
+      },
+    ],
+  },
+  {
+    source: "packages/engine/fixtures/contracts/4.3-fake-reset.txt",
+    why: "A, Z, D(11), poison; Warrior(20); 2×Teleport(2); rule: no hero below 0 HP. The only real poison level without portals or other spells.",
+    cases: [
+      {
+        name: "win-two-teleports",
+        note: "Poison heals 1, then two Teleport(2) casts walk the Warrior back over poison cells it already visited (−3 each); D(11) ends it at exactly 0 HP.",
+        positions: { "A:0": [0, 0], "Z:0": [1, 2], "D:0": [0, 2], "E:0": [0, 1] },
+        casts: [
+          { afterSteps: 5, spellId: 0 },
+          { afterSteps: 11, spellId: 1 },
+        ],
+      },
+      {
+        name: "constraint-fails-waiting-room",
+        note: "Teleport(2) right after the spawn has no 2nd room to go back to, so the Warrior returns to the waiting room; it dies later, but below 0 HP.",
+        positions: { "A:0": [0, 0], "Z:0": [0, 2], "D:0": [0, 1], "E:0": [1, 0] },
+        casts: [
+          { afterSteps: 1, spellId: 0 },
+          { afterSteps: 5, spellId: 1 },
+        ],
+      },
+      {
+        name: "loss-no-cast",
+        note: "No spells: D(11) leaves 9 HP and the Warrior reaches Z.",
+        positions: { "A:0": [0, 0], "Z:0": [0, 2], "D:0": [0, 1], "E:0": [1, 0] },
+      },
+    ],
+  },
 ];
 
-function runTurns(level, layout) {
+// FR-33 refusals, named by the TS SpellCastError message they come from.
+function refusalCode(message) {
+  if (message.startsWith("FR-33: cannot cast after the run is")) return "run_over";
+  if (message.startsWith("FR-33: cannot cast before a hero action")) return "before_first_action";
+  if (message.startsWith("FR-33: casting a hero-targeted spell with no active hero")) return "no_active_hero";
+  if (message.startsWith("FR-33: cannot cast mid-action")) return "mid_action";
+  if (message.startsWith("FR-32: no spell with id")) return "no_spell";
+  if (message.includes("is already consumed")) return "consumed";
+  throw new Error(`unmapped cast refusal: ${message}`);
+}
+
+// Same loop as simulate() with a castScript, except that a refused cast is
+// logged instead of thrown, and afterSteps 0 (before any action) is tried
+// too. Each successful cast is its own turn (first event "cast").
+function runTurns(level, layout, casts = []) {
   const state = createRun(level, layout);
   const turns = [];
+  const castLog = [];
+  const castWindow = [canCastNow(state)];
   const maxSteps = 10_000;
+  const tryCast = (c) => {
+    try {
+      const { events } = castSpell(state, { spellId: c.spellId });
+      turns.push(events);
+      castWindow.push(canCastNow(state));
+      castLog.push({ afterSteps: c.afterSteps, spellId: c.spellId, result: "ok" });
+    } catch (err) {
+      castLog.push({ afterSteps: c.afterSteps, spellId: c.spellId, result: refusalCode(err.message) });
+    }
+  };
+  for (const c of casts) if (c.afterSteps === 0) tryCast(c);
   while (state.outcome === "in_progress" && state.stepCount < maxSteps) {
+    const before = state.stepCount;
     const { events } = stepRun(state);
+    if (events.length > 0) {
+      turns.push(events);
+      castWindow.push(canCastNow(state));
+    }
+    const due = state.stepCount > before ? casts.filter((c) => c.afterSteps === state.stepCount) : [];
+    for (const c of due) tryCast(c);
+    if (due.length > 0) continue;
     if (events.length === 0) break;
-    turns.push(events);
   }
   if (state.outcome === "in_progress") {
     state.outcome = "stalemate";
     turns.push([{ type: "stalemate" }]);
+    castWindow.push(false);
   }
-  return { turns, outcome: state.outcome };
+  return { turns, outcome: state.outcome, castLog, castWindow };
 }
 
 function buildLevel(spec) {
@@ -232,14 +349,24 @@ function buildLevel(spec) {
       validation: { ok: report.ok, codes: report.issues.map((i) => i.code) },
     };
     if (!report.ok) return out;
-    const { turns, outcome } = runTurns(level, layout);
-    // Sanity: the turn split must flatten to exactly what simulate() records.
+    const casts = c.casts ?? [];
+    const { turns, outcome, castLog, castWindow } = runTurns(level, layout, casts);
+    // Sanity: the turn split must flatten to exactly what simulate() records
+    // with the casts that succeeded.
+    const castScript = castLog
+      .filter((r) => r.result === "ok")
+      .map((r) => ({ afterSteps: r.afterSteps, cast: { spellId: r.spellId } }));
     const flat = JSON.stringify(turns.flat());
-    const sim = simulate(level, layout);
+    const sim = simulate(level, layout, { castScript });
     if (flat !== JSON.stringify(sim.events) || outcome !== sim.outcome) {
       throw new Error(`turn recording for ${level.id}/${c.name} diverges from simulate()`);
     }
-    const score = scoreLevel(level, layout);
+    const score = scoreLevel(level, layout, { castScripts: { normal: castScript } });
+    if (casts.length > 0) {
+      out.casts = casts;
+      out.castLog = castLog;
+      out.castWindow = castWindow;
+    }
     out.runOutcome = outcome;
     out.turns = turns;
     out.score = {
@@ -267,6 +394,9 @@ function build() {
     index.push(built.entry);
     Object.assign(files, built.files);
   }
+  // Picker order: contract, then level number (1.4 before 2.1 before 4.3).
+  const num = (id) => id.replace(/^\D+/, "").split(".").map(Number);
+  index.sort((a, b) => num(a.id)[0] - num(b.id)[0] || num(a.id)[1] - num(b.id)[1]);
   // FR-14 tick table: every element × immune/not × poison seen/not. No
   // shipped fixture has poison, so this is its only parity check.
   const ticks = [];

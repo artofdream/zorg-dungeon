@@ -32,6 +32,12 @@ Round 3 (stacked on round 2) ports water, ice and poison with immunities
 2.2, 2.4 and 2.5. Poison has no qualifying fixture, so it is checked against
 a TS tick table.
 
+Round 4 ports Attack(x) and Teleport(n), the FR-33 casting window, and the
+HP-floor rule. It adds 1.4, 2.1 and 4.3. The level screen now steps the
+engine live and casts from a spell bar. Golden cases carry the cast script,
+each cast's result and the per-turn cast window. Selection and the other
+spells stay refused.
+
 ## Consequences
 
 ADR-0002's concern is handled by the parity gate, not by trust. Each new

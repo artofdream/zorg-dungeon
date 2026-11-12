@@ -3,7 +3,9 @@ extends SceneTree
 ## replays each placement in its tests/golden/<id>.json through the GDScript
 ## engine and fails unless
 ## validation codes, every turn's events, the run outcome and the score match
-## the TypeScript engine's recording exactly.
+## the TypeScript engine's recording exactly. Cases with `casts` also check
+## each cast's result (ok or the FR-32/FR-33 refusal) and, after every turn,
+## whether a cast would be allowed (FR-33 window).
 ##   godot --headless --path apps/godot --script res://tests/parity_test.gd
 
 const INDEX_PATH := "res://levels/index.json"
@@ -52,7 +54,13 @@ func _check_level(entry: Dictionary) -> Vector2i:
 			problems.append("validation %s != %s" % [report["codes"], c["validation"]["codes"]])
 		if report["ok"] and c.has("turns"):
 			var state := ZorgEngine.create_run(loaded, rooms)
-			var turns := ZorgEngine.run_turns(state)
+			var run := ZorgEngine.run_turns(state, c.get("casts", []))
+			var turns: Array = run["turns"]
+			if c.has("casts"):
+				if not _eq(run["castLog"], c["castLog"]):
+					problems.append("cast log %s != %s" % [JSON.stringify(run["castLog"]), JSON.stringify(c["castLog"])])
+				if not _eq(run["castWindow"], c["castWindow"]):
+					problems.append("cast window %s != %s" % [run["castWindow"], c["castWindow"]])
 			if turns.size() != c["turns"].size():
 				problems.append("turn count %d != %d" % [turns.size(), c["turns"].size()])
 			for i in mini(turns.size(), c["turns"].size()):
