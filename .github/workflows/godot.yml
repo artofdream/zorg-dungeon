@@ -1,0 +1,118 @@
+name: godot
+# Godot port milestone 1 (ADR-0008). Read-only: no secrets, no deploy, no
+# store upload. The Android debug keystore is generated per run and thrown
+# away; only its SHA-256 fingerprint is printed.
+on:
+  pull_request:
+    paths:
+      - "apps/godot/**"
+      - "packages/engine/**"
+      - ".github/workflows/godot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: 4.7.2-stable
+  GODOT_TEMPLATE_DIR: 4.7.2.stable
+
+jobs:
+  golden:
+    name: golden recording matches the TS engine
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @zorg/engine build
+      - name: Regenerate golden + level JSON and fail on drift
+        run: node packages/engine/scripts/godot-golden.mjs --check
+
+  godot:
+    name: parity test + desktop and Android debug builds
+    needs: golden
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/godot
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Godot + export templates
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-linux-android
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: ${{ runner.temp }}
+        run: |
+          base=https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}
+          mkdir -p ~/godot ~/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}
+          curl -fsSL -o godot.zip "$base/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip -d ~/godot
+          curl -fsSL -o templates.tpz "$base/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          unzip -q templates.tpz 'templates/linux_*x86_64*' 'templates/android_*' 'templates/version.txt'
+          mv templates/* ~/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}/
+          rm -f godot.zip templates.tpz
+      - name: Put godot on PATH
+        run: |
+          ln -sf ~/godot/Godot_v${GODOT_VERSION}_linux.x86_64 ~/godot/godot
+          echo "$HOME/godot" >> "$GITHUB_PATH"
+      - name: Import project
+        run: godot --headless --path . --import
+      - name: Parity test (GDScript engine vs TS recording)
+        run: godot --headless --path . --script res://tests/parity_test.gd
+      - name: Level scene smoke test
+        run: godot --headless --path . --script res://tests/level_smoke_test.gd
+      - name: Export desktop (Linux x86_64, debug)
+        run: |
+          mkdir -p build/linux
+          godot --headless --path . --export-debug Linux build/linux/zorg.x86_64
+          test -s build/linux/zorg.x86_64
+          ls -la build/linux
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Throwaway debug keystore + Android SDK paths
+        run: |
+          ks="$RUNNER_TEMP/debug.keystore"
+          keytool -genkeypair -v -keystore "$ks" -storepass android -keypass android \
+            -alias androiddebugkey -dname "CN=Android Debug,O=Android,C=US" \
+            -keyalg RSA -keysize 2048 -validity 3650 >/dev/null 2>&1
+          echo "Debug keystore fingerprint:"
+          keytool -list -v -keystore "$ks" -storepass android | grep 'SHA256:'
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$ks" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> "$GITHUB_ENV"
+          settings=$(ls ~/.config/godot/editor_settings-*.tres | head -1)
+          sdk="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          sed -i '/^export\/android\/\(android_sdk_path\|java_sdk_path\|debug_keystore\)/d' "$settings"
+          printf 'export/android/android_sdk_path = "%s"\nexport/android/java_sdk_path = "%s"\nexport/android/debug_keystore = "%s"\nexport/android/debug_keystore_user = "androiddebugkey"\nexport/android/debug_keystore_pass = "android"\n' \
+            "$sdk" "$JAVA_HOME" "$ks" >> "$settings"
+          echo "SDK: $sdk"; ls "$sdk/build-tools" | tail -3
+      - name: Export Android debug APK
+        run: |
+          mkdir -p build/android
+          godot --headless --path . --export-debug Android build/android/zorg-debug.apk
+          test -s build/android/zorg-debug.apk
+          ls -la build/android
+          "$(ls -d ${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools/* | tail -1)/apksigner" verify --print-certs build/android/zorg-debug.apk | grep -i 'SHA-256'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zorg-godot-linux-x86_64
+          path: apps/godot/build/linux/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zorg-godot-android-debug-apk
+          path: apps/godot/build/android/zorg-debug.apk
+          if-no-files-found: error
