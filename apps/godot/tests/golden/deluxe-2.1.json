@@ -1,0 +1,543 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "levelId": "deluxe-2.1",
+  "levelFile": "apps/godot/levels/deluxe-2.1.json",
+  "cases": [
+    {
+      "name": "win-last-moment",
+      "note": "A–E(fire)–Z. The fire-immune Elf walks through the fire; Attack(1) one action before Z kills it and the Warrior still waiting.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "id": "E:0",
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "casts": [
+        {
+          "afterSteps": 8,
+          "spellId": 0
+        }
+      ],
+      "castLog": [
+        {
+          "afterSteps": 8,
+          "spellId": 0,
+          "result": "ok"
+        }
+      ],
+      "castWindow": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "runOutcome": "win",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "E:0",
+            "roomType": "E"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 5
+            },
+            "to": {
+              "x": 2,
+              "y": 6
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 6
+            },
+            "to": {
+              "x": 2,
+              "y": 7
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 7
+            },
+            "to": {
+              "x": 2,
+              "y": 8
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 8
+            },
+            "to": {
+              "x": 2,
+              "y": 9
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "cast",
+            "spellId": 0,
+            "spellType": "Attack",
+            "heroIds": [
+              0,
+              1
+            ]
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 0
+          },
+          {
+            "type": "death",
+            "heroId": 0
+          },
+          {
+            "type": "damage",
+            "heroId": 1,
+            "amount": 1,
+            "hp": 0
+          },
+          {
+            "type": "death",
+            "heroId": 1
+          },
+          {
+            "type": "win"
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "win",
+        "constraints": []
+      }
+    },
+    {
+      "name": "refused-too-late",
+      "note": "The same cast one action later: the Elf is already in Z, so the cast is refused (run over).",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 0,
+          "y": 2
+        },
+        {
+          "id": "E:0",
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "casts": [
+        {
+          "afterSteps": 9,
+          "spellId": 0
+        }
+      ],
+      "castLog": [
+        {
+          "afterSteps": 9,
+          "spellId": 0,
+          "result": "run_over"
+        }
+      ],
+      "castWindow": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "E:0",
+            "roomType": "E"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 5
+            },
+            "to": {
+              "x": 2,
+              "y": 6
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 6
+            },
+            "to": {
+              "x": 2,
+              "y": 7
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 7
+            },
+            "to": {
+              "x": 2,
+              "y": 8
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 8
+            },
+            "to": {
+              "x": 2,
+              "y": 9
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 9
+            },
+            "to": {
+              "x": 2,
+              "y": 10
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    },
+    {
+      "name": "loss-no-cast",
+      "note": "Z next to A and no spell: the Elf walks straight in.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "E:0",
+          "x": 0,
+          "y": 2
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    }
+  ]
+}

@@ -23,6 +23,20 @@
       "why": "A, Z, 2×D(1), one fire room, Warrior(5), rule dist(A, Z) = 2 (same distance form as 1.2)."
     },
     {
+      "id": "deluxe-1.4",
+      "name": "Low Blow",
+      "file": "res://levels/deluxe-1.4.json",
+      "golden": "res://tests/golden/deluxe-1.4.json",
+      "why": "Smallest spell level: A, Z, D(2), Warrior(4), one Attack(3), no rule."
+    },
+    {
+      "id": "deluxe-2.1",
+      "name": "Fire Immunity",
+      "file": "res://levels/deluxe-2.1.json",
+      "golden": "res://tests/golden/deluxe-2.1.json",
+      "why": "A, Z, fire room; Elf(1, {fire}) then Warrior(1); one Attack(1). Attack also hits heroes still in the waiting room."
+    },
+    {
       "id": "deluxe-2.2",
       "name": "Elemental Sanctuary",
       "file": "res://levels/deluxe-2.2.json",
@@ -42,6 +56,13 @@
       "file": "res://levels/deluxe-2.5.json",
       "golden": "res://tests/golden/deluxe-2.5.json",
       "why": "Same as 2.4 with ice instead of water: the Warrior slides across the ice room."
+    },
+    {
+      "id": "deluxe-4.3",
+      "name": "Fake Reset",
+      "file": "res://levels/deluxe-4.3.json",
+      "golden": "res://tests/golden/deluxe-4.3.json",
+      "why": "A, Z, D(11), poison; Warrior(20); 2×Teleport(2); rule: no hero below 0 HP. The only real poison level without portals or other spells."
     }
   ]
 }
