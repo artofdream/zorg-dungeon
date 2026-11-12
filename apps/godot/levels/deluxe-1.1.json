@@ -1,0 +1,72 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/1.1-foundations.txt",
+  "sourceSha256": "ab216506f39ceb42725e1fdf0a33c84c696f900bbb5b60d05a2ea78e2f4a16ef",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "D:0",
+      "def": {
+        "type": "D",
+        "damage": 2
+      }
+    },
+    {
+      "id": "E:0",
+      "def": {
+        "type": "E",
+        "element": "fire"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-1.1",
+    "name": "Foundations",
+    "contractId": "1",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "D",
+          "damage": 2
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "fire"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Warrior",
+        "hp": 5
+      }
+    ]
+  }
+}

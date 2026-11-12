@@ -1,12 +1,15 @@
 extends Node3D
-## Level screen: build the dungeon (tap/drag rooms), then Play/Step a replay
-## of the engine's recording. Plain boxes on purpose (milestone 1).
+## Level screen: pick a level, build the dungeon (tap or drag rooms, with a
+## green/red ghost preview), then Play/Step a replay of the engine's
+## recording. Plain boxes on purpose.
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
-const SLOTS_Y := Vector2i(-2, 2)
-const COLORS := {"A": Color(0.3, 0.75, 0.35), "Z": Color(0.85, 0.2, 0.2), "D": Color(0.95, 0.6, 0.15)}
+const SLOTS_Y := Vector2i(-2, 3)
+const COLORS := {"A": Color(0.3, 0.75, 0.35), "Z": Color(0.85, 0.2, 0.2), "D": Color(0.95, 0.6, 0.15), "E": Color(0.6, 0.6, 0.65)}
+const FIRE := Color(1.0, 0.35, 0.1)
 const STEP_SECONDS := 0.18
+const DRAG_START_PX := 12.0
 
 @onready var engine: Node = $Engine
 @onready var board: Node3D = $Board
@@ -16,12 +19,18 @@ const STEP_SECONDS := 0.18
 @onready var camera: Camera3D = $CameraRig/Camera3D
 @onready var ui: CanvasLayer = $UI
 
-var placed := {}          # room id -> {x, y}
+var level_index := 0
+var placed := {}          # room id -> Vector2i slot
 var room_nodes := {}      # room id -> Node3D
-var selected := ""        # room id waiting for a tap on the board
-var dragging := ""        # placed room being dragged
-var drag_moved := false
-var press_pos := Vector2.ZERO
+var selected := ""        # tray room waiting for a tap on the board
+
+# One drag at a time, from the tray or from the board.
+var drag_id := ""
+var drag_from_tray := false
+var drag_active := false
+var drag_origin := Vector2.ZERO
+var ghost: MeshInstance3D
+var ghost_mat: StandardMaterial3D
 
 var recording: Dictionary = {}
 var turn_index := 0
@@ -35,27 +44,62 @@ var zoom := 24.0
 var touches := {}
 var pinch_start := 0.0
 var zoom_start := 0.0
+var cam_tween: Tween
 
 # ui
+var title: Label
+var goal: Label
+var picker: HBoxContainer
 var tray: HBoxContainer
 var status: Label
 var result: Label
 var log_label: Label
 var play_btn: Button
 var step_btn: Button
-var reset_btn: Button
 
 func _ready() -> void:
-	var err: String = engine.load_default_level()
 	_build_ui()
-	if err != "":
-		status.text = "Cannot load level: " + err
-		return
 	_build_board()
+	_build_ghost()
+	var err: String = engine.load_index()
+	if err != "":
+		status.text = err
+		return
+	_build_picker()
+	_open_level(0)
+
+# ------------------------------------------------------------------ levels
+
+func _open_level(i: int) -> void:
+	level_index = i
+	_on_reset()
+	for id in room_nodes:
+		room_nodes[id].queue_free()
+	room_nodes.clear()
+	placed.clear()
+	selected = ""
+	var err: String = engine.load_level_file(engine.levels[i]["file"])
+	if err != "":
+		title.text = "Cannot load level"
+		status.text = err
+		tray.visible = false
+		return
+	title.text = engine.level_name()
+	var rules: Array = engine.constraint_texts()
+	goal.text = "Goal: every hero dies before reaching Zorg's room." + ("" if rules.is_empty() else "  Rule: " + ", ".join(rules))
+	for b in picker.get_children():
+		b.modulate = Color(1, 1, 0.5) if b.get_index() == i else Color.WHITE
 	_refresh_tray()
 	_refresh_validation()
-	rig.position = Vector3(12.5, 0, -2.5)
-	_update_camera(true)
+	_snap_camera()
+
+func _build_picker() -> void:
+	for i in engine.levels.size():
+		var idx: int = i
+		var e: Dictionary = engine.levels[i]
+		var b := _btn(String(e["id"]).replace("deluxe-", ""), func(): _open_level(idx))
+		b.tooltip_text = String(e["name"])
+		picker.add_child(b)
 
 # ------------------------------------------------------------------ UI
 
@@ -67,30 +111,37 @@ func _btn(text: String, cb: Callable) -> Button:
 	b.pressed.connect(cb)
 	return b
 
+func _label(size: int) -> Label:
+	var l := Label.new()
+	l.add_theme_font_size_override("font_size", size)
+	return l
+
 func _build_ui() -> void:
 	var top := VBoxContainer.new()
 	top.position = Vector2(16, 12)
 	ui.add_child(top)
-	var title := Label.new()
-	title.add_theme_font_size_override("font_size", 26)
-	title.text = engine.level_name() if engine.loaded.get("ok", false) else "Zorg"
+	title = _label(26)
 	top.add_child(title)
-	if engine.loaded.get("ok", false):
-		var goal := Label.new()
-		goal.add_theme_font_size_override("font_size", 20)
-		goal.text = "Goal: every hero dies before Zorg's room.  Rule: " + ", ".join(engine.constraint_texts())
-		top.add_child(goal)
-	status = Label.new()
-	status.add_theme_font_size_override("font_size", 20)
+	goal = _label(20)
+	top.add_child(goal)
+	status = _label(20)
 	top.add_child(status)
-	result = Label.new()
-	result.add_theme_font_size_override("font_size", 30)
+	result = _label(30)
 	top.add_child(result)
-	log_label = Label.new()
-	log_label.add_theme_font_size_override("font_size", 18)
+	log_label = _label(18)
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	log_label.custom_minimum_size = Vector2(700, 0)
 	top.add_child(log_label)
+
+	picker = HBoxContainer.new()
+	picker.anchor_left = 1.0
+	picker.anchor_right = 1.0
+	picker.offset_left = -340
+	picker.offset_top = 12
+	picker.offset_right = -16
+	picker.alignment = BoxContainer.ALIGNMENT_END
+	picker.add_theme_constant_override("separation", 8)
+	ui.add_child(picker)
 
 	var bottom := HBoxContainer.new()
 	bottom.anchor_top = 1.0
@@ -105,18 +156,28 @@ func _build_ui() -> void:
 	tray.add_theme_constant_override("separation", 8)
 	tray.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(tray)
-	bottom.add_child(_btn("⟲ 90°", func(): target_yaw -= 90.0))
-	bottom.add_child(_btn("⟳ 90°", func(): target_yaw += 90.0))
+	bottom.add_child(_btn("⟲ 90°", func(): _rotate(-90.0)))
+	bottom.add_child(_btn("⟳ 90°", func(): _rotate(90.0)))
 	play_btn = _btn("Play", _on_play)
 	step_btn = _btn("Step", _on_step)
-	reset_btn = _btn("Build", _on_reset)
 	bottom.add_child(play_btn)
 	bottom.add_child(step_btn)
-	bottom.add_child(reset_btn)
+	bottom.add_child(_btn("Build", _on_reset))
 
 func _label_for(def: Dictionary) -> String:
-	return "D(%d)" % int(def["damage"]) if def["type"] == "D" else String(def["type"])
+	match String(def["type"]):
+		"D": return "D(%d)" % int(def["damage"])
+		"E": return "E(%s)" % String(def["element"])
+	return String(def["type"])
 
+func _supplied(id: String) -> Dictionary:
+	for s in engine.supplied():
+		if s["id"] == id:
+			return s
+	return {}
+
+## Tray buttons react on press (not release) so one finger can drag a room
+## straight out of the tray; a press + release without moving is a tap.
 func _refresh_tray() -> void:
 	for c in tray.get_children():
 		c.queue_free()
@@ -124,14 +185,13 @@ func _refresh_tray() -> void:
 		if placed.has(s["id"]):
 			continue
 		var id: String = s["id"]
-		var b := _btn(_label_for(s["def"]), func(): _select(id))
-		b.toggle_mode = true
-		b.button_pressed = selected == id
+		var b := Button.new()
+		b.text = _label_for(s["def"])
+		b.custom_minimum_size = Vector2(96, 64)
+		b.add_theme_font_size_override("font_size", 24)
+		b.modulate = Color(1, 1, 0.5) if selected == id else Color.WHITE
+		b.button_down.connect(func(): _begin_drag(id, true, get_viewport().get_mouse_position()))
 		tray.add_child(b)
-
-func _select(id: String) -> void:
-	selected = "" if selected == id else id
-	_refresh_tray()
 
 func _building() -> bool:
 	return recording.is_empty()
@@ -154,16 +214,10 @@ func _refresh_validation() -> void:
 		if not seen.has(c):
 			seen[c] = true
 			parts.append(words.get(c, c))
-	status.text = "Ready to play." if report["ok"] else "Build: " + ", ".join(parts) + "."
+	if _building():
+		status.text = "Ready to play." if report["ok"] else "Build: " + ", ".join(parts) + "."
 	play_btn.disabled = not report["ok"] and _building()
 	step_btn.disabled = play_btn.disabled
-	for id in room_nodes:
-		var bad := false
-		for i in report["issues"]:
-			if (i["roomIds"] as Array).has(id) and i["code"] != "missing":
-				bad = true
-		(room_nodes[id].get_meta("floor_mat") as StandardMaterial3D).emission_enabled = bad
-		(room_nodes[id].get_meta("floor_mat") as StandardMaterial3D).emission = Color(1, 0, 0)
 
 # ------------------------------------------------------------------ 3D
 
@@ -188,20 +242,29 @@ func _build_board() -> void:
 			var shade := 0.22 if (x + y) % 2 == 0 else 0.27
 			_box(Vector3(ROOM - 0.1, 0.1, ROOM - 0.1), Color(shade, shade, shade + 0.03), slot_center(x, y) + Vector3(0, -0.1, 0), board)
 
+func _build_ghost() -> void:
+	ghost = MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(ROOM - 0.2, 0.4, ROOM - 0.2)
+	ghost.mesh = bm
+	ghost_mat = StandardMaterial3D.new()
+	ghost_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ghost_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ghost.material_override = ghost_mat
+	ghost.visible = false
+	add_child(ghost)
+
 func _room_node(s: Dictionary) -> Node3D:
 	var root := Node3D.new()
-	var tile := ZorgEngine.default_tile()
+	var tile := ZorgEngine.base_tile(s["def"])
 	var color: Color = COLORS.get(s["def"]["type"], Color.GRAY)
-	var floor_mat := StandardMaterial3D.new()
-	floor_mat.albedo_color = color
 	for ly in 5:
 		for lx in 5:
 			var p := Vector3(lx + 0.5 - ROOM / 2.0, 0, -(ly + 0.5 - ROOM / 2.0))
-			if tile[ly][lx] == "wall":
-				_box(Vector3(0.95, 1.0, 0.95), Color(0.55, 0.5, 0.45), p + Vector3(0, 0.5, 0), root)
-			else:
-				var f := _box(Vector3(0.95, 0.1, 0.95), color, p, root)
-				f.material_override = floor_mat
+			match String(tile[ly][lx]):
+				"wall": _box(Vector3(0.95, 1.0, 0.95), Color(0.55, 0.5, 0.45), p + Vector3(0, 0.5, 0), root)
+				"green": _box(Vector3(0.95, 0.15, 0.95), FIRE, p, root)
+				_: _box(Vector3(0.95, 0.1, 0.95), color, p, root)
 	var label := Label3D.new()
 	label.text = _label_for(s["def"])
 	label.font_size = 96
@@ -210,18 +273,13 @@ func _room_node(s: Dictionary) -> Node3D:
 	label.position.y = 2.2
 	label.outline_size = 24
 	root.add_child(label)
-	root.set_meta("floor_mat", floor_mat)
 	rooms_root.add_child(root)
 	return root
 
 func _place(id: String, slot: Vector2i) -> void:
-	var s: Dictionary = {}
-	for x in engine.supplied():
-		if x["id"] == id:
-			s = x
 	placed[id] = slot
 	if not room_nodes.has(id):
-		room_nodes[id] = _room_node(s)
+		room_nodes[id] = _room_node(_supplied(id))
 	room_nodes[id].position = slot_center(slot.x, slot.y)
 	_refresh_tray()
 	_refresh_validation()
@@ -243,10 +301,10 @@ func _screen_to_slot(pos: Vector2) -> Variant:
 	if t < 0:
 		return null
 	var hit := origin + dir * t
-	var slot := Vector2i(floori(hit.x / ROOM), floori(-hit.z / ROOM))
-	if slot.x < SLOTS_X.x or slot.x > SLOTS_X.y or slot.y < SLOTS_Y.x or slot.y > SLOTS_Y.y:
-		return null
-	return slot
+	return Vector2i(floori(hit.x / ROOM), floori(-hit.z / ROOM))
+
+func _in_board(slot: Vector2i) -> bool:
+	return slot.x >= SLOTS_X.x and slot.x <= SLOTS_X.y and slot.y >= SLOTS_Y.x and slot.y <= SLOTS_Y.y
 
 func _room_at_slot(slot: Vector2i) -> String:
 	for id in placed:
@@ -254,7 +312,82 @@ func _room_at_slot(slot: Vector2i) -> String:
 			return id
 	return ""
 
+## A spot is allowed when it is on the board and no other room is there
+## (FR-5 no overlaps). Connectivity is shown by the status line instead,
+## because building can pass through disconnected states.
+func spot_allowed(id: String, slot: Variant) -> bool:
+	if slot == null or not _in_board(slot):
+		return false
+	var other := _room_at_slot(slot)
+	return other == "" or other == id
+
+func _show_ghost(id: String, screen_pos: Vector2) -> void:
+	var slot = _screen_to_slot(screen_pos)
+	if slot == null:
+		ghost.visible = false
+		return
+	var ok := spot_allowed(id, slot)
+	ghost.visible = true
+	ghost.position = slot_center(slot.x, slot.y) + Vector3(0, 0.3, 0)
+	ghost_mat.albedo_color = Color(0.2, 1.0, 0.3, 0.45) if ok else Color(1.0, 0.1, 0.1, 0.6)
+	status.text = "Drop %s here." % _label_for(_supplied(id)["def"]) if ok else "Can't place here: %s." % ("off the board" if not _in_board(slot) else "another room is there")
+
 # ------------------------------------------------------------------ input
+
+func _begin_drag(id: String, from_tray: bool, pos: Vector2) -> void:
+	if not _building():
+		return
+	drag_id = id
+	drag_from_tray = from_tray
+	drag_active = false
+	drag_origin = pos
+
+## Drop (or tap) at `pos`. Public so the smoke test can drive it.
+func end_drag(pos: Vector2) -> void:
+	var id := drag_id
+	drag_id = ""
+	ghost.visible = false
+	if id == "":
+		return
+	if not drag_active:
+		if drag_from_tray:
+			selected = "" if selected == id else id
+			_refresh_tray()
+		else:
+			_unplace(id)                     # tap a placed room: back to the tray
+		return
+	var slot = _screen_to_slot(pos)
+	if spot_allowed(id, slot):
+		_place(id, slot)
+	elif drag_from_tray:
+		_refresh_validation()                # red spot: room stays in the tray
+	else:
+		_place(id, placed[id])               # red spot: snap back
+	drag_active = false
+
+func drag_to(pos: Vector2) -> void:
+	if drag_id == "":
+		return
+	if not drag_active and pos.distance_to(drag_origin) > DRAG_START_PX:
+		drag_active = true
+		selected = ""
+	if drag_active:
+		_show_ghost(drag_id, pos)
+		if not drag_from_tray and room_nodes.has(drag_id):
+			var slot = _screen_to_slot(pos)
+			if slot != null:
+				room_nodes[drag_id].position = slot_center(slot.x, slot.y) + Vector3(0, 0.8, 0)
+
+## Drag motion/release must be seen even when the press began on a tray
+## Button, so it is handled here before the GUI.
+func _input(event: InputEvent) -> void:
+	if drag_id == "" or touches.size() >= 2:
+		return
+	if event is InputEventMouseMotion:
+		drag_to(event.position)
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		end_drag(event.position)
+		get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Fingers: two-finger pinch zoom + pan. One finger arrives as emulated mouse.
@@ -267,7 +400,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			var pts := touches.values()
 			pinch_start = (pts[0] as Vector2).distance_to(pts[1])
 			zoom_start = zoom
-			dragging = ""
+			if drag_id != "" and not drag_from_tray and placed.has(drag_id):
+				_place(drag_id, placed[drag_id])
+			drag_id = ""
+			ghost.visible = false
 		return
 	if event is InputEventScreenDrag:
 		if touches.size() >= 2 and touches.has(event.index):
@@ -278,7 +414,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if pinch_start > 0:
 				zoom = clampf(zoom_start * pinch_start / maxf(d, 1.0), 12.0, 70.0)
 			_pan((event.position - before) * 0.5)
-			_update_camera(false)
+			_update_camera()
 		elif touches.has(event.index):
 			touches[event.index] = event.position
 		return
@@ -287,63 +423,64 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
 			zoom = clampf(zoom - 2.0, 12.0, 70.0)
-			_update_camera(false)
+			_update_camera()
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			zoom = clampf(zoom + 2.0, 12.0, 70.0)
-			_update_camera(false)
-		elif event.button_index == MOUSE_BUTTON_LEFT:
-			if event.pressed:
-				_on_press(event.position)
-			else:
-				_on_release(event.position)
+			_update_camera()
+		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			_on_board_press(event.position)
 	elif event is InputEventMouseMotion:
 		if event.button_mask & (MOUSE_BUTTON_MASK_RIGHT | MOUSE_BUTTON_MASK_MIDDLE):
 			_pan(event.relative)
-			_update_camera(false)
-		elif dragging != "" and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
-			if event.position.distance_to(press_pos) > 12:
-				drag_moved = true
-			var slot = _screen_to_slot(event.position)
-			if slot != null:
-				room_nodes[dragging].position = slot_center(slot.x, slot.y) + Vector3(0, 0.6, 0)
+			_update_camera()
+		elif selected != "" and _building():
+			_show_ghost(selected, event.position)     # hover preview (mouse)
 	elif event is InputEventKey and event.pressed:
 		if event.keycode == KEY_Q:
-			target_yaw -= 90.0
+			_rotate(-90.0)
 		elif event.keycode == KEY_E:
-			target_yaw += 90.0
+			_rotate(90.0)
 		elif event.keycode == KEY_SPACE:
 			_on_step()
 
-func _on_press(pos: Vector2) -> void:
-	press_pos = pos
-	drag_moved = false
+func _on_board_press(pos: Vector2) -> void:
 	if not _building():
 		return
 	var slot = _screen_to_slot(pos)
-	if slot == null:
-		return
-	var here := _room_at_slot(slot)
-	if here != "" and selected == "":
-		dragging = here
-
-func _on_release(pos: Vector2) -> void:
-	if not _building():
-		return
-	var slot = _screen_to_slot(pos)
-	if dragging != "":
-		var id := dragging
-		dragging = ""
-		if not drag_moved:
-			_unplace(id)            # tap a placed room: back to the tray
-		elif slot == null:
-			_unplace(id)
-		else:
+	if selected != "":
+		# Tap-to-place: only on an allowed spot; a red spot keeps the selection.
+		if spot_allowed(selected, slot):
+			var id := selected
+			selected = ""
+			ghost.visible = false
 			_place(id, slot)
+		else:
+			_show_ghost(selected, pos)
 		return
-	if selected != "" and slot != null:
-		var id := selected
-		selected = ""
-		_place(id, slot)
+	if slot != null:
+		var here := _room_at_slot(slot)
+		if here != "":
+			_begin_drag(here, false, pos)
+
+# ------------------------------------------------------------------ camera
+
+func _rotate(deg: float) -> void:
+	target_yaw += deg
+	_snap_camera()
+
+## After a rotation (or a new level), glide the pivot back onto the dungeon
+## so the board doesn't drift off screen; yaw lands exactly on 45° + n·90°.
+func _snap_camera() -> void:
+	var center := slot_center(2, 0)
+	if not placed.is_empty():
+		var sum := Vector3.ZERO
+		for id in placed:
+			sum += slot_center(placed[id].x, placed[id].y)
+		center = sum / placed.size()
+	if cam_tween:
+		cam_tween.kill()
+	cam_tween = create_tween()
+	cam_tween.tween_property(rig, "position", center, 0.25)
 
 func _pan(delta_px: Vector2) -> void:
 	var scale := zoom / 600.0
@@ -352,21 +489,28 @@ func _pan(delta_px: Vector2) -> void:
 	rig.position -= right * delta_px.x * scale
 	rig.position += fwd * delta_px.y * scale
 
-func _update_camera(_snap: bool) -> void:
+func _update_camera() -> void:
 	rig.rotation_degrees.y = yaw
 	camera.position = Vector3(0, zoom * 0.8, zoom * 0.6)
 	camera.look_at(rig.global_position, Vector3.UP)
 
 func _process(delta: float) -> void:
-	if absf(target_yaw - yaw) > 0.01:
+	if yaw != target_yaw:
 		yaw = move_toward(yaw, target_yaw, delta * 360.0)
-		_update_camera(false)
+		if yaw == target_yaw:
+			yaw = fposmod(yaw, 360.0)
+			target_yaw = yaw
+	_update_camera()
 	if playing:
 		play_timer -= delta
 		if play_timer <= 0:
 			play_timer = STEP_SECONDS
 			if not _advance():
 				playing = false
+				play_btn.text = "Play"
+
+func camera_settled() -> bool:
+	return yaw == target_yaw and is_equal_approx(fmod(yaw - 45.0, 90.0), 0.0)
 
 # ------------------------------------------------------------------ play
 
@@ -381,13 +525,14 @@ func _ensure_recording() -> bool:
 	turn_index = 0
 	heroes.clear()
 	selected = ""
+	ghost.visible = false
 	_refresh_tray()
 	tray.visible = false
 	status.text = "Extermination: %d turns recorded by the engine." % recording["turns"].size()
 	return true
 
 func _advance() -> bool:
-	if turn_index >= recording["turns"].size():
+	if recording.is_empty() or turn_index >= recording["turns"].size():
 		return false
 	var events: Array = recording["turns"][turn_index]
 	turn_index += 1
@@ -406,7 +551,7 @@ func _show_result() -> void:
 	var sc: Dictionary = recording["score"]
 	match String(sc["outcome"]):
 		"win":
-			result.text = "You win! Every hero died and the rule holds."
+			result.text = "You win! Every hero died and the rules hold."
 		"loss":
 			result.text = "You lose: a hero reached Zorg."
 		_:
@@ -431,7 +576,8 @@ func _on_step() -> void:
 func _on_reset() -> void:
 	recording = {}
 	playing = false
-	play_btn.text = "Play"
+	if play_btn:
+		play_btn.text = "Play"
 	heroes.clear()
 	result.text = ""
 	log_label.text = ""

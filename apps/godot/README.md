@@ -1,27 +1,40 @@
-# Zorg — Godot 4 port (milestone 1)
+# Zorg — Godot 4 port (round 2)
 
-A first playable slice of Zorg's Dungeon Maker in Godot 4.7.2 (GDScript only).
-It loads one real level, **Contractual Obligation** (`deluxe-1.2`, contract 1):
-rooms A, Z, D(1), D(2), D(3), one Warrior(6), and the rule
-`dist(D(1), D(3)) = 2`. You place the rooms, press Play or Step, and watch the
-Warrior replay what the engine decided. The visuals are plain boxes for now.
+A small playable slice of Zorg's Dungeon Maker in Godot 4.7.2 (GDScript
+only). The picker in the top right holds three real contract-1 levels:
+
+| Level | Rooms | Hero | Rule |
+|---|---|---|---|
+| 1.1 Foundations | A, Z, D(2), E(fire) | Warrior(5) | none |
+| 1.2 Contractual Obligation | A, Z, D(1), D(2), D(3) | Warrior(6) | dist(D(1), D(3)) = 2 |
+| 1.3 Around The Bush | A, Z, 2×D(1), E(fire) | Warrior(5) | dist(A, Z) = 2 |
+
+Round 2 ported one new rule piece for these levels: the **fire room**. Its
+3×3 middle is fire, and each step onto a fire cell costs 1 HP (FR-14).
+Water, ice and poison are still refused. You place the rooms, press Play or
+Step, and watch the Warrior replay what the engine decided. The visuals are
+plain boxes.
 The status is **Simulated**: it runs in CI and headless tests, and nobody has
 tried it on a real phone yet.
 
-**Why this level:** no fixture uses only A/Z/D rooms and Warriors with no
-spells and no rules at all. `deluxe-1.2` is the closest: A/Z/D only, one
-Warrior, no spells, plus one simple distance rule. We ported just that rule.
-`base-classic-1` needs a fire room, and `deluxe-1.4` needs a spell.
+**Why these levels:** apart from 1.2, every level made only of A/Z/D rooms
+and Warriors also has a spell, a mirror world or a variable. The next easiest
+step was the fire room, which unlocks 1.1 and 1.3. `base-classic-1` has the
+same content as 1.1. 1.4 and later levels need spells.
 
 ## Open and play
 1. Install Godot 4.7.2 (standard build, not .NET).
 2. In the Project Manager, choose **Import** and pick `apps/godot/project.godot`.
-3. Press **F5**. Tap a room in the tray, then tap a square on the board to
-   place it. You can drag a placed room to move it, or tap it to send it back
-   to the tray. Once every room is placed and connected, **Play** and **Step**
-   unlock. You can also step with Space.
+3. Press **F5**. Drag a room out of the tray onto the board, or tap it and
+   then tap a square. A green ghost shows where it will land. A red ghost
+   means you can't place it there (off the board or the square is taken), and
+   dropping it there leaves the room where it was. You can drag a placed room
+   to move it, or tap it to send it back to the tray. Once every room is
+   placed and connected, **Play** and **Step** unlock. You can also step with
+   Space.
 4. Camera: use the mouse wheel or pinch to zoom. Right-drag or two-finger drag
-   to pan. The ⟲/⟳ buttons (or Q/E) rotate the view 90°.
+   to pan. The ⟲/⟳ buttons (or Q/E) rotate the view 90°. After a rotation
+   the view lands exactly on the new angle and recentres on your rooms.
 
 ## Tests
 ```
@@ -30,9 +43,10 @@ node packages/engine/scripts/godot-golden.mjs --check   # TS engine recording is
 godot --headless --path apps/godot --script res://tests/parity_test.gd
 godot --headless --path apps/godot --script res://tests/level_smoke_test.gd
 ```
-The golden script runs the TypeScript engine on six fixed placements and
-records every turn to `tests/golden/deluxe-1.2.json`. It also writes the
-level file the game loads (`levels/deluxe-1.2.json`) from the real fixture.
+The golden script runs the TypeScript engine on fixed placements for each
+level (12 in total) and records every turn to `tests/golden/<level>.json`. It
+also writes the level files the game loads (`levels/*.json`, plus
+`levels/index.json` for the picker) from the real fixtures.
 The parity test replays the same placements in GDScript and fails on any
 difference. If you change `packages/engine`, run the golden script without
 `--check` and commit the result.

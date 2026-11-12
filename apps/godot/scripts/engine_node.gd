@@ -2,14 +2,23 @@ extends Node
 ## Scene-side wrapper around the pure ZorgEngine. Holds the loaded level and
 ## produces the turn-by-turn recording the Heroes node replays.
 
-const LEVEL_PATH := "res://levels/deluxe-1.2.json"
+const INDEX_PATH := "res://levels/index.json"
 
 var loaded: Dictionary = {}
+var levels: Array = []
 
-func load_default_level() -> String:
-	var data = JSON.parse_string(FileAccess.get_file_as_string(LEVEL_PATH))
+## Level list written by packages/engine/scripts/godot-golden.mjs.
+func load_index() -> String:
+	var data = JSON.parse_string(FileAccess.get_file_as_string(INDEX_PATH))
 	if typeof(data) != TYPE_DICTIONARY:
-		return "Cannot read %s" % LEVEL_PATH
+		return "Cannot read %s" % INDEX_PATH
+	levels = data["levels"]
+	return ""
+
+func load_level_file(path: String) -> String:
+	var data = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if typeof(data) != TYPE_DICTIONARY:
+		return "Cannot read %s" % path
 	loaded = ZorgEngine.load_level(data)
 	return "" if loaded["ok"] else loaded["error"]
 

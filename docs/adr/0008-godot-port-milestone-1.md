@@ -23,6 +23,10 @@ project stays in this repo until it stands alone or needs Git LFS.
 Distribution starts with sideloaded debug APKs, then itch.io, then the Play
 Store only if wanted. See `apps/godot/README.md`.
 
+Round 2 (stacked on milestone 1) adds levels 1.1 and 1.3. The only new rule
+it ports is the fire room (FR-14, fire only), and it comes with its own
+golden cases.
+
 ## Consequences
 
 ADR-0002's concern is handled by the parity gate, not by trust. Each new
