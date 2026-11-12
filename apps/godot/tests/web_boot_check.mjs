@@ -34,13 +34,14 @@ const chrome = spawn(process.env.CHROME ?? "google-chrome", [
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const done = (code, msg) => { console.log(msg); chrome.kill(); server.close(); process.exit(code); };
 
-let tabs;
-for (let i = 0; i < 30 && !tabs; i++) {
+let tab;
+for (let i = 0; i < 30 && !tab; i++) {
   await sleep(500);
-  tabs = await fetch(`http://127.0.0.1:${port}/json`).then((r) => r.json()).catch(() => undefined);
+  const tabs = await fetch(`http://127.0.0.1:${port}/json`).then((r) => r.json()).catch(() => undefined);
+  tab = Array.isArray(tabs) ? tabs.find((t) => t.type === "page" && t.webSocketDebuggerUrl) : undefined;
 }
-if (!tabs) done(1, "web boot: FAIL (chrome did not start)");
-const ws = new WebSocket(tabs.find((t) => t.type === "page").webSocketDebuggerUrl);
+if (!tab) done(1, "web boot: FAIL (chrome did not start)");
+const ws = new WebSocket(tab.webSocketDebuggerUrl);
 await new Promise((r) => (ws.onopen = r));
 let id = 0;
 const pending = new Map();
