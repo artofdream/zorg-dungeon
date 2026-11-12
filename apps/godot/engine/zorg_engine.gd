@@ -17,6 +17,11 @@ extends RefCounted
 ##                 and the "no hero below 0 HP" floor (FR-10, FR-43)
 ##   simulation.ts castSpell / canCastNow for Attack(x) and Teleport(n)
 ##                 (FR-32–FR-35)
+##   portals.ts    P(n, f): i-th entry teleports to the f(i)-th most recent
+##                 earlier visit, else the waiting room (FR-15)
+##   gold.ts       O(x) pickup, the purse dropping in the death room, FIFO
+##                 T(x, elem) tolls refunded to the source rooms (FR-16, FR-17)
+##   pathing.ts / elf.ts  gold and tolls in Warrior and Elf planning
 ## Everything else fails closed (NFR-8): other room types, other heroes,
 ## other spells, variables, mirror worlds -> load_level() returns an error.
 ## Room C, the Gunner duration and FR-4 gating are not touched here.
@@ -24,7 +29,7 @@ extends RefCounted
 const ROOM_SIZE := 5
 const BASE_TIE := ["right", "up", "left", "down"]
 const DELTA := {"right": Vector2i(1, 0), "up": Vector2i(0, 1), "left": Vector2i(-1, 0), "down": Vector2i(0, -1)}
-const SUPPORTED_ROOMS := ["A", "Z", "D", "E"]
+const SUPPORTED_ROOMS := ["A", "Z", "D", "E", "O", "P", "T"]
 const SUPPORTED_ELEMENTS := ["fire", "water", "ice", "poison"]
 const SUPPORTED_HEROES := ["Warrior", "Elf"]
 const SUPPORTED_SPELLS := ["Attack", "Teleport"]
@@ -48,8 +53,17 @@ static func load_level(data: Dictionary) -> Dictionary:
 			return _fail("Room type %s is not ported yet (NFR-8 fail-closed)." % t)
 		if t == "E" and not SUPPORTED_ELEMENTS.has(String(s["def"].get("element", ""))):
 			return _fail("E(%s) is not a ported element (NFR-8 fail-closed)." % s["def"].get("element", "?"))
-		if t == "D" and not (s["def"]["damage"] is float or s["def"]["damage"] is int):
+		if t == "D" and not _num(s["def"]["damage"]):
 			return _fail("D room %s has a non-numeric damage." % s["id"])
+		if t == "O" and not _num(s["def"].get("gold")):
+			return _fail("O room %s has a non-numeric amount (NFR-8 fail-closed)." % s["id"])
+		if t == "T" and (not _num(s["def"].get("cost")) or not SUPPORTED_ELEMENTS.has(String(s["def"].get("element", "")))):
+			return _fail("T room %s needs a numeric cost and a ported element (NFR-8 fail-closed)." % s["id"])
+		if t == "P":
+			if not _num(s["def"].get("entries")):
+				return _fail("P room %s has a non-numeric entry count (NFR-8 fail-closed)." % s["id"])
+			if portal_formula(String(s["def"].get("formula", ""))).is_empty():
+				return _fail("P room %s has an unsupported formula (NFR-8 fail-closed)." % s["id"])
 	for h in level.get("heroes", []):
 		if typeof(h) != TYPE_DICTIONARY or not SUPPORTED_HEROES.has(h.get("type", "")):
 			return _fail("Only Warrior and Elf heroes are ported yet (NFR-8 fail-closed).")
@@ -80,6 +94,9 @@ static func expand_spells(slots: Array) -> Variant:
 		for i in count:
 			out.append(def)
 	return out
+
+static func _num(v) -> bool:
+	return v is float or v is int
 
 static func _fail(msg: String) -> Dictionary:
 	return {"ok": false, "error": msg, "level": {}, "supplied": []}
@@ -124,8 +141,24 @@ static func elemental_tile() -> Array:
 				tile[y][x] = "green"
 	return tile
 
+## FR-17 default T tile: 3×3 interior dark (elemental), the 4 hatches light (toll).
+static func toll_tile() -> Array:
+	var tile := default_tile()
+	for y in range(1, ROOM_SIZE - 1):
+		for x in range(1, ROOM_SIZE - 1):
+			if tile[y][x] != "wall":
+				tile[y][x] = "dark"
+	tile[0][2] = "light"
+	tile[ROOM_SIZE - 1][2] = "light"
+	tile[2][0] = "light"
+	tile[2][ROOM_SIZE - 1] = "light"
+	return tile
+
 static func base_tile(def: Dictionary) -> Array:
-	return elemental_tile() if def.get("type", "") == "E" else default_tile()
+	match String(def.get("type", "")):
+		"E": return elemental_tile()
+		"T": return toll_tile()
+	return default_tile()
 
 static func resolved_tile(room: Dictionary) -> Array:
 	return rotate_tile(base_tile(room["def"]), int(room["orientation"]))
@@ -266,9 +299,12 @@ static func build_walk_grid(rooms: Array) -> Dictionary:
 				var w := Vector2i(int(room["x"]) * ROOM_SIZE + lx, int(room["y"]) * ROOM_SIZE + ly)
 				var kind: String = tile[ly][lx]
 				var element := ""
-				if kind == "green" and room["def"]["type"] == "E":
+				if (kind == "green" and room["def"]["type"] == "E") or (kind == "dark" and room["def"]["type"] == "T"):
 					element = String(room["def"]["element"])
-				cells[_key(w)] = {"world": w, "roomId": room["id"], "roomType": room["def"]["type"], "kind": kind, "element": element}
+				var toll = null   # light T cells: gold needed to cross (FR-17)
+				if kind == "light" and room["def"]["type"] == "T":
+					toll = int(room["def"]["cost"])
+				cells[_key(w)] = {"world": w, "roomId": room["id"], "roomType": room["def"]["type"], "kind": kind, "element": element, "toll": toll}
 	return cells
 
 # ---------------------------------------------------------------- elements (FR-14)
@@ -291,12 +327,15 @@ static func elemental_tick(element: String, immunities: Array, poison_visited: b
 		"poison": return {"hpDelta": -3 if poison_visited else 1, "die": false, "recordPoisonVisit": true, "ignored": false}
 	return {"hpDelta": 0, "die": false, "recordPoisonVisit": false, "ignored": true}
 
-## Water is not a voluntary step unless the hero is immune (pathing.ts isPassable).
-static func _passable(grid: Dictionary, pos: Vector2i, immunities: Array = []) -> bool:
+## Water (unless immune) and a light cell the hero can't pay for are not
+## voluntary steps (pathing.ts isPassable, FR-14 / FR-17).
+static func _passable(grid: Dictionary, pos: Vector2i, immunities: Array = [], gold: int = 0) -> bool:
 	var cell = grid.get(_key(pos))
 	if cell == null or cell["kind"] == "wall":
 		return false
 	if cell["element"] == "water" and not immunities.has("water"):
+		return false
+	if cell["toll"] != null and gold < int(cell["toll"]):
 		return false
 	return true
 
@@ -306,10 +345,11 @@ static func _open(grid: Dictionary, pos: Vector2i) -> bool:
 
 ## pathing.ts resolveStep: the first cell must be passable; entering ice
 ## (not immune) slides on until a wall or a missing cell, stopping in Z.
-## The slide may land on water (the simulator then kills the hero).
-static func resolve_step(grid: Dictionary, from: Vector2i, dir: String, immunities: Array = []) -> Array:
+## The slide may land on water or an unpaid light cell (the simulator then
+## kills the hero); only the first cell is checked against the gold in hand.
+static func resolve_step(grid: Dictionary, from: Vector2i, dir: String, immunities: Array = [], gold: int = 0) -> Array:
 	var first: Vector2i = from + DELTA[dir]
-	if not _passable(grid, first, immunities):
+	if not _passable(grid, first, immunities, gold):
 		return []
 	var path: Array = [first]
 	var fc: Dictionary = grid[_key(first)]
@@ -333,13 +373,13 @@ static func _room_at(grid: Dictionary, pos: Vector2i) -> Variant:
 	var cell = grid.get(_key(pos))
 	return null if cell == null else cell["roomId"]
 
-static func distance_to_rooms(rooms: Array, grid: Dictionary, targets: Array, immunities: Array = []) -> Dictionary:
+static func distance_to_rooms(rooms: Array, grid: Dictionary, targets: Array, immunities: Array = [], gold: int = 0) -> Dictionary:
 	var incoming := {}
 	for cell in grid.values():
-		if not _passable(grid, cell["world"], immunities):
+		if not _passable(grid, cell["world"], immunities, gold):
 			continue
 		for d in BASE_TIE:
-			var path := resolve_step(grid, cell["world"], d, immunities)
+			var path := resolve_step(grid, cell["world"], d, immunities, gold)
 			if path.is_empty():
 				continue
 			var land: Vector2i = path[path.size() - 1]
@@ -378,7 +418,7 @@ static func distance_to_rooms(rooms: Array, grid: Dictionary, targets: Array, im
 			queue.append(prev)
 	return dist
 
-static func reachable_room_ids(grid: Dictionary, from: Vector2i, immunities: Array = []) -> Dictionary:
+static func reachable_room_ids(grid: Dictionary, from: Vector2i, immunities: Array = [], gold: int = 0) -> Dictionary:
 	var rooms := {}
 	var here = _room_at(grid, from)
 	if here != null:
@@ -389,10 +429,10 @@ static func reachable_room_ids(grid: Dictionary, from: Vector2i, immunities: Arr
 	while head < queue.size():
 		var cur: Vector2i = queue[head]
 		head += 1
-		if not _passable(grid, cur, immunities) and head > 1:
+		if not _passable(grid, cur, immunities, gold) and head > 1:
 			continue
 		for d in BASE_TIE:
-			var path := resolve_step(grid, cur, d, immunities)
+			var path := resolve_step(grid, cur, d, immunities, gold)
 			if path.is_empty():
 				continue
 			var land: Vector2i = path[path.size() - 1]
@@ -420,12 +460,12 @@ static func highest_weight_room_ids(rooms: Array, reachable: Dictionary) -> Arra
 			ids.append(room["id"])
 	return ids
 
-static func choose_warrior_step(grid: Dictionary, dist: Dictionary, from: Vector2i, orientation: int, targets: Array, immunities: Array = []) -> Variant:
+static func choose_warrior_step(grid: Dictionary, dist: Dictionary, from: Vector2i, orientation: int, targets: Array, immunities: Array = [], gold: int = 0) -> Variant:
 	if not dist.has(_key(from)):
 		return null
 	var here: int = dist[_key(from)]
 	for d in oriented_tie_break(orientation):
-		var path := resolve_step(grid, from, d, immunities)
+		var path := resolve_step(grid, from, d, immunities, gold)
 		if path.is_empty():
 			continue
 		var land: Vector2i = path[path.size() - 1]
@@ -437,6 +477,122 @@ static func choose_warrior_step(grid: Dictionary, dist: Dictionary, from: Vector
 		if nd != null and nd < here:
 			return d
 	return null
+
+# ---------------------------------------------------------------- gold in planning (FR-16, FR-17)
+
+## gold.ts pilesKey: "id:amount" for non-empty piles, sorted by room id.
+static func piles_key(piles: Dictionary) -> String:
+	var ids: Array = []
+	for id in piles.keys():
+		if int(piles[id]) > 0:
+			ids.append(String(id))
+	ids.sort()
+	var parts: Array = []
+	for id in ids:
+		parts.append("%s:%d" % [id, int(piles[id])])
+	return ";".join(parts)
+
+static func _parse_piles(key: String) -> Dictionary:
+	var out := {}
+	if key == "":
+		return out
+	for part in key.split(";"):
+		var at := part.rfind(":")
+		if at <= 0:
+			continue
+		var amount := int(part.substr(at + 1))
+		if amount > 0:
+			out[part.substr(0, at)] = amount
+	return out
+
+## pathing.ts shouldUseEconomy: gold in hand, gold on the map, or any O/T room.
+static func _use_economy(rooms: Array, gold: int, piles: Dictionary) -> bool:
+	if gold > 0:
+		return true
+	for v in piles.values():
+		if int(v) > 0:
+			return true
+	return rooms.any(func(r): return r["def"]["type"] == "T" or r["def"]["type"] == "O")
+
+## pathing.ts applyPlannedEconomy: entering a room takes its pile; a light
+## cell is paid when the plan has the gold (an unpaid one later in a slide is
+## planned through, as with D, FR-28).
+static func _plan_gold(grid: Dictionary, cell: Vector2i, room_id: String, gold: int, piles: Dictionary, targets: Array) -> Dictionary:
+	var next_room = _room_at(grid, cell)
+	if next_room == null:
+		return {"invalid": true}
+	var reached := false
+	var piles_now := piles
+	if next_room != room_id:
+		if targets.has(next_room):
+			reached = true
+		var pile := int(piles.get(next_room, 0))
+		if pile > 0:
+			gold += pile
+			piles_now = piles.duplicate()
+			piles_now[next_room] = 0
+	var toll = grid[_key(cell)]["toll"]
+	if toll != null and gold >= int(toll):
+		gold -= int(toll)
+	return {"invalid": false, "gold": gold, "roomId": next_room, "piles": piles_now, "reached": reached}
+
+## pathing.ts chooseWarriorEconomy: BFS over (cell, room, gold, piles) for
+## the shortest way into a target room, so a pickup can open a later toll.
+## Ignores HP (FR-28) and portals, as the TS engine does.
+static func _choose_warrior_economy(grid: Dictionary, from: Vector2i, room_id: String, orientation: int,
+		immunities: Array, gold: int, piles: Dictionary, targets: Array) -> Variant:
+	var dirs := oriented_tie_break(orientation)
+	var start := {"cell": from, "roomId": room_id, "gold": gold, "piles": piles_key(piles), "length": 0, "firstDir": null}
+	var seen := {"%s|%s|%d|%s" % [_key(from), room_id, gold, start["piles"]]: true}
+	var queue: Array = [start]
+	var max_length := maxi(8, _passable_count(grid) * 4)
+	var head := 0
+	while head < queue.size():
+		var cur: Dictionary = queue[head]
+		head += 1
+		if cur["length"] >= max_length:
+			continue
+		for d in dirs:
+			var path := resolve_step(grid, cur["cell"], d, immunities, cur["gold"])
+			if path.is_empty():
+				continue
+			var gold_now: int = cur["gold"]
+			var room_now: String = cur["roomId"]
+			var piles_now := _parse_piles(cur["piles"])
+			var reached := false
+			var invalid := false
+			var last: Vector2i = path[path.size() - 1]
+			for cell in path:
+				var r := _plan_gold(grid, cell, room_now, gold_now, piles_now, targets)
+				if r["invalid"]:
+					invalid = true
+					break
+				gold_now = r["gold"]
+				room_now = r["roomId"]
+				piles_now = r["piles"]
+				last = cell
+				if r["reached"]:
+					reached = true
+					break
+			if invalid:
+				continue
+			var first_dir = d if cur["firstDir"] == null else cur["firstDir"]
+			if reached:
+				return first_dir
+			var pk := piles_key(piles_now)
+			var nk := "%s|%s|%d|%s" % [_key(last), room_now, gold_now, pk]
+			if seen.has(nk):
+				continue
+			seen[nk] = true
+			queue.append({"cell": last, "roomId": room_now, "gold": gold_now, "piles": pk, "length": cur["length"] + 1, "firstDir": first_dir})
+	return null
+
+static func _passable_count(grid: Dictionary) -> int:
+	var n := 0
+	for c in grid.values():
+		if c["kind"] != "wall":
+			n += 1
+	return n
 
 # ---------------------------------------------------------------- Elf (FR-21)
 
@@ -463,39 +619,42 @@ static func _parse_poison(key: String) -> Dictionary:
 ## elf.ts chooseElfStep: BFS over (cell, room, poison memory); keep the state
 ## with more HP (then fewer actions); the winner is the best state that
 ## reaches a target room, and its first direction is the step. Planning
-## ignores death (FR-28). No gold/tolls in the ported rooms.
+## ignores death (FR-28). Gold is map knowledge: entering a room takes its
+## pile, a light cell is paid, and a plan that can't pay a light cell is
+## dropped (FR-16, FR-17). The state key includes gold and piles.
 static func choose_elf_step(rooms: Array, grid: Dictionary, from: Vector2i, hp: int, room_id: String,
-		poison_visits: Dictionary, immunities: Array, orientation: int, targets: Array) -> Variant:
+		poison_visits: Dictionary, immunities: Array, orientation: int, targets: Array,
+		gold: int = 0, piles: Dictionary = {}) -> Variant:
 	if targets.has(room_id):
 		return null
 	var dirs := oriented_tie_break(orientation)
-	var start := {"cell": from, "roomId": room_id, "hp": hp, "poison": _poison_key(poison_visits), "length": 0, "firstDir": null}
+	var start := {"cell": from, "roomId": room_id, "hp": hp, "poison": _poison_key(poison_visits),
+		"gold": gold, "piles": piles_key(piles), "length": 0, "firstDir": null}
 	var best := {}
-	best["%s|%s|%s" % [_key(from), room_id, start["poison"]]] = start
+	best[_elf_key(start)] = start
 	var queue: Array = [start]
 	var winner = null
-	var passable := 0
-	for c in grid.values():
-		if c["kind"] != "wall":
-			passable += 1
-	var max_length := maxi(8, passable * 4)
+	var max_length := maxi(8, _passable_count(grid) * 4)
 	var head := 0
 	while head < queue.size():
 		var cur: Dictionary = queue[head]
 		head += 1
 		if cur["length"] >= max_length:
 			continue
-		var known = best.get("%s|%s|%s" % [_key(cur["cell"]), cur["roomId"], cur["poison"]])
+		var known = best.get(_elf_key(cur))
 		if known != null and _elf_better(known, cur):
 			continue
 		for d in dirs:
-			var path := resolve_step(grid, cur["cell"], d, immunities)
+			var path := resolve_step(grid, cur["cell"], d, immunities, cur["gold"])
 			if path.is_empty():
 				continue
 			var hp_now: int = cur["hp"]
 			var room_now: String = cur["roomId"]
 			var poison_now := _parse_poison(cur["poison"])
+			var gold_now: int = cur["gold"]
+			var piles_now := _parse_piles(cur["piles"])
 			var reached := false
+			var invalid := false
 			var last: Vector2i = path[path.size() - 1]
 			for cell in path:
 				var walk: Dictionary = grid[_key(cell)]
@@ -505,6 +664,16 @@ static func choose_elf_step(rooms: Array, grid: Dictionary, from: Vector2i, hp: 
 						reached = true
 					if walk["roomType"] == "D":
 						hp_now -= int(_room_def_in(rooms, next_room)["damage"])
+					var pile := int(piles_now.get(next_room, 0))
+					if pile > 0:
+						gold_now += pile
+						piles_now = piles_now.duplicate()
+						piles_now[next_room] = 0
+				if walk["toll"] != null:
+					if gold_now < int(walk["toll"]):
+						invalid = true   # elf.ts: an unpaid light cell is not a route
+						break
+					gold_now -= int(walk["toll"])
 				var el: String = walk["element"]
 				var tick := elemental_tick(el, immunities, el == "poison" and poison_now.has(_key(cell)))
 				hp_now += int(tick["hpDelta"])
@@ -515,18 +684,24 @@ static func choose_elf_step(rooms: Array, grid: Dictionary, from: Vector2i, hp: 
 				last = cell
 				if reached:
 					break
+			if invalid:
+				continue
 			var nxt := {"cell": last, "roomId": room_now, "hp": hp_now, "poison": _poison_key(poison_now),
+				"gold": gold_now, "piles": piles_key(piles_now),
 				"length": cur["length"] + 1, "firstDir": d if cur["firstDir"] == null else cur["firstDir"]}
 			if reached:
 				if winner == null or _elf_better(nxt, winner):
 					winner = nxt
 				continue
-			var nk := "%s|%s|%s" % [_key(last), room_now, nxt["poison"]]
+			var nk := _elf_key(nxt)
 			var prev = best.get(nk)
 			if prev == null or _elf_better(nxt, prev):
 				best[nk] = nxt
 				queue.append(nxt)
 	return null if winner == null else winner["firstDir"]
+
+static func _elf_key(st: Dictionary) -> String:
+	return "%s|%s|%s|%d|%s" % [_key(st["cell"]), st["roomId"], st["poison"], st["gold"], st["piles"]]
 
 static func _room_def_in(rooms: Array, id: String) -> Dictionary:
 	for r in rooms:
@@ -545,6 +720,7 @@ static func create_run(loaded: Dictionary, rooms: Array) -> Dictionary:
 	var i := 0
 	for h in loaded["level"]["heroes"]:
 		heroes.append({"id": i, "type": h["type"], "immunities": hero_immunities(h), "hp": int(h["hp"]), "visits": [],
+			"gold": [], "portalEntries": {},
 			"spawned": false, "dead": false, "stuck": false, "cell": null, "roomId": null})
 		i += 1
 	var main_a := ""
@@ -554,8 +730,13 @@ static func create_run(loaded: Dictionary, rooms: Array) -> Dictionary:
 			main_a = r["id"]
 			orientation = int(r["orientation"])
 			break
+	# gold.ts initialRoomGold: only authored O(x) rooms start with a pile.
+	var room_gold := {}
+	for r in rooms:
+		if r["def"]["type"] == "O":
+			room_gold[r["id"]] = int(r["def"]["gold"])
 	return {"rooms": rooms.duplicate(true), "heroes": heroes, "mainAId": main_a, "orientation": orientation,
-		"outcome": "in_progress", "stepCount": 0, "events": [], "poisonVisits": {},
+		"outcome": "in_progress", "stepCount": 0, "events": [], "poisonVisits": {}, "roomGold": room_gold,
 		"spells": loaded.get("spells", []).map(func(d): return {"def": d, "consumed": false})}
 
 static func _cell(v: Vector2i) -> Dictionary:
@@ -579,27 +760,137 @@ static func _check_death(state: Dictionary, hero: Dictionary, events: Array) -> 
 	if hero["hp"] <= 0 and not hero["dead"]:
 		hero["dead"] = true
 		hero["stuck"] = false
+		# FR-16: the purse stays in the room where the hero died (an O pile on top).
+		var purse: Array = hero["gold"]
+		if hero["roomId"] != null and not purse.is_empty():
+			var room_gold: Dictionary = state["roomGold"]
+			room_gold[hero["roomId"]] = int(room_gold.get(hero["roomId"], 0)) + purse.size()
+			events.append({"type": "gold_drop", "heroId": hero["id"], "roomId": hero["roomId"], "amount": purse.size()})
+			purse.clear()
 		events.append({"type": "death", "heroId": hero["id"]})
 		if state["heroes"].all(func(h): return h["dead"]):
 			state["outcome"] = "win"
 			events.append({"type": "win"})
 
-static func _enter_room(state: Dictionary, hero: Dictionary, room_id: String, first_cell: Vector2i, events: Array) -> void:
+## simulation.ts enterRoom. Returns true when a portal moved the hero (a
+## teleport or the waiting room), which ends the rest of the step.
+static func _enter_room(state: Dictionary, hero: Dictionary, room_id: String, first_cell: Vector2i, events: Array, grid: Dictionary) -> bool:
+	var prior: Array = (hero["visits"] as Array).duplicate()
 	hero["visits"].append({"roomId": room_id, "firstCell": first_cell})   # FR-15 / FR-35 history
 	hero["roomId"] = room_id
+	return _apply_entry(state, hero, room_id, events, prior, grid, 0)
+
+## simulation.ts applyEntry: the gold pickup comes first (FR-16), then A / Z
+## / D, then death, then the portal (FR-15). `prior` is the visit history
+## before this entry (the entry itself is never a destination).
+static func _apply_entry(state: Dictionary, hero: Dictionary, room_id: String, events: Array, prior: Array, grid: Dictionary, depth: int) -> bool:
 	var def := _room_def(state, room_id)
 	events.append({"type": "enter", "heroId": hero["id"], "roomId": room_id, "roomType": def["type"]})
+	var room_gold: Dictionary = state["roomGold"]
+	var pile := int(room_gold.get(room_id, 0))
+	if pile > 0:
+		for i in pile:
+			hero["gold"].append(room_id)   # FIFO purse: each coin remembers its source room
+		room_gold[room_id] = 0
+		events.append({"type": "pickup", "heroId": hero["id"], "roomId": room_id, "amount": pile, "gold": hero["gold"].size()})
 	if def["type"] == "A":
 		state["mainAId"] = room_id
 	if def["type"] == "Z":
 		state["outcome"] = "loss"
 		events.append({"type": "loss", "heroId": hero["id"]})
-		return
+		return false
 	if def["type"] == "D":
 		var amount := int(def["damage"])
 		hero["hp"] -= amount
 		events.append({"type": "damage", "heroId": hero["id"], "amount": amount, "hp": hero["hp"]})
 	_check_death(state, hero, events)
+	if state["outcome"] != "in_progress" or hero["dead"]:
+		return false
+	if def["type"] == "P":
+		return _apply_portal(state, hero, room_id, def, events, prior, grid, depth)
+	return false
+
+## portals.ts evalPortalIndex: "1", "i", "x↦7x-6", "i->i-1" ... as [a, b]
+## for a·i + b; [] when the formula is not one of those forms.
+static func portal_formula(formula: String) -> Array:
+	var t := formula.strip_edges()
+	if t == "":
+		return []
+	var parts := RegEx.create_from_string("\\s*(?:↦|->|=>)\\s*").sub(t, "\u0001", true).split("\u0001")
+	var expr := (parts[1] if parts.size() == 2 else parts[0]).strip_edges()
+	var token := RegEx.create_from_string("[xnXN]").sub(RegEx.create_from_string("\\s+").sub(expr, "", true), "i", true)
+	if RegEx.create_from_string("^-?\\d+$").search(token) != null:
+		return [0, int(token)]
+	var m := RegEx.create_from_string("^(-?\\d*)\\*?i([+-]\\d+)?$").search(token)
+	if m == null:
+		return []
+	var a_tok := m.get_string(1)
+	var a := 1 if a_tok == "" else (-1 if a_tok == "-" else int(a_tok))
+	var b := int(m.get_string(2)) if m.get_start(2) >= 0 else 0
+	return [a, b]
+
+## FR-15: the i-th entry (i ≤ n) teleports to the first cell of the f(i)-th
+## most recent earlier visit; too short a history means the waiting room.
+## The landing cell's element and toll apply (an unpaid toll there kills).
+static func _apply_portal(state: Dictionary, hero: Dictionary, room_id: String, def: Dictionary, events: Array,
+		prior: Array, grid: Dictionary, depth: int) -> bool:
+	var n := int(def["entries"])
+	var entries: Dictionary = hero["portalEntries"]
+	var i := int(entries.get(room_id, 0)) + 1
+	entries[room_id] = i
+	if i < 1 or i > n:
+		return false
+	var f := portal_formula(String(def["formula"]))
+	var k: int = int(f[0]) * i + int(f[1])
+	if k < 1 or k > prior.size():
+		hero["spawned"] = false
+		hero["stuck"] = false
+		hero["cell"] = null
+		hero["roomId"] = null
+		events.append({"type": "wait_room", "heroId": hero["id"]})
+		return true
+	var dest: Dictionary = prior[prior.size() - k]
+	hero["cell"] = dest["firstCell"]
+	events.append({"type": "teleport", "heroId": hero["id"], "fromRoomId": room_id, "toRoomId": dest["roomId"], "to": _cell(dest["firstCell"])})
+	if depth >= 8:
+		push_error("FR-15: portal teleport chain exceeded 8 hops.")
+		state["outcome"] = "error"
+		return true
+	if dest["roomId"] != room_id:
+		var next_prior: Array = (hero["visits"] as Array).duplicate()
+		hero["visits"].append({"roomId": dest["roomId"], "firstCell": dest["firstCell"]})
+		hero["roomId"] = dest["roomId"]
+		_apply_entry(state, hero, dest["roomId"], events, next_prior, grid, depth + 1)
+	if state["outcome"] == "in_progress" and hero["spawned"] and not hero["dead"] and hero["cell"] != null:
+		_apply_elemental_cell(state, hero, hero["cell"], grid, events)
+		if state["outcome"] == "in_progress" and not hero["dead"]:
+			_apply_toll_cell(state, hero, hero["cell"], grid, events, true)
+	return true
+
+## FR-17 (simulation.ts applyTollCell): a light cell takes the oldest coins
+## first and refunds each to its source room. A hero who can't pay only
+## gets here by force (a slide, a portal), and dies.
+static func _apply_toll_cell(state: Dictionary, hero: Dictionary, cell: Vector2i, grid: Dictionary, events: Array, forced: bool) -> void:
+	var walk = grid.get(_key(cell))
+	if walk == null or walk["toll"] == null or int(walk["toll"]) <= 0:
+		return
+	var cost := int(walk["toll"])
+	var purse: Array = hero["gold"]
+	if purse.size() >= cost:
+		var counts := {}
+		for i in cost:
+			var src: String = purse.pop_front()
+			counts[src] = int(counts.get(src, 0)) + 1
+		var refunds: Array = []
+		var room_gold: Dictionary = state["roomGold"]
+		for src in counts:
+			room_gold[src] = int(room_gold.get(src, 0)) + int(counts[src])
+			refunds.append({"roomId": src, "amount": counts[src]})
+		events.append({"type": "toll", "heroId": hero["id"], "amount": cost, "gold": purse.size(), "refunds": refunds})
+		return
+	if forced:
+		hero["hp"] = 0
+		_check_death(state, hero, events)
 
 ## FR-14 (simulation.ts applyElementalCell): immune heroes ignore the cell;
 ## a damage event carries -hpDelta (poison's first visit is a -1 "damage",
@@ -656,22 +947,26 @@ static func step_run(state: Dictionary) -> Array:
 		hero["cell"] = cell
 		hero["roomId"] = spawn["id"]
 		events.append({"type": "spawn", "heroId": hero["id"], "cell": _cell(cell), "roomId": spawn["id"]})
-		_enter_room(state, hero, spawn["id"], cell, events)
+		_enter_room(state, hero, spawn["id"], cell, events, grid)
 		_apply_elemental_cell(state, hero, cell, grid, events)
+		_apply_toll_cell(state, hero, cell, grid, events, false)
 		state["events"].append_array(events)
 		return events
 	var imm: Array = hero["immunities"]
-	var reachable := reachable_room_ids(grid, hero["cell"], imm)
+	var gold: int = hero["gold"].size()
+	var reachable := reachable_room_ids(grid, hero["cell"], imm, gold)
 	var targets := highest_weight_room_ids(state["rooms"], reachable)
 	var dir = null
 	if not targets.is_empty():
 		if hero["type"] == "Elf":
 			dir = choose_elf_step(state["rooms"], grid, hero["cell"], hero["hp"], hero["roomId"],
-				state["poisonVisits"], imm, state["orientation"], targets)
+				state["poisonVisits"], imm, state["orientation"], targets, gold, state["roomGold"])
+		elif _use_economy(state["rooms"], gold, state["roomGold"]):
+			dir = _choose_warrior_economy(grid, hero["cell"], hero["roomId"], state["orientation"], imm, gold, state["roomGold"], targets)
 		else:
-			var dist := distance_to_rooms(state["rooms"], grid, targets, imm)
-			dir = choose_warrior_step(grid, dist, hero["cell"], state["orientation"], targets, imm)
-	var path: Array = [] if dir == null else resolve_step(grid, hero["cell"], dir, imm)
+			var dist := distance_to_rooms(state["rooms"], grid, targets, imm, gold)
+			dir = choose_warrior_step(grid, dist, hero["cell"], state["orientation"], targets, imm, gold)
+	var path: Array = [] if dir == null else resolve_step(grid, hero["cell"], dir, imm, gold)
 	if path.is_empty():
 		hero["stuck"] = true
 		events.append({"type": "wait", "heroId": hero["id"]})
@@ -679,17 +974,23 @@ static func step_run(state: Dictionary) -> Array:
 		state["events"].append_array(events)
 		return events
 	hero["stuck"] = false
-	for to in path:
+	for index in path.size():
+		var to: Vector2i = path[index]
 		var from: Vector2i = hero["cell"]
 		hero["cell"] = to
 		events.append({"type": "move", "heroId": hero["id"], "from": _cell(from), "to": _cell(to), "dir": dir})
 		var next_room = _room_at(grid, to)
+		var teleported := false
 		if next_room != hero["roomId"]:
-			_enter_room(state, hero, next_room, to, events)
-		if state["outcome"] != "in_progress" or hero["dead"]:
+			teleported = _enter_room(state, hero, next_room, to, events, grid)
+		if teleported or state["outcome"] != "in_progress" or hero["dead"] or not hero["spawned"]:
 			break
 		_apply_elemental_cell(state, hero, to, grid, events)
-		if state["outcome"] != "in_progress" or hero["dead"]:
+		if state["outcome"] != "in_progress" or hero["dead"] or not hero["spawned"]:
+			break
+		# A chosen first step always pays; a light cell reached mid-slide is forced.
+		_apply_toll_cell(state, hero, to, grid, events, index > 0)
+		if state["outcome"] != "in_progress" or hero["dead"] or not hero["spawned"]:
 			break
 	state["events"].append_array(events)
 	return events
