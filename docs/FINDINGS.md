@@ -253,3 +253,16 @@ shipped `<pre class="mermaid">`. Not a second-miss gate. Do not promote
 gating. [#51](https://github.com/artofdream/zorg-dungeon/issues/51) stays
 open until the learn page is live and probed.
 
+
+## CF-012: ci journey probes broke when ubuntu-latest moved to 26.04
+- Status: Resolved
+- Recurrence: 1
+- Linked: PR #84 (Godot milestone 1) — first PR after the runner migration
+- Sensor added: .github/workflows/ci.yml
+
+`ci` on PR #84 failed at "Install Playwright Chromium": Playwright 1.55.1
+does not support `ubuntu26.04-x64`, and `ubuntu-latest` began moving to
+Ubuntu 26 on 2026-10-19. Build, typecheck, lint and test had all passed;
+main's last green `ci` was 2026-10-28, before the label moved. The fix pins
+`ci` to `ubuntu-24.04` without changing any web behaviour. Recurrence 1.
+Bumping Playwright later can drop the pin.
