@@ -1,0 +1,138 @@
+name: deploy-godot
+# Godot web preview (ADR-0008): after a merge to main, export the web build
+# and publish it as static files at https://zorg.artof.link/godot/ on the
+# existing Lightsail host. Caddy serves /godot/* from /opt/zorg-godot/current
+# (see deploy/Caddyfile and compose.prod.yaml; deploy-web applies those).
+# Only /opt/zorg-godot is written here: no compose, Caddy, sshd or key
+# changes. Debug export, unsigned; no release or store work.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/godot/**"
+      - ".github/workflows/deploy-godot.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-godot
+  cancel-in-progress: false
+
+env:
+  GODOT_VERSION: 4.7.2-stable
+  GODOT_TEMPLATE_DIR: 4.7.2.stable
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require deploy secret
+        env:
+          LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+        run: |
+          if [ -z "${LIGHTSAIL_SSH_KEY:-}" ]; then
+            echo "::error::LIGHTSAIL_SSH_KEY is not set (same secret deploy-web uses). Do not invent or commit credentials."
+            exit 1
+          fi
+
+      - name: Cache Godot + web export template
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-web
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        if: steps.cache.outputs.cache-hit != 'true'
+        working-directory: ${{ runner.temp }}
+        run: |
+          base=https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}
+          mkdir -p ~/godot ~/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}
+          curl -fsSL -o godot.zip "$base/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip -d ~/godot
+          curl -fsSL -o templates.tpz "$base/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          unzip -q templates.tpz 'templates/web_nothreads_*' 'templates/version.txt'
+          mv templates/* ~/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}/
+          rm -f godot.zip templates.tpz
+
+      - name: Export web build and precompress it
+        working-directory: apps/godot
+        run: |
+          set -euo pipefail
+          godot=~/godot/Godot_v${GODOT_VERSION}_linux.x86_64
+          mkdir -p build/web && touch build/.gdignore
+          "$godot" --headless --path . --import
+          "$godot" --headless --path . --export-debug Web build/web/index.html
+          for f in index.html index.js index.wasm index.pck; do test -s "build/web/$f"; done
+          # Caddy serves these sidecars with `precompressed zstd gzip`.
+          cd build/web
+          for f in *.html *.js *.wasm *.pck; do
+            gzip -9 -k -n "$f"
+            if command -v zstd >/dev/null; then zstd -q -19 -k "$f"; fi
+          done
+          ls -la
+          tar -czf "$RUNNER_TEMP/godot-web.tgz" .
+
+      - name: Publish to /opt/zorg-godot on Lightsail
+        env:
+          LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+        run: |
+          set -euo pipefail
+          SSH_HOST="${LIGHTSAIL_HOST:-zorg.artof.link}"
+          SSH_USER="${LIGHTSAIL_USER:-ubuntu}"
+          KEY_FILE="${RUNNER_TEMP}/lightsail_ssh_key"
+          printf '%s\n' "$LIGHTSAIL_SSH_KEY" | tr -d '\r' > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          mkdir -p "${HOME}/.ssh" && chmod 700 "${HOME}/.ssh"
+          ssh-keyscan -H "$SSH_HOST" >> "${HOME}/.ssh/known_hosts" 2>/dev/null || true
+          remote() {
+            ssh -i "$KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=20 \
+              -o StrictHostKeyChecking=accept-new "${SSH_USER}@${SSH_HOST}" "$@"
+          }
+          REL="${GITHUB_SHA::12}"
+          # Unpack into releases/<sha>, then swap the `current` symlink
+          # atomically (Caddy mounts /opt/zorg-godot, so the swap is seen at
+          # once). Keep the three newest releases.
+          remote "set -euo pipefail
+            sudo install -d -m 755 -o root -g root /opt/zorg-godot /opt/zorg-godot/releases
+            tmp=/opt/zorg-godot/releases/.incoming-$REL
+            sudo rm -rf \$tmp && sudo install -d -m 755 -o root -g root \$tmp
+            sudo tar -xzf - --no-same-owner --no-same-permissions -C \$tmp
+            sudo chmod -R a+rX \$tmp
+            test -s \$tmp/index.html && test -s \$tmp/index.wasm && test -s \$tmp/index.pck
+            sudo rm -rf /opt/zorg-godot/releases/$REL
+            sudo mv -T \$tmp /opt/zorg-godot/releases/$REL
+            sudo ln -sfn releases/$REL /opt/zorg-godot/current.new
+            sudo mv -Tf /opt/zorg-godot/current.new /opt/zorg-godot/current
+            cd /opt/zorg-godot/releases && ls -1t | grep -v '^\\.' | tail -n +4 | xargs -r sudo rm -rf
+            echo published=\$(readlink /opt/zorg-godot/current)" < "$RUNNER_TEMP/godot-web.tgz"
+          rm -f "$KEY_FILE"
+
+      - name: Probe https://zorg.artof.link/godot/
+        # Until deploy-web has applied the /godot/ Caddy route, /godot/ falls
+        # through to the React app, so check Godot-specific content and types.
+        run: |
+          set -u
+          base=https://zorg.artof.link/godot
+          for i in $(seq 1 40); do
+            html=$(curl -fsS "$base/" 2>/dev/null || true)
+            wasm_type=$(curl -fsSI "$base/index.wasm" 2>/dev/null | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')
+            pck_code=$(curl -s -o /dev/null -w '%{http_code}' "$base/index.pck")
+            if printf '%s' "$html" | grep -q 'GODOT_CONFIG' && [ "$wasm_type" = "application/wasm" ] && [ "$pck_code" = 200 ]; then
+              echo "godot preview: index.html OK, index.wasm $wasm_type, index.pck $pck_code"
+              exit 0
+            fi
+            echo "waiting for /godot/ (try $i: wasm type '${wasm_type}', pck $pck_code)"
+            sleep 15
+          done
+          echo "::error::/godot/ is not serving the Godot build (has deploy-web applied the Caddyfile?)"
+          exit 1

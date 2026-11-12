@@ -1,6 +1,6 @@
 name: godot
-# Godot port milestone 1 (ADR-0008). Read-only: no secrets, no deploy, no
-# store upload. The Android debug keystore is generated per run and thrown
+# Godot port (ADR-0008). Read-only: no secrets, no deploy, no store upload
+# (the /godot/ web preview is deployed by deploy-godot.yml after a merge). The Android debug keystore is generated per run and thrown
 # away; only its SHA-256 fingerprint is printed.
 on:
   pull_request:
@@ -34,10 +34,10 @@ jobs:
         run: node packages/engine/scripts/godot-golden.mjs --check
 
   godot:
-    name: parity test + desktop and Android debug builds
+    name: parity test + desktop, web and Android debug builds
     needs: golden
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: apps/godot
@@ -50,7 +50,7 @@ jobs:
           path: |
             ~/godot
             ~/.local/share/godot/export_templates
-          key: godot-${{ env.GODOT_VERSION }}-linux-android
+          key: godot-${{ env.GODOT_VERSION }}-linux-android-web-windows
       - name: Download Godot ${{ env.GODOT_VERSION }}
         if: steps.cache.outputs.cache-hit != 'true'
         working-directory: ${{ runner.temp }}
@@ -60,7 +60,8 @@ jobs:
           curl -fsSL -o godot.zip "$base/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
           unzip -q godot.zip -d ~/godot
           curl -fsSL -o templates.tpz "$base/Godot_v${GODOT_VERSION}_export_templates.tpz"
-          unzip -q templates.tpz 'templates/linux_*x86_64*' 'templates/android_*' 'templates/version.txt'
+          unzip -q templates.tpz 'templates/linux_*x86_64*' 'templates/android_*' \
+            'templates/web_nothreads_*' 'templates/windows_*x86_64*' 'templates/version.txt'
           mv templates/* ~/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}/
           rm -f godot.zip templates.tpz
       - name: Put godot on PATH
@@ -68,7 +69,11 @@ jobs:
           ln -sf ~/godot/Godot_v${GODOT_VERSION}_linux.x86_64 ~/godot/godot
           echo "$HOME/godot" >> "$GITHUB_PATH"
       - name: Import project
-        run: godot --headless --path . --import
+        # build/.gdignore keeps exports and screenshots out of the project's
+        # resources (and out of every exported .pck).
+        run: |
+          mkdir -p build && touch build/.gdignore
+          godot --headless --path . --import
       - name: Parity test (GDScript engine vs TS recording)
         run: godot --headless --path . --script res://tests/parity_test.gd
       - name: Level scene smoke test (headless)
@@ -85,6 +90,25 @@ jobs:
           godot --headless --path . --export-debug Linux build/linux/zorg.x86_64
           test -s build/linux/zorg.x86_64
           ls -la build/linux
+      - name: Export Windows x86_64 (debug, unsigned)
+        run: |
+          mkdir -p build/windows
+          godot --headless --path . --export-debug Windows build/windows/zorg.exe
+          test -s build/windows/zorg.exe
+          ls -la build/windows
+      - name: Export Web (debug, single-threaded, no COOP/COEP needed)
+        run: |
+          mkdir -p build/web
+          godot --headless --path . --export-debug Web build/web/index.html
+          for f in index.html index.js index.wasm index.pck; do test -s "build/web/$f" || { echo "::error::missing build/web/$f"; exit 1; }; done
+          grep -q 'GODOT_THREADS_ENABLED = false' build/web/index.html
+          grep -q '"ensureCrossOriginIsolationHeaders":false' build/web/index.html
+          ls -la build/web
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Web build boots in headless Chrome without cross-origin isolation
+        run: timeout 180 node tests/web_boot_check.mjs build/web build/screens/web.png
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -120,8 +144,20 @@ jobs:
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
+          name: zorg-godot-windows-x86_64
+          path: apps/godot/build/windows/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zorg-godot-web
+          path: apps/godot/build/web/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
           name: zorg-godot-screenshot
-          path: apps/godot/build/screens/level.png
+          path: |
+            apps/godot/build/screens/level.png
+            apps/godot/build/screens/web.png
           if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
