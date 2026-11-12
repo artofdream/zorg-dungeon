@@ -78,6 +78,9 @@ func _open_level(i: int) -> void:
 	room_nodes.clear()
 	placed.clear()
 	selected = ""
+	drag_id = ""
+	drag_active = false
+	ghost.visible = false
 	var err: String = engine.load_level_file(engine.levels[i]["file"])
 	if err != "":
 		title.text = "Cannot load level"
@@ -353,6 +356,7 @@ func end_drag(pos: Vector2) -> void:
 		if drag_from_tray:
 			selected = "" if selected == id else id
 			_refresh_tray()
+			_refresh_validation()            # tap hides the hover preview
 		else:
 			_unplace(id)                     # tap a placed room: back to the tray
 		return
