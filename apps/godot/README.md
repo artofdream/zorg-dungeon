@@ -1,26 +1,35 @@
-# Zorg — Godot 4 port (round 2)
+# Zorg — Godot 4 port (round 3)
 
 A small playable slice of Zorg's Dungeon Maker in Godot 4.7.2 (GDScript
-only). The picker in the top right holds three real contract-1 levels:
+only). The picker in the top right holds six real levels:
 
 | Level | Rooms | Hero | Rule |
 |---|---|---|---|
 | 1.1 Foundations | A, Z, D(2), E(fire) | Warrior(5) | none |
 | 1.2 Contractual Obligation | A, Z, D(1), D(2), D(3) | Warrior(6) | dist(D(1), D(3)) = 2 |
 | 1.3 Around The Bush | A, Z, 2×D(1), E(fire) | Warrior(5) | dist(A, Z) = 2 |
+| 2.2 Elemental Sanctuary | A, Z, E(fire), E(water), E(ice) | Elf(3, {water}), Elf(3, {ice}) | dist(A, Z) != 2 |
+| 2.4 Cross With the Constraint – Watered Down | A, Z, 2×D(1), E(fire), E(water) | Warrior(4) | ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1 |
+| 2.5 Cross With the Constraint | A, Z, 2×D(1), E(fire), E(ice) | Warrior(4) | same as 2.4 |
 
-Round 2 ported one new rule piece for these levels: the **fire room**. Its
-3×3 middle is fire, and each step onto a fire cell costs 1 HP (FR-14).
-Water, ice and poison are still refused. You place the rooms, press Play or
-Step, and watch the Warrior replay what the engine decided. The visuals are
-plain boxes.
+Element rooms (FR-14) have a 3×3 middle of one element. **Fire** costs 1 HP
+per step. **Water** can't be walked into, and a hero who slides onto it dies.
+**Ice** makes a hero slide on in the same direction until a wall (or Z).
+**Poison** gives +1 HP the first time any hero steps on a cell and −3 after
+that. A hero immune to an element ignores those cells completely. The **Elf**
+(FR-21) picks the path to Z that keeps the most HP, then the shortest one,
+then right, up, left, down. You place the rooms, press Play or Step, and
+watch the heroes replay what the engine decided. The visuals are plain boxes.
 The status is **Simulated**: it runs in CI and headless tests, and nobody has
 tried it on a real phone yet.
 
-**Why these levels:** apart from 1.2, every level made only of A/Z/D rooms
-and Warriors also has a spell, a mirror world or a variable. The next easiest
-step was the fire room, which unlocks 1.1 and 1.3. `base-classic-1` has the
-same content as 1.1. 1.4 and later levels need spells.
+**Why these levels:** they are the only real levels made just of A/Z/D/E
+rooms with Warriors and Elves and a rule the engine understands. 2.6, 2.8
+and base-extras 3.5 have prose rules that are still refused. `base-classic-1`
+and `base-classic-3` repeat 1.1 and 2.5. No such level uses poison (those in
+contract 4 also need portals or spells), so poison is checked against a TS
+tick table instead of a level. Spells, mirror worlds and variables are still
+refused (NFR-8).
 
 ## Open and play
 1. Install Godot 4.7.2 (standard build, not .NET).
@@ -28,7 +37,8 @@ same content as 1.1. 1.4 and later levels need spells.
 3. Press **F5**. Drag a room out of the tray onto the board, or tap it and
    then tap a square. A green ghost shows where it will land. A red ghost
    means you can't place it there (off the board or the square is taken), and
-   dropping it there leaves the room where it was. You can drag a placed room
+   dropping it there leaves the room where it was. An orange ghost means the
+   spot is free but doesn't touch any placed room yet. You can drag a placed room
    to move it, or tap it to send it back to the tray. Once every room is
    placed and connected, **Play** and **Step** unlock. You can also step with
    Space.
@@ -44,7 +54,8 @@ godot --headless --path apps/godot --script res://tests/parity_test.gd
 godot --headless --path apps/godot --script res://tests/level_smoke_test.gd
 ```
 The golden script runs the TypeScript engine on fixed placements for each
-level (12 in total) and records every turn to `tests/golden/<level>.json`. It
+level (22 in total) and records every turn to `tests/golden/<level>.json`,
+plus a 24-row element tick table in `tests/golden/elements.json`. It
 also writes the level files the game loads (`levels/*.json`, plus
 `levels/index.json` for the picker) from the real fixtures.
 The parity test replays the same placements in GDScript and fails on any

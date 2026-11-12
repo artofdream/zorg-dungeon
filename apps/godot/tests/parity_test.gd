@@ -16,7 +16,21 @@ func _init() -> void:
 		failures += r.x
 		total += r.y
 	print("parity: %d/%d cases match the TS engine" % [total - failures, total])
-	quit(1 if failures > 0 else 0)
+	var tick_fail := _check_ticks()
+	quit(1 if failures > 0 or tick_fail > 0 else 0)
+
+## FR-14 tick table (elements.ts elementalTick). Poison has no shipped
+## fixture yet, so this table is its only parity check.
+func _check_ticks() -> int:
+	var ticks: Array = _read("res://tests/golden/elements.json")["ticks"]
+	var bad := 0
+	for t in ticks:
+		var got := ZorgEngine.elemental_tick(t["element"], t["immunities"], t["visited"])
+		if not _eq(got, t["tick"]):
+			bad += 1
+			printerr("FAIL tick ", t["element"], " ", t["immunities"], " visited=", t["visited"], ": got ", got, " want ", t["tick"])
+	print("elements: %d/%d ticks match the TS engine" % [ticks.size() - bad, ticks.size()])
+	return bad
 
 func _check_level(entry: Dictionary) -> Vector2i:
 	var failures := 0

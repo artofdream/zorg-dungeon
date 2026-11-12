@@ -1,0 +1,102 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/2.2-elemental-sanctuary.txt",
+  "sourceSha256": "2b785245d797571badc3d6a005197f0625b729f7da47984ff4ec8cc4f22a1ad6",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "E:0",
+      "def": {
+        "type": "E",
+        "element": "fire"
+      }
+    },
+    {
+      "id": "E:1",
+      "def": {
+        "type": "E",
+        "element": "water"
+      }
+    },
+    {
+      "id": "E:2",
+      "def": {
+        "type": "E",
+        "element": "ice"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-2.2",
+    "name": "Elemental Sanctuary",
+    "contractId": "2",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "fire"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "water"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "ice"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Elf",
+        "hp": 3,
+        "immunities": [
+          "water"
+        ]
+      },
+      {
+        "type": "Elf",
+        "hp": 3,
+        "immunities": [
+          "ice"
+        ]
+      }
+    ],
+    "constraints": [
+      {
+        "id": "c-1",
+        "expression": "dist(A, Z) != 2."
+      }
+    ]
+  }
+}

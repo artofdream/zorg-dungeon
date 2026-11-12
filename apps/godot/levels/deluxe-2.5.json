@@ -1,0 +1,99 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/2.5-cross-with-the-constraint.txt",
+  "sourceSha256": "b5895df93e8827405c4c59e13bb9921468dfd2a15490276eb6c819547bace2ab",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "D:0",
+      "def": {
+        "type": "D",
+        "damage": 1
+      }
+    },
+    {
+      "id": "D:1",
+      "def": {
+        "type": "D",
+        "damage": 1
+      }
+    },
+    {
+      "id": "E:0",
+      "def": {
+        "type": "E",
+        "element": "fire"
+      }
+    },
+    {
+      "id": "E:1",
+      "def": {
+        "type": "E",
+        "element": "ice"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-2.5",
+    "name": "Cross With the Constraint",
+    "contractId": "2",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 2,
+        "room": {
+          "type": "D",
+          "damage": 1
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "fire"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "ice"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Warrior",
+        "hp": 4
+      }
+    ],
+    "constraints": [
+      {
+        "id": "c-1",
+        "expression": "∃s ∈ Π, dist(s, A) = dist(s, Z) = 1."
+      }
+    ]
+  }
+}

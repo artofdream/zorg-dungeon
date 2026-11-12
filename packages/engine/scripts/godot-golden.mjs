@@ -3,8 +3,8 @@
 // the levels the Godot port ships, with fixed placements, and writes
 // a turn-by-turn recording the GDScript engine must reproduce exactly.
 // Covers FR-5–FR-8 (placement), FR-11–FR-13 (A/Z/D), FR-20 (Warrior),
-// FR-26–FR-31 (scheduler), FR-14 (fire only), FR-10 / FR-43 (dist
-// constraint + win/loss).
+// FR-26–FR-31 (scheduler), FR-14 (fire, water, ice, poison + immunity),
+// FR-21 (Elf), FR-10 / FR-43 (dist constraints + win/loss).
 //
 // Usage (after `pnpm --filter @zorg/engine build`):
 //   node packages/engine/scripts/godot-golden.mjs          # write files
@@ -15,6 +15,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   createRun,
+  elementalTick,
   enumerateSuppliedRooms,
   parseLevel,
   scoreLevel,
@@ -26,6 +27,7 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "..", "..", "..");
 const LEVEL_INDEX_OUT = "apps/godot/levels/index.json";
+const ELEMENTS_OUT = "apps/godot/tests/golden/elements.json";
 
 // Fixed placements (room grid coordinates, orientation 0 unless stated).
 // Room ids come from enumerateSuppliedRooms (A:0, Z:0, D:0, D:1, …, E:0).
@@ -106,6 +108,74 @@ const LEVELS = [
         name: "loss-straight",
         note: "dist(A, Z) = 2 straight through one D(1): the Warrior walks in with HP to spare.",
         positions: { "A:0": [0, 0], "D:0": [1, 0], "Z:0": [2, 0], "D:1": [0, 1], "E:0": [1, 1] },
+      },
+    ],
+  },
+  {
+    source: "packages/engine/fixtures/contracts/2.2-elemental-sanctuary.txt",
+    why: "Smallest Elf level: A, Z, fire, water, ice rooms; Elf(3,{water}) and Elf(3,{ice}); rule dist(A, Z) != 2.",
+    cases: [
+      {
+        name: "win-sanctuary",
+        note: "The water-immune Elf slides off the ice into fire and burns; the ice-immune Elf walks over the ice and burns too. dist(A, Z) = 3.",
+        positions: { "A:0": [0, 0], "Z:0": [1, 2], "E:0": [0, 2], "E:1": [1, 0], "E:2": [0, 1] },
+      },
+      {
+        name: "loss-elves",
+        note: "The water-immune Elf slides through water into fire and dies; the ice-immune Elf walks over the ice into Z.",
+        positions: { "A:0": [0, 0], "Z:0": [1, 1], "E:0": [1, 2], "E:1": [0, 2], "E:2": [0, 1] },
+      },
+      {
+        name: "loss-keeps-hp",
+        note: "Fire and water both touch Z. Through fire is just as short but costs HP, so the water-immune Elf walks through water and reaches Z (FR-21).",
+        positions: { "A:0": [0, 0], "Z:0": [1, 1], "E:0": [1, 0], "E:1": [0, 1], "E:2": [0, 2] },
+      },
+      {
+        name: "stalemate-water",
+        note: "The water-immune Elf crosses water, slides on ice and burns; the ice-immune Elf cannot cross water and waits.",
+        positions: { "A:0": [0, 0], "Z:0": [0, 2], "E:0": [1, 2], "E:1": [1, 0], "E:2": [1, 1] },
+      },
+    ],
+  },
+  {
+    source: "packages/engine/fixtures/contracts/2.4-cross-with-the-constraint-watered-down.txt",
+    why: "Warrior(4) with A, Z, 2×D(1), fire and water: water blocks the short way; rule ∃s ∈ Π, dist(s,A) = dist(s,Z) = 1.",
+    cases: [
+      {
+        name: "win-around-the-water",
+        note: "Water sits between A and Z, so the Warrior goes round through D(1), D(1) and fire and dies.",
+        positions: { "A:0": [0, 0], "Z:0": [0, 2], "D:0": [1, 0], "D:1": [1, 1], "E:0": [1, 2], "E:1": [0, 1] },
+      },
+      {
+        name: "constraint-fails",
+        note: "Same walk, but the water room moves away: no room is 1 from both A and Z.",
+        positions: { "A:0": [0, 0], "Z:0": [0, 2], "D:0": [1, 0], "D:1": [1, 1], "E:0": [1, 2], "E:1": [2, 0] },
+      },
+      {
+        name: "stalemate-no-path",
+        note: "Water cuts the only way to Z: the Warrior has no reachable Z and waits.",
+        positions: { "A:0": [0, 0], "Z:0": [0, 2], "D:0": [1, 0], "D:1": [1, 1], "E:0": [2, 0], "E:1": [0, 1] },
+      },
+    ],
+  },
+  {
+    source: "packages/engine/fixtures/contracts/2.5-cross-with-the-constraint.txt",
+    why: "Same as 2.4 with ice instead of water: the Warrior slides across the ice room.",
+    cases: [
+      {
+        name: "win-ice-slide",
+        note: "The Warrior steps on ice and slides into D(1); three fire cells then finish it before Z.",
+        positions: { "A:0": [0, 0], "Z:0": [1, 1], "D:0": [0, 2], "D:1": [2, 1], "E:0": [1, 2], "E:1": [0, 1] },
+      },
+      {
+        name: "loss-slide-into-z",
+        note: "Fire takes 3 HP, then an ice slide carries the Warrior into Z with 1 HP left.",
+        positions: { "A:0": [0, 0], "Z:0": [1, 2], "D:0": [0, 1], "D:1": [0, 2], "E:0": [1, 0], "E:1": [1, 1] },
+      },
+      {
+        name: "constraint-fails",
+        note: "D(1), then an ice slide into fire kills the Warrior, but no room is 1 from both A and Z.",
+        positions: { "A:0": [0, 0], "Z:0": [0, 2], "D:0": [1, 0], "D:1": [2, 0], "E:0": [1, 2], "E:1": [1, 1] },
       },
     ],
   },
@@ -197,6 +267,17 @@ function build() {
     index.push(built.entry);
     Object.assign(files, built.files);
   }
+  // FR-14 tick table: every element × immune/not × poison seen/not. No
+  // shipped fixture has poison, so this is its only parity check.
+  const ticks = [];
+  for (const element of ["fire", "water", "ice", "poison"]) {
+    for (const immunities of [[], [element], ["fire", "water", "ice", "poison"].filter((e) => e !== element)]) {
+      for (const visited of [false, true]) {
+        ticks.push({ element, immunities, visited, tick: elementalTick(element, immunities, visited) });
+      }
+    }
+  }
+  files[ELEMENTS_OUT] = JSON.stringify({ generatedBy: "packages/engine/scripts/godot-golden.mjs", ticks }, null, 2) + "\n";
   files[LEVEL_INDEX_OUT] = JSON.stringify({ generatedBy: "packages/engine/scripts/godot-golden.mjs", levels: index }, null, 2) + "\n";
   return files;
 }

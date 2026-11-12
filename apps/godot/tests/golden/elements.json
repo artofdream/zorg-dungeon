@@ -1,0 +1,317 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "ticks": [
+    {
+      "element": "fire",
+      "immunities": [],
+      "visited": false,
+      "tick": {
+        "hpDelta": -1,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "fire",
+      "immunities": [],
+      "visited": true,
+      "tick": {
+        "hpDelta": -1,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "fire",
+      "immunities": [
+        "fire"
+      ],
+      "visited": false,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": true
+      }
+    },
+    {
+      "element": "fire",
+      "immunities": [
+        "fire"
+      ],
+      "visited": true,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": true
+      }
+    },
+    {
+      "element": "fire",
+      "immunities": [
+        "water",
+        "ice",
+        "poison"
+      ],
+      "visited": false,
+      "tick": {
+        "hpDelta": -1,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "fire",
+      "immunities": [
+        "water",
+        "ice",
+        "poison"
+      ],
+      "visited": true,
+      "tick": {
+        "hpDelta": -1,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "water",
+      "immunities": [],
+      "visited": false,
+      "tick": {
+        "hpDelta": 0,
+        "die": true,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "water",
+      "immunities": [],
+      "visited": true,
+      "tick": {
+        "hpDelta": 0,
+        "die": true,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "water",
+      "immunities": [
+        "water"
+      ],
+      "visited": false,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": true
+      }
+    },
+    {
+      "element": "water",
+      "immunities": [
+        "water"
+      ],
+      "visited": true,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": true
+      }
+    },
+    {
+      "element": "water",
+      "immunities": [
+        "fire",
+        "ice",
+        "poison"
+      ],
+      "visited": false,
+      "tick": {
+        "hpDelta": 0,
+        "die": true,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "water",
+      "immunities": [
+        "fire",
+        "ice",
+        "poison"
+      ],
+      "visited": true,
+      "tick": {
+        "hpDelta": 0,
+        "die": true,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "ice",
+      "immunities": [],
+      "visited": false,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "ice",
+      "immunities": [],
+      "visited": true,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "ice",
+      "immunities": [
+        "ice"
+      ],
+      "visited": false,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": true
+      }
+    },
+    {
+      "element": "ice",
+      "immunities": [
+        "ice"
+      ],
+      "visited": true,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": true
+      }
+    },
+    {
+      "element": "ice",
+      "immunities": [
+        "fire",
+        "water",
+        "poison"
+      ],
+      "visited": false,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "ice",
+      "immunities": [
+        "fire",
+        "water",
+        "poison"
+      ],
+      "visited": true,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": false
+      }
+    },
+    {
+      "element": "poison",
+      "immunities": [],
+      "visited": false,
+      "tick": {
+        "hpDelta": 1,
+        "die": false,
+        "recordPoisonVisit": true,
+        "ignored": false
+      }
+    },
+    {
+      "element": "poison",
+      "immunities": [],
+      "visited": true,
+      "tick": {
+        "hpDelta": -3,
+        "die": false,
+        "recordPoisonVisit": true,
+        "ignored": false
+      }
+    },
+    {
+      "element": "poison",
+      "immunities": [
+        "poison"
+      ],
+      "visited": false,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": true
+      }
+    },
+    {
+      "element": "poison",
+      "immunities": [
+        "poison"
+      ],
+      "visited": true,
+      "tick": {
+        "hpDelta": 0,
+        "die": false,
+        "recordPoisonVisit": false,
+        "ignored": true
+      }
+    },
+    {
+      "element": "poison",
+      "immunities": [
+        "fire",
+        "water",
+        "ice"
+      ],
+      "visited": false,
+      "tick": {
+        "hpDelta": 1,
+        "die": false,
+        "recordPoisonVisit": true,
+        "ignored": false
+      }
+    },
+    {
+      "element": "poison",
+      "immunities": [
+        "fire",
+        "water",
+        "ice"
+      ],
+      "visited": true,
+      "tick": {
+        "hpDelta": -3,
+        "die": false,
+        "recordPoisonVisit": true,
+        "ignored": false
+      }
+    }
+  ]
+}

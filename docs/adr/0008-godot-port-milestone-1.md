@@ -27,6 +27,11 @@ Round 2 (stacked on milestone 1) adds levels 1.1 and 1.3. The only new rule
 it ports is the fire room (FR-14, fire only), and it comes with its own
 golden cases.
 
+Round 3 (stacked on round 2) ports water, ice and poison with immunities
+(FR-14) and the Elf (FR-21), plus the "∃s ∈ Π" distance rule. It adds levels
+2.2, 2.4 and 2.5. Poison has no qualifying fixture, so it is checked against
+a TS tick table.
+
 ## Consequences
 
 ADR-0002's concern is handled by the parity gate, not by trust. Each new

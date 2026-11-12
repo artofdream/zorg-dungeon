@@ -21,6 +21,27 @@
       "file": "res://levels/deluxe-1.3.json",
       "golden": "res://tests/golden/deluxe-1.3.json",
       "why": "A, Z, 2×D(1), one fire room, Warrior(5), rule dist(A, Z) = 2 (same distance form as 1.2)."
+    },
+    {
+      "id": "deluxe-2.2",
+      "name": "Elemental Sanctuary",
+      "file": "res://levels/deluxe-2.2.json",
+      "golden": "res://tests/golden/deluxe-2.2.json",
+      "why": "Smallest Elf level: A, Z, fire, water, ice rooms; Elf(3,{water}) and Elf(3,{ice}); rule dist(A, Z) != 2."
+    },
+    {
+      "id": "deluxe-2.4",
+      "name": "Cross With the Constraint - Watered Down",
+      "file": "res://levels/deluxe-2.4.json",
+      "golden": "res://tests/golden/deluxe-2.4.json",
+      "why": "Warrior(4) with A, Z, 2×D(1), fire and water: water blocks the short way; rule ∃s ∈ Π, dist(s,A) = dist(s,Z) = 1."
+    },
+    {
+      "id": "deluxe-2.5",
+      "name": "Cross With the Constraint",
+      "file": "res://levels/deluxe-2.5.json",
+      "golden": "res://tests/golden/deluxe-2.5.json",
+      "why": "Same as 2.4 with ice instead of water: the Warrior slides across the ice room."
     }
   ]
 }
