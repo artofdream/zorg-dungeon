@@ -10,6 +10,7 @@ extends RefCounted
 ##   pathing.ts    walk grid, distanceToRooms, chooseWarriorStep (FR-20)
 ##   weights.ts    reachable rooms + default {Z:1} weights
 ##   simulation.ts createRun / stepRun for A, Z, D (FR-11–FR-13, FR-26–FR-31)
+##   elements.ts   E(fire) only: 1 damage per entry onto a green cell (FR-14)
 ##   constraints.ts dist(r, s) compare only (FR-10, FR-43)
 ## Everything else fails closed (NFR-8): other room types, other heroes,
 ## spells, variables, mirror worlds -> load_level() returns an error.
@@ -18,7 +19,8 @@ extends RefCounted
 const ROOM_SIZE := 5
 const BASE_TIE := ["right", "up", "left", "down"]
 const DELTA := {"right": Vector2i(1, 0), "up": Vector2i(0, 1), "left": Vector2i(-1, 0), "down": Vector2i(0, -1)}
-const SUPPORTED_ROOMS := ["A", "Z", "D"]
+const SUPPORTED_ROOMS := ["A", "Z", "D", "E"]
+const SUPPORTED_ELEMENTS := ["fire"]
 
 # ---------------------------------------------------------------- level
 
@@ -34,6 +36,8 @@ static func load_level(data: Dictionary) -> Dictionary:
 		var t: String = s["def"]["type"]
 		if not SUPPORTED_ROOMS.has(t):
 			return _fail("Room type %s is not ported yet (NFR-8 fail-closed)." % t)
+		if t == "E" and not SUPPORTED_ELEMENTS.has(String(s["def"].get("element", ""))):
+			return _fail("E(%s) is not ported yet; only fire is (NFR-8 fail-closed)." % s["def"].get("element", "?"))
 		if t == "D" and not (s["def"]["damage"] is float or s["def"]["damage"] is int):
 			return _fail("D room %s has a non-numeric damage." % s["id"])
 	for h in level.get("heroes", []):
@@ -77,8 +81,20 @@ static func rotate_tile(tile: Array, orientation: int) -> Array:
 		cur = nxt
 	return cur
 
+## FR-14 default E tile: the 4-hatch cross with the 3×3 interior green.
+static func elemental_tile() -> Array:
+	var tile := default_tile()
+	for y in range(1, ROOM_SIZE - 1):
+		for x in range(1, ROOM_SIZE - 1):
+			if tile[y][x] != "wall":
+				tile[y][x] = "green"
+	return tile
+
+static func base_tile(def: Dictionary) -> Array:
+	return elemental_tile() if def.get("type", "") == "E" else default_tile()
+
 static func resolved_tile(room: Dictionary) -> Array:
-	return rotate_tile(default_tile(), int(room["orientation"]))
+	return rotate_tile(base_tile(room["def"]), int(room["orientation"]))
 
 static func rotate_cardinal(dir: String, orientation: int) -> String:
 	var order := ["right", "up", "left", "down"]
@@ -214,7 +230,11 @@ static func build_walk_grid(rooms: Array) -> Dictionary:
 		for ly in ROOM_SIZE:
 			for lx in ROOM_SIZE:
 				var w := Vector2i(int(room["x"]) * ROOM_SIZE + lx, int(room["y"]) * ROOM_SIZE + ly)
-				cells[_key(w)] = {"world": w, "roomId": room["id"], "kind": tile[ly][lx]}
+				var kind: String = tile[ly][lx]
+				var element := ""
+				if kind == "green" and room["def"]["type"] == "E":
+					element = String(room["def"]["element"])
+				cells[_key(w)] = {"world": w, "roomId": room["id"], "kind": kind, "element": element}
 	return cells
 
 static func _passable(grid: Dictionary, pos: Vector2i) -> bool:
@@ -401,6 +421,15 @@ static func _enter_room(state: Dictionary, hero: Dictionary, room_id: String, ev
 		events.append({"type": "damage", "heroId": hero["id"], "amount": amount, "hp": hero["hp"]})
 	_check_death(state, hero, events)
 
+## FR-14 fire: 1 damage on every entry onto a green fire cell (elements.ts).
+static func _apply_elemental_cell(state: Dictionary, hero: Dictionary, cell: Vector2i, grid: Dictionary, events: Array) -> void:
+	var walk = grid.get(_key(cell))
+	if walk == null or walk["element"] != "fire":
+		return
+	hero["hp"] -= 1
+	events.append({"type": "damage", "heroId": hero["id"], "amount": 1, "hp": hero["hp"]})
+	_check_death(state, hero, events)
+
 static func _maybe_settle(state: Dictionary, events: Array) -> void:
 	if state["outcome"] != "in_progress":
 		return
@@ -436,6 +465,7 @@ static func step_run(state: Dictionary) -> Array:
 		hero["roomId"] = spawn["id"]
 		events.append({"type": "spawn", "heroId": hero["id"], "cell": _cell(cell), "roomId": spawn["id"]})
 		_enter_room(state, hero, spawn["id"], events)
+		_apply_elemental_cell(state, hero, cell, grid, events)
 		state["events"].append_array(events)
 		return events
 	var reachable := reachable_room_ids(grid, hero["cell"])
@@ -459,6 +489,9 @@ static func step_run(state: Dictionary) -> Array:
 		var next_room = _room_at(grid, to)
 		if next_room != hero["roomId"]:
 			_enter_room(state, hero, next_room, events)
+		if state["outcome"] != "in_progress" or hero["dead"]:
+			break
+		_apply_elemental_cell(state, hero, to, grid, events)
 		if state["outcome"] != "in_progress" or hero["dead"]:
 			break
 	state["events"].append_array(events)

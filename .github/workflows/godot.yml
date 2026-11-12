@@ -37,6 +37,7 @@ jobs:
     name: parity test + desktop and Android debug builds
     needs: golden
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: apps/godot
@@ -70,8 +71,14 @@ jobs:
         run: godot --headless --path . --import
       - name: Parity test (GDScript engine vs TS recording)
         run: godot --headless --path . --script res://tests/parity_test.gd
-      - name: Level scene smoke test
-        run: godot --headless --path . --script res://tests/level_smoke_test.gd
+      - name: Level scene smoke test (headless)
+        run: timeout 120 godot --headless --path . --script res://tests/level_smoke_test.gd
+      - name: Level scene smoke test with real GUI input (Xvfb) + screenshot
+        run: |
+          command -v xvfb-run >/dev/null || (sudo apt-get update -q && sudo apt-get install -yq xvfb)
+          mkdir -p build/screens
+          timeout 120 xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver opengl3 \
+            --script res://tests/level_smoke_test.gd -- --shot=build/screens/level.png
       - name: Export desktop (Linux x86_64, debug)
         run: |
           mkdir -p build/linux
@@ -111,6 +118,11 @@ jobs:
           name: zorg-godot-linux-x86_64
           path: apps/godot/build/linux/
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zorg-godot-screenshot
+          path: apps/godot/build/screens/level.png
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
           name: zorg-godot-android-debug-apk

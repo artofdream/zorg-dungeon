@@ -1,0 +1,85 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/1.3-around-the-bush.txt",
+  "sourceSha256": "e77e315d9d3df245b8d5fddaa89c86250532f2ba7aa26075be3cbcb277ba9afa",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "D:0",
+      "def": {
+        "type": "D",
+        "damage": 1
+      }
+    },
+    {
+      "id": "D:1",
+      "def": {
+        "type": "D",
+        "damage": 1
+      }
+    },
+    {
+      "id": "E:0",
+      "def": {
+        "type": "E",
+        "element": "fire"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-1.3",
+    "name": "Around The Bush",
+    "contractId": "1",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 2,
+        "room": {
+          "type": "D",
+          "damage": 1
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "fire"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Warrior",
+        "hp": 5
+      }
+    ],
+    "constraints": [
+      {
+        "id": "c-1",
+        "expression": "dist(A, Z) = 2."
+      }
+    ]
+  }
+}

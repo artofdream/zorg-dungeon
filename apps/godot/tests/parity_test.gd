@@ -1,21 +1,30 @@
 extends SceneTree
-## Headless parity check (ADR-0008). Replays every placement in
-## tests/golden/deluxe-1.2.json through the GDScript engine and fails unless
+## Headless parity check (ADR-0008). For every level in levels/index.json,
+## replays each placement in its tests/golden/<id>.json through the GDScript
+## engine and fails unless
 ## validation codes, every turn's events, the run outcome and the score match
 ## the TypeScript engine's recording exactly.
 ##   godot --headless --path apps/godot --script res://tests/parity_test.gd
 
-const LEVEL_PATH := "res://levels/deluxe-1.2.json"
-const GOLDEN_PATH := "res://tests/golden/deluxe-1.2.json"
+const INDEX_PATH := "res://levels/index.json"
 
 func _init() -> void:
 	var failures := 0
-	var loaded := ZorgEngine.load_level(_read(LEVEL_PATH))
+	var total := 0
+	for entry in _read(INDEX_PATH)["levels"]:
+		var r := _check_level(entry)
+		failures += r.x
+		total += r.y
+	print("parity: %d/%d cases match the TS engine" % [total - failures, total])
+	quit(1 if failures > 0 else 0)
+
+func _check_level(entry: Dictionary) -> Vector2i:
+	var failures := 0
+	var loaded := ZorgEngine.load_level(_read(entry["file"]))
 	if not loaded["ok"]:
-		printerr("load_level failed: ", loaded["error"])
-		quit(1)
-		return
-	var golden: Dictionary = _read(GOLDEN_PATH)
+		printerr("FAIL ", entry["id"], " load_level: ", loaded["error"])
+		return Vector2i(1, 1)
+	var golden: Dictionary = _read(entry["golden"])
 	var by_id := {}
 	for s in loaded["supplied"]:
 		by_id[s["id"]] = s
@@ -42,12 +51,11 @@ func _init() -> void:
 			if not _eq(sc, c["score"]):
 				problems.append("score %s != %s" % [JSON.stringify(sc), JSON.stringify(c["score"])])
 		if problems.is_empty():
-			print("PASS ", c["name"])
+			print("PASS ", entry["id"], " ", c["name"])
 		else:
 			failures += 1
-			printerr("FAIL ", c["name"], ": ", "; ".join(problems))
-	print("parity: %d/%d cases match the TS engine" % [golden["cases"].size() - failures, golden["cases"].size()])
-	quit(1 if failures > 0 else 0)
+			printerr("FAIL ", entry["id"], " ", c["name"], ": ", "; ".join(problems))
+	return Vector2i(failures, golden["cases"].size())
 
 func _read(path: String) -> Dictionary:
 	var text := FileAccess.get_file_as_string(path)

@@ -1,0 +1,26 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "levels": [
+    {
+      "id": "deluxe-1.1",
+      "name": "Foundations",
+      "file": "res://levels/deluxe-1.1.json",
+      "golden": "res://tests/golden/deluxe-1.1.json",
+      "why": "First level of contract 1: A, Z, D(2), one fire room, Warrior(5), no rule."
+    },
+    {
+      "id": "deluxe-1.2",
+      "name": "Contractual Obligation",
+      "file": "res://levels/deluxe-1.2.json",
+      "golden": "res://tests/golden/deluxe-1.2.json",
+      "why": "A/Z/D only, one Warrior, no spells, one dist rule (milestone 1)."
+    },
+    {
+      "id": "deluxe-1.3",
+      "name": "Around The Bush",
+      "file": "res://levels/deluxe-1.3.json",
+      "golden": "res://tests/golden/deluxe-1.3.json",
+      "why": "A, Z, 2×D(1), one fire room, Warrior(5), rule dist(A, Z) = 2 (same distance form as 1.2)."
+    }
+  ]
+}
