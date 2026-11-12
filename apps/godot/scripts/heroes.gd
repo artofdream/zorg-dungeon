@@ -5,6 +5,7 @@ const CELL := 1.0
 
 var _figures := {}
 var _hp_labels := {}
+var _move_tweens := {}
 var names := {}      # hero id -> "Warrior" / "Elf {water}" (set by the level)
 
 func _name(id: int) -> String:
@@ -13,7 +14,17 @@ func _name(id: int) -> String:
 static func cell_to_world(c: Dictionary) -> Vector3:
 	return Vector3((float(c["x"]) + 0.5) * CELL, 0.0, -(float(c["y"]) + 0.5) * CELL)
 
+## A move tween writes position for 0.12s. Kill it before a teleport or a
+## free, or the figure slides back to the old cell (or is freed mid-slide).
+func _kill_move(id: int) -> void:
+	var tw: Tween = _move_tweens.get(id)
+	if tw and tw.is_valid():
+		tw.kill()
+	_move_tweens.erase(id)
+
 func clear() -> void:
+	for id in _move_tweens.keys():
+		_kill_move(id)
 	for child in get_children():
 		child.queue_free()
 	_figures.clear()
@@ -56,8 +67,10 @@ func apply_turn(events: Array) -> String:
 			"move":
 				var f: Node3D = _figures.get(id)
 				if f:
+					_kill_move(id)
 					var tw := create_tween()
 					tw.tween_property(f, "position", cell_to_world(e["to"]), 0.12)
+					_move_tweens[id] = tw
 			"enter":
 				lines.append("enters %s" % e["roomId"])
 			"damage":
@@ -80,11 +93,13 @@ func apply_turn(events: Array) -> String:
 			"teleport":
 				var f: Node3D = _figures.get(id)
 				if f:
+					_kill_move(id)
 					f.position = cell_to_world(e["to"])
 				lines.append("%s teleports to %s" % [_name(id), e["toRoomId"]])
 			"wait_room":
 				var f: Node3D = _figures.get(id)
 				if f:
+					_kill_move(id)
 					f.queue_free()
 					_figures.erase(id)
 					_hp_labels.erase(id)
