@@ -1,17 +1,20 @@
 class_name ZorgEngine
 extends RefCounted
-## Pure-logic GDScript port of the slice of packages/engine that one
-## Warrior-only level needs (ADR-0008). No nodes, no visuals: scenes call
+## Pure-logic GDScript port of the slice of packages/engine that the
+## shipped levels need (ADR-0008). No nodes, no visuals: scenes call
 ## this and replay its events; they never change outcomes.
 ##
 ## Ported from the TS engine (the formal spec GAME_SPEC.md wins):
 ##   tiles.ts      default 4-hatch 5x5 tile, CCW rotation, tie order (FR-31)
 ##   placement.ts  validateLayout (FR-5–FR-8)
-##   pathing.ts    walk grid, distanceToRooms, chooseWarriorStep (FR-20)
+##   pathing.ts    walk grid, water/ice movement, distanceToRooms,
+##                 chooseWarriorStep (FR-14, FR-20)
+##   elf.ts        chooseElfStep: most HP kept, then shortest (FR-21)
 ##   weights.ts    reachable rooms + default {Z:1} weights
-##   simulation.ts createRun / stepRun for A, Z, D (FR-11–FR-13, FR-26–FR-31)
-##   elements.ts   E(fire) only: 1 damage per entry onto a green cell (FR-14)
-##   constraints.ts dist(r, s) compare only (FR-10, FR-43)
+##   simulation.ts createRun / stepRun for A, Z, D, E (FR-11–FR-14, FR-26–FR-31)
+##   elements.ts   fire, water, ice, poison + immunities (FR-14)
+##   constraints.ts dist(r, s) compare and "∃s ∈ Π, dist(s,A) = dist(s,Z) = n"
+##                 (FR-10, FR-43)
 ## Everything else fails closed (NFR-8): other room types, other heroes,
 ## spells, variables, mirror worlds -> load_level() returns an error.
 ## Room C, the Gunner duration and FR-4 gating are not touched here.
@@ -20,7 +23,8 @@ const ROOM_SIZE := 5
 const BASE_TIE := ["right", "up", "left", "down"]
 const DELTA := {"right": Vector2i(1, 0), "up": Vector2i(0, 1), "left": Vector2i(-1, 0), "down": Vector2i(0, -1)}
 const SUPPORTED_ROOMS := ["A", "Z", "D", "E"]
-const SUPPORTED_ELEMENTS := ["fire"]
+const SUPPORTED_ELEMENTS := ["fire", "water", "ice", "poison"]
+const SUPPORTED_HEROES := ["Warrior", "Elf"]
 
 # ---------------------------------------------------------------- level
 
@@ -37,14 +41,14 @@ static func load_level(data: Dictionary) -> Dictionary:
 		if not SUPPORTED_ROOMS.has(t):
 			return _fail("Room type %s is not ported yet (NFR-8 fail-closed)." % t)
 		if t == "E" and not SUPPORTED_ELEMENTS.has(String(s["def"].get("element", ""))):
-			return _fail("E(%s) is not ported yet; only fire is (NFR-8 fail-closed)." % s["def"].get("element", "?"))
+			return _fail("E(%s) is not a ported element (NFR-8 fail-closed)." % s["def"].get("element", "?"))
 		if t == "D" and not (s["def"]["damage"] is float or s["def"]["damage"] is int):
 			return _fail("D room %s has a non-numeric damage." % s["id"])
 	for h in level.get("heroes", []):
-		if typeof(h) != TYPE_DICTIONARY or h.get("type", "") != "Warrior":
-			return _fail("Only Warrior heroes are ported yet (NFR-8 fail-closed).")
+		if typeof(h) != TYPE_DICTIONARY or not SUPPORTED_HEROES.has(h.get("type", "")):
+			return _fail("Only Warrior and Elf heroes are ported yet (NFR-8 fail-closed).")
 		if not (h["hp"] is float or h["hp"] is int):
-			return _fail("Warrior HP is unresolved.")
+			return _fail("Hero HP is unresolved.")
 	return {"ok": true, "error": "", "level": level, "supplied": supplied}
 
 static func _fail(msg: String) -> Dictionary:
@@ -234,31 +238,78 @@ static func build_walk_grid(rooms: Array) -> Dictionary:
 				var element := ""
 				if kind == "green" and room["def"]["type"] == "E":
 					element = String(room["def"]["element"])
-				cells[_key(w)] = {"world": w, "roomId": room["id"], "kind": kind, "element": element}
+				cells[_key(w)] = {"world": w, "roomId": room["id"], "roomType": room["def"]["type"], "kind": kind, "element": element}
 	return cells
 
-static func _passable(grid: Dictionary, pos: Vector2i) -> bool:
+# ---------------------------------------------------------------- elements (FR-14)
+
+## FR-21 / FR-14: only an Elf lists immunities (valid element names only).
+static func hero_immunities(def: Dictionary) -> Array:
+	if def.get("type", "") != "Elf":
+		return []
+	return (def.get("immunities", []) as Array).filter(func(e): return SUPPORTED_ELEMENTS.has(e))
+
+## elements.ts elementalTick: immune -> ignored; fire -1; water dies; ice 0
+## (movement only); poison +1 on a cell's first visit, -3 after.
+static func elemental_tick(element: String, immunities: Array, poison_visited: bool) -> Dictionary:
+	if element == "" or immunities.has(element):
+		return {"hpDelta": 0, "die": false, "recordPoisonVisit": false, "ignored": true}
+	match element:
+		"fire": return {"hpDelta": -1, "die": false, "recordPoisonVisit": false, "ignored": false}
+		"water": return {"hpDelta": 0, "die": true, "recordPoisonVisit": false, "ignored": false}
+		"ice": return {"hpDelta": 0, "die": false, "recordPoisonVisit": false, "ignored": false}
+		"poison": return {"hpDelta": -3 if poison_visited else 1, "die": false, "recordPoisonVisit": true, "ignored": false}
+	return {"hpDelta": 0, "die": false, "recordPoisonVisit": false, "ignored": true}
+
+## Water is not a voluntary step unless the hero is immune (pathing.ts isPassable).
+static func _passable(grid: Dictionary, pos: Vector2i, immunities: Array = []) -> bool:
+	var cell = grid.get(_key(pos))
+	if cell == null or cell["kind"] == "wall":
+		return false
+	if cell["element"] == "water" and not immunities.has("water"):
+		return false
+	return true
+
+static func _open(grid: Dictionary, pos: Vector2i) -> bool:
 	var cell = grid.get(_key(pos))
 	return cell != null and cell["kind"] != "wall"
 
-## A/Z/D tiles carry no ice, water or tolls, so a step is one cell.
-static func resolve_step(grid: Dictionary, from: Vector2i, dir: String) -> Array:
+## pathing.ts resolveStep: the first cell must be passable; entering ice
+## (not immune) slides on until a wall or a missing cell, stopping in Z.
+## The slide may land on water (the simulator then kills the hero).
+static func resolve_step(grid: Dictionary, from: Vector2i, dir: String, immunities: Array = []) -> Array:
 	var first: Vector2i = from + DELTA[dir]
-	if not _passable(grid, first):
+	if not _passable(grid, first, immunities):
 		return []
-	return [first]
+	var path: Array = [first]
+	var fc: Dictionary = grid[_key(first)]
+	if fc["element"] != "ice" or immunities.has("ice"):
+		return path
+	if fc["roomType"] == "Z":
+		return path
+	var cur := first
+	while true:
+		var nxt: Vector2i = cur + DELTA[dir]
+		var cell = grid.get(_key(nxt))
+		if cell == null or cell["kind"] == "wall":
+			break
+		path.append(nxt)
+		if cell["roomType"] == "Z":
+			break
+		cur = nxt
+	return path
 
 static func _room_at(grid: Dictionary, pos: Vector2i) -> Variant:
 	var cell = grid.get(_key(pos))
 	return null if cell == null else cell["roomId"]
 
-static func distance_to_rooms(rooms: Array, grid: Dictionary, targets: Array) -> Dictionary:
+static func distance_to_rooms(rooms: Array, grid: Dictionary, targets: Array, immunities: Array = []) -> Dictionary:
 	var incoming := {}
 	for cell in grid.values():
-		if not _passable(grid, cell["world"]):
+		if not _passable(grid, cell["world"], immunities):
 			continue
 		for d in BASE_TIE:
-			var path := resolve_step(grid, cell["world"], d)
+			var path := resolve_step(grid, cell["world"], d, immunities)
 			if path.is_empty():
 				continue
 			var land: Vector2i = path[path.size() - 1]
@@ -279,7 +330,7 @@ static func distance_to_rooms(rooms: Array, grid: Dictionary, targets: Array) ->
 		for ly in ROOM_SIZE:
 			for lx in ROOM_SIZE:
 				var w := Vector2i(int(room["x"]) * ROOM_SIZE + lx, int(room["y"]) * ROOM_SIZE + ly)
-				if not _passable(grid, w):
+				if not _open(grid, w):
 					continue
 				if not dist.has(_key(w)):
 					dist[_key(w)] = 0
@@ -297,7 +348,7 @@ static func distance_to_rooms(rooms: Array, grid: Dictionary, targets: Array) ->
 			queue.append(prev)
 	return dist
 
-static func reachable_room_ids(grid: Dictionary, from: Vector2i) -> Dictionary:
+static func reachable_room_ids(grid: Dictionary, from: Vector2i, immunities: Array = []) -> Dictionary:
 	var rooms := {}
 	var here = _room_at(grid, from)
 	if here != null:
@@ -308,10 +359,10 @@ static func reachable_room_ids(grid: Dictionary, from: Vector2i) -> Dictionary:
 	while head < queue.size():
 		var cur: Vector2i = queue[head]
 		head += 1
-		if not _passable(grid, cur) and head > 1:
+		if not _passable(grid, cur, immunities) and head > 1:
 			continue
 		for d in BASE_TIE:
-			var path := resolve_step(grid, cur, d)
+			var path := resolve_step(grid, cur, d, immunities)
 			if path.is_empty():
 				continue
 			var land: Vector2i = path[path.size() - 1]
@@ -339,12 +390,12 @@ static func highest_weight_room_ids(rooms: Array, reachable: Dictionary) -> Arra
 			ids.append(room["id"])
 	return ids
 
-static func choose_warrior_step(grid: Dictionary, dist: Dictionary, from: Vector2i, orientation: int, targets: Array) -> Variant:
+static func choose_warrior_step(grid: Dictionary, dist: Dictionary, from: Vector2i, orientation: int, targets: Array, immunities: Array = []) -> Variant:
 	if not dist.has(_key(from)):
 		return null
 	var here: int = dist[_key(from)]
 	for d in oriented_tie_break(orientation):
-		var path := resolve_step(grid, from, d)
+		var path := resolve_step(grid, from, d, immunities)
 		if path.is_empty():
 			continue
 		var land: Vector2i = path[path.size() - 1]
@@ -357,6 +408,102 @@ static func choose_warrior_step(grid: Dictionary, dist: Dictionary, from: Vector
 			return d
 	return null
 
+# ---------------------------------------------------------------- Elf (FR-21)
+
+static func _elf_better(a: Dictionary, b: Dictionary) -> bool:
+	if a["hp"] != b["hp"]:
+		return a["hp"] > b["hp"]
+	if a["length"] != b["length"]:
+		return a["length"] < b["length"]
+	return false
+
+static func _poison_key(visits: Dictionary) -> String:
+	var keys: Array = visits.keys()
+	keys.sort()
+	return ";".join(keys)
+
+static func _parse_poison(key: String) -> Dictionary:
+	var out := {}
+	if key == "":
+		return out
+	for k in key.split(";", false):
+		out[k] = true
+	return out
+
+## elf.ts chooseElfStep: BFS over (cell, room, poison memory); keep the state
+## with more HP (then fewer actions); the winner is the best state that
+## reaches a target room, and its first direction is the step. Planning
+## ignores death (FR-28). No gold/tolls in the ported rooms.
+static func choose_elf_step(rooms: Array, grid: Dictionary, from: Vector2i, hp: int, room_id: String,
+		poison_visits: Dictionary, immunities: Array, orientation: int, targets: Array) -> Variant:
+	if targets.has(room_id):
+		return null
+	var dirs := oriented_tie_break(orientation)
+	var start := {"cell": from, "roomId": room_id, "hp": hp, "poison": _poison_key(poison_visits), "length": 0, "firstDir": null}
+	var best := {}
+	best["%s|%s|%s" % [_key(from), room_id, start["poison"]]] = start
+	var queue: Array = [start]
+	var winner = null
+	var passable := 0
+	for c in grid.values():
+		if c["kind"] != "wall":
+			passable += 1
+	var max_length := maxi(8, passable * 4)
+	var head := 0
+	while head < queue.size():
+		var cur: Dictionary = queue[head]
+		head += 1
+		if cur["length"] >= max_length:
+			continue
+		var known = best.get("%s|%s|%s" % [_key(cur["cell"]), cur["roomId"], cur["poison"]])
+		if known != null and _elf_better(known, cur):
+			continue
+		for d in dirs:
+			var path := resolve_step(grid, cur["cell"], d, immunities)
+			if path.is_empty():
+				continue
+			var hp_now: int = cur["hp"]
+			var room_now: String = cur["roomId"]
+			var poison_now := _parse_poison(cur["poison"])
+			var reached := false
+			var last: Vector2i = path[path.size() - 1]
+			for cell in path:
+				var walk: Dictionary = grid[_key(cell)]
+				var next_room: String = walk["roomId"]
+				if next_room != room_now:
+					if targets.has(next_room):
+						reached = true
+					if walk["roomType"] == "D":
+						hp_now -= int(_room_def_in(rooms, next_room)["damage"])
+				var el: String = walk["element"]
+				var tick := elemental_tick(el, immunities, el == "poison" and poison_now.has(_key(cell)))
+				hp_now += int(tick["hpDelta"])
+				if tick["recordPoisonVisit"]:
+					poison_now = poison_now.duplicate()
+					poison_now[_key(cell)] = true
+				room_now = next_room
+				last = cell
+				if reached:
+					break
+			var nxt := {"cell": last, "roomId": room_now, "hp": hp_now, "poison": _poison_key(poison_now),
+				"length": cur["length"] + 1, "firstDir": d if cur["firstDir"] == null else cur["firstDir"]}
+			if reached:
+				if winner == null or _elf_better(nxt, winner):
+					winner = nxt
+				continue
+			var nk := "%s|%s|%s" % [_key(last), room_now, nxt["poison"]]
+			var prev = best.get(nk)
+			if prev == null or _elf_better(nxt, prev):
+				best[nk] = nxt
+				queue.append(nxt)
+	return null if winner == null else winner["firstDir"]
+
+static func _room_def_in(rooms: Array, id: String) -> Dictionary:
+	for r in rooms:
+		if r["id"] == id:
+			return r["def"]
+	return {}
+
 # ---------------------------------------------------------------- simulation (FR-11–FR-13, FR-26–FR-31)
 
 ## Returns a run state, or {error} when FR-8 blocks extermination.
@@ -367,7 +514,8 @@ static func create_run(loaded: Dictionary, rooms: Array) -> Dictionary:
 	var heroes: Array = []
 	var i := 0
 	for h in loaded["level"]["heroes"]:
-		heroes.append({"id": i, "hp": int(h["hp"]), "spawned": false, "dead": false, "stuck": false, "cell": null, "roomId": null})
+		heroes.append({"id": i, "type": h["type"], "immunities": hero_immunities(h), "hp": int(h["hp"]),
+			"spawned": false, "dead": false, "stuck": false, "cell": null, "roomId": null})
 		i += 1
 	var main_a := ""
 	var orientation := 0
@@ -377,7 +525,7 @@ static func create_run(loaded: Dictionary, rooms: Array) -> Dictionary:
 			orientation = int(r["orientation"])
 			break
 	return {"rooms": rooms.duplicate(true), "heroes": heroes, "mainAId": main_a, "orientation": orientation,
-		"outcome": "in_progress", "stepCount": 0, "events": []}
+		"outcome": "in_progress", "stepCount": 0, "events": [], "poisonVisits": {}}
 
 static func _cell(v: Vector2i) -> Dictionary:
 	return {"x": v.x, "y": v.y}
@@ -421,13 +569,25 @@ static func _enter_room(state: Dictionary, hero: Dictionary, room_id: String, ev
 		events.append({"type": "damage", "heroId": hero["id"], "amount": amount, "hp": hero["hp"]})
 	_check_death(state, hero, events)
 
-## FR-14 fire: 1 damage on every entry onto a green fire cell (elements.ts).
+## FR-14 (simulation.ts applyElementalCell): immune heroes ignore the cell;
+## a damage event carries -hpDelta (poison's first visit is a -1 "damage",
+## i.e. +1 HP); water sets HP to 0 with no damage event.
 static func _apply_elemental_cell(state: Dictionary, hero: Dictionary, cell: Vector2i, grid: Dictionary, events: Array) -> void:
 	var walk = grid.get(_key(cell))
-	if walk == null or walk["element"] != "fire":
+	if walk == null or walk["element"] == "":
 		return
-	hero["hp"] -= 1
-	events.append({"type": "damage", "heroId": hero["id"], "amount": 1, "hp": hero["hp"]})
+	var k := _key(cell)
+	var tick := elemental_tick(walk["element"], hero["immunities"], state["poisonVisits"].has(k))
+	if tick["ignored"]:
+		return
+	if tick["recordPoisonVisit"]:
+		state["poisonVisits"][k] = true
+	if tick["hpDelta"] != 0:
+		var amount: int = -int(tick["hpDelta"])
+		hero["hp"] -= amount
+		events.append({"type": "damage", "heroId": hero["id"], "amount": amount, "hp": hero["hp"]})
+	if tick["die"]:
+		hero["hp"] = 0
 	_check_death(state, hero, events)
 
 static func _maybe_settle(state: Dictionary, events: Array) -> void:
@@ -468,13 +628,18 @@ static func step_run(state: Dictionary) -> Array:
 		_apply_elemental_cell(state, hero, cell, grid, events)
 		state["events"].append_array(events)
 		return events
-	var reachable := reachable_room_ids(grid, hero["cell"])
+	var imm: Array = hero["immunities"]
+	var reachable := reachable_room_ids(grid, hero["cell"], imm)
 	var targets := highest_weight_room_ids(state["rooms"], reachable)
 	var dir = null
 	if not targets.is_empty():
-		var dist := distance_to_rooms(state["rooms"], grid, targets)
-		dir = choose_warrior_step(grid, dist, hero["cell"], state["orientation"], targets)
-	var path: Array = [] if dir == null else resolve_step(grid, hero["cell"], dir)
+		if hero["type"] == "Elf":
+			dir = choose_elf_step(state["rooms"], grid, hero["cell"], hero["hp"], hero["roomId"],
+				state["poisonVisits"], imm, state["orientation"], targets)
+		else:
+			var dist := distance_to_rooms(state["rooms"], grid, targets, imm)
+			dir = choose_warrior_step(grid, dist, hero["cell"], state["orientation"], targets, imm)
+	var path: Array = [] if dir == null else resolve_step(grid, hero["cell"], dir, imm)
 	if path.is_empty():
 		hero["stuck"] = true
 		events.append({"type": "wait", "heroId": hero["id"]})
@@ -514,7 +679,7 @@ static func run_turns(state: Dictionary, max_steps: int = 10000) -> Array:
 
 static func _normalize(expr: String) -> String:
 	var re := RegEx.create_from_string("\\s+")
-	var s := re.sub(expr, " ", true)
+	var s := re.sub(expr.replace("≠", "!="), " ", true)
 	s = RegEx.create_from_string("[.。]\\s*$").sub(s, "")
 	return s.strip_edges()
 
@@ -553,12 +718,28 @@ static func _atom_value(rooms: Array, atom: Dictionary) -> Variant:
 	var b = _unique_room(rooms, atom["right"])
 	if a == null or b == null:
 		return null
+	return _manhattan(a, b)
+
+static func _manhattan(a: Dictionary, b: Dictionary) -> int:
 	return absi(int(a["x"]) - int(b["x"])) + absi(int(a["y"]) - int(b["y"]))
 
 ## Only `dist(r, s) <op> n | dist(...)` is grounded; any other prose is
 ## "unsupported" and refuses a win, as in constraints.ts.
 static func evaluate_constraint(rooms: Array, expression: String) -> Dictionary:
 	var n := _normalize(expression)
+	var also := RegEx.create_from_string("(?i)^on doit également avoir\\s+(.+)$").search(n)
+	if also != null:
+		n = also.get_string(1)
+	# "∃s ∈ Π, dist(s, A) = dist(s, Z) = n": some placed room sits n from both.
+	var adj := RegEx.create_from_string("(?i)^(?:∃|exists)\\s*s\\s*∈\\s*Π\\s*,\\s*dist\\(\\s*s\\s*,\\s*A\\s*\\)\\s*=\\s*dist\\(\\s*s\\s*,\\s*Z\\s*\\)\\s*=\\s*(\\d+)$").search(n)
+	if adj != null:
+		var need := int(adj.get_string(1))
+		var a = _unique_room(rooms, {"type": "A"})
+		var z = _unique_room(rooms, {"type": "Z"})
+		if a == null or z == null:
+			return {"kind": "distance", "status": "unsupported"}
+		var held := rooms.any(func(r): return _manhattan(r, a) == need and _manhattan(r, z) == need)
+		return {"kind": "distance", "status": "held" if held else "failed"}
 	var m := RegEx.create_from_string("^(dist\\(\\s*.+?\\s*,\\s*.+?\\s*\\))\\s*(=|!=|<=|>=|<|>)\\s*(.+)$").search(n)
 	if m == null:
 		return {"kind": "unsupported", "status": "unsupported"}

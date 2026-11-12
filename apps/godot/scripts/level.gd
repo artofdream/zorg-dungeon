@@ -1,13 +1,16 @@
 extends Node3D
 ## Level screen: pick a level, build the dungeon (tap or drag rooms, with a
-## green/red ghost preview), then Play/Step a replay of the engine's
+## green/orange/red ghost preview), then Play/Step a replay of the engine's
 ## recording. Plain boxes on purpose.
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
 const SLOTS_Y := Vector2i(-2, 3)
 const COLORS := {"A": Color(0.3, 0.75, 0.35), "Z": Color(0.85, 0.2, 0.2), "D": Color(0.95, 0.6, 0.15), "E": Color(0.6, 0.6, 0.65)}
-const FIRE := Color(1.0, 0.35, 0.1)
+const ELEMENT_COLORS := {"fire": Color(1.0, 0.35, 0.1), "water": Color(0.15, 0.4, 1.0), "ice": Color(0.75, 0.95, 1.0), "poison": Color(0.6, 0.2, 0.8)}
+const GHOST_OK := Color(0.2, 1.0, 0.3, 0.45)
+const GHOST_LOOSE := Color(1.0, 0.6, 0.1, 0.5)   # allowed, but touches no placed room yet
+const GHOST_BAD := Color(1.0, 0.1, 0.1, 0.6)
 const STEP_SECONDS := 0.18
 const DRAG_START_PX := 12.0
 
@@ -123,6 +126,8 @@ func _build_ui() -> void:
 	title = _label(26)
 	top.add_child(title)
 	goal = _label(20)
+	goal.autowrap_mode = TextServer.AUTOWRAP_WORD
+	goal.custom_minimum_size = Vector2(560, 0)   # stays clear of the level picker
 	top.add_child(goal)
 	status = _label(20)
 	top.add_child(status)
@@ -136,7 +141,7 @@ func _build_ui() -> void:
 	picker = HBoxContainer.new()
 	picker.anchor_left = 1.0
 	picker.anchor_right = 1.0
-	picker.offset_left = -340
+	picker.offset_left = -660
 	picker.offset_top = 12
 	picker.offset_right = -16
 	picker.alignment = BoxContainer.ALIGNMENT_END
@@ -263,7 +268,7 @@ func _room_node(s: Dictionary) -> Node3D:
 			var p := Vector3(lx + 0.5 - ROOM / 2.0, 0, -(ly + 0.5 - ROOM / 2.0))
 			match String(tile[ly][lx]):
 				"wall": _box(Vector3(0.95, 1.0, 0.95), Color(0.55, 0.5, 0.45), p + Vector3(0, 0.5, 0), root)
-				"green": _box(Vector3(0.95, 0.15, 0.95), FIRE, p, root)
+				"green": _box(Vector3(0.95, 0.15, 0.95), ELEMENT_COLORS.get(String(s["def"].get("element", "")), Color.WHITE), p, root)
 				_: _box(Vector3(0.95, 0.1, 0.95), color, p, root)
 	var label := Label3D.new()
 	label.text = _label_for(s["def"])
@@ -321,16 +326,36 @@ func spot_allowed(id: String, slot: Variant) -> bool:
 	var other := _room_at_slot(slot)
 	return other == "" or other == id
 
+## True when other rooms are placed and none shares a side with `slot`
+## (FR-5 would flag the layout as disconnected). Still droppable.
+func spot_loose(id: String, slot: Vector2i) -> bool:
+	var others := 0
+	for other in placed:
+		if other == id:
+			continue
+		others += 1
+		var d: Vector2i = placed[other] - slot
+		if absi(d.x) + absi(d.y) == 1:
+			return false
+	return others > 0
+
 func _show_ghost(id: String, screen_pos: Vector2) -> void:
 	var slot = _screen_to_slot(screen_pos)
 	if slot == null:
 		ghost.visible = false
 		return
 	var ok := spot_allowed(id, slot)
+	var loose := ok and spot_loose(id, slot)
 	ghost.visible = true
 	ghost.position = slot_center(slot.x, slot.y) + Vector3(0, 0.3, 0)
-	ghost_mat.albedo_color = Color(0.2, 1.0, 0.3, 0.45) if ok else Color(1.0, 0.1, 0.1, 0.6)
-	status.text = "Drop %s here." % _label_for(_supplied(id)["def"]) if ok else "Can't place here: %s." % ("off the board" if not _in_board(slot) else "another room is there")
+	ghost_mat.albedo_color = GHOST_BAD if not ok else (GHOST_LOOSE if loose else GHOST_OK)
+	var label := _label_for(_supplied(id)["def"])
+	if not ok:
+		status.text = "Can't place here: %s." % ("off the board" if not _in_board(slot) else "another room is there")
+	elif loose:
+		status.text = "%s here would not touch any room yet." % label
+	else:
+		status.text = "Drop %s here." % label
 
 # ------------------------------------------------------------------ input
 
@@ -435,7 +460,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_camera()
 		elif selected != "" and _building():
 			_show_ghost(selected, event.position)     # hover preview (mouse)
-	elif event is InputEventKey and event.pressed:
+	elif event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_Q:
 			_rotate(-90.0)
 		elif event.keycode == KEY_E:
@@ -524,6 +549,7 @@ func _ensure_recording() -> bool:
 	recording = r
 	turn_index = 0
 	heroes.clear()
+	heroes.names = engine.hero_names()
 	selected = ""
 	ghost.visible = false
 	_refresh_tray()
@@ -559,7 +585,12 @@ func _show_result() -> void:
 			for c in sc["constraints"]:
 				if c["status"] != "held":
 					failed.append("%s (%s)" % [c["id"], c["status"]])
-			result.text = "Not won yet: rule not met " + ", ".join(failed) if not failed.is_empty() else "Not won yet."
+			if not failed.is_empty():
+				result.text = "Not won yet: rule not met " + ", ".join(failed)
+			elif String(recording.get("outcome", "")) == "stalemate":
+				result.text = "Not won yet: a hero is stuck and can't move."
+			else:
+				result.text = "Not won yet."
 
 func _on_play() -> void:
 	if _ensure_recording():

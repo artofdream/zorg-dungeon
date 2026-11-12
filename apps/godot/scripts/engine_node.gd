@@ -34,6 +34,16 @@ func constraint_texts() -> Array:
 		out.append(String(c["expression"]))
 	return out
 
+## "Warrior", "Elf {water}" … for labels, by hero id.
+func hero_names() -> Dictionary:
+	var out := {}
+	var i := 0
+	for h in loaded["level"].get("heroes", []):
+		var imm: Array = ZorgEngine.hero_immunities(h)
+		out[i] = String(h["type"]) + ("" if imm.is_empty() else " {%s}" % ", ".join(imm))
+		i += 1
+	return out
+
 func validate(rooms: Array) -> Dictionary:
 	return ZorgEngine.validate_layout(supplied(), rooms)
 

@@ -95,6 +95,13 @@ func _initialize() -> void:
 	_check(level.ghost.visible and level.ghost_mat.albedo_color.r > 0.9 and level.ghost_mat.albedo_color.g < 0.2, "ghost is red over an occupied spot")
 	level.end_drag(target)
 	_check(not level.placed.has("Z:0"), "drop on a red spot leaves Z in the tray")
+	var far: Vector2 = cam.unproject_position(level.slot_center(3, 0))
+	level._begin_drag("Z:0", true, far + Vector2(0, 300))
+	level.drag_to(far)
+	_check(level.ghost.visible and level.ghost_mat.albedo_color == level.GHOST_LOOSE, "ghost is orange where Z would not touch A")
+	level.end_drag(far)
+	_check(level.placed.get("Z:0") == Vector2i(3, 0), "an orange spot still accepts the drop")
+	level._unplace("Z:0")
 
 	# Same drag again with real input events through the GUI (press on a tray
 	# Button, move over the board, release) to cover the actual wiring.
