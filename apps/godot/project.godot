@@ -23,4 +23,8 @@ pointing/emulate_mouse_from_touch=true
 [rendering]
 
 renderer/rendering_method="mobile"
+; Browsers only run the Compatibility (WebGL 2) renderer.
+renderer/rendering_method.web="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
+; Desktop texture formats for the Windows and Web (desktop browser) builds.
+textures/vram_compression/import_s3tc_bptc=true
