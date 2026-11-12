@@ -1,0 +1,1103 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "levelId": "deluxe-1.2",
+  "levelFile": "apps/godot/levels/deluxe-1.2.json",
+  "cases": [
+    {
+      "name": "win-line",
+      "note": "A–D(1)–D(2)–D(3)–Z in a row; Warrior(6) takes 1+2+3 and dies before Z; dist(D(1),D(3)) = 2 holds.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 4,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "D:1",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "D:2",
+          "x": 3,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "win",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 5
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": 2
+            },
+            "to": {
+              "x": 9,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": 2
+            },
+            "to": {
+              "x": 10,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:1",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 2,
+            "hp": 3
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 10,
+              "y": 2
+            },
+            "to": {
+              "x": 11,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 11,
+              "y": 2
+            },
+            "to": {
+              "x": 12,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 12,
+              "y": 2
+            },
+            "to": {
+              "x": 13,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 13,
+              "y": 2
+            },
+            "to": {
+              "x": 14,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 14,
+              "y": 2
+            },
+            "to": {
+              "x": 15,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:2",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 3,
+            "hp": 0
+          },
+          {
+            "type": "death",
+            "heroId": 0
+          },
+          {
+            "type": "win"
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "win",
+        "constraints": [
+          {
+            "id": "c-1",
+            "kind": "distance",
+            "status": "held"
+          }
+        ]
+      }
+    },
+    {
+      "name": "constraint-fails",
+      "note": "Same row with D(2) and D(1) swapped: hero dies but dist(D(1),D(3)) = 1, so the level is not won.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 4,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "D:1",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "D:2",
+          "x": 3,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "win",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:1",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 2,
+            "hp": 4
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": 2
+            },
+            "to": {
+              "x": 9,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": 2
+            },
+            "to": {
+              "x": 10,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 3
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 10,
+              "y": 2
+            },
+            "to": {
+              "x": 11,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 11,
+              "y": 2
+            },
+            "to": {
+              "x": 12,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 12,
+              "y": 2
+            },
+            "to": {
+              "x": 13,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 13,
+              "y": 2
+            },
+            "to": {
+              "x": 14,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 14,
+              "y": 2
+            },
+            "to": {
+              "x": 15,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:2",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 3,
+            "hp": 0
+          },
+          {
+            "type": "death",
+            "heroId": 0
+          },
+          {
+            "type": "win"
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "unresolved",
+        "constraints": [
+          {
+            "id": "c-1",
+            "kind": "distance",
+            "status": "failed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "loss-tiebreak",
+      "note": "2×2 square plus a tail; two equal paths, the right-first tie-break picks one and the Warrior reaches Z alive.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "Z:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "D:1",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "D:2",
+          "x": 2,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 7
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 7
+            },
+            "to": {
+              "x": 3,
+              "y": 7
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 7
+            },
+            "to": {
+              "x": 4,
+              "y": 7
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 7
+            },
+            "to": {
+              "x": 5,
+              "y": 7
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 5
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 7
+            },
+            "to": {
+              "x": 6,
+              "y": 7
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 7
+            },
+            "to": {
+              "x": 7,
+              "y": 7
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 7
+            },
+            "to": {
+              "x": 7,
+              "y": 6
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 6
+            },
+            "to": {
+              "x": 7,
+              "y": 5
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 5
+            },
+            "to": {
+              "x": 7,
+              "y": 4
+            },
+            "dir": "down"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": [
+          {
+            "id": "c-1",
+            "kind": "distance",
+            "status": "failed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "rotated-90",
+      "note": "Same square at orientation 90°: the tie order rotates (FR-31).",
+      "orientation": 90,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "Z:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "D:1",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "D:2",
+          "x": 2,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 7
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 7
+            },
+            "to": {
+              "x": 2,
+              "y": 6
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 6
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 5
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "down"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:1",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 2,
+            "hp": 4
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 2
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": [
+          {
+            "id": "c-1",
+            "kind": "distance",
+            "status": "failed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "invalid-disconnected",
+      "note": "D(3) floats away from the rest: FR-5 rejects it before extermination.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 3,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "D:1",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "D:2",
+          "x": 5,
+          "y": 5
+        }
+      ],
+      "validation": {
+        "ok": false,
+        "codes": [
+          "disconnected"
+        ]
+      }
+    },
+    {
+      "name": "invalid-overlap-missing",
+      "note": "Z placed on top of A and D(3) left in the tray: overlap + missing.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "D:1",
+          "x": 2,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": false,
+        "codes": [
+          "overlap",
+          "missing"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/1.2-contractual-obligation.txt",
+  "sourceSha256": "f2fa7c17b7634f7749c75d5016b039dd574177be696776a454129ddc5ff4e979",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "D:0",
+      "def": {
+        "type": "D",
+        "damage": 1
+      }
+    },
+    {
+      "id": "D:1",
+      "def": {
+        "type": "D",
+        "damage": 2
+      }
+    },
+    {
+      "id": "D:2",
+      "def": {
+        "type": "D",
+        "damage": 3
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-1.2",
+    "name": "Contractual Obligation",
+    "contractId": "1",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "D",
+          "damage": 1
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "D",
+          "damage": 2
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "D",
+          "damage": 3
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Warrior",
+        "hp": 6
+      }
+    ],
+    "constraints": [
+      {
+        "id": "c-1",
+        "expression": "dist(D(1), D(3)) = 2."
+      }
+    ]
+  }
+}
