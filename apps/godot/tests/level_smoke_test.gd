@@ -173,6 +173,15 @@ func _initialize() -> void:
 	_check(level.placed.get("Z:0") == Vector2i(2, 0), "keyboard: Right then Enter places Z at (2, 0)")
 	_key(KEY_BACKSPACE)
 	_check(not level.placed.has("Z:0") and level.placed.has("A:0"), "keyboard: Backspace undoes the last placement")
+	# A pick-up ended by other means (a tap elsewhere) must not leave Enter armed.
+	level._kb_select("Z:0")
+	level.selected = ""
+	_key(KEY_ENTER)
+	_check(not level.kb_active and not level.placed.has("Z:0"), "keyboard: a cleared selection disarms Enter")
+	level._kb_select("Z:0")
+	_key(KEY_TAB)
+	_check(not level.kb_active and level.selected == "", "keyboard: Tab cancels the pick-up")
+	level.get_viewport().gui_release_focus()
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)

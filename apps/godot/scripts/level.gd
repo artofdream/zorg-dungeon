@@ -738,6 +738,13 @@ func _kb_show() -> void:
 	status.text += "  Arrows move, Enter places, Esc cancels."
 
 func _kb_key(e: InputEventKey) -> bool:
+	# Tap/click placement, a drag or a run start can end the selection first.
+	if selected == "" or not _building() or placed.has(selected):
+		kb_active = false
+		return false
+	if e.keycode == KEY_TAB:                 # leaving for the buttons cancels the pick-up
+		_kb_cancel()
+		return false
 	var moves := {KEY_LEFT: Vector2i(-1, 0), KEY_RIGHT: Vector2i(1, 0), KEY_UP: Vector2i(0, 1), KEY_DOWN: Vector2i(0, -1)}
 	if moves.has(e.keycode):
 		var next: Vector2i = kb_slot + moves[e.keycode]
@@ -759,14 +766,17 @@ func _kb_key(e: InputEventKey) -> bool:
 			_kb_show()
 		return true
 	if e.keycode == KEY_ESCAPE:
-		selected = ""
-		kb_active = false
-		ghost.visible = false
-		_refresh_tray()
-		_refresh_validation()
+		_kb_cancel()
 		_kb_refocus.call_deferred()
 		return true
 	return false
+
+func _kb_cancel() -> void:
+	selected = ""
+	kb_active = false
+	ghost.visible = false
+	_refresh_tray()
+	_refresh_validation()
 
 ## After a keyboard drop, focus the next tray room (or Play once all are placed).
 func _kb_refocus() -> void:
@@ -1099,6 +1109,7 @@ func _ensure_recording() -> bool:
 		status.text = err
 		return false
 	recording = {"turns": []}
+	kb_active = false
 	turn_index = 0
 	heroes.clear()
 	heroes.names = engine.hero_names()
