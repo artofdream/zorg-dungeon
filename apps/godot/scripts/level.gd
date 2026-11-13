@@ -394,7 +394,8 @@ func _refresh_tray() -> void:
 		b.custom_minimum_size = Vector2(64, ZorgHud.TARGET)
 		b.tooltip_text = "Drag onto the board, or tap then tap a spot"
 		if selected == id:
-			b.add_theme_stylebox_override("normal", b.get_theme_stylebox("pressed"))
+			# From the HUD theme directly: b isn't in the tree yet.
+			b.add_theme_stylebox_override("normal", ui_root.theme.get_stylebox("pressed", "Button"))
 		b.button_down.connect(func(): _begin_drag(id, true, get_viewport().get_mouse_position()))
 		tray.add_child(b)
 
