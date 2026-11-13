@@ -157,7 +157,13 @@ func apply_turn(events: Array) -> String:
 				_hp[id] = int(e["hp"])
 				_refresh_label(id)
 				if int(e["amount"]) != 0:
-					_flash(id, int(e["amount"]))
+					# Let this turn's move finish first, then pop on that cell.
+					var amount := int(e["amount"])
+					var tw: Tween = _tweens.get(id)
+					if moved.has(id) and tw and tw.is_valid():
+						tw.tween_callback(_flash.bind(id, amount))
+					else:
+						_flash(id, amount)
 				if int(e["amount"]) < 0:
 					lines.append("heals %d (HP %d)" % [-int(e["amount"]), int(e["hp"])])
 				else:
