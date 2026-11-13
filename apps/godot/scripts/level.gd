@@ -5,6 +5,10 @@ extends Node3D
 ## Round 6 look: procedural 2.5D tiles and figures (look.gd), one sun with
 ## soft shadows plus ambient light, smooth zoom / tilt / rotation. Visual
 ## only: the engine and its parity tests don't see any of it.
+## Round 7 (phone UX): DPI-aware UI scale and one theme (hud.gd), 48 dp
+## touch targets, colour-swatch tray buttons, a Levels popup, on-screen
+## zoom/tilt/turn/fit buttons, screen-space labels on backing plates that
+## never collide, and a camera that fits the dungeon with margins.
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
@@ -17,6 +21,8 @@ const ZOOM_LIMITS := Vector2(12.0, 70.0)
 const PITCH_LIMITS := Vector2(30.0, 80.0)   # degrees above the board
 const CAM_SMOOTH := 12.0                    # 1/s, exponential ease for zoom and tilt
 const DRAG_START_PX := 12.0
+const FIT_EMPTY := Rect2i(0, 0, 3, 2)       # slots framed before any room is placed
+const FIT_HEIGHT := 1.2                     # walls/props counted when framing
 
 @onready var engine: Node = $Engine
 @onready var board: Node3D = $Board
@@ -60,24 +66,40 @@ var touches := {}
 var pinch_start := 0.0
 var zoom_start := 0.0
 var cam_tween: Tween
+var cam_manual := false          # user zoomed/panned: stop auto-fit until Fit or a new level
+var fit_pending := 0             # 1 = smooth refit, 2 = instant (after the HUD re-lays out)
+var fit_wait := 0
 
 # ui
 var title: Label
 var goal: Label
 var picker: GridContainer
-var tray: HBoxContainer
+var tray: HFlowContainer
 var status: Label
 var result: Label
 var log_label: Label
 var play_btn: Button
 var step_btn: Button
 var spell_bar: HBoxContainer
+var ui_root: Control
+var label_layer: Control         # room labels (below the hero labels)
+var hero_layer: Control          # hero HP labels and hit numbers (on top)
+var hud_top: VBoxContainer
+var bottom_bar: HBoxContainer
+var cam_grid: GridContainer
+var levels_btn: Button
+var levels_panel: PanelContainer
+var ui_scale := 1.0
 const REFUSALS := {"before_first_action": "wait for the first hero action", "run_over": "the run is over",
 	"no_active_hero": "no hero is active", "consumed": "that spell is used up", "no_spell": "no such spell"}
 
 func _ready() -> void:
 	_setup_lighting()
+	_apply_ui_scale()
 	_build_ui()
+	heroes.cam = camera
+	heroes.overlay = hero_layer
+	get_viewport().size_changed.connect(_on_resized)
 	_build_board()
 	_build_ghost()
 	var err: String = engine.load_index()
@@ -93,10 +115,11 @@ func _open_level(i: int) -> void:
 	level_index = i
 	_on_reset()
 	for id in room_nodes:
-		room_nodes[id].queue_free()
+		_free_room(id)
 	room_nodes.clear()
 	placed.clear()
 	selected = ""
+	levels_panel.visible = false
 	var err: String = engine.load_level_file(engine.levels[i]["file"])
 	if err != "":
 		title.text = "Cannot load level"
@@ -104,6 +127,7 @@ func _open_level(i: int) -> void:
 		tray.visible = false
 		return
 	title.text = engine.level_name()
+	levels_btn.text = "Level " + String(engine.levels[i]["id"]).replace("deluxe-", "")
 	var rules: Array = engine.constraint_texts()
 	goal.text = "Goal: every hero dies before reaching Zorg's room." + ("" if rules.is_empty() else "  Rule: " + ", ".join(rules))
 	for b in picker.get_children():
@@ -111,14 +135,16 @@ func _open_level(i: int) -> void:
 	_refresh_tray()
 	_refresh_validation()
 	_refresh_spells()
-	_snap_camera()
+	cam_manual = false
+	_fit_camera(true)
+	_request_fit(2)
 
 func _build_picker() -> void:
 	for i in engine.levels.size():
 		var idx: int = i
 		var e: Dictionary = engine.levels[i]
 		var b := _btn(String(e["id"]).replace("deluxe-", ""), func(): _open_level(idx))
-		b.custom_minimum_size = Vector2(78, 56)
+		b.custom_minimum_size = Vector2(72, ZorgHud.TARGET)
 		b.tooltip_text = String(e["name"])
 		picker.add_child(b)
 
@@ -127,109 +153,159 @@ func _build_picker() -> void:
 func _btn(text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(96, 64)   # >= 48 dp at mobile densities
-	b.add_theme_font_size_override("font_size", 24)
+	b.custom_minimum_size = Vector2(64, ZorgHud.TARGET)   # >= 48 dp once scaled
 	b.pressed.connect(cb)
 	return b
 
 func _label(size: int) -> Label:
 	var l := Label.new()
 	l.add_theme_font_size_override("font_size", size)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
 
 func _build_ui() -> void:
-	var top := VBoxContainer.new()
-	top.position = Vector2(16, 12)
-	ui.add_child(top)
-	title = _label(26)
-	top.add_child(title)
-	goal = _label(20)
-	goal.autowrap_mode = TextServer.AUTOWRAP_WORD
-	goal.custom_minimum_size = Vector2(560, 0)   # stays clear of the level picker
-	top.add_child(goal)
-	status = _label(20)
-	top.add_child(status)
-	result = _label(30)
-	top.add_child(result)
-	log_label = _label(18)
-	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	log_label.custom_minimum_size = Vector2(700, 0)
-	top.add_child(log_label)
+	ui_root = Control.new()
+	ui_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_root.theme = ZorgHud.make_theme()
+	ui.add_child(ui_root)
+	label_layer = _layer()
+	hero_layer = _layer()
 
+	hud_top = VBoxContainer.new()
+	hud_top.position = Vector2(12, 8)
+	hud_top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_top.add_theme_constant_override("separation", 2)
+	ui_root.add_child(hud_top)
+	title = _label(22)
+	hud_top.add_child(title)
+	goal = _label(16)
+	goal.autowrap_mode = TextServer.AUTOWRAP_WORD
+	hud_top.add_child(goal)
+	status = _label(16)
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD
+	hud_top.add_child(status)
+	result = _label(22)
+	result.add_theme_color_override("font_color", Color(1.0, 0.92, 0.45))
+	hud_top.add_child(result)
+	log_label = _label(16)
+	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	hud_top.add_child(log_label)
+
+	# Top right: the current level; tap it for the level grid.
+	levels_btn = _btn("Levels", func(): levels_panel.visible = not levels_panel.visible)
+	levels_btn.custom_minimum_size = Vector2(134, ZorgHud.TARGET)
+	levels_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	levels_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	ui_root.add_child(levels_btn)
+	fps_label = _label(16)
+	fps_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	fps_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	fps_label.visible = _url_flag("fps", "0") == "1"
+	ui_root.add_child(fps_label)
+
+	levels_panel = PanelContainer.new()
+	levels_panel.set_anchors_preset(Control.PRESET_CENTER)
+	levels_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	levels_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	levels_panel.visible = false
+	ui_root.add_child(levels_panel)
+	var lp := VBoxContainer.new()
+	lp.add_theme_constant_override("separation", 8)
+	levels_panel.add_child(lp)
+	var lt := _label(18)
+	lt.text = "Choose a level"
+	lp.add_child(lt)
 	picker = GridContainer.new()
 	picker.columns = 5
-	picker.anchor_left = 1.0
-	picker.anchor_right = 1.0
-	picker.offset_left = -436
-	picker.offset_top = 12
-	picker.offset_right = -16
 	picker.add_theme_constant_override("h_separation", 6)
 	picker.add_theme_constant_override("v_separation", 6)
-	ui.add_child(picker)
+	lp.add_child(picker)
+	lp.add_child(_btn("Close", func(): levels_panel.visible = false))
 
-	var bottom := HBoxContainer.new()
-	bottom.anchor_top = 1.0
-	bottom.anchor_bottom = 1.0
-	bottom.anchor_right = 1.0
-	bottom.offset_top = -84
-	bottom.offset_left = 16
-	bottom.offset_right = -16
-	bottom.add_theme_constant_override("separation", 12)
-	ui.add_child(bottom)
-	tray = HBoxContainer.new()
-	tray.add_theme_constant_override("separation", 8)
+	# Camera buttons (touch screens; mouse: wheel, Ctrl + wheel, Q/E, right-drag).
+	# Plain ASCII labels: the web build's default font has no arrow glyphs.
+	cam_grid = GridContainer.new()
+	cam_grid.columns = 2
+	cam_grid.add_theme_constant_override("h_separation", 6)
+	cam_grid.add_theme_constant_override("v_separation", 6)
+	cam_grid.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	cam_grid.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	cam_grid.grow_vertical = Control.GROW_DIRECTION_BOTH
+	ui_root.add_child(cam_grid)
+	for spec in [["Zoom +", func(): _zoom_button(-4.0)], ["Zoom -", func(): _zoom_button(4.0)],
+			["Tilt +", func(): _tilt_by(8.0)], ["Tilt -", func(): _tilt_by(-8.0)],
+			["< 90°", func(): _rotate(-90.0)], ["90° >", func(): _rotate(90.0)],
+			["Fit", _on_fit]]:
+		cam_grid.add_child(_btn(spec[0], spec[1]))
+
+	# Bottom bar: tray rooms (wrap upward if many), spells during a run, run controls.
+	bottom_bar = HBoxContainer.new()
+	bottom_bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	bottom_bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	bottom_bar.alignment = BoxContainer.ALIGNMENT_END
+	bottom_bar.add_theme_constant_override("separation", 8)
+	ui_root.add_child(bottom_bar)
+	tray = HFlowContainer.new()
+	tray.add_theme_constant_override("h_separation", 6)
+	tray.add_theme_constant_override("v_separation", 6)
 	tray.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bottom.add_child(tray)
-	# Plain ASCII arrows: the web build's default font has no ⟲/⟳ glyphs.
-	bottom.add_child(_btn("< 90°", func(): _rotate(-90.0)))
-	bottom.add_child(_btn("90° >", func(): _rotate(90.0)))
-	play_btn = _btn("Play", _on_play)
-	step_btn = _btn("Step", _on_step)
-	bottom.add_child(play_btn)
-	bottom.add_child(step_btn)
-	bottom.add_child(_btn("Build", _on_reset))
-
+	tray.size_flags_vertical = Control.SIZE_SHRINK_END
+	tray.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bottom_bar.add_child(tray)
 	# Spell bar (FR-32/FR-33): one button per spell, usable by tap or mouse,
 	# enabled only between completed actions while the run is going.
 	spell_bar = HBoxContainer.new()
-	spell_bar.anchor_top = 1.0
-	spell_bar.anchor_bottom = 1.0
-	spell_bar.anchor_left = 1.0
-	spell_bar.anchor_right = 1.0
-	spell_bar.offset_top = -160
-	spell_bar.offset_bottom = -92
-	spell_bar.offset_left = -700
-	spell_bar.offset_right = -16
-	spell_bar.alignment = BoxContainer.ALIGNMENT_END
-	spell_bar.add_theme_constant_override("separation", 8)
-	ui.add_child(spell_bar)
+	spell_bar.add_theme_constant_override("separation", 6)
+	spell_bar.size_flags_vertical = Control.SIZE_SHRINK_END
+	bottom_bar.add_child(spell_bar)
+	play_btn = _btn("Play", _on_play)
+	step_btn = _btn("Step", _on_step)
+	for b in [play_btn, step_btn, _btn("Build", _on_reset)]:
+		b.custom_minimum_size.x = 76
+		b.size_flags_vertical = Control.SIZE_SHRINK_END
+		bottom_bar.add_child(b)
+	_apply_margins()
 
-	# Camera tilt for touch screens (mouse: Ctrl + wheel or middle-drag; keys W/S).
-	var cam_bar := VBoxContainer.new()
-	cam_bar.anchor_left = 1.0
-	cam_bar.anchor_right = 1.0
-	cam_bar.anchor_top = 0.5
-	cam_bar.anchor_bottom = 0.5
-	cam_bar.offset_left = -100
-	cam_bar.offset_right = -16
-	cam_bar.offset_top = -60
-	cam_bar.offset_bottom = 60
-	cam_bar.add_theme_constant_override("separation", 8)
-	ui.add_child(cam_bar)
-	for spec in [["Tilt +", 8.0], ["Tilt -", -8.0]]:
-		var amount: float = spec[1]
-		var tb := _btn(spec[0], func(): _tilt_by(amount))
-		tb.custom_minimum_size = Vector2(84, 52)
-		tb.add_theme_font_size_override("font_size", 20)
-		cam_bar.add_child(tb)
+func _layer() -> Control:
+	var c := Control.new()
+	c.set_anchors_preset(Control.PRESET_FULL_RECT)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui_root.add_child(c)
+	return c
 
-	fps_label = _label(18)
-	fps_label.anchor_left = 1.0
-	fps_label.anchor_right = 1.0
-	fps_label.offset_left = -436
-	fps_label.offset_top = 196
-	fps_label.visible = _url_flag("fps", "0") == "1"
-	ui.add_child(fps_label)
+## UI scale from the screen DPI (1 UI unit ~ 1 dp on phones; 1 on desktop).
+func _apply_ui_scale() -> void:
+	ui_scale = ZorgHud.ui_scale(get_window())
+	get_window().content_scale_factor = ui_scale
+	print("zorg: ui scale %.2f (dpi %d, window %s)" % [ui_scale, DisplayServer.screen_get_dpi(), get_window().size])
+
+## Keep the HUD inside the safe area (notch, rounded corners, system bars).
+func _apply_margins() -> void:
+	var ins: Array = ZorgHud.safe_insets(get_window())
+	var m := 8.0
+	ui_root.offset_left = ins[0] + m
+	ui_root.offset_top = ins[1] + m
+	ui_root.offset_right = -(ins[2] + m)
+	ui_root.offset_bottom = -(ins[3] + m)
+	var vp := get_viewport().get_visible_rect().size
+	var w := clampf(vp.x * 0.55, 320.0, 640.0)
+	goal.custom_minimum_size.x = w
+	status.custom_minimum_size.x = w
+	log_label.custom_minimum_size.x = w
+	fps_label.offset_top = ZorgHud.TARGET + 6
+	cam_grid.offset_left = -cam_grid.get_combined_minimum_size().x
+	cam_grid.offset_top = -cam_grid.get_combined_minimum_size().y / 2.0
+	cam_grid.offset_bottom = cam_grid.get_combined_minimum_size().y / 2.0
+	cam_grid.offset_right = 0
+
+func _on_resized() -> void:
+	var s := ZorgHud.ui_scale(get_window())
+	if not is_equal_approx(s, ui_scale):
+		_apply_ui_scale()
+	_apply_margins()
+	if not cam_manual:
+		_request_fit(2)
 
 func _spell_label(def: Dictionary) -> String:
 	match String(def["type"]):
@@ -240,13 +316,14 @@ func _spell_label(def: Dictionary) -> String:
 func _refresh_spells() -> void:
 	for c in spell_bar.get_children():
 		c.queue_free()
+	spell_bar.visible = not _building()
 	var list: Array = engine.spells()
 	var allowed: bool = engine.can_cast()
 	for i in list.size():
 		var idx: int = i
 		var sp: Dictionary = list[i]
 		var b := _btn(_spell_label(sp["def"]), func(): cast_spell(idx))
-		b.custom_minimum_size = Vector2(150, 64)
+		b.custom_minimum_size = Vector2(120, ZorgHud.TARGET)
 		b.disabled = sp["consumed"] or not allowed
 		if sp["consumed"]:
 			b.text += " (used)"  # ASCII: the web build has no system font fallback
@@ -285,7 +362,7 @@ func _label_for(def: Dictionary) -> String:
 func _refresh_piles() -> void:
 	var piles: Dictionary = engine.room_gold()
 	for id in room_nodes:
-		var label: Label3D = room_nodes[id].get_meta("label")
+		var label: Label = room_nodes[id].get_meta("label")
 		var base := _label_for(_supplied(id)["def"])
 		var n := int(piles.get(id, 0))
 		label.text = base + ("  $%d" % n if n > 0 and not _building() else "")
@@ -313,9 +390,11 @@ func _refresh_tray() -> void:
 		var id: String = s["id"]
 		var b := Button.new()
 		b.text = _label_for(s["def"])
-		b.custom_minimum_size = Vector2(96, 64)
-		b.add_theme_font_size_override("font_size", 24)
-		b.modulate = Color(1, 1, 0.5) if selected == id else Color.WHITE
+		b.icon = ZorgHud.swatch(s["def"])
+		b.custom_minimum_size = Vector2(64, ZorgHud.TARGET)
+		b.tooltip_text = "Drag onto the board, or tap then tap a spot"
+		if selected == id:
+			b.add_theme_stylebox_override("normal", b.get_theme_stylebox("pressed"))
 		b.button_down.connect(func(): _begin_drag(id, true, get_viewport().get_mouse_position()))
 		tray.add_child(b)
 
@@ -374,18 +453,24 @@ func _room_node(s: Dictionary) -> Node3D:
 	pile.visible = false
 	root.add_child(pile)
 	root.set_meta("pile", pile)
-	var label := Label3D.new()
+	# Screen-space label on a small plate at the room's back corner; placed
+	# each frame by _layout_labels so labels never overlap.
+	var plate := PanelContainer.new()
+	plate.add_theme_stylebox_override("panel", ZorgHud.plate())
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var label := _label(16)
 	label.text = _label_for(s["def"])
-	label.font_size = 96
-	label.pixel_size = 0.015
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.position.y = 2.2
-	label.outline_size = 24
-	label.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	root.add_child(label)
+	plate.add_child(label)
+	label_layer.add_child(plate)
 	root.set_meta("label", label)
+	root.set_meta("plate", plate)
 	rooms_root.add_child(root)
 	return root
+
+func _free_room(id: String) -> void:
+	var n: Node3D = room_nodes[id]
+	(n.get_meta("plate") as Control).queue_free()
+	n.queue_free()
 
 func _place(id: String, slot: Vector2i) -> void:
 	placed[id] = slot
@@ -395,14 +480,16 @@ func _place(id: String, slot: Vector2i) -> void:
 	_refresh_tray()
 	_refresh_validation()
 	_refresh_piles()
+	_request_fit(1)
 
 func _unplace(id: String) -> void:
 	placed.erase(id)
 	if room_nodes.has(id):
-		room_nodes[id].queue_free()
+		_free_room(id)
 		room_nodes.erase(id)
 	_refresh_tray()
 	_refresh_validation()
+	_request_fit(1)
 
 func _screen_to_slot(pos: Vector2) -> Variant:
 	var origin := camera.project_ray_origin(pos)
@@ -545,6 +632,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			var d := (pts[0] as Vector2).distance_to(pts[1])
 			if pinch_start > 0:
 				target_zoom = clampf(zoom_start * pinch_start / maxf(d, 1.0), ZOOM_LIMITS.x, ZOOM_LIMITS.y)
+				cam_manual = true
+			cam_manual = true
 			_pan((event.position - before) * 0.5)
 			_update_camera()
 		elif touches.has(event.index):
@@ -563,13 +652,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			if event.ctrl_pressed or event.shift_pressed:
 				_tilt_by(-wheel * 5.0)
 			else:
-				_zoom_by(wheel * 2.5)
+				_zoom_button(wheel * 2.5)
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			_on_board_press(event.position)
 	elif event is InputEventMouseMotion:
 		if event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
 			_tilt_by(-event.relative.y * 0.25)          # middle-drag tilts
 		elif event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
+			cam_manual = true
 			_pan(event.relative)
 			_update_camera()
 		elif selected != "" and _building():
@@ -586,9 +676,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_S:
 			_tilt_by(-5.0)
 		elif event.keycode == KEY_EQUAL or event.keycode == KEY_KP_ADD:
-			_zoom_by(-2.5)
+			_zoom_button(-2.5)
 		elif event.keycode == KEY_MINUS or event.keycode == KEY_KP_SUBTRACT:
-			_zoom_by(2.5)
+			_zoom_button(2.5)
+		elif event.keycode == KEY_F:
+			_on_fit()
 		elif event.keycode == KEY_F3:
 			fps_label.visible = not fps_label.visible
 
@@ -682,20 +774,130 @@ func _zoom_by(d: float) -> void:
 
 func _tilt_by(d: float) -> void:
 	target_pitch = clampf(target_pitch + d, PITCH_LIMITS.x, PITCH_LIMITS.y)
+	_request_fit(1)
+
+## Refit once the HUD has re-laid out (containers sort at the end of a frame).
+func _request_fit(mode: int) -> void:
+	fit_pending = maxi(fit_pending, mode)
+	fit_wait = 2
+
+## On-screen +/- buttons, wheel and keys: the user takes over the zoom.
+func _zoom_button(d: float) -> void:
+	cam_manual = true
+	_zoom_by(d)
+
+func _on_fit() -> void:
+	cam_manual = false
+	_fit_camera(false)
 
 ## After a rotation (or a new level), glide the pivot back onto the dungeon
 ## so the board doesn't drift off screen; yaw lands exactly on 45° + n·90°.
 func _snap_camera() -> void:
-	var center := slot_center(2, 0)
-	if not placed.is_empty():
-		var sum := Vector3.ZERO
-		for id in placed:
-			sum += slot_center(placed[id].x, placed[id].y)
-		center = sum / placed.size()
+	if not cam_manual:
+		_fit_camera(false)
+		return
+	var lo := Vector3(INF, 0, INF)
+	var hi := Vector3(-INF, 0, -INF)
+	for id in placed:
+		var c := slot_center(placed[id].x, placed[id].y)
+		lo = lo.min(c)
+		hi = hi.max(c)
+	var center := slot_center(2, 0) if placed.is_empty() else (lo + hi) / 2.0
 	if cam_tween:
 		cam_tween.kill()
 	cam_tween = create_tween()
 	cam_tween.tween_property(rig, "position", center, 0.25)
+
+## Free screen area for the board: below the top text, above the bottom
+## bar, left of the camera buttons (UI units, same space as unproject).
+func _fit_area() -> Rect2:
+	var vp := get_viewport().get_visible_rect().size
+	var left := ui_root.offset_left + 4.0
+	var right := cam_grid.get_global_rect().position.x - 8.0
+	var top := hud_top.get_global_rect().end.y + 6.0
+	var bottom := bottom_bar.get_global_rect().position.y - 8.0
+	if bottom - top < vp.y * 0.4:
+		top = bottom - vp.y * 0.4
+	if right - left < vp.x * 0.4:
+		right = left + vp.x * 0.4
+	return Rect2(left, top, right - left, bottom - top)
+
+func _ground_at(pos: Vector2) -> Vector3:
+	var o := camera.project_ray_origin(pos)
+	var d := camera.project_ray_normal(pos)
+	return o - d * (o.y / d.y) if absf(d.y) > 0.0001 else rig.position
+
+## Centre on and fit the dungeon's bounds (placed rooms, else FIT_EMPTY)
+## inside _fit_area, for the yaw/tilt the camera is heading to. Binary
+## search on the zoom, then shift the pivot so the box sits in the middle.
+func _fit_camera(instant: bool) -> void:
+	var lo := Vector2i(FIT_EMPTY.position)
+	var hi := FIT_EMPTY.end - Vector2i.ONE
+	if not placed.is_empty():
+		lo = Vector2i(1 << 20, 1 << 20)
+		hi = -lo
+		for id in placed:
+			lo = lo.min(placed[id])
+			hi = hi.max(placed[id])
+	var x0 := lo.x * ROOM
+	var x1 := (hi.x + 1) * ROOM
+	var z0 := -lo.y * ROOM
+	var z1 := -(hi.y + 1) * ROOM
+	var pts: Array[Vector3] = []
+	for x in [x0, x1]:
+		for z in [z0, z1]:
+			for h in [0.0, FIT_HEIGHT]:
+				pts.append(Vector3(x, h, z))
+	var area := _fit_area()
+	var saved := [rig.position, yaw, pitch, zoom]
+	rig.position = Vector3((x0 + x1) / 2.0, 0, (z0 + z1) / 2.0)
+	yaw = target_yaw
+	pitch = target_pitch
+	var best := ZOOM_LIMITS.y
+	for round in 2:
+		var a := ZOOM_LIMITS.x
+		var b := ZOOM_LIMITS.y
+		for i in 14:
+			zoom = (a + b) / 2.0
+			_update_camera()
+			if _fits(pts, area.size):
+				b = zoom
+			else:
+				a = zoom
+		best = b
+		zoom = best
+		_update_camera()
+		var box := Rect2(camera.unproject_position(pts[0]), Vector2.ZERO)
+		for p in pts:
+			box = box.expand(camera.unproject_position(p))
+		var screen_mid := get_viewport().get_visible_rect().size / 2.0
+		rig.position = _ground_at(screen_mid - (area.get_center() - box.get_center()))
+	var target_pos := rig.position
+	rig.position = saved[0]
+	yaw = saved[1]
+	pitch = saved[2]
+	zoom = saved[3]
+	_update_camera()
+	if cam_tween:
+		cam_tween.kill()
+	target_zoom = best
+	if instant:
+		rig.position = target_pos
+		zoom = best
+		_update_camera()
+	else:
+		cam_tween = create_tween()
+		cam_tween.tween_property(rig, "position", target_pos, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+## True when the projected points' bounding box fits in `size`.
+func _fits(pts: Array[Vector3], size: Vector2) -> bool:
+	var box := Rect2()
+	for i in pts.size():
+		if camera.is_position_behind(pts[i]):
+			return false
+		var q := camera.unproject_position(pts[i])
+		box = Rect2(q, Vector2.ZERO) if i == 0 else box.expand(q)
+	return box.size.x <= size.x and box.size.y <= size.y
 
 func _pan(delta_px: Vector2) -> void:
 	var scale := zoom / 600.0
@@ -716,6 +918,15 @@ func _process(delta: float) -> void:
 	zoom = target_zoom if absf(target_zoom - zoom) < 0.01 else lerpf(zoom, target_zoom, k)
 	pitch = target_pitch if absf(target_pitch - pitch) < 0.01 else lerpf(pitch, target_pitch, k)
 	_update_camera()
+	result.visible = result.text != ""        # empty lines take no room from the board
+	log_label.visible = log_label.text != "" or not _building()
+	if fit_wait > 0:
+		fit_wait -= 1
+	elif fit_pending != 0 and drag_id == "":
+		if fit_pending == 2 or not cam_manual:
+			_fit_camera(fit_pending == 2)
+		fit_pending = 0
+	_layout_labels()
 	for id in room_nodes:
 		var gate: Node3D = room_nodes[id].get_node_or_null("PortalGate")
 		if gate:
@@ -728,6 +939,47 @@ func _process(delta: float) -> void:
 			if not _advance():
 				playing = false
 				play_btn.text = "Play"
+
+## Room labels sit on a plate at each room's back corner (topmost on
+## screen). Overlaps are pushed down below the label they hit, so labels
+## never cover each other; hero labels draw on a layer above them.
+func _layout_labels() -> void:
+	var items: Array = []
+	for id in room_nodes:
+		var n: Node3D = room_nodes[id]
+		var plate: Control = n.get_meta("plate")
+		var c := n.global_position
+		var best := Vector2(0, INF)
+		var visible := true
+		for dx in [-1.0, 1.0]:
+			for dz in [-1.0, 1.0]:
+				var w := c + Vector3(dx * (ROOM / 2.0 - 0.6), FIT_HEIGHT, dz * (ROOM / 2.0 - 0.6))
+				if camera.is_position_behind(w):
+					visible = false
+				var q := camera.unproject_position(w)
+				if q.y < best.y:
+					best = q
+		plate.visible = visible
+		if not visible:
+			continue
+		var size := plate.get_combined_minimum_size()
+		plate.size = size
+		items.append([plate, Rect2(best - Vector2(size.x / 2.0, 0), size)])
+	items.sort_custom(func(a, b): return a[1].position.y < b[1].position.y)
+	var taken: Array[Rect2] = heroes.label_rects()
+	for it in items:
+		var r: Rect2 = it[1]
+		for tries in 8:
+			var hit := false
+			for t in taken:
+				if t.grow(1.0).intersects(r):
+					r.position.y = t.end.y + 2.0
+					hit = true
+					break
+			if not hit:
+				break
+		taken.append(r)
+		(it[0] as Control).position = r.position - label_layer.get_global_rect().position
 
 func camera_settled() -> bool:
 	return yaw == target_yaw and is_equal_approx(fmod(yaw - 45.0, 90.0), 0.0)
@@ -749,7 +1001,9 @@ func _ensure_recording() -> bool:
 	ghost.visible = false
 	_refresh_tray()
 	tray.visible = false
+	levels_panel.visible = false
 	status.text = "Extermination: Step or Play; cast spells between actions."
+	_request_fit(1)                          # the turn line now takes a row
 	_refresh_spells()
 	return true
 
@@ -776,6 +1030,7 @@ func run_over() -> bool:
 	return not recording.is_empty() and engine.over()
 
 func _show_result() -> void:
+	_request_fit(1)                          # the result banner takes a row
 	var sc: Dictionary = engine.score()
 	recording["outcome"] = engine.state["outcome"]
 	match String(sc["outcome"]):
@@ -817,6 +1072,7 @@ func _on_reset() -> void:
 	result.text = ""
 	log_label.text = ""
 	tray.visible = true
+	_request_fit(1)
 	_refresh_tray()
 	_refresh_validation()
 	_refresh_piles()

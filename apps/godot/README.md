@@ -1,7 +1,7 @@
-# Zorg — Godot 4 port (round 6)
+# Zorg — Godot 4 port (round 7)
 
 A small playable slice of Zorg's Dungeon Maker in Godot 4.7.2 (GDScript
-only). The picker in the top right holds thirteen real levels:
+only). The **Level** button in the top right opens a grid of thirteen real levels:
 
 | Level | Rooms | Hero | Rule / spells |
 |---|---|---|---|
@@ -37,7 +37,7 @@ room they came from. A hero who can't pay can't step on, and one pushed onto
 an unpaid hatch dies. Warriors and Elves plan with their gold, as in the TS
 engine. Gold shows as "$n" on heroes and rooms.
 
-**Spells** (FR-32 to FR-35) are one-use buttons in the spell bar above Play.
+**Spells** (FR-32 to FR-35) are one-use buttons next to Play during a run.
 **Attack(x)** deals x damage to every living hero, including heroes still
 waiting to spawn. **Teleport(n)** sends the active hero to the first cell of
 its n-th most recent room (1 = the room it is in) with no room effect, or back
@@ -55,8 +55,15 @@ The Elf is slim and green, with a pointed hat. Heroes hop from cell to cell,
 flash with a floating number when hurt or healed, and fade out when they
 die. Everything is built from Godot primitives in `scripts/look.gd`, with no
 asset files. One sun gives soft shadows, plus ambient light.
-The status is **Simulated**: it runs in CI and headless tests, and nobody has
-tried it on a real phone yet.
+**Phone UI** (round 7, visual only): the HUD scales with screen DPI so one
+UI unit is about 1 dp on phones (desktop and web stay at the 1280×720
+layout; `-- --ui-scale=1.75` forces it for testing). Every button is at least
+52 units (≥ 48 dp) tall, text is 16 units or more, and the HUD keeps inside
+the display safe area. Tray rooms are buttons with a colour swatch. Room
+labels are screen-space plates at each room's back corner that never
+overlap, and hero HP labels sit above the (larger) heroes on a layer on top.
+The status is **Simulated**: it runs in CI and headless tests. Debug APKs
+were also tried by hand on one Android phone; that is not CI evidence.
 
 **Why these levels:** apart from 1.4, 2.1 and 4.3, they are the only real
 levels made just of A/Z/D/E rooms with Warriors and Elves and a rule the
@@ -88,11 +95,12 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    to move it, or tap it to send it back to the tray. Once every room is
    placed and connected, **Play** and **Step** unlock. You can also step with
    Space.
-4. Camera: use the mouse wheel, pinch or +/- to zoom. Tilt with
-   Ctrl + wheel, middle-drag, W/S or the `Tilt +` / `Tilt -` buttons.
-   Right-drag or two-finger drag pans. The `< 90°` / `90° >` buttons (or Q/E)
-   rotate the view 90°. Zoom and tilt ease within limits, and a rotation
-   eases onto the exact new angle and recentres on your rooms.
+4. Camera: the view fits your rooms (with margins clear of the HUD) when a
+   level opens and after each placement. Zoom with `Zoom +` / `Zoom -`, the
+   mouse wheel, pinch or +/-; tilt with `Tilt +` / `Tilt -`, Ctrl + wheel,
+   middle-drag or W/S. Right-drag or two-finger drag pans. `< 90°` / `90° >`
+   (or Q/E) rotate 90°. Once you zoom or pan yourself, auto-fit stops until
+   you press `Fit` (or F) or open a level.
 5. Web: add `?fps=1` to the URL (or press F3) for an FPS counter, and
    `?shadows=0` to turn shadows off. Shadows also turn off by themselves if
    the first seconds run under 30 FPS.
