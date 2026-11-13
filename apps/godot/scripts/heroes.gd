@@ -62,15 +62,23 @@ func _stop_tween(id: int) -> void:
 func _figure(id: int, hp: int) -> Node3D:
 	var fig := ZorgLook.hero_figure(String(names.get(id, "")).begins_with("Elf"))
 	var root: Node3D = fig["root"]
-	root.set_meta("body", fig["body"])
+	var body: Node3D = fig["body"]
+	root.set_meta("body", body)
 	root.set_meta("mats", fig["mats"])
 	root.scale = Vector3.ONE * SCALE
+	# Scale is about the origin, so it would raise the authored sole height
+	# (FLOOR_H) off the slab. Shift under the scale; the hop still moves `body`.
+	var base := Node3D.new()
+	root.remove_child(body)
+	base.add_child(body)
+	base.position.y = ZorgLook.FLOOR_H * (1.0 / SCALE - 1.0)
+	root.add_child(base)
 	# Bright ring under the feet so the hero stands out from the floor.
 	var ring := StandardMaterial3D.new()
 	ring.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	ring.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ring.albedo_color = Color(1.0, 0.95, 0.5, 0.75)
-	ZorgLook.add_mesh(root, ZorgLook.ring(0.2, 0.27), ring, Vector3(0, ZorgLook.FLOOR_H + 0.02, 0), false)
+	ZorgLook.add_mesh(base, ZorgLook.ring(0.2, 0.27), ring, Vector3(0, ZorgLook.FLOOR_H + 0.02, 0), false)
 	_hp[id] = hp
 	var plate := PanelContainer.new()
 	plate.add_theme_stylebox_override("panel", ZorgHud.plate())

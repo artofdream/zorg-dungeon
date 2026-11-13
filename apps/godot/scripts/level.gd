@@ -393,10 +393,11 @@ func _refresh_tray() -> void:
 		b.icon = ZorgHud.swatch(s["def"])
 		b.custom_minimum_size = Vector2(64, ZorgHud.TARGET)
 		b.tooltip_text = "Drag onto the board, or tap then tap a spot"
-		if selected == id:
-			b.add_theme_stylebox_override("normal", b.get_theme_stylebox("pressed"))
 		b.button_down.connect(func(): _begin_drag(id, true, get_viewport().get_mouse_position()))
 		tray.add_child(b)
+		if selected == id:
+			# Ancestor themes apply only once the button is in the tree.
+			b.add_theme_stylebox_override("normal", b.get_theme_stylebox("pressed"))
 
 func _building() -> bool:
 	return recording.is_empty()
