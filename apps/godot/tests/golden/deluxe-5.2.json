@@ -1,0 +1,653 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "levelId": "deluxe-5.2",
+  "levelFile": "apps/godot/levels/deluxe-5.2.json",
+  "cases": [
+    {
+      "name": "win-toll-wall",
+      "note": "T(1, fire) is the only way to Z and the Warrior has no gold, so Z is out of reach; with every room tied at weight 0 it bounces between A and D(1) until D kills it (FR-17 blocks the light cell).",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "O:0",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "T:0",
+          "x": 1,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "win",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 4
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 5
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "down"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 3
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 5
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "down"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 2
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 5
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "down"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 1
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 5
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "down"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 0
+          },
+          {
+            "type": "death",
+            "heroId": 0
+          },
+          {
+            "type": "win"
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "win",
+        "constraints": []
+      }
+    },
+    {
+      "name": "stalemate-one-coin",
+      "note": "The Warrior picks up O's coin, but crossing T means paying at both light hatches (2 gold), so there is no payable path to Z and it waits.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "O:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "T:0",
+          "x": 1,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "stalemate",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "O:0",
+            "roomType": "O"
+          },
+          {
+            "type": "pickup",
+            "heroId": 0,
+            "roomId": "O:0",
+            "amount": 1,
+            "gold": 1
+          }
+        ],
+        [
+          {
+            "type": "wait",
+            "heroId": 0
+          },
+          {
+            "type": "stalemate"
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "unresolved",
+        "constraints": []
+      }
+    },
+    {
+      "name": "loss-carries-gold",
+      "note": "A–O–Z–D in a row: the Warrior takes the coin on the way and walks into Z holding it.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 3,
+          "y": 0
+        },
+        {
+          "id": "O:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "T:0",
+          "x": 0,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "O:0",
+            "roomType": "O"
+          },
+          {
+            "type": "pickup",
+            "heroId": 0,
+            "roomId": "O:0",
+            "amount": 1,
+            "gold": 1
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": 2
+            },
+            "to": {
+              "x": 9,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": 2
+            },
+            "to": {
+              "x": 10,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    }
+  ]
+}

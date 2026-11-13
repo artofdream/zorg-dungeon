@@ -1,0 +1,114 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/5.8-vault-break.txt",
+  "sourceSha256": "e9d968fa59e065c274a41507a9afe7f2b6e187ff944ad8c8ab863a500346e513",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "D:0",
+      "def": {
+        "type": "D",
+        "damage": 1
+      }
+    },
+    {
+      "id": "O:0",
+      "def": {
+        "type": "O",
+        "gold": 1
+      }
+    },
+    {
+      "id": "T:0",
+      "def": {
+        "type": "T",
+        "cost": 1,
+        "element": "fire"
+      }
+    },
+    {
+      "id": "T:1",
+      "def": {
+        "type": "T",
+        "cost": 1,
+        "element": "water"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-5.8",
+    "name": "Vault Break",
+    "contractId": "5",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "D",
+          "damage": 1
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "O",
+          "gold": 1
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "T",
+          "cost": 1,
+          "element": "fire"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "T",
+          "cost": 1,
+          "element": "water"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Elf",
+        "hp": 1,
+        "immunities": [
+          "fire"
+        ]
+      },
+      {
+        "type": "Elf",
+        "hp": 13,
+        "immunities": [
+          "water"
+        ]
+      }
+    ]
+  }
+}

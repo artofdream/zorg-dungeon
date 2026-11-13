@@ -58,11 +58,32 @@
       "why": "Same as 2.4 with ice instead of water: the Warrior slides across the ice room."
     },
     {
+      "id": "deluxe-4.1",
+      "name": "Teleportation Station",
+      "file": "res://levels/deluxe-4.1.json",
+      "golden": "res://tests/golden/deluxe-4.1.json",
+      "why": "Smallest portal level: A, Z, poison, P(1, 1); Warrior(6), no spells, no rule."
+    },
+    {
       "id": "deluxe-4.3",
       "name": "Fake Reset",
       "file": "res://levels/deluxe-4.3.json",
       "golden": "res://tests/golden/deluxe-4.3.json",
       "why": "A, Z, D(11), poison; Warrior(20); 2×Teleport(2); rule: no hero below 0 HP. The only real poison level without portals or other spells."
+    },
+    {
+      "id": "deluxe-5.2",
+      "name": "Wealth Frontier",
+      "file": "res://levels/deluxe-5.2.json",
+      "golden": "res://tests/golden/deluxe-5.2.json",
+      "why": "Smallest gold + toll level: A, Z, D(1), O(1), T(1, fire); Warrior(5), no rule."
+    },
+    {
+      "id": "deluxe-5.8",
+      "name": "Vault Break",
+      "file": "res://levels/deluxe-5.8.json",
+      "golden": "res://tests/golden/deluxe-5.8.json",
+      "why": "Elf gold + toll level: A, Z, D(1), O(1), T(1, fire), T(1, water); Elf(1, {fire}) then Elf(13, {water})."
     }
   ]
 }

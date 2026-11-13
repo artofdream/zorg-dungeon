@@ -1,0 +1,88 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/5.2-wealth-frontier.txt",
+  "sourceSha256": "cb50593f57461b86fc04d7fdfe9d383b421c511c7dc0d8ce806bb99e99f47137",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "D:0",
+      "def": {
+        "type": "D",
+        "damage": 1
+      }
+    },
+    {
+      "id": "O:0",
+      "def": {
+        "type": "O",
+        "gold": 1
+      }
+    },
+    {
+      "id": "T:0",
+      "def": {
+        "type": "T",
+        "cost": 1,
+        "element": "fire"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-5.2",
+    "name": "Wealth Frontier",
+    "contractId": "5",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "D",
+          "damage": 1
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "O",
+          "gold": 1
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "T",
+          "cost": 1,
+          "element": "fire"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Warrior",
+        "hp": 5
+      }
+    ]
+  }
+}
