@@ -2,6 +2,7 @@ extends Node3D
 ## Replays engine events only. Nothing here can change an outcome.
 
 const CELL := 1.0
+const STEP_TIME := 0.13 # one cell of a move tween
 
 var _figures := {}
 var _hp_labels := {}
@@ -63,7 +64,8 @@ func _figure(id: int, hp: int) -> Node3D:
 	return root
 
 ## Juice (visual only): a short red/green flash and a floating number.
-func _flash(id: int, amount: int) -> void:
+## `at` is the cell the hit landed on; omit it to use the figure's position.
+func _flash(id: int, amount: int, at: Variant = null) -> void:
 	var f: Node3D = _figures.get(id)
 	if not f:
 		return
@@ -82,12 +84,26 @@ func _flash(id: int, amount: int) -> void:
 	num.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	num.no_depth_test = true
 	num.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	num.position = f.position + Vector3(0.35, 1.4, 0)
+	var origin := f.position
+	if at is Vector3:
+		origin = at as Vector3
+	num.position = origin + Vector3(0.35, 1.4, 0)
 	add_child(num)
 	var nt := num.create_tween().set_parallel()
 	nt.tween_property(num, "position:y", num.position.y + 0.9, 0.8).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	nt.tween_property(num, "modulate:a", 0.0, 0.8).set_delay(0.2)
 	nt.chain().tween_callback(num.queue_free)
+
+## Pop the hit on the landing cell after the queued slide. Kept off the move
+## tween: the next turn's _stop_tween kills that one, and an ice slide
+## (STEP_TIME per cell) is still running when Play steps again.
+func _flash_landed(id: int, amount: int, at: Vector3, delay: float) -> void:
+	var f: Node3D = _figures.get(id)
+	if not f:
+		return
+	var tw := f.create_tween()
+	tw.tween_interval(delay)
+	tw.tween_callback(_flash.bind(id, amount, at))
 
 ## Death: tip over, sink a little and fade out, then hide.
 func _fade_out(f: Node3D) -> void:
@@ -108,7 +124,7 @@ func _step_to(tw: Tween, f: Node3D, to: Vector3) -> void:
 		var d := to - f.position
 		if d.length() > 0.01:
 			f.rotation.y = atan2(d.x, d.z))
-	tw.tween_property(f, "position", to, 0.13).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(f, "position", to, STEP_TIME).set_trans(Tween.TRANS_SINE)
 	tw.parallel().tween_property(body, "position:y", 0.16, 0.065).set_ease(Tween.EASE_OUT)
 	tw.parallel().tween_property(body, "position:y", 0.0, 0.065).set_ease(Tween.EASE_IN).set_delay(0.065)
 
@@ -118,6 +134,8 @@ func _step_to(tw: Tween, f: Node3D, to: Vector3) -> void:
 func apply_turn(events: Array) -> String:
 	var lines: Array = []
 	var moved := {}
+	var steps := {} # hero id -> cells queued on this turn's move tween
+	var land := {}  # hero id -> world position of the latest step
 	for e in events:
 		var id := int(e.get("heroId", -1))
 		match String(e["type"]):
@@ -135,7 +153,9 @@ func apply_turn(events: Array) -> String:
 						_stop_tween(id)
 						_tweens[id] = f.create_tween()   # dies with the figure
 						moved[id] = true
-					_step_to(_tweens[id], f, cell_to_world(e["to"]))
+					land[id] = cell_to_world(e["to"])
+					steps[id] = int(steps.get(id, 0)) + 1
+					_step_to(_tweens[id], f, land[id])
 			"enter":
 				lines.append("enters %s" % e["roomId"])
 			"pickup":
@@ -158,9 +178,10 @@ func apply_turn(events: Array) -> String:
 				_refresh_label(id)
 				if int(e["amount"]) != 0:
 					# Show the hit where the hero lands, after this turn's move.
+					# Not a callback on the move tween: _stop_tween would drop it.
 					var mt: Tween = _tweens.get(id)
 					if moved.has(id) and mt and mt.is_valid():
-						mt.tween_callback(_flash.bind(id, int(e["amount"])))
+						_flash_landed(id, int(e["amount"]), land[id] as Vector3, STEP_TIME * float(steps[id]))
 					else:
 						_flash(id, int(e["amount"]))
 				if int(e["amount"]) < 0:
