@@ -6,7 +6,8 @@ extends RefCounted
 const TARGET := 52.0      # min button height in UI units (>= 48 dp once scaled)
 const FONT := 18          # body text in UI units (>= 16 dp once scaled)
 
-## UI units -> dp: aim for 1 UI unit = 1 dp on phones. Desktop and desktop
+## UI units -> dp: aim for 1 UI unit = 1 dp on phones (1 CSS px on the web,
+## where the reported DPI is 96 x devicePixelRatio). Desktop and desktop
 ## web (low DPI) stay at the 1280x720 layout (factor 1). `--ui-scale=X`
 ## after `--` on the command line overrides it, for testing.
 static func ui_scale(win: Window) -> float:
@@ -16,10 +17,12 @@ static func ui_scale(win: Window) -> float:
 	if DisplayServer.get_name() == "headless" or win.size.y < 240:
 		return 1.0
 	var dpi := float(DisplayServer.screen_get_dpi())
-	var px_per_unit := float(win.size.y) / 720.0   # what canvas_items stretch gives
+	# canvas_items + expand stretch: px per unit before content scale.
+	var px_per_unit := minf(float(win.size.x) / 1280.0, float(win.size.y) / 720.0)
 	if dpi <= 0.0 or px_per_unit <= 0.0:
 		return 1.0
-	return clampf((dpi / 160.0) / px_per_unit, 1.0, 2.5)
+	var px_per_dp := dpi / (96.0 if OS.has_feature("web") else 160.0)
+	return clampf(px_per_dp / px_per_unit, 1.0, 4.0)
 
 ## Safe area (notch, rounded corners, system bars) in UI units, as
 ## [left, top, right, bottom] insets.
@@ -51,7 +54,13 @@ static func make_theme() -> Theme:
 	t.set_stylebox("hover", "Button", _box(Color(0.21, 0.24, 0.31, 0.95), Color(0.55, 0.6, 0.72)))
 	t.set_stylebox("pressed", "Button", _box(Color(0.28, 0.42, 0.62, 0.98), Color(0.6, 0.75, 1.0)))
 	t.set_stylebox("disabled", "Button", _box(Color(0.12, 0.13, 0.16, 0.7), Color(0.22, 0.24, 0.28)))
-	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
+	# Keyboard focus ring (WCAG 2.4.7): 3 px amber, ~12:1 on the dark HUD.
+	# Godot shows it for keyboard navigation, not after taps or clicks.
+	var focus := _box(Color(0, 0, 0, 0), Color(1.0, 0.8, 0.25), 12)
+	focus.draw_center = false
+	focus.set_border_width_all(3)
+	focus.set_expand_margin_all(3)
+	t.set_stylebox("focus", "Button", focus)
 	t.set_color("font_color", "Button", Color(0.95, 0.96, 1.0))
 	t.set_color("font_disabled_color", "Button", Color(0.55, 0.57, 0.62))
 	t.set_constant("h_separation", "Button", 8)

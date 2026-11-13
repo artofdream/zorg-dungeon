@@ -34,6 +34,13 @@ func _mouse_motion(pos: Vector2) -> void:
 	e.button_mask = MOUSE_BUTTON_MASK_LEFT
 	root.push_input(e)
 
+func _key(code: Key) -> void:
+	for down in [true, false]:
+		var e := InputEventKey.new()
+		e.keycode = code
+		e.pressed = down
+		root.push_input(e)
+
 func _real_input_drag(cam: Camera3D) -> void:
 	level._open_level(1)
 	for i in 20:
@@ -151,6 +158,21 @@ func _initialize() -> void:
 			if plates[a].get_rect().intersects(plates[b].get_rect()):
 				overlap += 1
 	_check(plates.size() >= 6 and overlap == 0, "5.5: %d room labels, %d overlaps" % [plates.size(), overlap])
+
+	# Keyboard placement (WCAG 2.1.1): pick a room, arrows move, Enter drops;
+	# Backspace undoes the last placement.
+	level._open_level(0)
+	for i in 5:
+		await process_frame
+	level._kb_select("A:0")
+	_key(KEY_ENTER)
+	_check(level.placed.get("A:0") == Vector2i(0, 0), "keyboard: Enter places A at (0, 0)")
+	level._kb_select("Z:0")
+	_key(KEY_RIGHT)
+	_key(KEY_ENTER)
+	_check(level.placed.get("Z:0") == Vector2i(2, 0), "keyboard: Right then Enter places Z at (2, 0)")
+	_key(KEY_BACKSPACE)
+	_check(not level.placed.has("Z:0") and level.placed.has("A:0"), "keyboard: Backspace undoes the last placement")
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
