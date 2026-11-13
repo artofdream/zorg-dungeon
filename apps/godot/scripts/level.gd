@@ -847,11 +847,20 @@ func _fit_camera(instant: bool) -> void:
 	var x1 := (hi.x + 1) * ROOM
 	var z0 := -lo.y * ROOM
 	var z1 := -(hi.y + 1) * ROOM
+	# Corners of each placed room once the tray is empty (an L-shaped dungeon
+	# is framed tighter than its bounding box), else of the whole box.
+	var boxes: Array = [[x0, x1, z0, z1]]
+	if not placed.is_empty() and (not _building() or placed.size() >= engine.supplied().size()):
+		boxes = []
+		for id in placed:
+			var sl: Vector2i = placed[id]
+			boxes.append([sl.x * ROOM, (sl.x + 1) * ROOM, -sl.y * ROOM, -(sl.y + 1) * ROOM])
 	var pts: Array[Vector3] = []
-	for x in [x0, x1]:
-		for z in [z0, z1]:
-			for h in [0.0, FIT_HEIGHT]:
-				pts.append(Vector3(x, h, z))
+	for bx in boxes:
+		for x in [bx[0], bx[1]]:
+			for z in [bx[2], bx[3]]:
+				for h in [0.0, FIT_HEIGHT]:
+					pts.append(Vector3(x, h, z))
 	var area := _fit_area()
 	var saved := [rig.position, yaw, pitch, zoom]
 	rig.position = Vector3((x0 + x1) / 2.0, 0, (z0 + z1) / 2.0)
