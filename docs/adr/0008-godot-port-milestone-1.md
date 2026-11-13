@@ -48,6 +48,12 @@ soft-shadow sun with ambient light (shadows switch off on slow web devices),
 smooth zoom, tilt and rotation, and small hit/death effects. The engine and
 the goldens are unchanged.
 
+Round 7 is a phone UX pass from a hand test: a DPI-based UI scale and one
+theme (48 dp targets, 16 dp text, safe-area margins), swatch tray buttons, a
+level popup, zoom/tilt/turn/fit buttons, collision-free screen-space labels,
+larger heroes, and a camera that fits the dungeon. Engine and goldens are
+unchanged.
+
 ## Consequences
 
 ADR-0002's concern is handled by the parity gate, not by trust. Each new

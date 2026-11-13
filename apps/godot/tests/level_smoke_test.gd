@@ -127,6 +127,31 @@ func _initialize() -> void:
 	else:
 		await _real_input_drag(cam)
 
+	# Round 7 phone UX: every button >= 52 UI units (48 dp once scaled) and
+	# no two room labels overlap on a busy level (5.5).
+	var five: int = engine.levels.map(func(e): return e["id"]).find("deluxe-5.5")
+	level._open_level(five)
+	var g5 = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[five]["golden"]))
+	for p in g5["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	for i in 10:
+		await process_frame
+	var small: Array = []
+	var stack: Array = [level.ui_root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if n is Button and n.get_combined_minimum_size().y < 52.0:
+			small.append(n.text)
+	_check(small.is_empty(), "every button is at least 52 units tall %s" % [small])
+	var plates: Array = level.label_layer.get_children().filter(func(c): return c.visible and not c.is_queued_for_deletion())
+	var overlap: int = 0
+	for a in plates.size():
+		for b in range(a + 1, plates.size()):
+			if plates[a].get_rect().intersects(plates[b].get_rect()):
+				overlap += 1
+	_check(plates.size() >= 6 and overlap == 0, "5.5: %d room labels, %d overlaps" % [plates.size(), overlap])
+
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
 	await create_timer(0.8).timeout
