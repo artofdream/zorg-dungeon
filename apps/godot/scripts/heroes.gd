@@ -23,8 +23,12 @@ func label_rects() -> Array[Rect2]:
 func _name(id: int) -> String:
 	return "%s %d" % [names.get(id, "Hero"), id + 1]
 
+## Figures are scaled about their origin, which would lift the feet (and
+## ring) from FLOOR_H to SCALE * FLOOR_H; sinking the origin keeps them on it.
+const FOOT_Y := ZorgLook.FLOOR_H * (1.0 - SCALE)
+
 static func cell_to_world(c: Dictionary) -> Vector3:
-	return Vector3((float(c["x"]) + 0.5) * CELL, 0.0, -(float(c["y"]) + 0.5) * CELL)
+	return Vector3((float(c["x"]) + 0.5) * CELL, FOOT_Y, -(float(c["y"]) + 0.5) * CELL)
 
 func clear() -> void:
 	for child in get_children():
@@ -161,7 +165,7 @@ func _flash(id: int, amount: int) -> void:
 func _fade_out(f: Node3D) -> void:
 	var tw := f.create_tween().set_parallel()
 	tw.tween_property(f, "rotation_degrees:z", 80.0, 0.35).set_ease(Tween.EASE_IN)
-	tw.tween_property(f, "position:y", -0.25, 0.7).set_delay(0.2)
+	tw.tween_property(f, "position:y", FOOT_Y - 0.25, 0.7).set_delay(0.2)
 	for m in f.get_meta("mats"):
 		(m as StandardMaterial3D).transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		tw.tween_property(m, "albedo_color:a", 0.0, 0.6).set_delay(0.25)
