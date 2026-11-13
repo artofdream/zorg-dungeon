@@ -2,19 +2,20 @@ extends Node3D
 ## Level screen: pick a level, build the dungeon (tap or drag rooms, with a
 ## green/orange/red ghost preview), then Play/Step the engine one action at
 ## a time and cast spells from the spell bar between actions (FR-33).
-## Plain boxes on purpose.
+## Round 6 look: procedural 2.5D tiles and figures (look.gd), one sun with
+## soft shadows plus ambient light, smooth zoom / tilt / rotation. Visual
+## only: the engine and its parity tests don't see any of it.
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
 const SLOTS_Y := Vector2i(-2, 3)
-const COLORS := {"A": Color(0.3, 0.75, 0.35), "Z": Color(0.85, 0.2, 0.2), "D": Color(0.95, 0.6, 0.15), "E": Color(0.6, 0.6, 0.65),
-	"O": Color(0.95, 0.8, 0.2), "P": Color(0.35, 0.8, 0.85), "T": Color(0.5, 0.45, 0.4)}
-const LIGHT_COLOR := Color(1.0, 0.95, 0.6)   # T light cells: the gold toll
-const ELEMENT_COLORS := {"fire": Color(1.0, 0.35, 0.1), "water": Color(0.15, 0.4, 1.0), "ice": Color(0.75, 0.95, 1.0), "poison": Color(0.6, 0.2, 0.8)}
 const GHOST_OK := Color(0.2, 1.0, 0.3, 0.45)
 const GHOST_LOOSE := Color(1.0, 0.6, 0.1, 0.5)   # allowed, but touches no placed room yet
 const GHOST_BAD := Color(1.0, 0.1, 0.1, 0.6)
 const STEP_SECONDS := 0.18
+const ZOOM_LIMITS := Vector2(12.0, 70.0)
+const PITCH_LIMITS := Vector2(30.0, 80.0)   # degrees above the board
+const CAM_SMOOTH := 12.0                    # 1/s, exponential ease for zoom and tilt
 const DRAG_START_PX := 12.0
 
 @onready var engine: Node = $Engine
@@ -47,6 +48,14 @@ var play_timer := 0.0
 var yaw := 45.0
 var target_yaw := 45.0
 var zoom := 24.0
+var target_zoom := 24.0
+var pitch := 53.13               # atan(0.8 / 0.6): the round 1-5 angle
+var target_pitch := 53.13
+var yaw_tween: Tween
+var fps_label: Label
+var perf_frames := 0
+var perf_time := 0.0
+var perf_checked := false
 var touches := {}
 var pinch_start := 0.0
 var zoom_start := 0.0
@@ -67,6 +76,7 @@ const REFUSALS := {"before_first_action": "wait for the first hero action", "run
 	"no_active_hero": "no hero is active", "consumed": "that spell is used up", "no_spell": "no such spell"}
 
 func _ready() -> void:
+	_setup_lighting()
 	_build_ui()
 	_build_board()
 	_build_ghost()
@@ -194,6 +204,33 @@ func _build_ui() -> void:
 	spell_bar.add_theme_constant_override("separation", 8)
 	ui.add_child(spell_bar)
 
+	# Camera tilt for touch screens (mouse: Ctrl + wheel or middle-drag; keys W/S).
+	var cam_bar := VBoxContainer.new()
+	cam_bar.anchor_left = 1.0
+	cam_bar.anchor_right = 1.0
+	cam_bar.anchor_top = 0.5
+	cam_bar.anchor_bottom = 0.5
+	cam_bar.offset_left = -100
+	cam_bar.offset_right = -16
+	cam_bar.offset_top = -60
+	cam_bar.offset_bottom = 60
+	cam_bar.add_theme_constant_override("separation", 8)
+	ui.add_child(cam_bar)
+	for spec in [["Tilt +", 8.0], ["Tilt -", -8.0]]:
+		var amount: float = spec[1]
+		var tb := _btn(spec[0], func(): _tilt_by(amount))
+		tb.custom_minimum_size = Vector2(84, 52)
+		tb.add_theme_font_size_override("font_size", 20)
+		cam_bar.add_child(tb)
+
+	fps_label = _label(18)
+	fps_label.anchor_left = 1.0
+	fps_label.anchor_right = 1.0
+	fps_label.offset_left = -436
+	fps_label.offset_top = 196
+	fps_label.visible = _url_flag("fps", "0") == "1"
+	ui.add_child(fps_label)
+
 func _spell_label(def: Dictionary) -> String:
 	match String(def["type"]):
 		"Attack": return "Attack(%d)" % int(def["damage"])
@@ -252,6 +289,12 @@ func _refresh_piles() -> void:
 		var base := _label_for(_supplied(id)["def"])
 		var n := int(piles.get(id, 0))
 		label.text = base + ("  $%d" % n if n > 0 and not _building() else "")
+		# Coin stack: the O room's own gold while building, live piles in a run.
+		var def: Dictionary = _supplied(id)["def"]
+		var shown := n if not _building() else (int(def.get("gold", 0)) if String(def["type"]) == "O" else 0)
+		var pile: Node3D = room_nodes[id].get_meta("pile")
+		pile.visible = shown > 0
+		pile.scale = Vector3.ONE * clampf(0.8 + 0.2 * shown, 0.8, 1.6)
 
 func _supplied(id: String) -> Dictionary:
 	for s in engine.supplied():
@@ -304,26 +347,14 @@ func _refresh_validation() -> void:
 
 # ------------------------------------------------------------------ 3D
 
-func _box(size: Vector3, color: Color, pos: Vector3, parent: Node3D) -> MeshInstance3D:
-	var m := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = size
-	m.mesh = bm
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	m.material_override = mat
-	m.position = pos
-	parent.add_child(m)
-	return m
-
 static func slot_center(x: int, y: int) -> Vector3:
 	return Vector3(x * ROOM + ROOM / 2.0, 0, -(y * ROOM + ROOM / 2.0))
 
 func _build_board() -> void:
 	for x in range(SLOTS_X.x, SLOTS_X.y + 1):
 		for y in range(SLOTS_Y.x, SLOTS_Y.y + 1):
-			var shade := 0.22 if (x + y) % 2 == 0 else 0.27
-			_box(Vector3(ROOM - 0.1, 0.1, ROOM - 0.1), Color(shade, shade, shade + 0.03), slot_center(x, y) + Vector3(0, -0.1, 0), board)
+			var m := ZorgLook.mat("board_a" if (x + y) % 2 == 0 else "board_b")
+			ZorgLook.add_mesh(board, ZorgLook.box_mesh(Vector3(ROOM - 0.1, 0.1, ROOM - 0.1)), m, slot_center(x, y) + Vector3(0, -0.1, 0), false)
 
 func _build_ghost() -> void:
 	ghost = MeshInstance3D.new()
@@ -338,25 +369,19 @@ func _build_ghost() -> void:
 	add_child(ghost)
 
 func _room_node(s: Dictionary) -> Node3D:
-	var root := Node3D.new()
-	var tile := ZorgEngine.base_tile(s["def"])
-	var color: Color = COLORS.get(s["def"]["type"], Color.GRAY)
-	for ly in 5:
-		for lx in 5:
-			var p := Vector3(lx + 0.5 - ROOM / 2.0, 0, -(ly + 0.5 - ROOM / 2.0))
-			match String(tile[ly][lx]):
-				"wall": _box(Vector3(0.95, 1.0, 0.95), Color(0.55, 0.5, 0.45), p + Vector3(0, 0.5, 0), root)
-				"green": _box(Vector3(0.95, 0.15, 0.95), ELEMENT_COLORS.get(String(s["def"].get("element", "")), Color.WHITE), p, root)
-				"dark": _box(Vector3(0.95, 0.15, 0.95), ELEMENT_COLORS.get(String(s["def"].get("element", "")), Color.WHITE).darkened(0.35), p, root)
-				"light": _box(Vector3(0.95, 0.12, 0.95), LIGHT_COLOR, p, root)
-				_: _box(Vector3(0.95, 0.1, 0.95), color, p, root)
+	var root := ZorgLook.build_room(s["def"], ZorgEngine.base_tile(s["def"]))
+	var pile := ZorgLook.gold_pile()
+	pile.visible = false
+	root.add_child(pile)
+	root.set_meta("pile", pile)
 	var label := Label3D.new()
 	label.text = _label_for(s["def"])
 	label.font_size = 96
-	label.pixel_size = 0.02
+	label.pixel_size = 0.015
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.position.y = 2.2
 	label.outline_size = 24
+	label.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(label)
 	root.set_meta("label", label)
 	rooms_root.add_child(root)
@@ -505,7 +530,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if touches.size() == 2:
 			var pts := touches.values()
 			pinch_start = (pts[0] as Vector2).distance_to(pts[1])
-			zoom_start = zoom
+			zoom_start = target_zoom
 			if drag_id != "" and not drag_from_tray and placed.has(drag_id):
 				_place(drag_id, placed[drag_id])
 			drag_id = ""
@@ -518,7 +543,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var pts := touches.values()
 			var d := (pts[0] as Vector2).distance_to(pts[1])
 			if pinch_start > 0:
-				zoom = clampf(zoom_start * pinch_start / maxf(d, 1.0), 12.0, 70.0)
+				target_zoom = clampf(zoom_start * pinch_start / maxf(d, 1.0), ZOOM_LIMITS.x, ZOOM_LIMITS.y)
 			_pan((event.position - before) * 0.5)
 			_update_camera()
 		elif touches.has(event.index):
@@ -527,16 +552,23 @@ func _unhandled_input(event: InputEvent) -> void:
 	if touches.size() >= 2:
 		return
 	if event is InputEventMouseButton:
+		# Wheel zooms; Ctrl/Shift + wheel tilts. Both ease in _process.
+		var wheel := 0.0
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
-			zoom = clampf(zoom - 2.0, 12.0, 70.0)
-			_update_camera()
+			wheel = -1.0
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
-			zoom = clampf(zoom + 2.0, 12.0, 70.0)
-			_update_camera()
+			wheel = 1.0
+		if wheel != 0.0:
+			if event.ctrl_pressed or event.shift_pressed:
+				_tilt_by(-wheel * 5.0)
+			else:
+				_zoom_by(wheel * 2.5)
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			_on_board_press(event.position)
 	elif event is InputEventMouseMotion:
-		if event.button_mask & (MOUSE_BUTTON_MASK_RIGHT | MOUSE_BUTTON_MASK_MIDDLE):
+		if event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
+			_tilt_by(-event.relative.y * 0.25)          # middle-drag tilts
+		elif event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
 			_pan(event.relative)
 			_update_camera()
 		elif selected != "" and _building():
@@ -548,6 +580,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			_rotate(90.0)
 		elif event.keycode == KEY_SPACE:
 			_on_step()
+		elif event.keycode == KEY_W:
+			_tilt_by(5.0)
+		elif event.keycode == KEY_S:
+			_tilt_by(-5.0)
+		elif event.keycode == KEY_EQUAL or event.keycode == KEY_KP_ADD:
+			_zoom_by(-2.5)
+		elif event.keycode == KEY_MINUS or event.keycode == KEY_KP_SUBTRACT:
+			_zoom_by(2.5)
+		elif event.keycode == KEY_F3:
+			fps_label.visible = not fps_label.visible
 
 func _on_board_press(pos: Vector2) -> void:
 	if not _building():
@@ -568,11 +610,77 @@ func _on_board_press(pos: Vector2) -> void:
 		if here != "":
 			_begin_drag(here, false, pos)
 
+# ------------------------------------------------------------------ light
+
+## One sun with soft shadows plus ambient light. Works on Compatibility
+## (web) and Mobile. On the web, `?shadows=0` turns shadows off, and they
+## also switch off by themselves if the first seconds run under 30 FPS.
+## `?fps=1` (or F3) shows an FPS counter.
+func _setup_lighting() -> void:
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.08, 0.09, 0.12)
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.62, 0.66, 0.78)
+	env.ambient_light_energy = 0.3
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	var we := WorldEnvironment.new()
+	we.environment = env
+	add_child(we)
+	var sun: DirectionalLight3D = $Sun
+	sun.light_color = Color(1.0, 0.95, 0.85)
+	sun.light_energy = 0.9
+	sun.shadow_enabled = _url_flag("shadows", "1") != "0"
+	sun.shadow_blur = 1.5
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_max_distance = 80.0
+	sun.shadow_bias = 0.05
+	sun.shadow_normal_bias = 1.0
+
+## Query parameter `name` on the web build, else `fallback`.
+func _url_flag(name: String, fallback: String) -> String:
+	if not OS.has_feature("web"):
+		return fallback
+	var q = JavaScriptBridge.eval("new URLSearchParams(location.search).get('%s')" % name, true)
+	return fallback if q == null else String(q)
+
+func _perf_tick(delta: float) -> void:
+	if fps_label and fps_label.visible:
+		fps_label.text = "%d FPS%s" % [Engine.get_frames_per_second(), "" if $Sun.shadow_enabled else " (no shadows)"]
+	if perf_checked:
+		return
+	perf_time += delta
+	perf_frames += 1
+	if perf_time < 1.0:
+		perf_frames = 0                     # skip the first second (loading)
+		return
+	if perf_time >= 5.0:
+		perf_checked = true
+		var fps := perf_frames / (perf_time - 1.0)
+		if OS.has_feature("web") and fps < 30.0 and $Sun.shadow_enabled:
+			$Sun.shadow_enabled = false
+			print("zorg: %.0f FPS with shadows, turning them off" % fps)
+
 # ------------------------------------------------------------------ camera
 
+## Smooth 90° turn (ease out); lands exactly on target_yaw, so the yaw is
+## always 45° + n·90° once settled.
 func _rotate(deg: float) -> void:
 	target_yaw += deg
+	if yaw_tween:
+		yaw_tween.kill()
+	yaw_tween = create_tween()
+	yaw_tween.tween_property(self, "yaw", target_yaw, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	yaw_tween.tween_callback(func():
+		yaw = fposmod(target_yaw, 360.0)
+		target_yaw = yaw)
 	_snap_camera()
+
+func _zoom_by(d: float) -> void:
+	target_zoom = clampf(target_zoom + d, ZOOM_LIMITS.x, ZOOM_LIMITS.y)
+
+func _tilt_by(d: float) -> void:
+	target_pitch = clampf(target_pitch + d, PITCH_LIMITS.x, PITCH_LIMITS.y)
 
 ## After a rotation (or a new level), glide the pivot back onto the dungeon
 ## so the board doesn't drift off screen; yaw lands exactly on 45° + n·90°.
@@ -597,16 +705,21 @@ func _pan(delta_px: Vector2) -> void:
 
 func _update_camera() -> void:
 	rig.rotation_degrees.y = yaw
-	camera.position = Vector3(0, zoom * 0.8, zoom * 0.6)
+	var p := deg_to_rad(pitch)
+	camera.position = Vector3(0, zoom * sin(p), zoom * cos(p))
 	camera.look_at(rig.global_position, Vector3.UP)
 
 func _process(delta: float) -> void:
-	if yaw != target_yaw:
-		yaw = move_toward(yaw, target_yaw, delta * 360.0)
-		if yaw == target_yaw:
-			yaw = fposmod(yaw, 360.0)
-			target_yaw = yaw
+	# Zoom and tilt ease toward their targets (frame-rate independent).
+	var k := 1.0 - exp(-CAM_SMOOTH * delta)
+	zoom = target_zoom if absf(target_zoom - zoom) < 0.01 else lerpf(zoom, target_zoom, k)
+	pitch = target_pitch if absf(target_pitch - pitch) < 0.01 else lerpf(pitch, target_pitch, k)
 	_update_camera()
+	for id in room_nodes:
+		var gate: Node3D = room_nodes[id].get_node_or_null("PortalGate")
+		if gate:
+			gate.rotation.y += delta * 1.2
+	_perf_tick(delta)
 	if playing:
 		play_timer -= delta
 		if play_timer <= 0:

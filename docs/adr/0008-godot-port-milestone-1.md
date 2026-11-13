@@ -43,6 +43,11 @@ Warrior and Elf planning, and adds 4.1, 5.2, 5.5 and 5.8. FIFO toll payment
 and portal formulas are also checked against TS tables, because no shipped
 run that ends pays a toll.
 
+Round 6 is a visuals pass: procedural 2.5D tiles and hero figures, one
+soft-shadow sun with ambient light (shadows switch off on slow web devices),
+smooth zoom, tilt and rotation, and small hit/death effects. The engine and
+the goldens are unchanged.
+
 ## Consequences
 
 ADR-0002's concern is handled by the parity gate, not by trust. Each new
