@@ -58,7 +58,7 @@ variables, is still refused (NFR-8).
    placed and connected, **Play** and **Step** unlock. You can also step with
    Space.
 4. Camera: use the mouse wheel or pinch to zoom. Right-drag or two-finger drag
-   to pan. The ⟲/⟳ buttons (or Q/E) rotate the view 90°. After a rotation
+   to pan. The `< 90°` / `90° >` buttons (or Q/E) rotate the view 90°. After a rotation
    the view lands exactly on the new angle and recentres on your rooms.
 
 ## Tests
@@ -89,6 +89,18 @@ throwaway debug key. Because that key changes, you have to uninstall the old
 build before installing a new one. The desktop build is in the
 `zorg-godot-linux-x86_64` artifact. Run `chmod +x zorg.x86_64` before
 starting it.
+
+## Try the Godot preview
+
+In a PC browser: <https://zorg.artof.link/godot/>, once the web-preview PR
+has merged and `deploy-godot` has run (`deploy-godot` publishes every merge
+that touches `apps/godot/`). It's a single-threaded debug build, so it needs
+no special server headers. The first load fetches about 10 MB (the engine,
+compressed). The same build is in the `zorg-godot-web` CI artifact, which
+you can serve with any static server, for example `python3 -m http.server`
+inside the unzipped folder. A Windows build is in
+`zorg-godot-windows-x86_64`: unzip it and run `zorg.exe`. It's unsigned, so
+SmartScreen asks you to confirm.
 
 ## Plan
 - **Style:** the game logic stays turn-based and the view is 3D, seen from an

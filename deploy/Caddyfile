@@ -44,6 +44,32 @@
     }
 }
 
+# Godot web preview (ADR-0008), static files only. deploy-godot.yml unpacks
+# each build into /opt/zorg-godot/releases/<sha> on the host and points the
+# `current` symlink at it; compose mounts /opt/zorg-godot read-only at
+# /srv/godot. The build is single-threaded, so no COOP/COEP headers are
+# needed. Everything else on the site is unchanged.
+(godot_preview) {
+    redir /godot /godot/ 308
+    handle_path /godot/* {
+        root * /srv/godot/current
+        # Explicit types: .pck has no standard MIME type, and .wasm must be
+        # application/wasm for streaming compilation.
+        @gd_wasm path *.wasm
+        header @gd_wasm Content-Type application/wasm
+        @gd_pck path *.pck
+        header @gd_pck Content-Type application/octet-stream
+        # Each deploy swaps the whole build: always revalidate (ETag /
+        # Last-Modified) so index.js, .wasm and .pck never mix versions.
+        header Cache-Control "no-cache"
+        # deploy-godot.yml ships .zst and .gz files next to each file, so
+        # Caddy compresses nothing on the fly (the .wasm is ~38 MB).
+        file_server {
+            precompressed zstd gzip
+        }
+    }
+}
+
 # Access log (JSON) for the whole site, /grafana included. Holds client IPs,
 # so retention is short: roll at 20 MiB, keep at most 14 files and nothing
 # older than 14 days. Caddy redacts Cookie/Authorization headers by default.
@@ -64,6 +90,8 @@ zorg.artof.link {
     import access_log
     # Observability: Grafana under /grafana/ (anonymous, read-only)
     import grafana_public
+    # Godot web preview under /godot/ (static)
+    import godot_preview
 
     # Application: Web app
     handle /* {
@@ -75,6 +103,7 @@ zorg.artof.link {
 :80 {
     import access_log
     import grafana_public
+    import godot_preview
 
     handle /* {
         reverse_proxy web:80

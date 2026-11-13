@@ -11,6 +11,8 @@ services:
       - caddy_config:/config
       # Access logs (rotated by Caddy, <=14 days; contain client IPs)
       - caddy_logs:/var/log/caddy
+      # Godot web preview builds (deploy-godot.yml), served at /godot/
+      - /opt/zorg-godot:/srv/godot:ro
     depends_on:
       - web
       - grafana

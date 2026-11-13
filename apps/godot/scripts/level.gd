@@ -170,8 +170,9 @@ func _build_ui() -> void:
 	tray.add_theme_constant_override("separation", 8)
 	tray.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bottom.add_child(tray)
-	bottom.add_child(_btn("⟲ 90°", func(): _rotate(-90.0)))
-	bottom.add_child(_btn("⟳ 90°", func(): _rotate(90.0)))
+	# Plain ASCII arrows: the web build's default font has no ⟲/⟳ glyphs.
+	bottom.add_child(_btn("< 90°", func(): _rotate(-90.0)))
+	bottom.add_child(_btn("90° >", func(): _rotate(90.0)))
 	play_btn = _btn("Play", _on_play)
 	step_btn = _btn("Step", _on_step)
 	bottom.add_child(play_btn)
@@ -211,7 +212,7 @@ func _refresh_spells() -> void:
 		b.custom_minimum_size = Vector2(150, 64)
 		b.disabled = sp["consumed"] or not allowed
 		if sp["consumed"]:
-			b.text += " ✓"
+			b.text += " (used)"  # ASCII: the web build has no system font fallback
 		spell_bar.add_child(b)
 
 ## Cast spell `id` now (between actions). Public so the smoke test can use it.

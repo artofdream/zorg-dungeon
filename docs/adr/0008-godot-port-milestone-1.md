@@ -44,3 +44,7 @@ ADR-0002's concern is handled by the parity gate, not by trust. Each new
 rule ported to GDScript needs golden cases first. The web app is unchanged.
 This is **Simulated** evidence only: no ledger rows are promoted, and no real
 phone has run it yet.
+
+The web preview adds Web (single-threaded, so no COOP/COEP headers) and
+Windows debug exports. `deploy-godot` publishes the web build as static
+files at `/godot/` on the existing Lightsail host, next to the web game.
