@@ -867,6 +867,28 @@ static func _apply_portal(state: Dictionary, hero: Dictionary, room_id: String, 
 			_apply_toll_cell(state, hero, hero["cell"], grid, events, true)
 	return true
 
+## gold.ts payToll: take the oldest `cost` coins (FIFO) and put each back in
+## its source room. Returns {paid, refunds} or null when the purse is short.
+static func pay_toll(piles: Dictionary, purse: Array, cost: int) -> Variant:
+	if cost <= 0:
+		return {"paid": 0, "refunds": []}
+	if purse.size() < cost:
+		return null
+	var counts := {}
+	for i in cost:
+		var src: String = purse.pop_front()
+		counts[src] = int(counts.get(src, 0)) + 1
+	var refunds: Array = []
+	for src in counts:
+		piles[src] = int(piles.get(src, 0)) + int(counts[src])
+		refunds.append({"roomId": src, "amount": counts[src]})
+	return {"paid": cost, "refunds": refunds}
+
+## portals.ts evalPortalIndex for entry i, or null for an unsupported formula.
+static func portal_index(formula: String, i: int) -> Variant:
+	var f := portal_formula(formula)
+	return null if f.is_empty() else int(f[0]) * i + int(f[1])
+
 ## FR-17 (simulation.ts applyTollCell): a light cell takes the oldest coins
 ## first and refunds each to its source room. A hero who can't pay only
 ## gets here by force (a slide, a portal), and dies.
@@ -874,19 +896,10 @@ static func _apply_toll_cell(state: Dictionary, hero: Dictionary, cell: Vector2i
 	var walk = grid.get(_key(cell))
 	if walk == null or walk["toll"] == null or int(walk["toll"]) <= 0:
 		return
-	var cost := int(walk["toll"])
 	var purse: Array = hero["gold"]
-	if purse.size() >= cost:
-		var counts := {}
-		for i in cost:
-			var src: String = purse.pop_front()
-			counts[src] = int(counts.get(src, 0)) + 1
-		var refunds: Array = []
-		var room_gold: Dictionary = state["roomGold"]
-		for src in counts:
-			room_gold[src] = int(room_gold.get(src, 0)) + int(counts[src])
-			refunds.append({"roomId": src, "amount": counts[src]})
-		events.append({"type": "toll", "heroId": hero["id"], "amount": cost, "gold": purse.size(), "refunds": refunds})
+	var paid = pay_toll(state["roomGold"], purse, int(walk["toll"]))
+	if paid != null:
+		events.append({"type": "toll", "heroId": hero["id"], "amount": paid["paid"], "gold": purse.size(), "refunds": paid["refunds"]})
 		return
 	if forced:
 		hero["hp"] = 0

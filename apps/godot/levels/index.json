@@ -79,6 +79,13 @@
       "why": "Smallest gold + toll level: A, Z, D(1), O(1), T(1, fire); Warrior(5), no rule."
     },
     {
+      "id": "deluxe-5.5",
+      "name": "Counting the Riches",
+      "file": "res://levels/deluxe-5.5.json",
+      "golden": "res://tests/golden/deluxe-5.5.json",
+      "why": "Portal + gold + toll: A, Z, fire, P(2, x↦7x-6), O(1), T(1, water); Warrior(21); one Teleport(4)."
+    },
+    {
       "id": "deluxe-5.8",
       "name": "Vault Break",
       "file": "res://levels/deluxe-5.8.json",

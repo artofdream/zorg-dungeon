@@ -19,7 +19,33 @@ func _init() -> void:
 		total += r.y
 	print("parity: %d/%d cases match the TS engine" % [total - failures, total])
 	var tick_fail := _check_ticks()
-	quit(1 if failures > 0 or tick_fail > 0 else 0)
+	var gold_fail := _check_gold_portals()
+	quit(1 if failures > 0 or tick_fail > 0 or gold_fail > 0 else 0)
+
+## FR-17 FIFO toll table (gold.ts payToll) and FR-15 portal formulas
+## (portals.ts evalPortalIndex). No shipped run that ends pays a toll, so the
+## table is the toll's parity check.
+func _check_gold_portals() -> int:
+	var data := _read("res://tests/golden/gold-portals.json")
+	var bad := 0
+	for t in data["tolls"]:
+		var piles := {"O:0": 0, "O:1": 2}
+		var purse: Array = (t["purse"] as Array).duplicate()
+		var paid = ZorgEngine.pay_toll(piles, purse, int(t["cost"]))
+		var ok := (paid == null and t["paid"] == null) or (paid != null and t["paid"] != null and _eq(paid, t["paid"]))
+		if not ok or not _eq(purse, t["purseAfter"]) or not _eq(piles, t["pilesAfter"]):
+			bad += 1
+			printerr("FAIL toll ", t["purse"], " cost ", t["cost"], ": got ", paid, " ", purse, " ", piles)
+	print("tolls: %d/%d FIFO payments match the TS engine" % [data["tolls"].size() - bad, data["tolls"].size()])
+	var pbad := 0
+	for p in data["portals"]:
+		var got = ZorgEngine.portal_index(p["formula"], int(p["i"]))
+		var want = p["value"]
+		if not ((got == null and typeof(want) == TYPE_STRING) or (got != null and typeof(want) != TYPE_STRING and _eq(got, want))):
+			pbad += 1
+			printerr("FAIL portal ", p["formula"], " i=", p["i"], ": got ", got, " want ", want)
+	print("portals: %d/%d formula values match the TS engine" % [data["portals"].size() - pbad, data["portals"].size()])
+	return bad + pbad
 
 ## FR-14 tick table (elements.ts elementalTick). Poison has no shipped
 ## fixture yet, so this table is its only parity check.

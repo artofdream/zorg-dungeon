@@ -1,0 +1,1311 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "levelId": "deluxe-5.5",
+  "levelFile": "apps/godot/levels/deluxe-5.5.json",
+  "cases": [
+    {
+      "name": "loss-second-entry-waits",
+      "note": "A–P–Z: the 1st entry (f(1) = 1) sends the Warrior back to A's centre; the 2nd (f(2) = 8) finds no 8th visit, so it goes back to the waiting room; the 3rd entry is past n = 2 and the Warrior walks on into Z.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "E:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "P:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "O:0",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "T:0",
+          "x": 2,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          },
+          {
+            "type": "teleport",
+            "heroId": 0,
+            "fromRoomId": "P:0",
+            "toRoomId": "A:0",
+            "to": {
+              "x": 2,
+              "y": 2
+            }
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          },
+          {
+            "type": "wait_room",
+            "heroId": 0
+          }
+        ],
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": 2
+            },
+            "to": {
+              "x": 9,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": 2
+            },
+            "to": {
+              "x": 10,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    },
+    {
+      "name": "loss-portal-then-gold",
+      "note": "Same two portal entries, then the spent P leads through O (pickup) into Z with the coin.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 1
+        },
+        {
+          "id": "E:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "P:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "O:0",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "T:0",
+          "x": 1,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          },
+          {
+            "type": "teleport",
+            "heroId": 0,
+            "fromRoomId": "P:0",
+            "toRoomId": "A:0",
+            "to": {
+              "x": 2,
+              "y": 2
+            }
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          },
+          {
+            "type": "wait_room",
+            "heroId": 0
+          }
+        ],
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 3
+            },
+            "to": {
+              "x": 2,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 4
+            },
+            "to": {
+              "x": 2,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 5
+            },
+            "to": {
+              "x": 2,
+              "y": 6
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 6
+            },
+            "to": {
+              "x": 3,
+              "y": 6
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 6
+            },
+            "to": {
+              "x": 3,
+              "y": 7
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 7
+            },
+            "to": {
+              "x": 4,
+              "y": 7
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 7
+            },
+            "to": {
+              "x": 5,
+              "y": 7
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "O:0",
+            "roomType": "O"
+          },
+          {
+            "type": "pickup",
+            "heroId": 0,
+            "roomId": "O:0",
+            "amount": 1,
+            "gold": 1
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 7
+            },
+            "to": {
+              "x": 6,
+              "y": 7
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 7
+            },
+            "to": {
+              "x": 7,
+              "y": 7
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 7
+            },
+            "to": {
+              "x": 8,
+              "y": 7
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": 7
+            },
+            "to": {
+              "x": 9,
+              "y": 7
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": 7
+            },
+            "to": {
+              "x": 10,
+              "y": 7
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    },
+    {
+      "name": "loss-teleport-into-portal",
+      "note": "After the waiting room, Teleport(4) puts the Warrior on P's first cell with no room effect, so the portal doesn't fire; it walks through the fire room (−3) and O into Z.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "E:0",
+          "x": 1,
+          "y": -1
+        },
+        {
+          "id": "P:0",
+          "x": 0,
+          "y": -1
+        },
+        {
+          "id": "O:0",
+          "x": 2,
+          "y": -1
+        },
+        {
+          "id": "T:0",
+          "x": 1,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "casts": [
+        {
+          "afterSteps": 8,
+          "spellId": 0
+        }
+      ],
+      "castLog": [
+        {
+          "afterSteps": 8,
+          "spellId": 0,
+          "result": "ok"
+        }
+      ],
+      "castWindow": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 1
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 1
+            },
+            "to": {
+              "x": 2,
+              "y": 0
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 0
+            },
+            "to": {
+              "x": 2,
+              "y": -1
+            },
+            "dir": "down"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          },
+          {
+            "type": "teleport",
+            "heroId": 0,
+            "fromRoomId": "P:0",
+            "toRoomId": "A:0",
+            "to": {
+              "x": 2,
+              "y": 2
+            }
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 2,
+              "y": 1
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 1
+            },
+            "to": {
+              "x": 2,
+              "y": 0
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 0
+            },
+            "to": {
+              "x": 2,
+              "y": -1
+            },
+            "dir": "down"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          },
+          {
+            "type": "wait_room",
+            "heroId": 0
+          }
+        ],
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "cast",
+            "spellId": 0,
+            "spellType": "Teleport",
+            "heroIds": [
+              0
+            ]
+          },
+          {
+            "type": "teleport",
+            "heroId": 0,
+            "fromRoomId": "A:0",
+            "toRoomId": "P:0",
+            "to": {
+              "x": 2,
+              "y": -1
+            }
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": -1
+            },
+            "to": {
+              "x": 2,
+              "y": -2
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": -2
+            },
+            "to": {
+              "x": 3,
+              "y": -2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": -2
+            },
+            "to": {
+              "x": 3,
+              "y": -3
+            },
+            "dir": "down"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": -3
+            },
+            "to": {
+              "x": 4,
+              "y": -3
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": -3
+            },
+            "to": {
+              "x": 5,
+              "y": -3
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "E:0",
+            "roomType": "E"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": -3
+            },
+            "to": {
+              "x": 6,
+              "y": -3
+            },
+            "dir": "right"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 20
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": -3
+            },
+            "to": {
+              "x": 7,
+              "y": -3
+            },
+            "dir": "right"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 19
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": -3
+            },
+            "to": {
+              "x": 8,
+              "y": -3
+            },
+            "dir": "right"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 18
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": -3
+            },
+            "to": {
+              "x": 9,
+              "y": -3
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": -3
+            },
+            "to": {
+              "x": 10,
+              "y": -3
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "O:0",
+            "roomType": "O"
+          },
+          {
+            "type": "pickup",
+            "heroId": 0,
+            "roomId": "O:0",
+            "amount": 1,
+            "gold": 1
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 10,
+              "y": -3
+            },
+            "to": {
+              "x": 11,
+              "y": -3
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 11,
+              "y": -3
+            },
+            "to": {
+              "x": 12,
+              "y": -3
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 12,
+              "y": -3
+            },
+            "to": {
+              "x": 12,
+              "y": -2
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 12,
+              "y": -2
+            },
+            "to": {
+              "x": 12,
+              "y": -1
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 12,
+              "y": -1
+            },
+            "to": {
+              "x": 12,
+              "y": 0
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    }
+  ]
+}

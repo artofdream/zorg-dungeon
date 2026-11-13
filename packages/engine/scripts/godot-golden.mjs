@@ -21,6 +21,8 @@ import {
   createRun,
   elementalTick,
   enumerateSuppliedRooms,
+  evalPortalIndex,
+  payToll,
   parseLevel,
   scoreLevel,
   simulate,
@@ -32,6 +34,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "..", "..", "..");
 const LEVEL_INDEX_OUT = "apps/godot/levels/index.json";
 const ELEMENTS_OUT = "apps/godot/tests/golden/elements.json";
+const GOLD_OUT = "apps/godot/tests/golden/gold-portals.json";
 
 // Fixed placements (room grid coordinates, orientation 0 unless stated).
 // Room ids come from enumerateSuppliedRooms (A:0, Z:0, D:0, D:1, …, E:0).
@@ -305,6 +308,28 @@ const LEVELS = [
     ],
   },
   {
+    source: "packages/engine/fixtures/contracts/5.5-counting-the-riches.txt",
+    why: "Portal + gold + toll: A, Z, fire, P(2, x↦7x-6), O(1), T(1, water); Warrior(21); one Teleport(4).",
+    cases: [
+      {
+        name: "loss-second-entry-waits",
+        note: "A–P–Z: the 1st entry (f(1) = 1) sends the Warrior back to A's centre; the 2nd (f(2) = 8) finds no 8th visit, so it goes back to the waiting room; the 3rd entry is past n = 2 and the Warrior walks on into Z.",
+        positions: { "A:0": [0, 0], "P:0": [1, 0], "Z:0": [2, 0], "E:0": [0, 1], "O:0": [1, 1], "T:0": [2, 1] },
+      },
+      {
+        name: "loss-portal-then-gold",
+        note: "Same two portal entries, then the spent P leads through O (pickup) into Z with the coin.",
+        positions: { "A:0": [0, 0], "P:0": [0, 1], "O:0": [1, 1], "Z:0": [2, 1], "T:0": [1, 0], "E:0": [2, 0] },
+      },
+      {
+        name: "loss-teleport-into-portal",
+        note: "After the waiting room, Teleport(4) puts the Warrior on P's first cell with no room effect, so the portal doesn't fire; it walks through the fire room (−3) and O into Z.",
+        positions: { "A:0": [0, 0], "T:0": [1, 0], "Z:0": [2, 0], "E:0": [1, -1], "P:0": [0, -1], "O:0": [2, -1] },
+        casts: [{ afterSteps: 8, spellId: 0 }],
+      },
+    ],
+  },
+  {
     source: "packages/engine/fixtures/contracts/5.8-vault-break.txt",
     why: "Elf gold + toll level: A, Z, D(1), O(1), T(1, fire), T(1, water); Elf(1, {fire}) then Elf(13, {water}).",
     cases: [
@@ -472,6 +497,34 @@ function build() {
     }
   }
   files[ELEMENTS_OUT] = JSON.stringify({ generatedBy: "packages/engine/scripts/godot-golden.mjs", ticks }, null, 2) + "\n";
+  // FR-17 FIFO toll table (gold.ts payToll) and FR-15 portal formulas
+  // (portals.ts evalPortalIndex). With the default T tile a cost-1 toll is
+  // paid twice to cross, and no shipped level holds 2 coins, so no shipped
+  // run that ends ever pays one: this table is the toll's parity check.
+  const tolls = [];
+  const purses = [[], ["O:0"], ["O:0", "O:1"], ["O:1", "O:0", "O:0"], ["D:0", "O:0", "O:1"]];
+  for (const purse of purses) {
+    for (const cost of [0, 1, 2, 3]) {
+      const piles = new Map([["O:0", 0], ["O:1", 2]]);
+      const left = purse.map((sourceRoomId) => ({ sourceRoomId }));
+      const paid = payToll(piles, left, cost);
+      tolls.push({ purse, cost, paid, purseAfter: left.map((u) => u.sourceRoomId), pilesAfter: Object.fromEntries(piles) });
+    }
+  }
+  // Every formula in the real fixtures, plus the other forms portals.ts reads.
+  const portals = [];
+  for (const formula of ["1", "2", "5", "6", "x↦3x-2", "x↦7x-6", "x↦5-2x", "x↦1+2*⌊1/x⌋", "∞", "i->i-1", "n => 2n+1", "-x"]) {
+    for (const i of [1, 2, 3]) {
+      let value = null;
+      try {
+        value = evalPortalIndex(formula, i);
+      } catch {
+        value = "unsupported";
+      }
+      portals.push({ formula, i, value });
+    }
+  }
+  files[GOLD_OUT] = JSON.stringify({ generatedBy: "packages/engine/scripts/godot-golden.mjs", tolls, portals }, null, 2) + "\n";
   files[LEVEL_INDEX_OUT] = JSON.stringify({ generatedBy: "packages/engine/scripts/godot-golden.mjs", levels: index }, null, 2) + "\n";
   return files;
 }
