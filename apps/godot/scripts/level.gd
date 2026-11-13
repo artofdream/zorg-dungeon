@@ -184,6 +184,7 @@ func _build_ui() -> void:
 	hud_top.add_theme_constant_override("separation", 2)
 	ui_root.add_child(hud_top)
 	title = _label(22)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD    # narrow portrait screens
 	hud_top.add_child(title)
 	goal = _label(16)
 	goal.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -304,6 +305,7 @@ func _apply_margins() -> void:
 	# and the text column stops short of the Level button.
 	bottom_bar.vertical = vp.x < vp.y
 	var w := minf(clampf(vp.x * 0.55, 320.0, 640.0), vp.x - 2.0 * 8.0 - levels_btn.custom_minimum_size.x - 12.0)
+	title.custom_minimum_size.x = w
 	goal.custom_minimum_size.x = w
 	status.custom_minimum_size.x = w
 	log_label.custom_minimum_size.x = w
