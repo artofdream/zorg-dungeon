@@ -595,6 +595,7 @@ func end_drag(pos: Vector2) -> void:
 		return
 	if not drag_active:
 		if drag_from_tray:
+			kb_active = false                # a tap or click takes over from the keyboard
 			selected = "" if selected == id else id
 			_refresh_tray()
 		else:
@@ -741,6 +742,9 @@ func _kb_key(e: InputEventKey) -> bool:
 	# Tap/click placement, a drag or a run start can end the selection first.
 	if selected == "" or not _building() or placed.has(selected):
 		kb_active = false
+		if _building():
+			ghost.visible = false
+			_refresh_validation()            # drop the arrows/Enter/Esc prompt
 		return false
 	if e.keycode == KEY_TAB:                 # leaving for the buttons cancels the pick-up
 		_kb_cancel()
@@ -795,6 +799,7 @@ func _on_board_press(pos: Vector2) -> void:
 		if spot_allowed(selected, slot):
 			var id := selected
 			selected = ""
+			kb_active = false
 			ghost.visible = false
 			_place(id, slot)
 		else:
