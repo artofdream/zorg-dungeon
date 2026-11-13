@@ -7,7 +7,9 @@ extends Node3D
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
 const SLOTS_Y := Vector2i(-2, 3)
-const COLORS := {"A": Color(0.3, 0.75, 0.35), "Z": Color(0.85, 0.2, 0.2), "D": Color(0.95, 0.6, 0.15), "E": Color(0.6, 0.6, 0.65)}
+const COLORS := {"A": Color(0.3, 0.75, 0.35), "Z": Color(0.85, 0.2, 0.2), "D": Color(0.95, 0.6, 0.15), "E": Color(0.6, 0.6, 0.65),
+	"O": Color(0.95, 0.8, 0.2), "P": Color(0.35, 0.8, 0.85), "T": Color(0.5, 0.45, 0.4)}
+const LIGHT_COLOR := Color(1.0, 0.95, 0.6)   # T light cells: the gold toll
 const ELEMENT_COLORS := {"fire": Color(1.0, 0.35, 0.1), "water": Color(0.15, 0.4, 1.0), "ice": Color(0.75, 0.95, 1.0), "poison": Color(0.6, 0.2, 0.8)}
 const GHOST_OK := Color(0.2, 1.0, 0.3, 0.45)
 const GHOST_LOOSE := Color(1.0, 0.6, 0.1, 0.5)   # allowed, but touches no placed room yet
@@ -227,6 +229,7 @@ func cast_spell(id: int) -> bool:
 	recording["turns"].append(r["events"])
 	turn_index += 1
 	log_label.text = "Turn %d: %s" % [turn_index, heroes.apply_turn(r["events"])]
+	_refresh_piles()
 	_refresh_spells()
 	if engine.over():
 		_show_result()
@@ -236,7 +239,19 @@ func _label_for(def: Dictionary) -> String:
 	match String(def["type"]):
 		"D": return "D(%d)" % int(def["damage"])
 		"E": return "E(%s)" % String(def["element"])
+		"O": return "O(%d)" % int(def["gold"])
+		"P": return "P(%d, %s)" % [int(def["entries"]), String(def["formula"]).replace("↦", "->")]
+		"T": return "T(%d, %s)" % [int(def["cost"]), String(def["element"])]
 	return String(def["type"])
+
+## Gold lying in each placed room, shown on its label while a run is going.
+func _refresh_piles() -> void:
+	var piles: Dictionary = engine.room_gold()
+	for id in room_nodes:
+		var label: Label3D = room_nodes[id].get_meta("label")
+		var base := _label_for(_supplied(id)["def"])
+		var n := int(piles.get(id, 0))
+		label.text = base + ("  $%d" % n if n > 0 and not _building() else "")
 
 func _supplied(id: String) -> Dictionary:
 	for s in engine.supplied():
@@ -332,6 +347,8 @@ func _room_node(s: Dictionary) -> Node3D:
 			match String(tile[ly][lx]):
 				"wall": _box(Vector3(0.95, 1.0, 0.95), Color(0.55, 0.5, 0.45), p + Vector3(0, 0.5, 0), root)
 				"green": _box(Vector3(0.95, 0.15, 0.95), ELEMENT_COLORS.get(String(s["def"].get("element", "")), Color.WHITE), p, root)
+				"dark": _box(Vector3(0.95, 0.15, 0.95), ELEMENT_COLORS.get(String(s["def"].get("element", "")), Color.WHITE).darkened(0.35), p, root)
+				"light": _box(Vector3(0.95, 0.12, 0.95), LIGHT_COLOR, p, root)
 				_: _box(Vector3(0.95, 0.1, 0.95), color, p, root)
 	var label := Label3D.new()
 	label.text = _label_for(s["def"])
@@ -341,6 +358,7 @@ func _room_node(s: Dictionary) -> Node3D:
 	label.position.y = 2.2
 	label.outline_size = 24
 	root.add_child(label)
+	root.set_meta("label", label)
 	rooms_root.add_child(root)
 	return root
 
@@ -631,8 +649,9 @@ func _advance() -> bool:
 	var line: String = heroes.apply_turn(events)
 	for e in events:
 		if e["type"] == "spawn":
-			heroes.set_start_hp(int(e["heroId"]), engine.hero_hp(int(e["heroId"])))
+			heroes.set_start_hp(int(e["heroId"]), engine.hero_hp(int(e["heroId"])), engine.hero_gold(int(e["heroId"])))
 	log_label.text = "Turn %d: %s" % [turn_index, line]
+	_refresh_piles()
 	_refresh_spells()
 	if engine.over():
 		_show_result()
@@ -686,5 +705,6 @@ func _on_reset() -> void:
 	tray.visible = true
 	_refresh_tray()
 	_refresh_validation()
+	_refresh_piles()
 	if spell_bar:
 		_refresh_spells()

@@ -1,0 +1,74 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/4.1-teleportation-station.txt",
+  "sourceSha256": "67e560addca2168abbac1d2de9d147d311531fe730c2c700b6032002d0edf9b2",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "E:0",
+      "def": {
+        "type": "E",
+        "element": "poison"
+      }
+    },
+    {
+      "id": "P:0",
+      "def": {
+        "type": "P",
+        "entries": 1,
+        "formula": "1"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-4.1",
+    "name": "Teleportation Station",
+    "contractId": "4",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "poison"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "P",
+          "entries": 1,
+          "formula": "1"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Warrior",
+        "hp": 6
+      }
+    ]
+  }
+}

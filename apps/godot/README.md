@@ -1,7 +1,7 @@
-# Zorg — Godot 4 port (round 4)
+# Zorg — Godot 4 port (round 5)
 
 A small playable slice of Zorg's Dungeon Maker in Godot 4.7.2 (GDScript
-only). The picker in the top right holds nine real levels:
+only). The picker in the top right holds thirteen real levels:
 
 | Level | Rooms | Hero | Rule / spells |
 |---|---|---|---|
@@ -14,6 +14,10 @@ only). The picker in the top right holds nine real levels:
 | 2.4 Cross With the Constraint – Watered Down | A, Z, 2×D(1), E(fire), E(water) | Warrior(4) | ∃s ∈ Π, dist(s, A) = dist(s, Z) = 1 |
 | 2.5 Cross With the Constraint | A, Z, 2×D(1), E(fire), E(ice) | Warrior(4) | same as 2.4 |
 | 4.3 Fake Reset | A, Z, D(11), E(poison) | Warrior(20) | no hero below 0 HP; spells 2×Teleport(2) |
+| 4.1 Teleportation Station | A, Z, E(poison), P(1, 1) | Warrior(6) | none |
+| 5.2 Wealth Frontier | A, Z, D(1), O(1), T(1, fire) | Warrior(5) | none |
+| 5.5 Counting the Riches | A, Z, E(fire), P(2, x↦7x-6), O(1), T(1, water) | Warrior(21) | spell Teleport(4) |
+| 5.8 Vault Break | A, Z, D(1), O(1), T(1, fire), T(1, water) | Elf(1, {fire}), Elf(13, {water}) | none |
 
 Element rooms (FR-14) have a 3×3 middle of one element. **Fire** costs 1 HP
 per step. **Water** can't be walked into, and a hero who slides onto it dies.
@@ -22,6 +26,16 @@ per step. **Water** can't be walked into, and a hero who slides onto it dies.
 that. A hero immune to an element ignores those cells completely. The **Elf**
 (FR-21) picks the path to Z that keeps the most HP, then the shortest one,
 then right, up, left, down.
+
+**Portals, gold and tolls** (FR-15 to FR-17). The i-th entry into a
+**P(n, f)** room, while i ≤ n, sends the hero to the f(i)-th most recent room
+visit before this one (or to the waiting room if there are fewer). **O(x)**
+holds x gold; the first hero in takes it all, and a dead hero's gold stays in
+the room where it died. **T(x, elem)** has an element middle and 4 light
+hatches that cost x gold each. Coins are paid oldest first and go back to the
+room they came from. A hero who can't pay can't step on, and one pushed onto
+an unpaid hatch dies. Warriors and Elves plan with their gold, as in the TS
+engine. Gold shows as "$n" on heroes and rooms.
 
 **Spells** (FR-32 to FR-35) are one-use buttons in the spell bar above Play.
 **Attack(x)** deals x damage to every living hero, including heroes still
@@ -45,6 +59,13 @@ small extra rule: no hero may go below 0 HP (`base-extras-9.2` is the same
 level). Other Attack-only levels are left for later: 1.5, 1.7, 1.8, 2.9, 2.10,
 10.3 and `base-classic-2`. Any other spell, plus Selection, mirror worlds and
 variables, is still refused (NFR-8).
+Round 5 added four small levels that use only ported rooms (now with P, O
+and T), Warriors, Elves and Teleport, and no rule. Other portal and gold
+levels (for example 4.6 with `x↦5-2x`, or `⌊1/x⌋`-style formulas) and custom
+tile shapes are left for later. With the default
+tile a hero needs 2 coins to cross a toll room and no level here has more
+than 1, so no shipped run that ends pays a toll: a TS toll table
+(`tests/golden/gold-portals.json`) checks FIFO payment and refunds instead.
 
 ## Open and play
 1. Install Godot 4.7.2 (standard build, not .NET).
@@ -69,11 +90,13 @@ godot --headless --path apps/godot --script res://tests/parity_test.gd
 godot --headless --path apps/godot --script res://tests/level_smoke_test.gd
 ```
 The golden script runs the TypeScript engine on fixed placements for each
-level (31 in total) and records every turn to `tests/golden/<level>.json`.
+level (43 in total) and records every turn to `tests/golden/<level>.json`.
 Spell cases also list the casts (`afterSteps`, `spellId`), each cast's result
 (`ok` or the refusal reason), and, after every turn, whether a cast would be
 allowed. A cast is its own turn, with `cast` as its first event. The script
-also writes a 24-row element tick table to `tests/golden/elements.json`, and
+also writes a 24-row element tick table to `tests/golden/elements.json`, a
+20-row toll table and a 36-row portal formula table to
+`tests/golden/gold-portals.json`, and
 it writes the level files the game loads (`levels/*.json`, plus
 `levels/index.json` for the picker) from the real fixtures.
 The parity test replays the same placements in GDScript and fails on any

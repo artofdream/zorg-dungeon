@@ -38,6 +38,11 @@ engine live and casts from a spell bar. Golden cases carry the cast script,
 each cast's result and the per-turn cast window. Selection and the other
 spells stay refused.
 
+Round 5 ports portals, gold and tolls (FR-15 to FR-17), including gold in
+Warrior and Elf planning, and adds 4.1, 5.2, 5.5 and 5.8. FIFO toll payment
+and portal formulas are also checked against TS tables, because no shipped
+run that ends pays a toll.
+
 ## Consequences
 
 ADR-0002's concern is handled by the parity gate, not by trust. Each new

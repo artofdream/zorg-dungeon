@@ -1,0 +1,585 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "tolls": [
+    {
+      "purse": [],
+      "cost": 0,
+      "paid": {
+        "paid": 0,
+        "refunds": []
+      },
+      "purseAfter": [],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [],
+      "cost": 1,
+      "paid": null,
+      "purseAfter": [],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [],
+      "cost": 2,
+      "paid": null,
+      "purseAfter": [],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [],
+      "cost": 3,
+      "paid": null,
+      "purseAfter": [],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "O:0"
+      ],
+      "cost": 0,
+      "paid": {
+        "paid": 0,
+        "refunds": []
+      },
+      "purseAfter": [
+        "O:0"
+      ],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "O:0"
+      ],
+      "cost": 1,
+      "paid": {
+        "paid": 1,
+        "refunds": [
+          {
+            "roomId": "O:0",
+            "amount": 1
+          }
+        ]
+      },
+      "purseAfter": [],
+      "pilesAfter": {
+        "O:0": 1,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "O:0"
+      ],
+      "cost": 2,
+      "paid": null,
+      "purseAfter": [
+        "O:0"
+      ],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "O:0"
+      ],
+      "cost": 3,
+      "paid": null,
+      "purseAfter": [
+        "O:0"
+      ],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "O:0",
+        "O:1"
+      ],
+      "cost": 0,
+      "paid": {
+        "paid": 0,
+        "refunds": []
+      },
+      "purseAfter": [
+        "O:0",
+        "O:1"
+      ],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "O:0",
+        "O:1"
+      ],
+      "cost": 1,
+      "paid": {
+        "paid": 1,
+        "refunds": [
+          {
+            "roomId": "O:0",
+            "amount": 1
+          }
+        ]
+      },
+      "purseAfter": [
+        "O:1"
+      ],
+      "pilesAfter": {
+        "O:0": 1,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "O:0",
+        "O:1"
+      ],
+      "cost": 2,
+      "paid": {
+        "paid": 2,
+        "refunds": [
+          {
+            "roomId": "O:0",
+            "amount": 1
+          },
+          {
+            "roomId": "O:1",
+            "amount": 1
+          }
+        ]
+      },
+      "purseAfter": [],
+      "pilesAfter": {
+        "O:0": 1,
+        "O:1": 3
+      }
+    },
+    {
+      "purse": [
+        "O:0",
+        "O:1"
+      ],
+      "cost": 3,
+      "paid": null,
+      "purseAfter": [
+        "O:0",
+        "O:1"
+      ],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "O:1",
+        "O:0",
+        "O:0"
+      ],
+      "cost": 0,
+      "paid": {
+        "paid": 0,
+        "refunds": []
+      },
+      "purseAfter": [
+        "O:1",
+        "O:0",
+        "O:0"
+      ],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "O:1",
+        "O:0",
+        "O:0"
+      ],
+      "cost": 1,
+      "paid": {
+        "paid": 1,
+        "refunds": [
+          {
+            "roomId": "O:1",
+            "amount": 1
+          }
+        ]
+      },
+      "purseAfter": [
+        "O:0",
+        "O:0"
+      ],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 3
+      }
+    },
+    {
+      "purse": [
+        "O:1",
+        "O:0",
+        "O:0"
+      ],
+      "cost": 2,
+      "paid": {
+        "paid": 2,
+        "refunds": [
+          {
+            "roomId": "O:1",
+            "amount": 1
+          },
+          {
+            "roomId": "O:0",
+            "amount": 1
+          }
+        ]
+      },
+      "purseAfter": [
+        "O:0"
+      ],
+      "pilesAfter": {
+        "O:0": 1,
+        "O:1": 3
+      }
+    },
+    {
+      "purse": [
+        "O:1",
+        "O:0",
+        "O:0"
+      ],
+      "cost": 3,
+      "paid": {
+        "paid": 3,
+        "refunds": [
+          {
+            "roomId": "O:1",
+            "amount": 1
+          },
+          {
+            "roomId": "O:0",
+            "amount": 2
+          }
+        ]
+      },
+      "purseAfter": [],
+      "pilesAfter": {
+        "O:0": 2,
+        "O:1": 3
+      }
+    },
+    {
+      "purse": [
+        "D:0",
+        "O:0",
+        "O:1"
+      ],
+      "cost": 0,
+      "paid": {
+        "paid": 0,
+        "refunds": []
+      },
+      "purseAfter": [
+        "D:0",
+        "O:0",
+        "O:1"
+      ],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2
+      }
+    },
+    {
+      "purse": [
+        "D:0",
+        "O:0",
+        "O:1"
+      ],
+      "cost": 1,
+      "paid": {
+        "paid": 1,
+        "refunds": [
+          {
+            "roomId": "D:0",
+            "amount": 1
+          }
+        ]
+      },
+      "purseAfter": [
+        "O:0",
+        "O:1"
+      ],
+      "pilesAfter": {
+        "O:0": 0,
+        "O:1": 2,
+        "D:0": 1
+      }
+    },
+    {
+      "purse": [
+        "D:0",
+        "O:0",
+        "O:1"
+      ],
+      "cost": 2,
+      "paid": {
+        "paid": 2,
+        "refunds": [
+          {
+            "roomId": "D:0",
+            "amount": 1
+          },
+          {
+            "roomId": "O:0",
+            "amount": 1
+          }
+        ]
+      },
+      "purseAfter": [
+        "O:1"
+      ],
+      "pilesAfter": {
+        "O:0": 1,
+        "O:1": 2,
+        "D:0": 1
+      }
+    },
+    {
+      "purse": [
+        "D:0",
+        "O:0",
+        "O:1"
+      ],
+      "cost": 3,
+      "paid": {
+        "paid": 3,
+        "refunds": [
+          {
+            "roomId": "D:0",
+            "amount": 1
+          },
+          {
+            "roomId": "O:0",
+            "amount": 1
+          },
+          {
+            "roomId": "O:1",
+            "amount": 1
+          }
+        ]
+      },
+      "purseAfter": [],
+      "pilesAfter": {
+        "O:0": 1,
+        "O:1": 3,
+        "D:0": 1
+      }
+    }
+  ],
+  "portals": [
+    {
+      "formula": "1",
+      "i": 1,
+      "value": 1
+    },
+    {
+      "formula": "1",
+      "i": 2,
+      "value": 1
+    },
+    {
+      "formula": "1",
+      "i": 3,
+      "value": 1
+    },
+    {
+      "formula": "2",
+      "i": 1,
+      "value": 2
+    },
+    {
+      "formula": "2",
+      "i": 2,
+      "value": 2
+    },
+    {
+      "formula": "2",
+      "i": 3,
+      "value": 2
+    },
+    {
+      "formula": "5",
+      "i": 1,
+      "value": 5
+    },
+    {
+      "formula": "5",
+      "i": 2,
+      "value": 5
+    },
+    {
+      "formula": "5",
+      "i": 3,
+      "value": 5
+    },
+    {
+      "formula": "6",
+      "i": 1,
+      "value": 6
+    },
+    {
+      "formula": "6",
+      "i": 2,
+      "value": 6
+    },
+    {
+      "formula": "6",
+      "i": 3,
+      "value": 6
+    },
+    {
+      "formula": "x↦3x-2",
+      "i": 1,
+      "value": 1
+    },
+    {
+      "formula": "x↦3x-2",
+      "i": 2,
+      "value": 4
+    },
+    {
+      "formula": "x↦3x-2",
+      "i": 3,
+      "value": 7
+    },
+    {
+      "formula": "x↦7x-6",
+      "i": 1,
+      "value": 1
+    },
+    {
+      "formula": "x↦7x-6",
+      "i": 2,
+      "value": 8
+    },
+    {
+      "formula": "x↦7x-6",
+      "i": 3,
+      "value": 15
+    },
+    {
+      "formula": "x↦5-2x",
+      "i": 1,
+      "value": "unsupported"
+    },
+    {
+      "formula": "x↦5-2x",
+      "i": 2,
+      "value": "unsupported"
+    },
+    {
+      "formula": "x↦5-2x",
+      "i": 3,
+      "value": "unsupported"
+    },
+    {
+      "formula": "x↦1+2*⌊1/x⌋",
+      "i": 1,
+      "value": "unsupported"
+    },
+    {
+      "formula": "x↦1+2*⌊1/x⌋",
+      "i": 2,
+      "value": "unsupported"
+    },
+    {
+      "formula": "x↦1+2*⌊1/x⌋",
+      "i": 3,
+      "value": "unsupported"
+    },
+    {
+      "formula": "∞",
+      "i": 1,
+      "value": "unsupported"
+    },
+    {
+      "formula": "∞",
+      "i": 2,
+      "value": "unsupported"
+    },
+    {
+      "formula": "∞",
+      "i": 3,
+      "value": "unsupported"
+    },
+    {
+      "formula": "i->i-1",
+      "i": 1,
+      "value": 0
+    },
+    {
+      "formula": "i->i-1",
+      "i": 2,
+      "value": 1
+    },
+    {
+      "formula": "i->i-1",
+      "i": 3,
+      "value": 2
+    },
+    {
+      "formula": "n => 2n+1",
+      "i": 1,
+      "value": 3
+    },
+    {
+      "formula": "n => 2n+1",
+      "i": 2,
+      "value": 5
+    },
+    {
+      "formula": "n => 2n+1",
+      "i": 3,
+      "value": 7
+    },
+    {
+      "formula": "-x",
+      "i": 1,
+      "value": -1
+    },
+    {
+      "formula": "-x",
+      "i": 2,
+      "value": -2
+    },
+    {
+      "formula": "-x",
+      "i": 3,
+      "value": -3
+    }
+  ]
+}

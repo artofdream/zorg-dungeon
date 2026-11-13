@@ -1,0 +1,110 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "source": "packages/engine/fixtures/contracts/5.5-counting-the-riches.txt",
+  "sourceSha256": "2cb4db65214475bc0dcb0d11aeec6c887b01e7deb7b1e801eed2881fc2a75234",
+  "supplied": [
+    {
+      "id": "A:0",
+      "def": {
+        "type": "A"
+      }
+    },
+    {
+      "id": "Z:0",
+      "def": {
+        "type": "Z"
+      }
+    },
+    {
+      "id": "E:0",
+      "def": {
+        "type": "E",
+        "element": "fire"
+      }
+    },
+    {
+      "id": "P:0",
+      "def": {
+        "type": "P",
+        "entries": 2,
+        "formula": "x↦7x-6"
+      }
+    },
+    {
+      "id": "O:0",
+      "def": {
+        "type": "O",
+        "gold": 1
+      }
+    },
+    {
+      "id": "T:0",
+      "def": {
+        "type": "T",
+        "cost": 1,
+        "element": "water"
+      }
+    }
+  ],
+  "level": {
+    "id": "deluxe-5.5",
+    "name": "Counting the Riches",
+    "contractId": "5",
+    "rooms": [
+      {
+        "count": 1,
+        "room": {
+          "type": "A"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "Z"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "E",
+          "element": "fire"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "P",
+          "entries": 2,
+          "formula": "x↦7x-6"
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "O",
+          "gold": 1
+        }
+      },
+      {
+        "count": 1,
+        "room": {
+          "type": "T",
+          "cost": 1,
+          "element": "water"
+        }
+      }
+    ],
+    "heroes": [
+      {
+        "type": "Warrior",
+        "hp": 21
+      }
+    ],
+    "spells": [
+      {
+        "type": "Teleport",
+        "steps": 4
+      }
+    ]
+  }
+}

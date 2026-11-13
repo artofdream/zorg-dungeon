@@ -1,0 +1,779 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "levelId": "deluxe-5.8",
+  "levelFile": "apps/godot/levels/deluxe-5.8.json",
+  "cases": [
+    {
+      "name": "loss-gold-moves",
+      "note": "The first Elf takes O's coin and dies in D(1); its coin stays in D. The second Elf finds O empty, picks the coin up in D (pickup before damage, FR-16) and reaches Z.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 1
+        },
+        {
+          "id": "D:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "O:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "T:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "T:1",
+          "x": 1,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "O:0",
+            "roomType": "O"
+          },
+          {
+            "type": "pickup",
+            "heroId": 0,
+            "roomId": "O:0",
+            "amount": 1,
+            "gold": 1
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": 2
+            },
+            "to": {
+              "x": 9,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": 2
+            },
+            "to": {
+              "x": 10,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 0
+          },
+          {
+            "type": "gold_drop",
+            "heroId": 0,
+            "roomId": "D:0",
+            "amount": 1
+          },
+          {
+            "type": "death",
+            "heroId": 0
+          }
+        ],
+        [
+          {
+            "type": "spawn",
+            "heroId": 1,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 1,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 1,
+            "roomId": "O:0",
+            "roomType": "O"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 8,
+              "y": 2
+            },
+            "to": {
+              "x": 9,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 9,
+              "y": 2
+            },
+            "to": {
+              "x": 10,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 1,
+            "roomId": "D:0",
+            "roomType": "D"
+          },
+          {
+            "type": "pickup",
+            "heroId": 1,
+            "roomId": "D:0",
+            "amount": 1,
+            "gold": 1
+          },
+          {
+            "type": "damage",
+            "heroId": 1,
+            "amount": 1,
+            "hp": 12
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 10,
+              "y": 2
+            },
+            "to": {
+              "x": 11,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 11,
+              "y": 2
+            },
+            "to": {
+              "x": 12,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 12,
+              "y": 2
+            },
+            "to": {
+              "x": 12,
+              "y": 3
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 12,
+              "y": 3
+            },
+            "to": {
+              "x": 12,
+              "y": 4
+            },
+            "dir": "up"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 1,
+            "from": {
+              "x": 12,
+              "y": 4
+            },
+            "to": {
+              "x": 12,
+              "y": 5
+            },
+            "dir": "up"
+          },
+          {
+            "type": "enter",
+            "heroId": 1,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 1
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    },
+    {
+      "name": "stalemate-tolls",
+      "note": "Z sits behind T(1, fire) and nobody holds gold: no Elf can pay a light cell, so Z is unreachable and both Elves wait in A.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "O:0",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "T:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "T:1",
+          "x": 2,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "stalemate",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "wait",
+            "heroId": 0
+          }
+        ],
+        [
+          {
+            "type": "spawn",
+            "heroId": 1,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 1,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "wait",
+            "heroId": 1
+          },
+          {
+            "type": "stalemate"
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "unresolved",
+        "constraints": []
+      }
+    },
+    {
+      "name": "loss-with-coin",
+      "note": "A–O–Z: the first Elf takes the coin and walks into Z with it.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "D:0",
+          "x": 0,
+          "y": 1
+        },
+        {
+          "id": "O:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "T:0",
+          "x": 1,
+          "y": 1
+        },
+        {
+          "id": "T:1",
+          "x": 2,
+          "y": 1
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "O:0",
+            "roomType": "O"
+          },
+          {
+            "type": "pickup",
+            "heroId": 0,
+            "roomId": "O:0",
+            "amount": 1,
+            "gold": 1
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": 2
+            },
+            "to": {
+              "x": 9,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": 2
+            },
+            "to": {
+              "x": 10,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    }
+  ]
+}

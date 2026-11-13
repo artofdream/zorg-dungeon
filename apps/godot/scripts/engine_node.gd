@@ -91,5 +91,12 @@ func spells() -> Array:
 func hero_hp(id: int) -> int:
 	return int(state["heroes"][id]["hp"])
 
+func hero_gold(id: int) -> int:
+	return (state["heroes"][id]["gold"] as Array).size()
+
+## Gold lying in each room (authored O piles, refunds, dropped purses).
+func room_gold() -> Dictionary:
+	return {} if state.is_empty() else state["roomGold"]
+
 func score() -> Dictionary:
 	return ZorgEngine.score(loaded, state)

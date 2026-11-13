@@ -1,8 +1,8 @@
 extends SceneTree
 ## Headless smoke test of the Level scene, driven through the same calls the
 ## tap/drag input uses:
-##  - for every level in the picker, place its first golden layout (a win),
-##    step the replay to the end and expect the win banner;
+##  - for every level in the picker, place its first golden layout (usually a
+##    win), step the replay to the end and expect the banner for its outcome;
 ##  - drag a room straight out of the tray onto the board;
 ##  - drag onto an occupied spot: red ghost, nothing placed;
 ##  - rotate 90° and check the camera settles on a 45° + n·90° yaw.
@@ -84,7 +84,10 @@ func _initialize() -> void:
 					_check(not btn.disabled, "%s: spell button %d is enabled between actions" % [engine.levels[i]["id"], int(c["spellId"])])
 					btn.pressed.emit()          # same path as a tap or click
 					await process_frame
-		_check(level.result.text.begins_with("You win"), "%s: win banner (%s)" % [engine.levels[i]["id"], level.result.text])
+		# Most first cases are wins; a level with no winnable layout under the
+		# ported rules (5.8) leads with the outcome its golden records.
+		var want: String = {"win": "You win", "loss": "You lose", "unresolved": "Not won yet"}[String(case0["score"]["outcome"])]
+		_check(level.result.text.begins_with(want), "%s: %s banner (%s)" % [engine.levels[i]["id"], case0["score"]["outcome"], level.result.text])
 		if not casts.is_empty():
 			await process_frame
 			_check(level.spell_bar.get_children().all(func(b): return b.disabled), "%s: no spell can be cast after the run ends" % engine.levels[i]["id"])
@@ -134,7 +137,7 @@ func _initialize() -> void:
 		if a.begins_with("--shot="):
 			shot = a.substr(7)
 	if shot != "":
-		# Last spell level mid-run, spell bar live, so the shot shows casting.
+		# Last level mid-run (gold and tolls on the board).
 		var last: int = engine.levels.size() - 1
 		level._open_level(last)
 		var g = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[last]["golden"]))

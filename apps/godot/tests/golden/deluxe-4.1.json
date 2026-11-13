@@ -1,0 +1,666 @@
+{
+  "generatedBy": "packages/engine/scripts/godot-golden.mjs",
+  "levelId": "deluxe-4.1",
+  "levelFile": "apps/godot/levels/deluxe-4.1.json",
+  "cases": [
+    {
+      "name": "win-poison-twice",
+      "note": "A–E(poison)–P–Z in a row. Poison heals 3, then P sends the Warrior back to the first cell of the poison room, and the second pass (−3 per cell) kills it.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 3,
+          "y": 0
+        },
+        {
+          "id": "E:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "P:0",
+          "x": 2,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "win",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "E:0",
+            "roomType": "E"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": -1,
+            "hp": 7
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": -1,
+            "hp": 8
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": -1,
+            "hp": 9
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": 2
+            },
+            "to": {
+              "x": 9,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": 2
+            },
+            "to": {
+              "x": 10,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          },
+          {
+            "type": "teleport",
+            "heroId": 0,
+            "fromRoomId": "P:0",
+            "toRoomId": "E:0",
+            "to": {
+              "x": 5,
+              "y": 2
+            }
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "E:0",
+            "roomType": "E"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 3,
+            "hp": 6
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 3,
+            "hp": 3
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 3,
+            "hp": 0
+          },
+          {
+            "type": "death",
+            "heroId": 0
+          },
+          {
+            "type": "win"
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "win",
+        "constraints": []
+      }
+    },
+    {
+      "name": "loss-portal-spent",
+      "note": "A–P–Z: the first entry sends the Warrior back to A's centre; P(1, 1) only works once, so the second entry is a normal room and the Warrior walks on into Z.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "E:0",
+          "x": 3,
+          "y": 0
+        },
+        {
+          "id": "P:0",
+          "x": 1,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          },
+          {
+            "type": "teleport",
+            "heroId": 0,
+            "fromRoomId": "P:0",
+            "toRoomId": "A:0",
+            "to": {
+              "x": 2,
+              "y": 2
+            }
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "P:0",
+            "roomType": "P"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 5,
+              "y": 2
+            },
+            "to": {
+              "x": 6,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 6,
+              "y": 2
+            },
+            "to": {
+              "x": 7,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 7,
+              "y": 2
+            },
+            "to": {
+              "x": 8,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 8,
+              "y": 2
+            },
+            "to": {
+              "x": 9,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 9,
+              "y": 2
+            },
+            "to": {
+              "x": 10,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    },
+    {
+      "name": "loss-direct",
+      "note": "Z next to A: the Warrior never touches the portal.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 0,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "E:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "P:0",
+          "x": 3,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "runOutcome": "loss",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 2,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 2,
+              "y": 2
+            },
+            "to": {
+              "x": 3,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 3,
+              "y": 2
+            },
+            "to": {
+              "x": 4,
+              "y": 2
+            },
+            "dir": "right"
+          }
+        ],
+        [
+          {
+            "type": "move",
+            "heroId": 0,
+            "from": {
+              "x": 4,
+              "y": 2
+            },
+            "to": {
+              "x": 5,
+              "y": 2
+            },
+            "dir": "right"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "Z:0",
+            "roomType": "Z"
+          },
+          {
+            "type": "loss",
+            "heroId": 0
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "loss",
+        "constraints": []
+      }
+    }
+  ]
+}
