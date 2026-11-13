@@ -1,4 +1,4 @@
-# Zorg — Godot 4 port (round 5)
+# Zorg — Godot 4 port (round 6)
 
 A small playable slice of Zorg's Dungeon Maker in Godot 4.7.2 (GDScript
 only). The picker in the top right holds thirteen real levels:
@@ -44,7 +44,17 @@ its n-th most recent room (1 = the room it is in) with no room effect, or back
 to the waiting room if it hasn't visited that many rooms. You can cast only
 between two hero actions, after the first one and before the run ends
 (FR-33). The buttons are greyed out at other times. You place the rooms, then
-Step or Play the run one action at a time. The visuals are plain boxes.
+Step or Play the run one action at a time.
+
+**Look** (round 6, visual only): rooms are 3D tiles with low stone walls and
+their own floor. A has a green spawn ring, Z a dark exit pit, D steel
+spikes, P a turning portal ring, O a coin stack and T wooden toll hatches.
+Fire glows, water is a see-through tint, ice is pale and glossy, and poison
+is green. The Warrior is broad and blue, with a helmet, shield and sword.
+The Elf is slim and green, with a pointed hat. Heroes hop from cell to cell,
+flash with a floating number when hurt or healed, and fade out when they
+die. Everything is built from Godot primitives in `scripts/look.gd`, with no
+asset files. One sun gives soft shadows, plus ambient light.
 The status is **Simulated**: it runs in CI and headless tests, and nobody has
 tried it on a real phone yet.
 
@@ -78,9 +88,14 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    to move it, or tap it to send it back to the tray. Once every room is
    placed and connected, **Play** and **Step** unlock. You can also step with
    Space.
-4. Camera: use the mouse wheel or pinch to zoom. Right-drag or two-finger drag
-   to pan. The `< 90°` / `90° >` buttons (or Q/E) rotate the view 90°. After a rotation
-   the view lands exactly on the new angle and recentres on your rooms.
+4. Camera: use the mouse wheel, pinch or +/- to zoom. Tilt with
+   Ctrl + wheel, middle-drag, W/S or the `Tilt +` / `Tilt -` buttons.
+   Right-drag or two-finger drag pans. The `< 90°` / `90° >` buttons (or Q/E)
+   rotate the view 90°. Zoom and tilt ease within limits, and a rotation
+   eases onto the exact new angle and recentres on your rooms.
+5. Web: add `?fps=1` to the URL (or press F3) for an FPS counter, and
+   `?shadows=0` to turn shadows off. Shadows also turn off by themselves if
+   the first seconds run under 30 FPS.
 
 ## Tests
 ```

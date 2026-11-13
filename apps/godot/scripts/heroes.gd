@@ -39,30 +39,78 @@ func _stop_tween(id: int) -> void:
 	if tw and tw.is_valid():
 		tw.kill()
 	_tweens.erase(id)
+	var f: Node3D = _figures.get(id)
+	if f and f.has_meta("body"):
+		(f.get_meta("body") as Node3D).position.y = 0.0
 
 func _figure(id: int, hp: int) -> Node3D:
-	var root := Node3D.new()
-	var mesh := MeshInstance3D.new()
-	var capsule := CapsuleMesh.new()
-	capsule.radius = 0.3
-	capsule.height = 1.2
-	mesh.mesh = capsule
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.3, 0.85, 0.4) if String(names.get(id, "")).begins_with("Elf") else Color(0.25, 0.45, 0.95)
-	mesh.material_override = mat
-	mesh.position.y = 0.7
-	root.add_child(mesh)
+	var fig := ZorgLook.hero_figure(String(names.get(id, "")).begins_with("Elf"))
+	var root: Node3D = fig["root"]
+	root.set_meta("body", fig["body"])
+	root.set_meta("mats", fig["mats"])
 	var label := Label3D.new()
 	_hp[id] = hp
 	label.text = _label_text(id)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.font_size = 48
-	label.position.y = 1.7
-	label.outline_size = 8
+	label.font_size = 44
+	label.pixel_size = 0.012
+	label.position.y = 1.85
+	label.outline_size = 10
+	label.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(label)
 	_hp_labels[id] = label
 	add_child(root)
 	return root
+
+## Juice (visual only): a short red/green flash and a floating number.
+func _flash(id: int, amount: int) -> void:
+	var f: Node3D = _figures.get(id)
+	if not f:
+		return
+	var hurt := amount > 0
+	var tint := Color(1.0, 0.1, 0.05) if hurt else Color(0.2, 1.0, 0.3)
+	for m in f.get_meta("mats"):
+		var tw := f.create_tween()
+		tw.tween_property(m, "emission", tint, 0.06)
+		tw.tween_property(m, "emission", Color.BLACK, 0.3)
+	var num := Label3D.new()
+	num.text = ("-%d" if hurt else "+%d") % absi(amount)
+	num.modulate = tint.lightened(0.2)
+	num.font_size = 72
+	num.pixel_size = 0.01
+	num.outline_size = 14
+	num.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	num.no_depth_test = true
+	num.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	num.position = f.position + Vector3(0.35, 1.4, 0)
+	add_child(num)
+	var nt := num.create_tween().set_parallel()
+	nt.tween_property(num, "position:y", num.position.y + 0.9, 0.8).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	nt.tween_property(num, "modulate:a", 0.0, 0.8).set_delay(0.2)
+	nt.chain().tween_callback(num.queue_free)
+
+## Death: tip over, sink a little and fade out, then hide.
+func _fade_out(f: Node3D) -> void:
+	var tw := f.create_tween().set_parallel()
+	tw.tween_property(f, "rotation_degrees:z", 80.0, 0.35).set_ease(Tween.EASE_IN)
+	tw.tween_property(f, "position:y", -0.25, 0.7).set_delay(0.2)
+	for m in f.get_meta("mats"):
+		(m as StandardMaterial3D).transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		tw.tween_property(m, "albedo_color:a", 0.0, 0.6).set_delay(0.25)
+	if _hp_labels.has(f.get_meta("id", -1)):
+		tw.tween_property(_hp_labels[f.get_meta("id")], "modulate:a", 0.0, 0.6).set_delay(0.25)
+	tw.chain().tween_callback(func(): f.visible = false)
+
+## One cell of movement: slide, with a small hop, facing the way it goes.
+func _step_to(tw: Tween, f: Node3D, to: Vector3) -> void:
+	var body: Node3D = f.get_meta("body")
+	tw.tween_callback(func():
+		var d := to - f.position
+		if d.length() > 0.01:
+			f.rotation.y = atan2(d.x, d.z))
+	tw.tween_property(f, "position", to, 0.13).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(body, "position:y", 0.16, 0.065).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(body, "position:y", 0.0, 0.065).set_ease(Tween.EASE_IN).set_delay(0.065)
 
 ## Apply one turn's events. Returns a short line for the log. Moves in one
 ## turn (an ice slide) chain into one tween; a teleport or the waiting room
@@ -76,6 +124,7 @@ func apply_turn(events: Array) -> String:
 			"spawn":
 				_stop_tween(id)
 				var f := _figure(id, int(_hp.get(id, 0)))
+				f.set_meta("id", id)
 				f.position = cell_to_world(e["cell"])
 				_figures[id] = f
 				lines.append("%s appears in %s" % [_name(id), e["roomId"]])
@@ -84,9 +133,9 @@ func apply_turn(events: Array) -> String:
 				if f:
 					if not moved.has(id):
 						_stop_tween(id)
-						_tweens[id] = create_tween()
+						_tweens[id] = f.create_tween()   # dies with the figure
 						moved[id] = true
-					(_tweens[id] as Tween).tween_property(f, "position", cell_to_world(e["to"]), 0.12)
+					_step_to(_tweens[id], f, cell_to_world(e["to"]))
 			"enter":
 				lines.append("enters %s" % e["roomId"])
 			"pickup":
@@ -107,6 +156,8 @@ func apply_turn(events: Array) -> String:
 			"damage":
 				_hp[id] = int(e["hp"])
 				_refresh_label(id)
+				if int(e["amount"]) != 0:
+					_flash(id, int(e["amount"]))
 				if int(e["amount"]) < 0:
 					lines.append("heals %d (HP %d)" % [-int(e["amount"]), int(e["hp"])])
 				else:
@@ -114,8 +165,12 @@ func apply_turn(events: Array) -> String:
 			"death":
 				var f: Node3D = _figures.get(id)
 				if f:
-					var tw := create_tween()
-					tw.tween_property(f, "rotation_degrees:z", 90.0, 0.3)
+					# Let this turn's move finish first, then fade.
+					var tw: Tween = _tweens.get(id)
+					if moved.has(id) and tw and tw.is_valid():
+						tw.tween_callback(_fade_out.bind(f))
+					else:
+						_fade_out(f)
 				lines.append("%s dies" % _name(id))
 			"wait":
 				lines.append("waits")
