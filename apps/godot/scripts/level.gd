@@ -827,7 +827,8 @@ func _ground_at(pos: Vector2) -> Vector3:
 	var d := camera.project_ray_normal(pos)
 	return o - d * (o.y / d.y) if absf(d.y) > 0.0001 else rig.position
 
-## Centre on and fit the dungeon's bounds (placed rooms, else FIT_EMPTY)
+## Centre on and fit the dungeon's bounds (placed rooms plus a one-slot
+## ring while rooms are still in the tray, else FIT_EMPTY)
 ## inside _fit_area, for the yaw/tilt the camera is heading to. Binary
 ## search on the zoom, then shift the pivot so the box sits in the middle.
 func _fit_camera(instant: bool) -> void:
@@ -839,6 +840,9 @@ func _fit_camera(instant: bool) -> void:
 		for id in placed:
 			lo = lo.min(placed[id])
 			hi = hi.max(placed[id])
+		if _building() and placed.size() < engine.supplied().size():
+			lo -= Vector2i.ONE              # rooms left in the tray: keep the
+			hi += Vector2i.ONE              # neighbouring drop spots on screen
 	var x0 := lo.x * ROOM
 	var x1 := (hi.x + 1) * ROOM
 	var z0 := -lo.y * ROOM
