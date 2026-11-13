@@ -157,7 +157,12 @@ func apply_turn(events: Array) -> String:
 				_hp[id] = int(e["hp"])
 				_refresh_label(id)
 				if int(e["amount"]) != 0:
-					_flash(id, int(e["amount"]))
+					# Show the hit where the hero lands, after this turn's move.
+					var mt: Tween = _tweens.get(id)
+					if moved.has(id) and mt and mt.is_valid():
+						mt.tween_callback(_flash.bind(id, int(e["amount"])))
+					else:
+						_flash(id, int(e["amount"]))
 				if int(e["amount"]) < 0:
 					lines.append("heals %d (HP %d)" % [-int(e["amount"]), int(e["hp"])])
 				else:
