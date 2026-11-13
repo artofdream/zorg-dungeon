@@ -56,8 +56,9 @@ flash with a floating number when hurt or healed, and fade out when they
 die. Everything is built from Godot primitives in `scripts/look.gd`, with no
 asset files. One sun gives soft shadows, plus ambient light.
 **Phone UI** (round 7, visual only): the HUD scales with screen DPI so one
-UI unit is about 1 dp on phones (desktop and web stay at the 1280×720
-layout; `-- --ui-scale=1.75` forces it for testing). Every button is at least
+UI unit is about 1 dp on phones and 1 CSS px in mobile browsers (desktop and
+desktop web stay at the 1280×720 layout; in portrait the tray gets its own
+row; `-- --ui-scale=1.75` forces it for testing). Every button is at least
 52 units (≥ 48 dp) tall, text is 16 units or more, and the HUD keeps inside
 the display safe area. Tray rooms are buttons with a colour swatch. Room
 labels are screen-space plates at each room's back corner that never
@@ -95,6 +96,10 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    to move it, or tap it to send it back to the tray. Once every room is
    placed and connected, **Play** and **Step** unlock. You can also step with
    Space.
+   Keyboard only: Tab moves between buttons (amber focus ring) and Enter or
+   Space presses one. On a tray room, it picks the room up; the arrow keys
+   then move the ghost, Enter drops it and Esc cancels. Backspace or Ctrl+Z
+   sends the last placed room back to the tray.
 4. Camera: the view fits your rooms (with margins clear of the HUD) when a
    level opens and after each placement. Zoom with `Zoom +` / `Zoom -`, the
    mouse wheel, pinch or +/-; tilt with `Tilt +` / `Tilt -`, Ctrl + wheel,

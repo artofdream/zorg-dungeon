@@ -36,6 +36,9 @@ var level_index := 0
 var placed := {}          # room id -> Vector2i slot
 var room_nodes := {}      # room id -> Node3D
 var selected := ""        # tray room waiting for a tap on the board
+var kb_active := false    # keyboard placement: arrows move kb_slot, Enter drops
+var kb_slot := Vector2i.ZERO
+var place_order: Array = []   # placement history, for undo (Backspace / Ctrl+Z)
 
 # One drag at a time, from the tray or from the board.
 var drag_id := ""
@@ -85,7 +88,8 @@ var ui_root: Control
 var label_layer: Control         # room labels (below the hero labels)
 var hero_layer: Control          # hero HP labels and hit numbers (on top)
 var hud_top: VBoxContainer
-var bottom_bar: HBoxContainer
+var bottom_bar: BoxContainer     # horizontal; vertical (tray above controls) in portrait
+var controls: HBoxContainer
 var cam_grid: GridContainer
 var levels_btn: Button
 var levels_panel: PanelContainer
@@ -118,6 +122,8 @@ func _open_level(i: int) -> void:
 		_free_room(id)
 	room_nodes.clear()
 	placed.clear()
+	place_order.clear()
+	kb_active = false
 	selected = ""
 	levels_panel.visible = false
 	var err: String = engine.load_level_file(engine.levels[i]["file"])
@@ -178,6 +184,7 @@ func _build_ui() -> void:
 	hud_top.add_theme_constant_override("separation", 2)
 	ui_root.add_child(hud_top)
 	title = _label(22)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD    # narrow portrait screens
 	hud_top.add_child(title)
 	goal = _label(16)
 	goal.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -240,7 +247,7 @@ func _build_ui() -> void:
 		cam_grid.add_child(_btn(spec[0], spec[1]))
 
 	# Bottom bar: tray rooms (wrap upward if many), spells during a run, run controls.
-	bottom_bar = HBoxContainer.new()
+	bottom_bar = BoxContainer.new()
 	bottom_bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	bottom_bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	bottom_bar.alignment = BoxContainer.ALIGNMENT_END
@@ -255,16 +262,21 @@ func _build_ui() -> void:
 	bottom_bar.add_child(tray)
 	# Spell bar (FR-32/FR-33): one button per spell, usable by tap or mouse,
 	# enabled only between completed actions while the run is going.
+	controls = HBoxContainer.new()
+	controls.add_theme_constant_override("separation", 8)
+	controls.size_flags_horizontal = Control.SIZE_SHRINK_END
+	controls.size_flags_vertical = Control.SIZE_SHRINK_END
+	bottom_bar.add_child(controls)
 	spell_bar = HBoxContainer.new()
 	spell_bar.add_theme_constant_override("separation", 6)
 	spell_bar.size_flags_vertical = Control.SIZE_SHRINK_END
-	bottom_bar.add_child(spell_bar)
+	controls.add_child(spell_bar)
 	play_btn = _btn("Play", _on_play)
 	step_btn = _btn("Step", _on_step)
 	for b in [play_btn, step_btn, _btn("Build", _on_reset)]:
 		b.custom_minimum_size.x = 76
 		b.size_flags_vertical = Control.SIZE_SHRINK_END
-		bottom_bar.add_child(b)
+		controls.add_child(b)
 	_apply_margins()
 
 func _layer() -> Control:
@@ -289,7 +301,11 @@ func _apply_margins() -> void:
 	ui_root.offset_right = -(ins[2] + m)
 	ui_root.offset_bottom = -(ins[3] + m)
 	var vp := get_viewport().get_visible_rect().size
-	var w := clampf(vp.x * 0.55, 320.0, 640.0)
+	# Portrait (narrow mobile browsers): tray on its own row above the controls,
+	# and the text column stops short of the Level button.
+	bottom_bar.vertical = vp.x < vp.y
+	var w := minf(clampf(vp.x * 0.55, 320.0, 640.0), vp.x - 2.0 * 8.0 - levels_btn.custom_minimum_size.x - 12.0)
+	title.custom_minimum_size.x = w
 	goal.custom_minimum_size.x = w
 	status.custom_minimum_size.x = w
 	log_label.custom_minimum_size.x = w
@@ -396,7 +412,12 @@ func _refresh_tray() -> void:
 		if selected == id:
 			# From the HUD theme directly: b isn't in the tree yet.
 			b.add_theme_stylebox_override("normal", ui_root.theme.get_stylebox("pressed", "Button"))
-		b.button_down.connect(func(): _begin_drag(id, true, get_viewport().get_mouse_position()))
+		b.button_down.connect(func():
+			# Enter/Space on a focused tray button: keyboard placement (WCAG 2.1.1).
+			if Input.is_action_pressed("ui_accept") and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+				_kb_select.call_deferred(id)
+			else:
+				_begin_drag(id, true, get_viewport().get_mouse_position()))
 		tray.add_child(b)
 
 func _building() -> bool:
@@ -475,6 +496,8 @@ func _free_room(id: String) -> void:
 
 func _place(id: String, slot: Vector2i) -> void:
 	placed[id] = slot
+	place_order.erase(id)
+	place_order.append(id)
 	if not room_nodes.has(id):
 		room_nodes[id] = _room_node(_supplied(id))
 	room_nodes[id].position = slot_center(slot.x, slot.y)
@@ -485,6 +508,7 @@ func _place(id: String, slot: Vector2i) -> void:
 
 func _unplace(id: String) -> void:
 	placed.erase(id)
+	place_order.erase(id)
 	if room_nodes.has(id):
 		_free_room(id)
 		room_nodes.erase(id)
@@ -663,10 +687,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			cam_manual = true
 			_pan(event.relative)
 			_update_camera()
-		elif selected != "" and _building():
+		elif selected != "" and _building() and not kb_active:
 			_show_ghost(selected, event.position)     # hover preview (mouse)
+	elif event is InputEventKey and event.pressed and kb_active and _kb_key(event):
+		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_Q:
+		if event.keycode == KEY_TAB and get_viewport().gui_get_focus_owner() == null:
+			levels_btn.grab_focus()          # Tab from nothing: start on the Level button
+		elif (event.keycode == KEY_BACKSPACE or (event.keycode == KEY_Z and event.ctrl_pressed)) and _building() and not place_order.is_empty():
+			_unplace(place_order.back())     # undo the last placement
+		elif event.keycode == KEY_Q:
 			_rotate(-90.0)
 		elif event.keycode == KEY_E:
 			_rotate(90.0)
@@ -684,6 +714,77 @@ func _unhandled_input(event: InputEvent) -> void:
 			_on_fit()
 		elif event.keycode == KEY_F3:
 			fps_label.visible = not fps_label.visible
+
+## Keyboard placement: pick a tray room with Enter/Space, move the ghost with
+## the arrow keys, Enter/Space drops it (only on an allowed spot), Esc cancels.
+func _kb_select(id: String) -> void:
+	if not _building() or placed.has(id):
+		return
+	selected = id
+	kb_active = true
+	kb_slot = Vector2i.ZERO
+	for other in place_order:               # start next to the last placed room
+		var base: Vector2i = placed[other]
+		for d in [Vector2i(1, 0), Vector2i(0, -1), Vector2i(-1, 0), Vector2i(0, 1)]:
+			if spot_allowed(id, base + d):
+				kb_slot = base + d
+				break
+	get_viewport().gui_release_focus()      # arrows now reach _unhandled_input
+	_refresh_tray()
+	_kb_show()
+
+func _kb_show() -> void:
+	_show_ghost(selected, camera.unproject_position(slot_center(kb_slot.x, kb_slot.y)))
+	status.text += "  Arrows move, Enter places, Esc cancels."
+
+func _kb_key(e: InputEventKey) -> bool:
+	# Tap/click placement, a drag or a run start can end the selection first.
+	if selected == "" or not _building() or placed.has(selected):
+		kb_active = false
+		return false
+	if e.keycode == KEY_TAB:                 # leaving for the buttons cancels the pick-up
+		_kb_cancel()
+		return false
+	var moves := {KEY_LEFT: Vector2i(-1, 0), KEY_RIGHT: Vector2i(1, 0), KEY_UP: Vector2i(0, 1), KEY_DOWN: Vector2i(0, -1)}
+	if moves.has(e.keycode):
+		var next: Vector2i = kb_slot + moves[e.keycode]
+		if _in_board(next):
+			kb_slot = next
+		_kb_show()
+		return true
+	if e.echo:
+		return false
+	if e.keycode == KEY_ENTER or e.keycode == KEY_KP_ENTER or e.keycode == KEY_SPACE:
+		if spot_allowed(selected, kb_slot):
+			var id := selected
+			selected = ""
+			kb_active = false
+			ghost.visible = false
+			_place(id, kb_slot)
+			_kb_refocus.call_deferred()
+		else:
+			_kb_show()
+		return true
+	if e.keycode == KEY_ESCAPE:
+		_kb_cancel()
+		_kb_refocus.call_deferred()
+		return true
+	return false
+
+func _kb_cancel() -> void:
+	selected = ""
+	kb_active = false
+	ghost.visible = false
+	_refresh_tray()
+	_refresh_validation()
+
+## After a keyboard drop, focus the next tray room (or Play once all are placed).
+func _kb_refocus() -> void:
+	for b in tray.get_children():
+		if not b.is_queued_for_deletion():
+			b.grab_focus()
+			return
+	play_btn.grab_focus()
 
 func _on_board_press(pos: Vector2) -> void:
 	if not _building():
@@ -1008,6 +1109,7 @@ func _ensure_recording() -> bool:
 		status.text = err
 		return false
 	recording = {"turns": []}
+	kb_active = false
 	turn_index = 0
 	heroes.clear()
 	heroes.names = engine.hero_names()
