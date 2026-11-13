@@ -394,6 +394,7 @@ func _place(id: String, slot: Vector2i) -> void:
 	room_nodes[id].position = slot_center(slot.x, slot.y)
 	_refresh_tray()
 	_refresh_validation()
+	_refresh_piles()
 
 func _unplace(id: String) -> void:
 	placed.erase(id)
