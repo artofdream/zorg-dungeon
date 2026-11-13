@@ -609,7 +609,10 @@ func _process(delta: float) -> void:
 	_update_camera()
 	if playing:
 		play_timer -= delta
-		if play_timer <= 0:
+		# STEP_SECONDS is the gap after a one-cell step. An ice slide is one
+		# tween per cell, so it runs longer; wait until the figure arrives
+		# before the next action kills that tween.
+		if play_timer <= 0 and not heroes.moving():
 			play_timer = STEP_SECONDS
 			if not _advance():
 				playing = false

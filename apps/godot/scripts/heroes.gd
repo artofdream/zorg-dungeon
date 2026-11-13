@@ -40,6 +40,16 @@ func _stop_tween(id: int) -> void:
 		tw.kill()
 	_tweens.erase(id)
 
+## True while a chained move (one step, or an ice slide of several cells at
+## 0.12s each) is still playing. Play waits on this so the next action does
+## not kill the slide halfway.
+func moving() -> bool:
+	for tw_v in _tweens.values():
+		var tw: Tween = tw_v
+		if tw and tw.is_valid() and tw.is_running():
+			return true
+	return false
+
 func _figure(id: int, hp: int) -> Node3D:
 	var root := Node3D.new()
 	var mesh := MeshInstance3D.new()
