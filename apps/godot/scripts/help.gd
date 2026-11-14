@@ -56,7 +56,7 @@ static func _row(parent: Control, name: String, def: Dictionary, text: String, w
 	var icon := TextureRect.new()
 	icon.texture = ZorgHud.swatch(def)
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-	icon.custom_minimum_size = Vector2(22, 24)
+	icon.custom_minimum_size = Vector2(ZorgHud.SWATCH, ZorgHud.SWATCH)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	row.add_child(icon)
 	var key := Label.new()
