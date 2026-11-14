@@ -1,0 +1,137 @@
+name: deploy-itch
+# itch.io upload (ADR-0008): after a merge to main that touches the Godot app,
+# or by hand, rebuild the four debug exports with godot.yml (parity and
+# smoke tests included), then push them with butler to
+# https://artofdream.itch.io/zorg-dungeon-maker, one channel per platform.
+# The push job runs in the `production` environment, so it waits for the same
+# manual approval as the other deploys. The itch.io project stays a Draft:
+# butler uploads builds; it never publishes the page.
+# Credentials: only the BUTLER_API_KEY repository secret, created and stored
+# by the owner. It is passed to butler through the environment and never
+# echoed; without it the job fails instead of falling back to anything.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/godot/**"
+      - ".github/workflows/deploy-itch.yml"
+
+permissions:
+  contents: read
+
+# A newer push supersedes an older run, including one still waiting for
+# approval.
+concurrency:
+  group: deploy-itch
+  cancel-in-progress: true
+
+env:
+  ITCH_TARGET: artofdream/zorg-dungeon-maker
+  BUTLER_VERSION: 15.32.0
+  # sha256 of https://broth.itch.zone/butler/linux-amd64/15.32.0/archive/default
+  BUTLER_SHA256: 2335971394ef6596f95ded0833e85ee28755e13761716ef4c91d6b11f69162f5
+
+jobs:
+  # Fail fast (before the 20-minute build) when the secret is missing.
+  preflight:
+    name: BUTLER_API_KEY is configured
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require BUTLER_API_KEY
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          if [ -z "${BUTLER_API_KEY:-}" ]; then
+            echo "::error::BUTLER_API_KEY is not set. Create an itch.io API key (itch.io > Settings > API keys) and store it as the repository secret BUTLER_API_KEY. Nothing was built or uploaded."
+            exit 1
+          fi
+          echo "BUTLER_API_KEY is set (value not shown)."
+
+  build:
+    name: tests + exports (godot.yml)
+    needs: preflight
+    uses: ./.github/workflows/godot.yml
+
+  push:
+    name: butler push to itch.io
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Require BUTLER_API_KEY
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          if [ -z "${BUTLER_API_KEY:-}" ]; then
+            echo "::error::BUTLER_API_KEY is not set. Create an itch.io API key (itch.io > Settings > API keys) and store it as the repository secret BUTLER_API_KEY. Nothing was uploaded."
+            exit 1
+          fi
+          echo "BUTLER_API_KEY is set (value not shown)."
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # git describe needs history and tags
+
+      - name: Version for --userversion
+        id: ver
+        run: |
+          v=$(git describe --tags --always --dirty 2>/dev/null || git rev-parse --short=12 HEAD)
+          echo "userversion=$v" >> "$GITHUB_OUTPUT"
+          echo "userversion: $v"
+
+      - name: Install butler ${{ env.BUTLER_VERSION }} (pinned, checksum verified)
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          curl -fsSL -o butler.zip "https://broth.itch.zone/butler/linux-amd64/${BUTLER_VERSION}/archive/default"
+          echo "${BUTLER_SHA256}  butler.zip" | sha256sum -c -
+          mkdir -p butler && unzip -q butler.zip -d butler && chmod +x butler/butler
+          echo "$RUNNER_TEMP/butler" >> "$GITHUB_PATH"
+          butler/butler -V
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: zorg-godot-web
+          path: itch/html5
+      - uses: actions/download-artifact@v4
+        with:
+          name: zorg-godot-windows-x86_64
+          path: itch/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: zorg-godot-linux-x86_64
+          path: itch/linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: zorg-godot-android-debug-apk
+          path: itch/android
+
+      - name: Check the channel folders
+        run: |
+          set -euo pipefail
+          test -s itch/html5/index.html && test -s itch/html5/index.wasm && test -s itch/html5/index.pck
+          test -s itch/windows/zorg.exe
+          test -s itch/linux/zorg.x86_64 && chmod +x itch/linux/zorg.x86_64
+          rm -f itch/linux/zorg.sh     # older builds shipped a broken wrapper
+          test -s itch/android/zorg-debug.apk
+          find itch -type f -printf '%10s  %p\n' | sort -k2
+
+      - name: butler push (html5, windows, linux, android)
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          USERVERSION: ${{ steps.ver.outputs.userversion }}
+        run: |
+          set -euo pipefail
+          for ch in html5 windows linux android; do
+            echo "::group::${ITCH_TARGET}:${ch} (${USERVERSION})"
+            butler push "itch/${ch}" "${ITCH_TARGET}:${ch}" --userversion "${USERVERSION}"
+            echo "::endgroup::"
+          done
+          butler status "${ITCH_TARGET}"
+          {
+            echo "### itch.io push"
+            echo "Pushed \`${USERVERSION}\` to \`${ITCH_TARGET}\`: html5, windows, linux, android."
+            echo "The project stays a Draft; tick 'played in the browser' for html5 once on the Edit game page."
+          } >> "$GITHUB_STEP_SUMMARY"
