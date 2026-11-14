@@ -103,7 +103,8 @@ var follow := false              # true: the camera tracks the first living hero
 var torch_timer := 0.0
 var look_time := 0.0
 var fps_log := 0.0
-const FOLLOW_ZOOM := 16.0
+const FOLLOW_ZOOM := 0.6         # follow view zooms to 60% of the current distance
+const FOLLOW_MIN := 7.0          # ... and may come closer than the normal zoom limit
 const FOLLOW_SMOOTH := 4.0       # 1/s, exponential ease of the pivot onto the hero
 const REFUSALS := {"before_first_action": "wait for the first hero action", "run_over": "the run is over",
 	"no_active_hero": "no hero is active", "consumed": "that spell is used up", "no_spell": "no such spell"}
@@ -951,7 +952,7 @@ func _rotate(deg: float) -> void:
 	_snap_camera()
 
 func _zoom_by(d: float) -> void:
-	target_zoom = clampf(target_zoom + d, ZOOM_LIMITS.x, ZOOM_LIMITS.y)
+	target_zoom = clampf(target_zoom + d, FOLLOW_MIN if follow else ZOOM_LIMITS.x, ZOOM_LIMITS.y)
 
 func _tilt_by(d: float) -> void:
 	target_pitch = clampf(target_pitch + d, PITCH_LIMITS.x, PITCH_LIMITS.y)
@@ -1296,7 +1297,7 @@ func _set_follow(on: bool) -> void:
 	if on:
 		if cam_tween:
 			cam_tween.kill()
-		target_zoom = minf(target_zoom, FOLLOW_ZOOM)
+		target_zoom = maxf(FOLLOW_MIN, target_zoom * FOLLOW_ZOOM)
 
 func _on_reset() -> void:
 	if follow:
