@@ -110,6 +110,8 @@ var help_dlg: Control            # modal: backdrop + room legend
 var help_box: VBoxContainer
 var quit_dlg: Control            # modal: "Quit Zorg?" Stay / Quit
 var quit_stay: Button
+var quit_btn: Button
+var embedded := false            # web build inside an iframe (itch.io): no Quit
 var hint: PanelContainer         # first-run hint (dismissed once, saved)
 var settings_path := ZorgAtmos.SETTINGS
 var follow := false              # true: the camera tracks the first living hero
@@ -125,6 +127,7 @@ const REFUSALS := {"before_first_action": "wait for the first hero action", "run
 
 func _ready() -> void:
 	get_tree().set_quit_on_go_back(false)   # Android Back goes to back_pressed()
+	embedded = is_embedded()
 	_setup_lighting()
 	_apply_ui_scale()
 	_build_ui()
@@ -423,9 +426,10 @@ func _build_dialogs() -> void:
 	quit_stay = _btn("Stay", func(): quit_dlg.visible = false)
 	quit_stay.custom_minimum_size.x = 120
 	row.add_child(quit_stay)
-	var qq := _btn("Quit", _quit)
-	qq.custom_minimum_size.x = 120
-	row.add_child(qq)
+	quit_btn = _btn("Quit", _quit)
+	quit_btn.custom_minimum_size.x = 120
+	row.add_child(quit_btn)
+	set_embedded(embedded)
 
 func open_help() -> void:
 	dismiss_hint()
@@ -449,6 +453,25 @@ func _quit() -> void:
 	else:
 		get_tree().quit()
 
+## True on the web when the page is inside an iframe (itch.io embeds the
+## game that way). Leaving the game is then the host page's business:
+## history.back() would navigate the host away. A cross-origin top that
+## can't be compared counts as embedded.
+static func is_embedded() -> bool:
+	if not OS.has_feature("web"):
+		return false
+	var r = JavaScriptBridge.eval("(function(){try{return window.self !== window.top}catch(e){return true}})()", true)
+	return r == true
+
+## Embedded: no Quit button, and Back/Esc with nothing open does nothing.
+func set_embedded(on: bool) -> void:
+	embedded = on
+	if quit_btn:
+		quit_btn.visible = not on
+	if on and quit_dlg and quit_dlg.visible:
+		quit_dlg.visible = false
+	print("zorg: embedded %s (Quit %s)" % [on, "hidden" if on else "shown"])
+
 ## Android Back and Esc: close the top popup (quit dialog, legend, level
 ## grid), else drop a room picked up for placing, else ask before quitting.
 func back_pressed() -> void:
@@ -460,7 +483,7 @@ func back_pressed() -> void:
 		levels_panel.visible = false
 	elif selected != "" or kb_active:
 		_kb_cancel()
-	else:
+	elif not embedded:
 		_show_quit()
 
 func popup_open() -> bool:

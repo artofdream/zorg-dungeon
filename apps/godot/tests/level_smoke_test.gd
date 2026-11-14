@@ -111,6 +111,21 @@ func _round11(engine: Node) -> void:
 	_check(not level.popup_open(), "back: Esc closed both popups")
 	level._unplace("Z:0")
 	level._unplace("A:0")
+	level.get_viewport().gui_release_focus()
+	# Web in an iframe (itch.io): no Quit; Back/Esc only closes popups.
+	_check(not level.embedded and level.quit_btn.visible, "embed: top level (not embedded) keeps the Quit button")
+	level.set_embedded(true)
+	_check(not level.quit_btn.visible, "embed: inside an iframe the Quit button is hidden")
+	_key(KEY_ESCAPE)
+	var after_esc: bool = level.quit_dlg.visible
+	level.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	_check(not after_esc and not level.quit_dlg.visible, "embed: Esc and Back with nothing open do nothing")
+	level.open_help()
+	_key(KEY_ESCAPE)
+	_check(not level.help_dlg.visible and not level.quit_dlg.visible, "embed: Esc still closes a popup")
+	level.set_embedded(false)
+	_check(level.quit_btn.visible, "embed: back at top level, Quit is shown again")
+	level.get_viewport().gui_release_focus()
 
 	# (2) "?" legend: every room type and element, GAME_SPEC wording only.
 	level.help_btn.pressed.emit()
