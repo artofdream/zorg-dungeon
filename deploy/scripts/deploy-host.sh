@@ -1,18 +1,53 @@
 #!/usr/bin/env bash
 # Host-side deploy steps for deploy-web. Runs as root in /opt/zorg AFTER the
-# checkout was reset to origin/main and deploy-web staged the Grafana env file
-# at /etc/zorg/grafana.env.new (root 0600).
-# Prints status only; never prints secrets.
+# checkout was reset to origin/main and deploy-web staged:
+#   /etc/zorg/grafana.env.new (root 0600)
+#   /etc/zorg/caddy.env.new   (root 0600; site basic auth user + hash)
+# Prints status only; never prints secrets or hashes.
 set -euo pipefail
 cd /opt/zorg
 C=(docker compose -f deploy/compose.prod.yaml)
+
+echo "==> stage /etc/zorg/caddy.env (site basic auth; values not shown)"
+# deploy-web writes caddy.env.new (root 0600, via SSH stdin) from repo
+# secrets. Caddy's env_file is required, and Caddy itself refuses to
+# start if the user or hash is empty, so a missing file or empty hash
+# does not serve the site openly.
+CADDY_ENV=/etc/zorg/caddy.env
+CADDY_NEW=/etc/zorg/caddy.env.new
+if [ -f "$CADDY_NEW" ]; then
+  install -m 600 -o root -g root "$CADDY_NEW" "$CADDY_ENV"
+  rm -f "$CADDY_NEW"
+fi
+if [ ! -f "$CADDY_ENV" ]; then
+  echo "::error::/etc/zorg/caddy.env is missing. deploy-web must write it from ZORG_AUTH_USER and ZORG_AUTH_PASSWORD. Not starting Caddy."
+  exit 1
+fi
+# Check keys are non-empty without printing values (lengths only).
+python3 - "$CADDY_ENV" <<'PY'
+import sys
+path = sys.argv[1]
+vals = {}
+for line in open(path, encoding="utf-8"):
+    line = line.rstrip("\n")
+    if not line or line.startswith("#") or "=" not in line:
+        continue
+    k, _, v = line.partition("=")
+    vals[k] = v
+user_len = len(vals.get("ZORG_AUTH_USER") or "")
+hash_len = len(vals.get("ZORG_AUTH_HASH") or "")
+print(f"caddy.env: user_len={user_len} hash_len={hash_len}")
+if user_len < 1 or hash_len < 20:
+    sys.stderr.write("::error::ZORG_AUTH_USER or ZORG_AUTH_HASH is empty in /etc/zorg/caddy.env; not starting Caddy.\n")
+    sys.exit(1)
+PY
 
 echo "==> build + start web"
 "${C[@]}" up -d --build web
 
 echo "==> validate Caddyfile before applying it"
 "${C[@]}" run --rm --no-deps -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1 \
-  || { echo "::error::Caddyfile failed validation; not applying"; exit 1; }
+  || { echo "::error::Caddyfile failed validation; not applying (Caddy refuses an empty site-login hash)"; exit 1; }
 
 echo "==> back up grafana.db before applying changes (Grafana upgrades migrate the DB)"
 GF_ID="$("${C[@]}" ps -q grafana 2>/dev/null || true)"

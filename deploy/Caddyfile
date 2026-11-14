@@ -1,47 +1,67 @@
 # Caddy configuration for zorg.artof.link
 {
-    # Admin API only on localhost INSIDE the Caddy container (e.g. for
-    # `docker compose exec caddy caddy reload`); not reachable from other
-    # containers. Prometheus scrapes the separate :9180 metrics site below.
-    admin localhost:2019
-    # HTTP request metrics (caddy_http_*), served on :9180/metrics.
-    metrics
-    # ACME contact email intentionally not committed (public repo).
-    # Optionally add `email <ops-contact>` on the host for expiry notices.
+	# Admin API only on localhost INSIDE the Caddy container (e.g. for
+	# `docker compose exec caddy caddy reload`); not reachable from other
+	# containers. Prometheus scrapes the separate :9180 metrics site below.
+	admin localhost:2019
+	# HTTP request metrics (caddy_http_*), served on :9180/metrics.
+	metrics
+	# ACME contact email intentionally not committed (public repo).
+	# Optionally add `email <ops-contact>` on the host for expiry notices.
 }
+
+# Shared username/password for the Maker and the Godot preview. User and
+# bcrypt hash come from the process environment (compose env_file
+# /etc/zorg/caddy.env, written by deploy-web from repo secrets). Caddy
+# refuses to adapt/start if either value is empty, so a missing hash does
+# not serve the site openly. /grafana* stays anonymous (ADR-0004). /healthz
+# is the nginx health check (plain "OK") and stays unauthenticated.
+# BEGIN site_basic_auth
+(site_basic_auth) {
+	@site_login not path /grafana* /healthz /healthz/
+	basic_auth @site_login {
+		{$ZORG_AUTH_USER} {$ZORG_AUTH_HASH}
+	}
+}
+# END site_basic_auth
 
 # Public Grafana is anonymous and read-only (ADR-0004). The login form, the
 # admin UI and credentialed API calls are NOT reachable through Caddy; admins
 # use an SSH tunnel to Grafana's host-local port 127.0.0.1:3000 instead
 # (CONTRIBUTING.md -> "Grafana admin access").
 (grafana_public) {
-    handle /grafana* {
-        route {
-            # Login, admin UI and admin APIs: answer as if they don't exist.
-            @gf_admin path /grafana/login /grafana/login/* /grafana/admin /grafana/admin/* /grafana/api/admin/* /grafana/api/serviceaccounts /grafana/api/serviceaccounts/* /grafana/api/auth/keys /grafana/api/auth/keys/* /grafana/user/password/* /grafana/api/user/password/*
-            respond @gf_admin 404
+	handle /grafana* {
+		route {
+			# Login, admin UI and admin APIs: answer as if they don't exist.
+			@gf_admin path /grafana/login /grafana/login/* /grafana/admin /grafana/admin/* /grafana/api/admin/* /grafana/api/serviceaccounts /grafana/api/serviceaccounts/* /grafana/api/auth/keys /grafana/api/auth/keys/* /grafana/user/password/* /grafana/api/user/password/*
+			respond @gf_admin 404
 
-            # Any credential (basic auth, bearer/API token, session cookie) is
-            # refused publicly, so nothing but the anonymous Viewer gets through.
-            @gf_auth_header header Authorization *
-            respond @gf_auth_header 403
-            @gf_session_cookie header_regexp Cookie (^|;\s*)grafana_session=
-            respond @gf_session_cookie 403
+			# Bearer / API tokens and Grafana session cookies are still
+			# refused, so nothing but the anonymous Viewer gets through.
+			# Site HTTP basic auth (the shared login on / and /godot/) is
+			# stripped instead of 403'd: the browser will send it to
+			# /grafana/ too after a sign-in, and the site password must
+			# never reach Grafana's request log.
+			@gf_bearer header_regexp Authorization (?i)^Bearer\s
+			respond @gf_bearer 403
+			@gf_session_cookie header_regexp Cookie (^|;\s*)grafana_session=
+			respond @gf_session_cookie 403
+			request_header -Authorization
 
-            # Anonymous viewers only read. The one write-shaped call a dashboard
-            # needs is POST /api/ds/query (plus harmless frontend metrics).
-            @gf_write {
-                not method GET HEAD OPTIONS
-                not {
-                    method POST
-                    path /grafana/api/ds/query /grafana/api/frontend-metrics
-                }
-            }
-            respond @gf_write 403
+			# Anonymous viewers only read. The one write-shaped call a dashboard
+			# needs is POST /api/ds/query (plus harmless frontend metrics).
+			@gf_write {
+				not method GET HEAD OPTIONS
+				not {
+					method POST
+					path /grafana/api/ds/query /grafana/api/frontend-metrics
+				}
+			}
+			respond @gf_write 403
 
-            reverse_proxy grafana:3000
-        }
-    }
+			reverse_proxy grafana:3000
+		}
+	}
 }
 
 # Godot web preview (ADR-0008), static files only. deploy-godot.yml unpacks
@@ -50,24 +70,24 @@
 # /srv/godot. The build is single-threaded, so no COOP/COEP headers are
 # needed. Everything else on the site is unchanged.
 (godot_preview) {
-    redir /godot /godot/ 308
-    handle_path /godot/* {
-        root * /srv/godot/current
-        # Explicit types: .pck has no standard MIME type, and .wasm must be
-        # application/wasm for streaming compilation.
-        @gd_wasm path *.wasm
-        header @gd_wasm Content-Type application/wasm
-        @gd_pck path *.pck
-        header @gd_pck Content-Type application/octet-stream
-        # Each deploy swaps the whole build: always revalidate (ETag /
-        # Last-Modified) so index.js, .wasm and .pck never mix versions.
-        header Cache-Control "no-cache"
-        # deploy-godot.yml ships .zst and .gz files next to each file, so
-        # Caddy compresses nothing on the fly (the .wasm is ~38 MB).
-        file_server {
-            precompressed zstd gzip
-        }
-    }
+	redir /godot /godot/ 308
+	handle_path /godot/* {
+		root * /srv/godot/current
+		# Explicit types: .pck has no standard MIME type, and .wasm must be
+		# application/wasm for streaming compilation.
+		@gd_wasm path *.wasm
+		header @gd_wasm Content-Type application/wasm
+		@gd_pck path *.pck
+		header @gd_pck Content-Type application/octet-stream
+		# Each deploy swaps the whole build: always revalidate (ETag /
+		# Last-Modified) so index.js, .wasm and .pck never mix versions.
+		header Cache-Control "no-cache"
+		# deploy-godot.yml ships .zst and .gz files next to each file, so
+		# Caddy compresses nothing on the fly (the .wasm is ~38 MB).
+		file_server {
+			precompressed zstd gzip
+		}
+	}
 }
 
 # Access log (JSON) for the whole site, /grafana included. Holds client IPs,
@@ -75,48 +95,50 @@
 # older than 14 days. Caddy redacts Cookie/Authorization headers by default.
 # Stored in the caddy_logs volume (survives container recreation).
 (access_log) {
-    log {
-        output file /var/log/caddy/access.log {
-            roll_size 20MiB
-            roll_keep 14
-            roll_keep_for 336h
-        }
-        format json
-    }
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 20MiB
+			roll_keep 14
+			roll_keep_for 336h
+		}
+		format json
+	}
 }
 
 # Production domain
 zorg.artof.link {
-    import access_log
-    # Observability: Grafana under /grafana/ (anonymous, read-only)
-    import grafana_public
-    # Godot web preview under /godot/ (static)
-    import godot_preview
+	import access_log
+	import site_basic_auth
+	# Observability: Grafana under /grafana/ (anonymous, read-only)
+	import grafana_public
+	# Godot web preview under /godot/ (static)
+	import godot_preview
 
-    # Application: Web app
-    handle /* {
-        reverse_proxy web:80
-    }
+	# Application: Web app
+	handle /* {
+		reverse_proxy web:80
+	}
 }
 
 # Local / fallback entrypoint (plain HTTP on :80, e.g. by IP): same guards.
 :80 {
-    import access_log
-    import grafana_public
-    import godot_preview
+	import access_log
+	import site_basic_auth
+	import grafana_public
+	import godot_preview
 
-    handle /* {
-        reverse_proxy web:80
-    }
+	handle /* {
+		reverse_proxy web:80
+	}
 }
 
 # Prometheus scrape endpoint. Port 9180 is NOT published in compose, so it is
 # reachable only on the internal Docker network. Not access-logged.
 http://:9180 {
-    handle /metrics {
-        metrics
-    }
-    handle {
-        respond 404
-    }
+	handle /metrics {
+		metrics
+	}
+	handle {
+		respond 404
+	}
 }

@@ -6,7 +6,7 @@ Des héros essayent d'aller jusqu'à la salle de Zorg.
 
 Tu gagnes s'ils **tombent avant d'y arriver**.
 
-Jouer ici : [zorg.artof.link](https://zorg.artof.link/?lang=fr)
+Jouer ici : [zorg.artof.link](https://zorg.artof.link/?lang=fr) (le site demande un identifiant partagé ; le propriétaire l'a).
 
 ```mermaid
 flowchart LR

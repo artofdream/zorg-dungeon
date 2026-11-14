@@ -5,6 +5,12 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    # Site basic auth (ZORG_AUTH_USER + bcrypt ZORG_AUTH_HASH). Required:
+    # Caddy must not start without them (fail-closed). deploy-web writes
+    # the file from repo secrets. Do not commit it. Values are not logged.
+    env_file:
+      - path: /etc/zorg/caddy.env
+        required: true
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

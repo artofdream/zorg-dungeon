@@ -35,6 +35,8 @@ jobs:
           LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           GRAFANA_SECRET_KEY: ${{ secrets.GRAFANA_SECRET_KEY }}
+          ZORG_AUTH_USER: ${{ secrets.ZORG_AUTH_USER }}
+          ZORG_AUTH_PASSWORD: ${{ secrets.ZORG_AUTH_PASSWORD }}
         run: |
           set -euo pipefail
           if [ -z "${LIGHTSAIL_SSH_KEY:-}" ]; then
@@ -49,6 +51,23 @@ jobs:
             echo "::error::GRAFANA_SECRET_KEY is not set. Add a random Grafana secret_key (e.g. 64 hex chars) under Settings → Secrets and variables → Actions. Do not commit it."
             exit 1
           fi
+          if [ -z "${ZORG_AUTH_USER:-}" ]; then
+            echo "::error::ZORG_AUTH_USER is not set. Add the shared site-login username under Settings → Secrets and variables → Actions. Do not invent or commit it."
+            exit 1
+          fi
+          if [ -z "${ZORG_AUTH_PASSWORD:-}" ]; then
+            echo "::error::ZORG_AUTH_PASSWORD is not set. Add the shared site-login password under Settings → Secrets and variables → Actions. Do not invent or commit it."
+            exit 1
+          fi
+          # Username must be a single Caddyfile token so it cannot break basic_auth.
+          if ! printf '%s' "$ZORG_AUTH_USER" | grep -Eq '^[A-Za-z0-9._@-]{1,64}$'; then
+            echo "::error::ZORG_AUTH_USER must be 1-64 characters of A-Z a-z 0-9 . _ @ -"
+            exit 1
+          fi
+          if [ "${#ZORG_AUTH_PASSWORD}" -lt 8 ]; then
+            echo "::error::ZORG_AUTH_PASSWORD must be at least 8 characters."
+            exit 1
+          fi
 
       - name: Redeploy web and Grafana on Lightsail
         env:
@@ -57,6 +76,8 @@ jobs:
           LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           GRAFANA_SECRET_KEY: ${{ secrets.GRAFANA_SECRET_KEY }}
+          ZORG_AUTH_USER: ${{ secrets.ZORG_AUTH_USER }}
+          ZORG_AUTH_PASSWORD: ${{ secrets.ZORG_AUTH_PASSWORD }}
         run: |
           set -euo pipefail
           SSH_HOST="${LIGHTSAIL_HOST:-zorg.artof.link}"
@@ -77,7 +98,25 @@ jobs:
           }
           echo "Redeploying on ${SSH_USER}@${SSH_HOST}"
 
-          # 1. Deliver the Grafana admin password and secret_key over SSH stdin
+          # 1. Hash the site-login password with the same Caddy image
+          #    compose runs, via stdin (never --plaintext on a command
+          #    line). Mask the hash so it cannot appear in logs.
+          HASH="$(printf '%s\n' "$ZORG_AUTH_PASSWORD" | docker run --rm -i caddy:2-alpine caddy hash-password | tr -d '\r\n')"
+          if [ "${HASH#\$2}" = "$HASH" ] || [ "${#HASH}" -lt 40 ]; then
+            echo "::error::caddy hash-password did not return a bcrypt hash"
+            exit 1
+          fi
+          printf '::add-mask::%s\n' "$HASH"
+          echo "hashed site-login password (hash not printed; len=${#HASH})"
+
+          # 2. Deliver the site-login user and hash over SSH stdin (never
+          #    on a command line, never echoed) into a root-only staging
+          #    file. deploy-host.sh moves it to /etc/zorg/caddy.env
+          #    (compose env_file, required). 0600, same pattern as Grafana.
+          printf 'ZORG_AUTH_USER=%s\nZORG_AUTH_HASH=%s\n' "$ZORG_AUTH_USER" "$HASH" \
+            | remote 'sudo install -d -m 700 -o root -g root /etc/zorg && sudo sh -c "umask 077; cat > /etc/zorg/caddy.env.new" && sudo chown root:root /etc/zorg/caddy.env.new && sudo chmod 600 /etc/zorg/caddy.env.new'
+
+          # 3. Deliver the Grafana admin password and secret_key over SSH stdin
           #    (never on a command line, never echoed) into a root-only staging
           #    file. deploy-host.sh moves it to /etc/zorg/grafana.env (read by
           #    compose.prod.yaml via env_file) after checking that a changed
@@ -85,7 +124,7 @@ jobs:
           printf 'GF_SECURITY_ADMIN_PASSWORD=%s\nGF_SECURITY_SECRET_KEY=%s\n' "$GRAFANA_ADMIN_PASSWORD" "$GRAFANA_SECRET_KEY" \
             | remote 'sudo install -d -m 700 -o root -g root /etc/zorg && sudo sh -c "umask 077; cat > /etc/zorg/grafana.env.new" && sudo chown root:root /etc/zorg/grafana.env.new && sudo chmod 600 /etc/zorg/grafana.env.new'
 
-          # 2. Update the checkout, then run the host-side deploy steps from it
+          # 4. Update the checkout, then run the host-side deploy steps from it
           #    (deploy/scripts/deploy-host.sh): build web, validate the
           #    Caddyfile, back up grafana.db, stage the env file, apply the
           #    compose changes, wait for Grafana on 127.0.0.1:3000,
@@ -97,3 +136,9 @@ jobs:
         # Anonymous dashboard + queries must work; login form, admin API and
         # any credentialed request must be refused. Dummy credentials only.
         run: bash deploy/scripts/probe-public-grafana.sh "https://zorg.artof.link/grafana"
+
+      - name: Probe site login
+        env:
+          ZORG_AUTH_USER: ${{ secrets.ZORG_AUTH_USER }}
+          ZORG_AUTH_PASSWORD: ${{ secrets.ZORG_AUTH_PASSWORD }}
+        run: bash deploy/scripts/probe-site-auth.sh "https://zorg.artof.link"

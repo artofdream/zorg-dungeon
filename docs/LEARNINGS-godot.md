@@ -53,3 +53,14 @@ The whole game must be playable without a mouse:
 - Q and E rotate. Backspace or Ctrl+Z undoes the last placement. Space steps the run.
 
 A 3 px amber focus ring (about 12:1 contrast) shows only for keyboard navigation, because Godot's default `show_focus_state_on_pointer_event` setting hides it for clicks. When the player taps or clicks again, the keyboard state must be cleared (#95). The smoke test plays level 1.1 keyboard-only.
+
+## 9. The web preview sits behind the shared site login
+
+`https://zorg.artof.link/godot/` uses the same username and password as the
+Maker at `/`. `/grafana/` and `/healthz` stay open. After that login is
+live, a `curl` of `/godot/` without `-u` gets 401; `deploy-godot` takes the
+credentials from the `ZORG_AUTH_USER` and `ZORG_AUTH_PASSWORD` repo secrets
+and never puts them in the URL or the logs. The itch.io copy of the game is
+hosted by itch.io and is not affected. See
+[CONTRIBUTING.md](../CONTRIBUTING.md#site-login-shared-username-and-password).
+
