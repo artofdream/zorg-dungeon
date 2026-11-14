@@ -76,7 +76,8 @@ row; `-- --ui-scale=1.75` forces it for testing). Every button is at least
 52 units (≥ 48 dp) tall, text is 16 units or more, and the HUD keeps inside
 the display safe area. Tray rooms are buttons with a colour swatch. Room
 labels are screen-space plates at each room's back corner that never
-overlap, and hero HP labels sit above the (larger) heroes on a layer on top.
+overlap each other or the HUD text (round 12; on the end screen the result
+banner replaces the "Extermination" line), and hero HP labels sit above the (larger) heroes on a layer on top.
 The status is **Simulated**: it runs in CI and headless tests. Debug APKs
 were also tried by hand on one Android phone; that is not CI evidence.
 
