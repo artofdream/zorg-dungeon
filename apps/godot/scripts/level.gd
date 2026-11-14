@@ -181,6 +181,7 @@ func _build_picker() -> void:
 		b.custom_minimum_size = Vector2(72, ZorgHud.TARGET)
 		b.tooltip_text = String(e["name"])
 		picker.add_child(b)
+	_trap_focus(levels_panel)                # Tab stays on the level grid
 
 # ------------------------------------------------------------------ UI
 
@@ -235,7 +236,7 @@ func _build_ui() -> void:
 	hud_top.add_child(log_label)
 
 	# Top right: the current level; tap it for the level grid.
-	levels_btn = _btn("Levels", func(): levels_panel.visible = not levels_panel.visible)
+	levels_btn = _btn("Levels", _toggle_levels)
 	levels_btn.custom_minimum_size = Vector2(134, ZorgHud.TARGET)
 	levels_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	levels_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -426,6 +427,13 @@ func _build_dialogs() -> void:
 	var qq := _btn("Quit", _quit)
 	qq.custom_minimum_size.x = 120
 	row.add_child(qq)
+	_trap_focus(help_dlg)
+	_trap_focus(quit_dlg)
+
+func _toggle_levels() -> void:
+	levels_panel.visible = not levels_panel.visible
+	if levels_panel.visible:
+		_focus_popup(levels_panel)
 
 func open_help() -> void:
 	dismiss_hint()
@@ -435,6 +443,7 @@ func open_help() -> void:
 	scroll.custom_minimum_size = Vector2(minf(680.0, vp.x - 60.0), maxf(140.0, vp.y - 150.0))
 	ZorgHelp.fill(help_box, scroll.custom_minimum_size.x - 160.0)
 	help_dlg.visible = true
+	_focus_popup(help_dlg)
 
 func close_help() -> void:
 	help_dlg.visible = false
@@ -463,8 +472,46 @@ func back_pressed() -> void:
 	else:
 		_show_quit()
 
+## Quit question, then the legend, then the level grid. Same order Back uses.
+func _top_popup() -> Control:
+	if quit_dlg.visible:
+		return quit_dlg
+	if help_dlg.visible:
+		return help_dlg
+	if levels_panel.visible:
+		return levels_panel
+	return null
+
 func popup_open() -> bool:
-	return quit_dlg.visible or help_dlg.visible or levels_panel.visible
+	return _top_popup() != null
+
+func _focus_in_popup() -> bool:
+	var top := _top_popup()
+	if top == null:
+		return false
+	var owner := get_viewport().gui_get_focus_owner()
+	return owner != null and top.is_ancestor_of(owner)
+
+## Focus the popup's first button once it is on screen. Deferred because this
+## runs from a button press; skipped if the popup closed before the idle frame.
+func _focus_popup(root: Control) -> void:
+	var buttons := root.find_children("*", "Button", true, false)
+	if not buttons.is_empty():
+		_grab_if_visible.bind(buttons[0]).call_deferred()
+
+func _grab_if_visible(b: Button) -> void:
+	if is_instance_valid(b) and b.is_visible_in_tree():
+		b.grab_focus()
+
+## Tab cycles inside the popup, so it can't move on to Play, Undo, or the tray.
+func _trap_focus(root: Control) -> void:
+	var buttons: Array = root.find_children("*", "Button", true, false)
+	if buttons.is_empty():
+		return
+	var first: Button = buttons[0]
+	var last: Button = buttons[buttons.size() - 1]
+	first.focus_previous = first.get_path_to(last)
+	last.focus_next = last.get_path_to(first)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and quit_dlg != null:
@@ -833,6 +880,13 @@ func drag_to(pos: Vector2) -> void:
 ## Drag motion/release must be seen even when the press began on a tray
 ## Button, so it is handled here before the GUI.
 func _input(event: InputEvent) -> void:
+	# Before the GUI: a focused Play/Undo/tray button would otherwise accept
+	# Space or Enter while a popup is covering the board.
+	if event is InputEventKey and popup_open() and not _focus_in_popup():
+		if event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+			back_pressed()
+		get_viewport().set_input_as_handled()
+		return
 	if drag_id == "" or touches.size() >= 2:
 		return
 	if event is InputEventMouseMotion:
@@ -842,6 +896,13 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Keys the popup doesn't use (Backspace, Space, camera keys) still arrive
+	# here. Leave the board alone until the popup closes. Esc still dismisses it.
+	if event is InputEventKey and popup_open():
+		if event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+			back_pressed()
+		get_viewport().set_input_as_handled()
+		return
 	# Fingers: two-finger pinch zoom + pan. One finger arrives as emulated mouse.
 	if event is InputEventScreenTouch:
 		if event.pressed:

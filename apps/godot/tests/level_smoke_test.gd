@@ -157,6 +157,43 @@ func _round11(engine: Node) -> void:
 	_check(targets.all(func(b): return b.get_combined_minimum_size().y >= ZorgHud.TARGET and b.get_combined_minimum_size().x >= ZorgHud.TARGET),
 		"round 11 buttons are at least %d x %d units" % [ZorgHud.TARGET, ZorgHud.TARGET])
 
+	# Popups block gameplay keys, including Space/Enter on a button behind them.
+	level._open_level(0)
+	level._place("A:0", Vector2i(0, 0))
+	level.open_help()
+	await process_frame
+	level.get_viewport().gui_release_focus()
+	var yaw_before: float = level.target_yaw
+	var status_before: String = level.status.text
+	_key(KEY_BACKSPACE)
+	_key(KEY_SPACE)
+	_key(KEY_Q)
+	_check(level.help_dlg.visible and level.placed.has("A:0") and level._building() and level.status.text == status_before and is_equal_approx(level.target_yaw, yaw_before),
+		"popup: legend blocks undo, step, and camera keys")
+	level.play_btn.grab_focus()
+	_key(KEY_SPACE)
+	_key(KEY_ENTER)
+	_check(level.help_dlg.visible and level._building() and level.placed.has("A:0") and level.status.text == status_before,
+		"popup: Space/Enter on Play behind the legend doesn't start a run")
+	level.undo_btn.grab_focus()
+	_key(KEY_ENTER)
+	_check(level.placed.has("A:0"), "popup: Enter on Undo behind the legend doesn't undo")
+	level.close_help()
+	level._show_quit()
+	await process_frame
+	_key(KEY_BACKSPACE)
+	_check(level.quit_dlg.visible and level.placed.has("A:0"), "popup: Backspace behind Quit doesn't undo")
+	_key(KEY_TAB)
+	var quit_buttons: Array = level.quit_dlg.find_children("*", "Button", true, false)
+	_check(level.get_viewport().gui_get_focus_owner() == quit_buttons[1], "popup: Tab stays inside the quit question")
+	level.quit_stay.pressed.emit()
+	level.levels_panel.visible = true
+	level.undo_btn.grab_focus()
+	_key(KEY_ENTER)
+	_check(level.levels_panel.visible and level.placed.has("A:0"), "popup: Enter on Undo behind Levels doesn't undo")
+	level.levels_panel.visible = false
+	level.get_viewport().gui_release_focus()
+
 func _initialize() -> void:
 	level = load("res://scenes/level.tscn").instantiate()
 	level.settings_path = "user://smoke_settings.cfg"   # leave the real settings alone
