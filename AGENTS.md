@@ -209,6 +209,8 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
   if they disagree, the spec wins. `docs/LEARN.md` — kid-facing rules
   (published as `learn.html`). `docs/PLAYER_JOURNEYS.md` — persona UX
   validation cases (published as `journeys.html`). Not a rules rewrite.
+  `docs/LEARNINGS-godot.md` — plain-English lessons from the Godot port
+  (parity, debug APKs, caching, deploy approvals, adb, UI scale, keyboard).
   `docs/SKILL_MATRIX.md` — which agent skills apply, who must load them,
   why they were chosen after the 2026-09 build, and how each row
   **Keep Learning and Apply**

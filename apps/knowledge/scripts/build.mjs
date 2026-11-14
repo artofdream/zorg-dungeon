@@ -375,7 +375,7 @@ const homeContent = `
 
   <div class="card">
     <h3>Archify diagrams</h3>
-    <p><span class="badge badge-planned">Documented</span> same-origin map under <code>/archify/</code> — readable aid, not Live. Sister pattern to Café Knowledge / ctos.</p>
+    <p><span class="badge badge-planned">Documented</span> same-origin maps under <code>/archify/</code> (knowledge workflow + runtime / Godot port) — readable aid, not Live. Sister pattern to Café Knowledge / ctos.</p>
     <a href="archify/">Open /archify/ →</a>
     <h3>Chronify timeline</h3>
     <p><span class="badge badge-planned">Documented</span> same-origin evolution rail under <code>/chronify/</code> — dated aid, not Live. Sister to Archify / ctos.</p>
@@ -395,6 +395,7 @@ const homeContent = `
     <h3>🏗️ Architecture</h3>
     <p>Monorepo split: engine vs Maker vs this knowledge site. Agent rules live in one file.</p>
     <a href="architecture.html">View architecture →</a>
+    <a href="learnings-godot.html">Godot port learnings →</a>
   </div>
   <div class="card">
     <h3>📊 Observability</h3>
@@ -704,6 +705,8 @@ for (const name of [
   "companion-plain-docs",
   "persona-journey-validation",
   "corpus-quarantine-honesty",
+  "engine-parity-goldens",
+  "adb-phone-test",
 ]) {
   if (!skillsMd.includes(name)) {
     throw new Error(`knowledge build: SKILL_MATRIX.md must list ${name}`);
@@ -872,6 +875,13 @@ if (!skillsHtml.includes("<table>")) {
   throw new Error("knowledge build: SKILL_MATRIX.md produced no matrix table");
 }
 writeFileSync(join(distDir, "skills.html"), pageShell({ title: "Skill matrix", current: "skills", content: skillsHtml }));
+
+// 7c. Godot port learnings (plain English; ADR-0008 stays the decision record)
+const godotLearnMd = readDoc("docs/LEARNINGS-godot.md");
+if (!godotLearnMd.includes("0008-godot-port-milestone-1") || !godotLearnMd.includes("engine-parity-goldens") || !godotLearnMd.includes("adb-phone-test")) {
+  throw new Error("knowledge build: LEARNINGS-godot.md must cite ADR-0008 and both Godot repo skills");
+}
+writeFileSync(join(distDir, "learnings-godot.html"), pageShell({ title: "Godot port learnings", current: "architecture", content: markdownToHtml(godotLearnMd) }));
 
 // 8. Observability Page
 const obsContent = `
@@ -1145,6 +1155,9 @@ if (existsSync(archifySrc)) {
   }
   if (!existsSync(join(archifyDist, "zorg-knowledge-workflow.architecture.html"))) {
     throw new Error("knowledge build: missing archify architecture HTML");
+  }
+  if (!existsSync(join(archifyDist, "zorg-runtime.architecture.html")) || !idx.includes("zorg-runtime.architecture.html")) {
+    throw new Error("knowledge build: missing or unlinked archify runtime map (zorg-runtime.architecture.html)");
   }
 }
 
