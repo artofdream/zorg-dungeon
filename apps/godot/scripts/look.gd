@@ -1,9 +1,10 @@
 class_name ZorgLook
 extends RefCounted
-## Procedural 2.5D look (round 6; round 9 stone noise, see atmos.gd): shared materials and meshes, room tiles,
-## room props and hero figures. Built from Godot primitives only, so there
-## are no asset files or licences. Visual only: nothing here reads or changes
-## engine state.
+## 2.5D look: shared materials and meshes, room tiles, room props and hero
+## figures. Round 10: walls, floor tiles, torches, props and heroes are CC0
+## low-poly models (KayKit by Kay Lousberg, see CREDITS.md) under
+## res://assets/kaykit; element floors keep their own flat colours so they
+## stay readable. Visual only: nothing here reads or changes engine state.
 
 const ROOM := 5.0
 const WALL_H := 0.7
@@ -15,8 +16,86 @@ const FLOORS := {
 	"T": Color(0.45, 0.38, 0.3),
 }
 
+const KK := "res://assets/kaykit/"
+## KayKit tiles are 2 m; one board cell is 1 unit.
+const TILE_SCALE := 0.5
+## Knight / Rogue are ~2.4 m tall; this makes them ~1.65 units before the
+## hero SCALE, the height the HP label anchor expects.
+const HERO_MODEL_SCALE := 0.58
+
 static var _mats := {}
 static var _meshes := {}
+static var _parts := {}
+
+## Meshes (with their transforms inside the model) of one KayKit piece,
+## loaded once and shared by every room.
+static func parts(piece: String) -> Array:
+	if not _parts.has(piece):
+		var out: Array = []
+		var scene: PackedScene = load(KK + "dungeon/%s.glb" % piece)
+		var n: Node = scene.instantiate()
+		_collect(n, Transform3D.IDENTITY, out)
+		n.free()
+		_parts[piece] = out
+	return _parts[piece]
+
+static func _collect(n: Node, t: Transform3D, out: Array) -> void:
+	var tt := t
+	if n is Node3D:
+		tt = t * (n as Node3D).transform
+	if n is MeshInstance3D and (n as MeshInstance3D).mesh:
+		out.append([(n as MeshInstance3D).mesh, tt])
+	for c in n.get_children():
+		_collect(c, tt, out)
+
+## Queue a KayKit piece for a merged mesh (see flush): rooms draw their floor
+## tiles and walls as one mesh per material instead of ~40 small ones, which
+## keeps phone frame rates up.
+static func queue_piece(batch: Dictionary, piece: String, pos: Vector3, s: Vector3, m: Material, shadows := true, yaw := 0.0) -> void:
+	var key := [m, shadows]
+	if not batch.has(key):
+		batch[key] = []
+	var base := Transform3D(Basis(Vector3.UP, yaw) * Basis.from_scale(s), pos)
+	for pr in parts(piece):
+		batch[key].append([pr[0], base * (pr[1] as Transform3D), piece])
+
+## One MeshInstance3D per (material, shadows) with every queued piece merged
+## in; each remembers the piece names it holds (meta "pieces").
+static func flush(parent: Node3D, batch: Dictionary) -> void:
+	for key in batch:
+		var st := SurfaceTool.new()
+		var names := {}
+		for it in batch[key]:
+			var mesh: Mesh = it[0]
+			for si in mesh.get_surface_count():
+				st.append_from(mesh, si, it[1])
+			names[it[2]] = true
+		var mi := MeshInstance3D.new()
+		mi.name = "Merged"
+		mi.mesh = st.commit()
+		mi.material_override = key[0]
+		if not key[1]:
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.set_meta("pieces", names.keys())
+		parent.add_child(mi)
+	batch.clear()
+
+## One KayKit piece at pos, scaled by s and turned by yaw (radians), with
+## material m (the shared atlas look if null). Returns its first mesh node.
+static func add_piece(parent: Node3D, piece: String, pos: Vector3, s: Vector3, m: Material = null, yaw := 0.0, shadows := true) -> MeshInstance3D:
+	var base := Transform3D(Basis(Vector3.UP, yaw) * Basis.from_scale(s), pos)
+	var first: MeshInstance3D = null
+	for pr in parts(piece):
+		var mi := MeshInstance3D.new()
+		mi.mesh = pr[0]
+		mi.transform = base * (pr[1] as Transform3D)
+		mi.material_override = m if m else mat("kk")
+		if not shadows:
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(mi)
+		if first == null:
+			first = mi
+	return first
 
 ## One shared material per look, so rooms of the same kind share GPU state.
 static func mat(key: String) -> StandardMaterial3D:
@@ -25,12 +104,17 @@ static func mat(key: String) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.roughness = 0.85
 	match key:
+		"kk":
+			# KayKit gradient atlas (downsampled to 256 px), warmed a little
+			# toward the torch-lit stone of the target look.
+			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
+			m.albedo_color = Color(1.0, 0.94, 0.86)
 		"wall":
-			m.albedo_color = Color(0.4, 0.36, 0.31)
-			ZorgAtmos.stone(m, 0.9)
-		"wall_cap":
-			m.albedo_color = Color(0.52, 0.47, 0.4)
-			ZorgAtmos.stone(m, 1.3)
+			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
+			m.albedo_color = Color(0.85, 0.76, 0.66)
+		"wall_top":
+			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
+			m.albedo_color = Color(0.5, 0.47, 0.45)
 		"board_a":
 			m.albedo_color = Color(0.25, 0.24, 0.24)
 			m.roughness = 1.0
@@ -111,8 +195,11 @@ static func mat(key: String) -> StandardMaterial3D:
 			if key.begins_with("floor_"):
 				m.albedo_color = FLOORS.get(key.substr(6), Color(0.5, 0.5, 0.5))
 				_readable(m)
+				# Stone tile pattern from the atlas, tinted by the room colour.
+				m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
 			elif key.begins_with("dark_"):
 				m.albedo_color = mat(key.substr(5)).albedo_color.darkened(0.3)
+				m.albedo_texture = mat(key.substr(5)).albedo_texture
 				m.emission_enabled = mat(key.substr(5)).emission_enabled
 				m.emission = mat(key.substr(5)).emission.darkened(0.3)
 				m.emission_energy_multiplier = mat(key.substr(5)).emission_energy_multiplier
@@ -179,47 +266,93 @@ static func cell_floor(kind: String, def: Dictionary) -> String:
 		"light": return "hatch"
 	return "floor_" + String(def.get("type", ""))
 
-## One room: per-cell floor slabs, low stone walls with a lighter cap, and
-## a prop that says what the room does. Positions are local to the room.
+## KayKit floor tile (2 x 0.15 x 2 m, top at +0.05) fitted to one cell with
+## its top at FLOOR_H.
+const _TILE_Y := 0.93
+const _TILE_TOP := 0.05
+
+## One room: KayKit stone floor tiles tinted by room type (element cells keep
+## their flat element colours), stone block walls, and props that say what
+## the room does. Positions are local to the room.
 static func build_room(def: Dictionary, tile: Array) -> Node3D:
 	var root := Node3D.new()
+	var batch := {}
 	var slab := box_mesh(Vector3(0.96, FLOOR_H, 0.96))
+	var tile_s := Vector3(TILE_SCALE, _TILE_Y, TILE_SCALE)
+	var tile_y := FLOOR_H - _TILE_TOP * _TILE_Y
+	# Foundation block: 2.2 x 2 x 2.2 m, fitted to one cell, WALL_H tall.
+	var block_s := Vector3(1.0 / 2.2, WALL_H / 2.0, 1.0 / 2.2)
 	for ly in 5:
 		for lx in 5:
-			var p := Vector3(lx + 0.5 - ROOM / 2.0, FLOOR_H / 2.0, -(ly + 0.5 - ROOM / 2.0))
+			var c := Vector3(lx + 0.5 - ROOM / 2.0, 0, -(ly + 0.5 - ROOM / 2.0))
+			var p := c + Vector3(0, FLOOR_H / 2.0, 0)
 			var kind := String(tile[ly][lx])
 			if kind == "wall":
-				add_mesh(root, box_mesh(Vector3(1.0, WALL_H, 1.0)), mat("wall"), p + Vector3(0, WALL_H / 2.0 - FLOOR_H / 2.0, 0))
-				add_mesh(root, box_mesh(Vector3(0.9, 0.06, 0.9)), mat("wall_cap"), p + Vector3(0, WALL_H - FLOOR_H / 2.0 + 0.04, 0), false)
+				queue_piece(batch, "floor_foundation_allsides", c, block_s, mat("wall"))
+				# Worn stone slab on top, darker than any floor, so a wall top
+				# never reads as floor.
+				queue_piece(batch, "floor_tile_small", c + Vector3(0, WALL_H - 0.02, 0), Vector3(TILE_SCALE, 0.5, TILE_SCALE), mat("wall_top"), false)
 				continue
 			var look := cell_floor(kind, def)
 			if look == "water":
 				# Dark bed under a see-through surface reads as depth.
 				add_mesh(root, slab, mat("water_bed"), p + Vector3(0, -0.04, 0), false)
 				add_mesh(root, box_mesh(Vector3(0.98, 0.04, 0.98)), mat("water"), p + Vector3(0, 0.1, 0), false)
-			else:
-				add_mesh(root, slab, mat(look), p, false)
-			if kind == "light":
+			elif kind == "light":
 				# Toll hatch: a wooden trapdoor with a coin on it.
-				add_mesh(root, disc(0.16, 0.05), mat("gold"), p + Vector3(0, FLOOR_H / 2.0 + 0.03, 0))
-	_add_prop(root, def)
+				queue_piece(batch, "floor_wood_small", c + Vector3(0, tile_y, 0), tile_s, mat("hatch"), false)
+				queue_piece(batch, "coin", c + Vector3(0, FLOOR_H + 0.04, 0), Vector3.ONE * 0.9, mat("gold"))
+			else:
+				queue_piece(batch, "floor_tile_small", c + Vector3(0, tile_y, 0), tile_s, mat(look), false)
+	flush(root, batch)
+	_add_prop(root, def, tile)
 	return root
 
-static func _add_prop(root: Node3D, def: Dictionary) -> void:
+## A wall cell touching a floor cell, nearest the corner `near` (tile
+## coordinates), and the direction into the room: [cell centre, inward].
+## inward is ZERO if the room has no such wall.
+static func wall_face(tile: Array, near: Vector2) -> Array:
+	var best := INF
+	var out: Array = [Vector3.ZERO, Vector3.ZERO]
+	for ly in 5:
+		for lx in 5:
+			if String(tile[ly][lx]) != "wall":
+				continue
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var q: Vector2i = Vector2i(lx, ly) + d
+				if q.x < 0 or q.x > 4 or q.y < 0 or q.y > 4 or String(tile[q.y][q.x]) == "wall":
+					continue
+				var dist := Vector2(lx, ly).distance_to(near) + 0.01 * absf(d.x)
+				if dist < best:
+					best = dist
+					out = [Vector3(lx + 0.5 - ROOM / 2.0, 0, -(ly + 0.5 - ROOM / 2.0)), Vector3(d.x, 0, -d.y)]
+	return out
+
+static func _add_prop(root: Node3D, def: Dictionary, tile: Array) -> void:
 	var top := FLOOR_H
 	match String(def.get("type", "")):
 		"A":
+			# Spawn: the heroes' door in a wall, and the green ring they appear on.
 			var r := add_mesh(root, ring(0.55, 0.75), mat("spawn"), Vector3(0, top + 0.03, 0), false)
 			r.scale = Vector3(1, 0.3, 1)
+			var face: Array = wall_face(tile, Vector2(4, 4))
+			var inward: Vector3 = face[1]
+			if inward != Vector3.ZERO:
+				var door := add_piece(root, "wall_doorway", (face[0] as Vector3) + inward * 0.5 + Vector3(0, FLOOR_H - 0.02, 0),
+					Vector3(0.28, 0.28, 0.28), null, atan2(inward.x, inward.z))
+				door.name = "SpawnDoor"
 		"Z":
-			add_mesh(root, disc(0.8, 0.04), mat("exit_pit"), Vector3(0, top + 0.02, 0), false)
+			# Exit: an open iron grate over Zorg's pit, ringed in red.
+			add_mesh(root, disc(0.62, 0.02), mat("exit_pit"), Vector3(0, top + 0.005, 0), false)
+			add_piece(root, "floor_tile_big_grate_open", Vector3(0, top, 0), Vector3(0.36, 0.2, 0.36), null, 0.0, false)
 			var r := add_mesh(root, ring(0.8, 0.98), mat("exit_glow"), Vector3(0, top + 0.04, 0), false)
 			r.scale = Vector3(1, 0.4, 1)
 		"D":
-			var spike := cone(0.13, 0.42)
-			for o in [Vector3(-0.35, 0, -0.35), Vector3(0.35, 0, -0.35), Vector3(-0.35, 0, 0.35), Vector3(0.35, 0, 0.35), Vector3.ZERO]:
-				add_mesh(root, spike, mat("steel"), o + Vector3(0, top + 0.21, 0))
+			add_piece(root, "floor_tile_big_spikes", Vector3(0, top - 0.02, 0), Vector3(0.4, 0.5, 0.4))
 		"P":
+			# Portal: the glowing ring between two stone pillars.
+			for side in [-1.0, 1.0]:
+				add_piece(root, "pillar", Vector3(side * 1.2, top - 0.02, 0), Vector3(0.28, 0.34, 0.28))
 			var gate := Node3D.new()
 			gate.name = "PortalGate"
 			gate.position = Vector3(0, top + 1.0, 0)
@@ -229,64 +362,42 @@ static func _add_prop(root: Node3D, def: Dictionary) -> void:
 			var core := add_mesh(gate, disc(0.66, 0.02), mat("portal_core"), Vector3.ZERO, false)
 			core.rotation_degrees.x = 90.0
 
-## Gold pile: a stack of coins, shown when the room holds gold.
+## Gold pile: a KayKit coin stack, shown when the room holds gold.
 static func gold_pile() -> Node3D:
 	var pile := Node3D.new()
-	var coin := disc(0.22, 0.06)
-	var offs := [Vector3(0, 0, 0), Vector3(0.28, 0, 0.1), Vector3(-0.22, 0, 0.2), Vector3(0.05, 0, -0.27), Vector3(0.02, 0.06, 0.02), Vector3(0.2, 0.06, 0.05)]
-	for i in offs.size():
-		var c := add_mesh(pile, coin, mat("gold"), offs[i] + Vector3(0, FLOOR_H + 0.03, 0))
-		c.rotation_degrees = Vector3(float((i * 7) % 13 - 6), i * 37, 0)
+	add_piece(pile, "coin_stack_small", Vector3(0, FLOOR_H, 0), Vector3.ONE * 0.8, mat("gold"))
 	return pile
 
-static func _hero_mat(mats: Array, c: Color, metal := 0.0) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.albedo_color = c
-	m.metallic = metal
-	m.roughness = 0.5 if metal > 0 else 0.8
-	m.emission_enabled = true
-	m.emission = Color.BLACK
-	mats.append(m)
-	return m
-
-## Hero figure: capsule body + sphere head, with own materials (so one hero
-## can flash or fade alone). Warrior: broad, blue, steel helmet, shield and
-## sword. Elf: slim, green, tall pointed hat and ears.
+## Hero figure: a KayKit Knight (Warrior) or hooded Rogue (Elf) playing its
+## idle loop. Each hero gets its own copies of the materials so one hero can
+## flash or fade alone.
 static func hero_figure(is_elf: bool) -> Dictionary:
 	var root := Node3D.new()
 	var body := Node3D.new()
 	body.name = "Body"
 	root.add_child(body)
+	var scene: PackedScene = load(KK + ("adventurers/rogue_hooded.glb" if is_elf else "adventurers/knight.glb"))
+	var model: Node3D = scene.instantiate()
+	model.name = "Model"
+	model.scale = Vector3.ONE * HERO_MODEL_SCALE
+	model.position.y = FLOOR_H
+	body.add_child(model)
 	var mats: Array = []
-	var skin := _hero_mat(mats, Color(0.95, 0.78, 0.62))
-	var cap := CapsuleMesh.new()
-	var head := SphereMesh.new()
-	head.radial_segments = 16
-	head.rings = 8
-	if is_elf:
-		cap.radius = 0.17
-		cap.height = 0.9
-		head.radius = 0.15
-		head.height = 0.3
-		add_mesh(body, cap, _hero_mat(mats, Color(0.2, 0.62, 0.3)), Vector3(0, 0.45 + FLOOR_H, 0))
-		add_mesh(body, head, skin, Vector3(0, 1.02 + FLOOR_H, 0))
-		add_mesh(body, cone(0.17, 0.5), _hero_mat(mats, Color(0.1, 0.38, 0.18)), Vector3(0, 1.36 + FLOOR_H, 0))
-		for side in [-1.0, 1.0]:
-			var ear := add_mesh(body, cone(0.04, 0.16), skin, Vector3(side * 0.15, 1.04 + FLOOR_H, 0), false)
-			ear.rotation_degrees.z = -side * 70.0
-	else:
-		cap.radius = 0.25
-		cap.height = 0.8
-		head.radius = 0.17
-		head.height = 0.34
-		var steel: StandardMaterial3D = _hero_mat(mats, Color(0.72, 0.74, 0.78), 0.7)
-		add_mesh(body, cap, _hero_mat(mats, Color(0.22, 0.38, 0.85)), Vector3(0, 0.4 + FLOOR_H, 0))
-		add_mesh(body, head, skin, Vector3(0, 0.96 + FLOOR_H, 0))
-		var helm := SphereMesh.new()
-		helm.radius = 0.19
-		helm.height = 0.2
-		helm.is_hemisphere = true
-		add_mesh(body, helm, steel, Vector3(0, 1.0 + FLOOR_H, 0))
-		add_mesh(body, box_mesh(Vector3(0.06, 0.42, 0.34)), _hero_mat(mats, Color(0.75, 0.15, 0.15)), Vector3(-0.3, 0.5 + FLOOR_H, 0))
-		add_mesh(body, box_mesh(Vector3(0.05, 0.6, 0.05)), steel, Vector3(0.3, 0.62 + FLOOR_H, 0.08))
+	var copies := {}
+	for node in model.find_children("*", "MeshInstance3D", true, false):
+		var mi: MeshInstance3D = node
+		for i in mi.mesh.get_surface_count():
+			var src: Material = mi.get_active_material(i)
+			if not copies.has(src):
+				var m: StandardMaterial3D = src.duplicate() if src is StandardMaterial3D else StandardMaterial3D.new()
+				m.emission_enabled = true
+				m.emission = Color.BLACK
+				copies[src] = m
+				mats.append(m)
+			mi.set_surface_override_material(i, copies[src])
+	var anim: AnimationPlayer = model.find_child("AnimationPlayer", true, false)
+	if anim and anim.has_animation("Idle"):
+		anim.get_animation("Idle").loop_mode = Animation.LOOP_LINEAR
+		anim.play("Idle")
+		anim.seek(randf() * anim.current_animation_length, true)
 	return {"root": root, "body": body, "mats": mats}

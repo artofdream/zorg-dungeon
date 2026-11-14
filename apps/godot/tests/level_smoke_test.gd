@@ -192,14 +192,32 @@ func _initialize() -> void:
 	level.set_quality("low", false)
 	var lit: Array = level.torch_lights().filter(func(l): return l.visible)
 	var shadowed: Array = level.torch_lights().filter(func(l): return l.visible and l.shadow_enabled)
-	_check(lit.size() <= ZorgAtmos.LOW_LIGHTS and lit.size() > 0 and shadowed.is_empty() and not level.get_node("Sun").shadow_enabled,
-		"quality Low: %d torch lights (max %d), no shadows" % [lit.size(), ZorgAtmos.LOW_LIGHTS])
+	_check(lit.size() <= ZorgAtmos.LOW_LIGHTS and lit.size() > 0 and shadowed.is_empty() and not level.get_node("Sun").shadow_enabled
+		and is_equal_approx(level.get_viewport().scaling_3d_scale, ZorgAtmos.LOW_3D_SCALE),
+		"quality Low: %d torch lights (max %d), no shadows, 3D scale %.2f" % [lit.size(), ZorgAtmos.LOW_LIGHTS, level.get_viewport().scaling_3d_scale])
 	level.set_quality("high", false)
 	lit = level.torch_lights().filter(func(l): return l.visible)
 	shadowed = level.torch_lights().filter(func(l): return l.visible and l.shadow_enabled)
-	_check(lit.size() > ZorgAtmos.LOW_LIGHTS and lit.size() <= ZorgAtmos.HIGH_LIGHTS and shadowed.size() == mini(ZorgAtmos.HIGH_SHADOWS, lit.size()),
-		"quality High: %d torch lights, %d with shadows" % [lit.size(), shadowed.size()])
+	_check(lit.size() > ZorgAtmos.LOW_LIGHTS and lit.size() <= ZorgAtmos.HIGH_LIGHTS and shadowed.size() == mini(ZorgAtmos.HIGH_SHADOWS, lit.size())
+		and is_equal_approx(level.get_viewport().scaling_3d_scale, 1.0),
+		"quality High: %d torch lights, %d with shadows, 3D scale %.2f" % [lit.size(), shadowed.size(), level.get_viewport().scaling_3d_scale])
 	level.set_quality("low", false)
+
+	# Round 10: every room is built from the vendored CC0 KayKit models: stone
+	# block walls, floor tiles and a wall sconce on its torch.
+	var sconce: Mesh = ZorgLook.parts("torch_mounted")[0][0]
+	var with_walls := 0
+	var with_sconce := 0
+	for id in level.room_nodes:
+		var rn: Node3D = level.room_nodes[id]
+		var merged: Array = rn.find_children("Merged*", "MeshInstance3D", false, false)
+		if merged.any(func(m): return "floor_foundation_allsides" in m.get_meta("pieces", [])) and merged.size() <= 8:
+			with_walls += 1
+		var torch: Node = rn.get_node_or_null("Torch")
+		if torch and torch.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.mesh == sconce):
+			with_sconce += 1
+	_check(level.room_nodes.size() >= 6 and with_walls == level.room_nodes.size() and with_sconce == level.room_nodes.size(),
+		"models: %d rooms, %d with merged KayKit walls (<= 8 meshes), %d with a wall sconce" % [level.room_nodes.size(), with_walls, with_sconce])
 
 	# Follow camera: only during a run, tracks the first living hero, and
 	# Build goes back to the fitted overview.
@@ -231,6 +249,10 @@ func _initialize() -> void:
 	await create_timer(1.5).timeout
 	var fig: Node3D = level.heroes._figures.get(0)
 	var hero_pos: Variant = fig.global_position if fig else null
+	var anim: AnimationPlayer = fig.find_child("AnimationPlayer", true, false) if fig else null
+	_check(anim != null and anim.is_playing() and anim.current_animation == "Idle" and (fig.get_meta("mats") as Array).size() > 0
+		and fig.get_meta("mats").all(func(m): return m is StandardMaterial3D and m.emission_enabled),
+		"models: the hero is a KayKit figure playing Idle, with its own flashable materials")
 	_check(hero_pos != null and Vector2(level.rig.position.x - hero_pos.x, level.rig.position.z - hero_pos.z).length() < 0.6,
 		"follow camera: pivot tracks the hero (%s vs %s)" % [level.rig.position, hero_pos])
 	level._on_reset()

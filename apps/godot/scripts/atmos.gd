@@ -1,19 +1,22 @@
 class_name ZorgAtmos
 extends RefCounted
 ## Round 9 look: a dark, torch-lit stone dungeon. Environment (dim ambient,
-## cool moonlight, fog, glow), a screen vignette, procedural stone noise and
-## wall torches with warm flickering OmniLight3Ds. Procedural only: no asset
-## files, so nothing to license. Visual only: never reads or changes engine
-## state.
+## cool moonlight, fog, glow), a screen vignette, procedural stone noise (the
+## empty board) and wall torches with warm flickering OmniLight3Ds. Round 10:
+## the torch is a CC0 KayKit wall sconce (see CREDITS.md). Visual only: never
+## reads or changes engine state.
 ##
 ## Quality "low" (default on phones and the web): at most LOW_LIGHTS torch
 ## lights, no shadows, no glow. "high" (default on desktop): up to
 ## HIGH_LIGHTS torch lights, the nearest HIGH_SHADOWS of them cast shadows,
-## sun shadows and glow on.
+## sun shadows and glow on. Round 10: Low also renders the 3D view at
+## LOW_3D_SCALE of the screen resolution (the UI stays at full resolution),
+## because the textured models made the phone GPU-bound.
 
 const LOW_LIGHTS := 4
 const HIGH_LIGHTS := 10
 const HIGH_SHADOWS := 3
+const LOW_3D_SCALE := 0.75
 const TORCH_COLOR := Color(1.0, 0.62, 0.3)
 const TORCH_ENERGY := 2.2
 const TORCH_RANGE := 6.5
@@ -130,31 +133,31 @@ static func stone(m: StandardMaterial3D, scale: float) -> void:
 	m.uv1_world_triplanar = true
 	m.uv1_scale = Vector3.ONE * scale
 
-## Wall torch for a room: a bracket and an emissive flame on the wall cell
-## nearest the room's back-left corner that touches a floor cell, plus an
-## OmniLight3D leaning into the room. The light starts hidden; the level
-## decides which rooms get one (quality limits). Returns the light.
+## Wall torch for a room: a KayKit wall sconce with an emissive flame on the
+## inner face of the wall cell nearest the room's back-left corner that
+## touches a floor cell, plus an OmniLight3D leaning into the room. The light
+## starts hidden; the level decides which rooms get one (quality limits).
+## Returns the light.
+const SCONCE_SCALE := 0.8
 static func add_torch(root: Node3D, tile: Array) -> OmniLight3D:
-	var spot := Vector2i(-1, -1)
-	var best := INF
-	for ly in 5:
-		for lx in 5:
-			if String(tile[ly][lx]) != "wall" or not _touches_floor(tile, lx, ly):
-				continue
-			var d := Vector2(lx, ly - 4).length()     # back-left = (0, 4)
-			if d < best:
-				best = d
-				spot = Vector2i(lx, ly)
+	var face: Array = ZorgLook.wall_face(tile, Vector2(0, 4))
+	var inward: Vector3 = face[1]
 	var torch := Node3D.new()
 	torch.name = "Torch"
 	root.add_child(torch)
-	if spot.x < 0:
-		spot = Vector2i(0, 4)
-	var p := Vector3(spot.x + 0.5 - 2.5, 0, -(spot.y + 0.5 - 2.5))
-	torch.position = p
+	var p: Vector3 = face[0]
+	if inward == Vector3.ZERO:
+		p = Vector3(-2.0, 0, -2.0)          # no wall: back-left cell, facing the centre
+		inward = (-p).normalized()
+	torch.position = p + inward * 0.5
+	torch.rotation.y = atan2(inward.x, inward.z)
+	# Sconce model: bracket at z = 0 (the wall face), torch head at
+	# (0, 0.6, 0.3) in model units.
 	var top := ZorgLook.WALL_H
-	ZorgLook.add_mesh(torch, ZorgLook.box_mesh(Vector3(0.1, 0.34, 0.1)), ZorgLook.mat("hatch"), Vector3(0, top + 0.17, 0), false)
-	var flame := ZorgLook.add_mesh(torch, ZorgLook.cone(0.14, 0.4), ZorgLook.mat("flame"), Vector3(0, top + 0.54, 0), false)
+	var sconce_y := top - 0.5
+	ZorgLook.add_piece(torch, "torch_mounted", Vector3(0, sconce_y, 0), Vector3.ONE * SCONCE_SCALE, null, 0.0, false)
+	var flame := ZorgLook.add_mesh(torch, ZorgLook.cone(0.11, 0.3), ZorgLook.mat("flame"),
+		Vector3(0, sconce_y + 0.72 * SCONCE_SCALE + 0.1, 0.31 * SCONCE_SCALE), false)
 	flame.name = "Flame"
 	var light := OmniLight3D.new()
 	light.name = "TorchLight"
@@ -164,20 +167,12 @@ static func add_torch(root: Node3D, tile: Array) -> OmniLight3D:
 	light.omni_attenuation = 1.2
 	light.shadow_enabled = false
 	light.shadow_bias = 0.08
-	# Lean the light toward the room centre so it washes the floor, not the wall.
-	var inward: Vector3 = (-p).normalized() * 0.6 if p.length() > 0.01 else Vector3.ZERO
-	light.position = Vector3(inward.x, top + 0.75, inward.z)
+	# In front of the sconce, leaning into the room so it washes the floor.
+	light.position = Vector3(0, top + 0.75, 0.3)
 	light.visible = false
 	light.set_meta("phase", randf() * TAU)
 	torch.add_child(light)
 	return light
-
-static func _touches_floor(tile: Array, x: int, y: int) -> bool:
-	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-		var q: Vector2i = Vector2i(x, y) + d
-		if q.x >= 0 and q.x < 5 and q.y >= 0 and q.y < 5 and String(tile[q.y][q.x]) != "wall":
-			return true
-	return false
 
 ## Warm flicker: two slow sines plus a fast one, per torch phase.
 static func flicker(light: OmniLight3D, t: float) -> void:

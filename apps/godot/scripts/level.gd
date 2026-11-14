@@ -873,6 +873,7 @@ func _apply_quality() -> void:
 	var high := quality == "high"
 	$Sun.shadow_enabled = high and _url_flag("shadows", "1") != "0"
 	ZorgAtmos.set_quality(env, high)
+	get_viewport().scaling_3d_scale = 1.0 if high else ZorgAtmos.LOW_3D_SCALE
 	if quality_btn:
 		quality_btn.text = "Graphics: " + ("High" if high else "Low")
 	_refresh_torches()
@@ -919,7 +920,12 @@ func _perf_tick(delta: float) -> void:
 		fps_log -= delta
 		if fps_log <= 0.0:                  # also in the log (adb logcat), for phone tests
 			fps_log = 2.0
-			print("zorg: fps %d quality %s" % [Engine.get_frames_per_second(), quality])
+			var vp := get_viewport().get_viewport_rid()
+			RenderingServer.viewport_set_measure_render_time(vp, true)
+			print("zorg: fps %d quality %s cpu %.1f gpu %.1f process %.1f ms draws %d prims %d" % [Engine.get_frames_per_second(), quality,
+				RenderingServer.viewport_get_measured_render_time_cpu(vp), RenderingServer.viewport_get_measured_render_time_gpu(vp),
+				Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+				Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)])
 	if perf_checked:
 		return
 	perf_time += delta

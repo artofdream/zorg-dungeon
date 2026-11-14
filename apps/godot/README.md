@@ -53,17 +53,22 @@ Fire glows, water is a see-through tint, ice is pale and glossy, and poison
 is green. The Warrior is broad and blue, with a helmet, shield and sword.
 The Elf is slim and green, with a pointed hat. Heroes hop from cell to cell,
 flash with a floating number when hurt or healed, and fade out when they
-die. Everything is built from Godot primitives in `scripts/look.gd`, with no
-asset files.
+die. These were Godot primitives until round 10 (see **Models** below).
 **Look** (round 9, visual only, `scripts/atmos.gd`): a dark, torch-lit stone
 dungeon. Ambient light is dim, a faint cool "moon" keeps shapes readable,
 and there's fog and a vignette. Each room has a wall torch whose warm light
 flickers. Walls and floor slabs use procedural stone noise, and room and
-element floors glow faintly in their own colour. No asset files, so there
-are no licences to record. **Graphics** (in the level panel; saved):
-Low lights the 4 rooms nearest the view with no shadows and no glow. High
+element floors glow faintly in their own colour. **Graphics** (in the level panel; saved):
+Low lights the 4 rooms nearest the view with no shadows and no glow, and
+renders the 3D view at 0.75 resolution (the HUD stays sharp). High
 lights up to 10 rooms, gives shadows to the 3 nearest torches and the sun,
 and adds glow. Phones and the web default to Low; desktop defaults to High.
+**Models** (round 10, visual only): walls, floor tiles, wall sconces, the
+spawn door, exit grate, spikes, portal pillars, coins and toll hatches are
+CC0 low-poly KayKit models, and the Warrior and Elf are KayKit's Knight and
+hooded Rogue playing an idle loop. Floors keep their room and element
+colours. Files and licences are listed in [CREDITS.md](CREDITS.md)
+(`assets/kaykit/`, trimmed to about 0.9 MB).
 **Phone UI** (round 7, visual only): the HUD scales with screen DPI so one
 UI unit is about 1 dp on phones and 1 CSS px in mobile browsers (desktop and
 desktop web stay at the 1280×720 layout; in portrait the tray gets its own
