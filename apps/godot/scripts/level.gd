@@ -595,9 +595,12 @@ func end_drag(pos: Vector2) -> void:
 		return
 	if not drag_active:
 		if drag_from_tray:
+			var was_kb := kb_active
 			kb_active = false                # a tap or click takes over from the keyboard
 			selected = "" if selected == id else id
 			_refresh_tray()
+			if was_kb:
+				_refresh_validation()        # drop the arrows/Enter/Esc prompt
 		else:
 			_unplace(id)                     # tap a placed room: back to the tray
 		return
