@@ -101,6 +101,7 @@ var quality_btn: Button
 var view_btn: Button
 var follow := false              # true: the camera tracks the first living hero
 var follow_zoomed := false       # the current zoom is already a follow close-up
+var follow_overview := 0.0       # overview distance that close-up was taken from
 var torch_timer := 0.0
 var look_time := 0.0
 var fps_log := 0.0
@@ -960,9 +961,13 @@ func _zoom_by(d: float) -> void:
 ## zooming out works, so no gesture or button snaps the camera the wrong way.
 func _set_zoom(z: float) -> void:
 	var lo := FOLLOW_MIN if follow else minf(ZOOM_LIMITS.x, target_zoom)
-	target_zoom = clampf(z, lo, ZOOM_LIMITS.y)
-	if not follow and target_zoom >= ZOOM_LIMITS.x:
-		follow_zoomed = false                # the user zoomed back out to an overview distance
+	var next := clampf(z, lo, ZOOM_LIMITS.y)
+	# A far close-up already sits at or above ZOOM_LIMITS.x (40 -> 24), so the
+	# floor cannot tell it from an overview. Re-arm only on a zoom-out that
+	# gets back to the overview this close-up came from, while following too.
+	if follow_zoomed and next > target_zoom and next >= follow_overview:
+		follow_zoomed = false
+	target_zoom = next
 
 func _tilt_by(d: float) -> void:
 	target_pitch = clampf(target_pitch + d, PITCH_LIMITS.x, PITCH_LIMITS.y)
@@ -1312,6 +1317,7 @@ func _set_follow(on: bool) -> void:
 		# zooms back out to an overview distance, View again (e.g. after a pan) keeps the
 		# close-up instead of stacking another 60%.
 		if not follow_zoomed:
+			follow_overview = target_zoom
 			target_zoom = maxf(FOLLOW_MIN, target_zoom * FOLLOW_ZOOM)
 			follow_zoomed = true
 

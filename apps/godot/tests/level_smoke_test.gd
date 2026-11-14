@@ -245,6 +245,28 @@ func _initialize() -> void:
 	level._pan(Vector2(1, 0))
 	_key(KEY_C)
 	_check(is_equal_approx(far_close, 24.0) and is_equal_approx(level.target_zoom, far_close), "follow camera: from a far overview, View/pan/View doesn't stack (%.1f -> %.1f)" % [far_close, level.target_zoom])
+	# 24 is already an overview-floor zoom. Zoom +, a wheel tick, or a pinch
+	# must not re-arm the 60%. Zooming back out to that overview, even while
+	# still following, must: pan then View closes in once.
+	level._pan(Vector2(1, 0))
+	level._zoom_button(-4.0)
+	var adjusted: float = level.target_zoom
+	_key(KEY_C)
+	_check(is_equal_approx(adjusted, 20.0) and is_equal_approx(level.target_zoom, adjusted), "follow camera: Zoom + from a far close-up doesn't stack (%.1f -> %.1f)" % [adjusted, level.target_zoom])
+	level._pan(Vector2(1, 0))
+	level._zoom_button(2.5)
+	adjusted = level.target_zoom
+	_key(KEY_C)
+	_check(is_equal_approx(adjusted, 22.5) and is_equal_approx(level.target_zoom, adjusted), "follow camera: a wheel tick from a far close-up doesn't stack (%.1f -> %.1f)" % [adjusted, level.target_zoom])
+	level._pan(Vector2(1, 0))
+	level._set_zoom(level.target_zoom * 1.02)
+	adjusted = level.target_zoom
+	_key(KEY_C)
+	_check(is_equal_approx(level.target_zoom, adjusted) and adjusted < 24.0, "follow camera: a pinch from a far close-up doesn't stack (%.1f)" % level.target_zoom)
+	level._set_zoom(40.0)
+	level._pan(Vector2(1, 0))
+	_key(KEY_C)
+	_check(is_equal_approx(level.target_zoom, 24.0), "follow camera: zooming out to the overview while following lets View close in once (%.1f)" % level.target_zoom)
 	level._on_reset()
 
 	# Two heroes: when the followed one dies, the camera moves on to the next.
