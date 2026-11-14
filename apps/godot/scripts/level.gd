@@ -873,6 +873,7 @@ func _apply_quality() -> void:
 	var high := quality == "high"
 	$Sun.shadow_enabled = high and _url_flag("shadows", "1") != "0"
 	ZorgAtmos.set_quality(env, high)
+	get_viewport().scaling_3d_scale = 1.0 if high else ZorgAtmos.LOW_3D_SCALE
 	if quality_btn:
 		quality_btn.text = "Graphics: " + ("High" if high else "Low")
 	_refresh_torches()

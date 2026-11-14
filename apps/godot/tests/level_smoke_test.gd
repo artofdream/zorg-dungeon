@@ -192,13 +192,15 @@ func _initialize() -> void:
 	level.set_quality("low", false)
 	var lit: Array = level.torch_lights().filter(func(l): return l.visible)
 	var shadowed: Array = level.torch_lights().filter(func(l): return l.visible and l.shadow_enabled)
-	_check(lit.size() <= ZorgAtmos.LOW_LIGHTS and lit.size() > 0 and shadowed.is_empty() and not level.get_node("Sun").shadow_enabled,
-		"quality Low: %d torch lights (max %d), no shadows" % [lit.size(), ZorgAtmos.LOW_LIGHTS])
+	_check(lit.size() <= ZorgAtmos.LOW_LIGHTS and lit.size() > 0 and shadowed.is_empty() and not level.get_node("Sun").shadow_enabled
+		and is_equal_approx(level.get_viewport().scaling_3d_scale, ZorgAtmos.LOW_3D_SCALE),
+		"quality Low: %d torch lights (max %d), no shadows, 3D scale %.2f" % [lit.size(), ZorgAtmos.LOW_LIGHTS, level.get_viewport().scaling_3d_scale])
 	level.set_quality("high", false)
 	lit = level.torch_lights().filter(func(l): return l.visible)
 	shadowed = level.torch_lights().filter(func(l): return l.visible and l.shadow_enabled)
-	_check(lit.size() > ZorgAtmos.LOW_LIGHTS and lit.size() <= ZorgAtmos.HIGH_LIGHTS and shadowed.size() == mini(ZorgAtmos.HIGH_SHADOWS, lit.size()),
-		"quality High: %d torch lights, %d with shadows" % [lit.size(), shadowed.size()])
+	_check(lit.size() > ZorgAtmos.LOW_LIGHTS and lit.size() <= ZorgAtmos.HIGH_LIGHTS and shadowed.size() == mini(ZorgAtmos.HIGH_SHADOWS, lit.size())
+		and is_equal_approx(level.get_viewport().scaling_3d_scale, 1.0),
+		"quality High: %d torch lights, %d with shadows, 3D scale %.2f" % [lit.size(), shadowed.size(), level.get_viewport().scaling_3d_scale])
 	level.set_quality("low", false)
 
 	# Round 10: every room is built from the vendored CC0 KayKit models: stone

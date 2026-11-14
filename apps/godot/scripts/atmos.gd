@@ -9,11 +9,14 @@ extends RefCounted
 ## Quality "low" (default on phones and the web): at most LOW_LIGHTS torch
 ## lights, no shadows, no glow. "high" (default on desktop): up to
 ## HIGH_LIGHTS torch lights, the nearest HIGH_SHADOWS of them cast shadows,
-## sun shadows and glow on.
+## sun shadows and glow on. Round 10: Low also renders the 3D view at
+## LOW_3D_SCALE of the screen resolution (the UI stays at full resolution),
+## because the textured models made the phone GPU-bound.
 
 const LOW_LIGHTS := 4
 const HIGH_LIGHTS := 10
 const HIGH_SHADOWS := 3
+const LOW_3D_SCALE := 0.75
 const TORCH_COLOR := Color(1.0, 0.62, 0.3)
 const TORCH_ENERGY := 2.2
 const TORCH_RANGE := 6.5
