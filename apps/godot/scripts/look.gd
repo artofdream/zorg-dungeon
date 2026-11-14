@@ -32,11 +32,11 @@ static func mat(key: String) -> StandardMaterial3D:
 			m.albedo_color = Color(0.52, 0.47, 0.4)
 			ZorgAtmos.stone(m, 1.3)
 		"board_a":
-			m.albedo_color = Color(0.2, 0.19, 0.19)
+			m.albedo_color = Color(0.25, 0.24, 0.24)
 			m.roughness = 1.0
 			ZorgAtmos.stone(m, 0.35)
 		"board_b":
-			m.albedo_color = Color(0.25, 0.24, 0.23)
+			m.albedo_color = Color(0.31, 0.3, 0.28)
 			m.roughness = 1.0
 			ZorgAtmos.stone(m, 0.35)
 		"flame":
@@ -115,6 +115,7 @@ static func mat(key: String) -> StandardMaterial3D:
 				m.albedo_color = mat(key.substr(5)).albedo_color.darkened(0.3)
 				m.emission_enabled = mat(key.substr(5)).emission_enabled
 				m.emission = mat(key.substr(5)).emission.darkened(0.3)
+				m.emission_energy_multiplier = mat(key.substr(5)).emission_energy_multiplier
 	_mats[key] = m
 	return m
 
