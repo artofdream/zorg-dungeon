@@ -12,10 +12,20 @@ echo "==> stage /etc/zorg/caddy.env (site basic auth; values not shown)"
 # deploy-web writes caddy.env.new (root 0600, via SSH stdin) from repo
 # secrets. Caddy's env_file is required, and Caddy itself refuses to
 # start if the user or hash is empty, so a missing file or empty hash
-# does not serve the site openly.
+# does not serve the site openly. `compose up -d` does not treat env_file
+# contents as a service-config change, and Caddy substitutes
+# {$ZORG_AUTH_USER} / {$ZORG_AUTH_HASH} only at process start, so a
+# changed file has to force-recreate Caddy or the previous login stays live.
 CADDY_ENV=/etc/zorg/caddy.env
 CADDY_NEW=/etc/zorg/caddy.env.new
+CADDY_AUTH_CHANGED=0
 if [ -f "$CADDY_NEW" ]; then
+  if ! cmp -s "$CADDY_NEW" "$CADDY_ENV" 2>/dev/null; then
+    CADDY_AUTH_CHANGED=1
+    echo "site login: changes on this deploy (values not shown)"
+  else
+    echo "site login: unchanged"
+  fi
   install -m 600 -o root -g root "$CADDY_NEW" "$CADDY_ENV"
   rm -f "$CADDY_NEW"
 fi
@@ -75,6 +85,14 @@ echo "==> apply compose changes (recreates only services whose config changed)"
 
 echo "==> refresh single-file bind mounts (Caddyfile, prometheus.yml)"
 bash deploy/scripts/sync-bind-mounts.sh
+
+# sync-bind-mounts recreates Caddy only when the Caddyfile changes.
+# A site-login change is not a bind mount, so recreate on its own
+# (same as Grafana's secret_key below).
+if [ "$CADDY_AUTH_CHANGED" = 1 ]; then
+  echo "==> recreate Caddy with the new site login"
+  "${C[@]}" up -d --force-recreate --no-deps caddy
+fi
 
 if [ "$KEY_CHANGED" = 1 ]; then
   echo "==> recreate Grafana with the new secret_key"
