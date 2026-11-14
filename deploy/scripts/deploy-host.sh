@@ -15,7 +15,14 @@ echo "==> stage /etc/zorg/caddy.env (site basic auth; values not shown)"
 # does not serve the site openly.
 CADDY_ENV=/etc/zorg/caddy.env
 CADDY_NEW=/etc/zorg/caddy.env.new
+CADDY_ENV_CHANGED=0
 if [ -f "$CADDY_NEW" ]; then
+  # cmp only; values are never printed. A content change must recreate
+  # Caddy: compose up -d ignores env_file contents, and Caddy expands
+  # {$ZORG_AUTH_*} only at process start (Bugbot on #108).
+  if [ ! -f "$CADDY_ENV" ] || ! cmp -s "$CADDY_NEW" "$CADDY_ENV"; then
+    CADDY_ENV_CHANGED=1
+  fi
   install -m 600 -o root -g root "$CADDY_NEW" "$CADDY_ENV"
   rm -f "$CADDY_NEW"
 fi
@@ -75,6 +82,11 @@ echo "==> apply compose changes (recreates only services whose config changed)"
 
 echo "==> refresh single-file bind mounts (Caddyfile, prometheus.yml)"
 bash deploy/scripts/sync-bind-mounts.sh
+
+if [ "$CADDY_ENV_CHANGED" = 1 ]; then
+  echo "==> recreate Caddy so it loads the new caddy.env"
+  "${C[@]}" up -d --force-recreate --no-deps caddy
+fi
 
 if [ "$KEY_CHANGED" = 1 ]; then
   echo "==> recreate Grafana with the new secret_key"
