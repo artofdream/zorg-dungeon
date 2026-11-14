@@ -32,12 +32,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Require deploy secret
+      - name: Require deploy secrets
         env:
           LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          ZORG_AUTH_USER: ${{ secrets.ZORG_AUTH_USER }}
+          ZORG_AUTH_PASSWORD: ${{ secrets.ZORG_AUTH_PASSWORD }}
         run: |
           if [ -z "${LIGHTSAIL_SSH_KEY:-}" ]; then
             echo "::error::LIGHTSAIL_SSH_KEY is not set (same secret deploy-web uses). Do not invent or commit credentials."
+            exit 1
+          fi
+          if [ -z "${ZORG_AUTH_USER:-}" ] || [ -z "${ZORG_AUTH_PASSWORD:-}" ]; then
+            echo "::error::ZORG_AUTH_USER and ZORG_AUTH_PASSWORD must be set (same secrets deploy-web uses for the site login). The /godot/ probe needs them once the login is live. Do not invent or commit them."
             exit 1
           fi
 
@@ -120,18 +126,30 @@ jobs:
       - name: Probe https://zorg.artof.link/godot/
         # Until deploy-web has applied the /godot/ Caddy route, /godot/ falls
         # through to the React app, so check Godot-specific content and types.
+        # After the site login is live, this needs the shared credentials
+        # (never printed, never put in the URL).
+        env:
+          ZORG_AUTH_USER: ${{ secrets.ZORG_AUTH_USER }}
+          ZORG_AUTH_PASSWORD: ${{ secrets.ZORG_AUTH_PASSWORD }}
         run: |
           set -u
           base=https://zorg.artof.link/godot
+          AUTH=(-u "${ZORG_AUTH_USER}:${ZORG_AUTH_PASSWORD}")
           for i in $(seq 1 40); do
-            html=$(curl -fsS "$base/" 2>/dev/null || true)
-            wasm_type=$(curl -fsSI "$base/index.wasm" 2>/dev/null | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')
-            pck_code=$(curl -s -o /dev/null -w '%{http_code}' "$base/index.pck")
+            code=$(curl -s -o /dev/null -w '%{http_code}' "${AUTH[@]}" "$base/" || true)
+            if [ "$code" = "401" ] && [ -z "${ZORG_AUTH_PASSWORD:-}" ]; then
+              echo "::error::/godot/ returned 401 and no site-login secret is set"
+              exit 1
+            fi
+            html=$(curl -sS "${AUTH[@]}" "$base/" 2>/dev/null || true)
+            wasm_type=$(curl -sSI "${AUTH[@]}" "$base/index.wasm" 2>/dev/null | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')
+            pck_code=$(curl -s -o /dev/null -w '%{http_code}' "${AUTH[@]}" "$base/index.pck")
+            cc=$(curl -sSI "${AUTH[@]}" "$base/" 2>/dev/null | tr -d '\r' | awk -F': ' 'tolower($1)=="cache-control"{print $2}')
             if printf '%s' "$html" | grep -q 'GODOT_CONFIG' && [ "$wasm_type" = "application/wasm" ] && [ "$pck_code" = 200 ]; then
-              echo "godot preview: index.html OK, index.wasm $wasm_type, index.pck $pck_code"
+              echo "godot preview: index.html OK, index.wasm $wasm_type, index.pck $pck_code, cache-control=${cc:-unset}"
               exit 0
             fi
-            echo "waiting for /godot/ (try $i: wasm type '${wasm_type}', pck $pck_code)"
+            echo "waiting for /godot/ (try $i: http $code, wasm type '${wasm_type}', pck $pck_code)"
             sleep 15
           done
           echo "::error::/godot/ is not serving the Godot build (has deploy-web applied the Caddyfile?)"

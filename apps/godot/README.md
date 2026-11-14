@@ -172,7 +172,7 @@ starting it.
 
 ## Try the Godot preview
 
-In a PC browser: <https://zorg.artof.link/godot/>, once the web-preview PR
+In a PC browser: <https://zorg.artof.link/godot/> (same shared sign-in as the Maker; see [CONTRIBUTING.md](../../CONTRIBUTING.md#site-login-shared-username-and-password)), once the web-preview PR
 has merged and `deploy-godot` has run (`deploy-godot` publishes every merge
 that touches `apps/godot/`). It's a single-threaded debug build, so it needs
 no special server headers. The first load fetches about 10 MB (the engine,

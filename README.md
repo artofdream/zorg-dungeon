@@ -6,6 +6,11 @@ game. Build a dungeon, then watch scripted heroes try to kill you through it.
 - **Try the Godot preview** in a PC browser at
   <https://zorg.artof.link/godot/> (the Godot 4 port, debug build; see
   [`apps/godot/README.md`](./apps/godot/README.md#try-the-godot-preview)).
+  The Maker at <https://zorg.artof.link/> and that preview share a username
+  and password (set as GitHub Actions secrets; see
+  [`CONTRIBUTING.md`](./CONTRIBUTING.md#site-login-shared-username-and-password)).
+  `/grafana/` stays anonymous and read-only. itch.io hosts its own copy and
+  is not affected.
 - [`GAME_SPEC.md`](./GAME_SPEC.md) — the rules, functional/non-functional
   requirements, and build plan.
 - [`AGENTS.md`](./AGENTS.md) — how this repo is governed (start here if

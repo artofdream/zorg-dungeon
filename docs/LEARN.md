@@ -6,7 +6,7 @@ Heroes try to walk to Zorg's room.
 
 You win if they **fall down before they get there**.
 
-Play here: [zorg.artof.link](https://zorg.artof.link)
+Play here: [zorg.artof.link](https://zorg.artof.link) (the site asks for a shared sign-in; the owner has it).
 
 ```mermaid
 flowchart LR

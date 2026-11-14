@@ -35,14 +35,17 @@ settings. Set them once:
     "producer doesn't merge its own change" rule to actually hold.
 - **Settings → General → Pull Requests**: disable "Allow auto-merge" unless
   you want it, and consider requiring linear history.
-- **Settings → Secrets and variables → Actions** (production web CD, `.github/workflows/deploy-web.yml`): required `LIGHTSAIL_SSH_KEY` (private key PEM); optional `LIGHTSAIL_HOST` (Lightsail static IP or hostname; falls back to `zorg.artof.link`) and `LIGHTSAIL_USER` (default `ubuntu`); required `GRAFANA_ADMIN_PASSWORD` (Grafana admin password — the deploy writes it to a root-only env file on the host, `/etc/zorg/grafana.env`, and resets the admin password in Grafana's DB; rotate by updating the secret and re-running `deploy-web`); required `GRAFANA_SECRET_KEY` (Grafana `secret_key`, a random 64-hex value, e.g. `openssl rand -hex 32 | tr -d '\n' | gh secret set GRAFANA_SECRET_KEY`; delivered the same way into `/etc/zorg/grafana.env`. On a change the deploy first verifies Grafana stores no secrets encrypted with the old key (`grafana_admin.py stored-secrets`) and refuses to switch otherwise, then rotates the envelope data keys and re-encrypts). Per-project credentials via the sponsor's 3DX Lab secrets method will replace these repo secrets later. Do not invent or commit credentials.
+- **Settings → Secrets and variables → Actions** (production web CD, `.github/workflows/deploy-web.yml`): required `LIGHTSAIL_SSH_KEY` (private key PEM); optional `LIGHTSAIL_HOST` (Lightsail static IP or hostname; falls back to `zorg.artof.link`) and `LIGHTSAIL_USER` (default `ubuntu`); required `GRAFANA_ADMIN_PASSWORD` (Grafana admin password — the deploy writes it to a root-only env file on the host, `/etc/zorg/grafana.env`, and resets the admin password in Grafana's DB; rotate by updating the secret and re-running `deploy-web`); required `GRAFANA_SECRET_KEY` (Grafana `secret_key`, a random 64-hex value, e.g. `openssl rand -hex 32 | tr -d '\n' | gh secret set GRAFANA_SECRET_KEY`; delivered the same way into `/etc/zorg/grafana.env`. On a change the deploy first verifies Grafana stores no secrets encrypted with the old key (`grafana_admin.py stored-secrets`) and refuses to switch otherwise, then rotates the envelope data keys and re-encrypts); required `ZORG_AUTH_USER` and `ZORG_AUTH_PASSWORD` (shared username and password for `https://zorg.artof.link/` and `/godot/`; `deploy-web` hashes the password with `caddy hash-password` on the runner — never committed, never printed — and writes the user and bcrypt hash to a root-only env file on the host, `/etc/zorg/caddy.env`, mode 0600; rotate by updating the secrets and re-running `deploy-web`). Per-project credentials via the sponsor's 3DX Lab secrets method will replace these repo secrets later. Do not invent or commit credentials.
 
 ## Grafana admin access (SSH tunnel only)
 
-Public `https://zorg.artof.link/grafana/` is **anonymous and read-only**.
-Caddy answers `/grafana/login`, the admin UI and admin APIs with 404, and
-refuses any request that carries credentials (basic auth, bearer token, or a
-Grafana session cookie) with 403. Grafana's basic auth is disabled. Admins sign
+Public `https://zorg.artof.link/grafana/` is **anonymous and read-only**
+and is not behind the shared site login. Caddy answers `/grafana/login`, the
+admin UI and admin APIs with 404, refuses bearer tokens and Grafana session
+cookies with 403, and strips a site-login `Authorization` header before
+proxying so the shared password never reaches Grafana's request log (a
+browser that already signed in to `/` or `/godot/` will send that header to
+`/grafana/` too). Grafana's own basic auth is disabled. Admins sign
 in over an SSH tunnel to Grafana's host-local port, which is published on
 `127.0.0.1:3000` only:
 
@@ -58,6 +61,49 @@ ssh -N -L 3000:127.0.0.1:3000 <LIGHTSAIL_USER>@<LIGHTSAIL_HOST>
 - `deploy-web` checks this path on every deploy (`deploy/scripts/grafana_admin.py
   login-check` on the host) and probes the public surface
   (`deploy/scripts/probe-public-grafana.sh`).
+
+## Site login (shared username and password)
+
+`https://zorg.artof.link/` and `https://zorg.artof.link/godot/` ask for HTTP
+basic auth. `/grafana/` (anonymous, read-only) and `/healthz` (nginx, returns
+plain `OK`) do not. The same login applies to the plain-HTTP `:80` fallback
+(e.g. by IP), so that path cannot skip the prompt.
+
+How it is applied:
+
+1. Create repo secrets `ZORG_AUTH_USER` and `ZORG_AUTH_PASSWORD` under
+   **Settings → Secrets and variables → Actions**. Do not paste them into
+   issues, PRs or chat. The username must be 1–64 characters of
+   `A-Z a-z 0-9 . _ @ -`. The password must be at least 8 characters.
+2. Merge the PR that adds the Caddy config, then approve the `deploy-web`
+   run in the `production` environment. Agents never approve deploys.
+3. `deploy-web` hashes the password with `caddy:2-alpine caddy hash-password`
+   (stdin, hash masked in logs), writes `/etc/zorg/caddy.env.new` over SSH
+   (root, 0600), and `deploy/scripts/deploy-host.sh` stages it to
+   `/etc/zorg/caddy.env`. The bcrypt hash is written single-quoted so
+   Compose does not interpolate the `$` characters in it (otherwise the
+   hash can be truncated and the real password never matches). Compose
+   gives that file to the Caddy container (`env_file`, required). The
+   Caddyfile uses `{$ZORG_AUTH_USER}` and `{$ZORG_AUTH_HASH}`.
+4. If the secrets, the env file or the hash are missing or empty, the deploy
+   fails and Caddy refuses to start. It will not serve the Maker or `/godot/`
+   openly. Verified with Caddy 2.10: `basic_auth` errors with "username and
+   password cannot be empty or missing".
+5. After a successful deploy, `deploy/scripts/probe-site-auth.sh` checks 401
+   without credentials and 200 with them on `/` and `/godot/`, and that
+   `/healthz` and `/grafana/` still answer without a login. `deploy-godot`'s
+   `/godot/` probe uses the same secrets. Playwright journey probes in `ci`
+   talk to a local app, not the live site, and do not need them.
+6. Rotate by changing the secrets and re-running `deploy-web`. Do not edit
+   `/etc/zorg/caddy.env` by hand in normal operation.
+
+itch.io hosts its own copy of the web build and is not affected.
+`knowledge.zorg.artof.link` (GitHub Pages) is not affected. Prometheus
+scrapes Caddy on the internal `caddy:9180/metrics` listener, which is not
+published and is not behind the site login.
+
+A later email-code login (SES) can replace this shared password; this is the
+temporary gate.
 
 ## Caddy admin API and metrics
 

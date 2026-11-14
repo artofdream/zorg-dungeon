@@ -57,3 +57,14 @@ A 3 px amber focus ring (about 12:1 contrast) shows only for keyboard navigation
 ## 9. Uploading to itch.io
 
 `deploy-itch` reuses `godot.yml` through `workflow_call`, so itch.io gets the exact builds the tests passed on. A preflight job fails before the long build if `BUTLER_API_KEY` is missing. Pin butler by version and SHA-256 (broth.itch.zone has no checksum file, so hash the archive once). butler pushes builds but never publishes a Draft page, and the HTML5 "played in the browser" flag has to be set once by hand. Inside itch's iframe, `window.self !== window.top`, and the web bridge returns that JS boolean as an int (1/0), so compare carefully (#106).
+
+## 10. The web preview sits behind the shared site login
+
+`https://zorg.artof.link/godot/` uses the same username and password as the
+Maker at `/`. `/grafana/` and `/healthz` stay open. After that login is
+live, a `curl` of `/godot/` without `-u` gets 401; `deploy-godot` takes the
+credentials from the `ZORG_AUTH_USER` and `ZORG_AUTH_PASSWORD` repo secrets
+and never puts them in the URL or the logs. The itch.io copy of the game is
+hosted by itch.io and is not affected. See
+[CONTRIBUTING.md](../CONTRIBUTING.md#site-login-shared-username-and-password).
+
