@@ -115,6 +115,7 @@ static func mat(key: String) -> StandardMaterial3D:
 				m.albedo_color = mat(key.substr(5)).albedo_color.darkened(0.3)
 				m.emission_enabled = mat(key.substr(5)).emission_enabled
 				m.emission = mat(key.substr(5)).emission.darkened(0.3)
+				m.emission_energy_multiplier = mat(key.substr(5)).emission_energy_multiplier
 	_mats[key] = m
 	return m
 
