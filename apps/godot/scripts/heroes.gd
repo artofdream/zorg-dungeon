@@ -290,6 +290,16 @@ func apply_turn(events: Array) -> String:
 				lines.append("every hero is dead")
 			"stalemate":
 				lines.append("stalemate")
+	# Round 11: a plain step inside a room has no other event; say so
+	# instead of leaving an empty "Turn N:" line.
+	if lines.is_empty():
+		var who: Array = []
+		for e in events:
+			var id := int(e.get("heroId", -1))
+			if String(e["type"]) == "move" and id >= 0 and not who.has(_name(id)):
+				who.append(_name(id))
+		if not who.is_empty():
+			lines.append(" and ".join(who) + " moves")
 	return ", ".join(lines)
 
 ## Show HP (and gold) on spawn (spawn events carry no HP).
