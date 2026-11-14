@@ -5,7 +5,8 @@ extends SceneTree
 ##    win), step the replay to the end and expect the banner for its outcome;
 ##  - drag a room straight out of the tray onto the board;
 ##  - drag onto an occupied spot: red ghost, nothing placed;
-##  - rotate 90° and check the camera settles on a 45° + n·90° yaw.
+##  - rotate 90° and check the camera settles on a 45° + n·90° yaw;
+##  - round 9: torch light / shadow limits per quality and the follow camera.
 ## Optional: `-- --shot=path.png` saves a screenshot (needs a display).
 
 var level: Node
@@ -182,6 +183,58 @@ func _initialize() -> void:
 	_key(KEY_TAB)
 	_check(not level.kb_active and level.selected == "", "keyboard: Tab cancels the pick-up")
 	level.get_viewport().gui_release_focus()
+
+	# Round 9 look: quality limits on torch lights and shadows.
+	var five2: int = engine.levels.map(func(e): return e["id"]).find("deluxe-5.5")
+	level._open_level(five2)
+	for p in g5["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	level.set_quality("low", false)
+	var lit: Array = level.torch_lights().filter(func(l): return l.visible)
+	var shadowed: Array = level.torch_lights().filter(func(l): return l.visible and l.shadow_enabled)
+	_check(lit.size() <= ZorgAtmos.LOW_LIGHTS and lit.size() > 0 and shadowed.is_empty() and not level.get_node("Sun").shadow_enabled,
+		"quality Low: %d torch lights (max %d), no shadows" % [lit.size(), ZorgAtmos.LOW_LIGHTS])
+	level.set_quality("high", false)
+	lit = level.torch_lights().filter(func(l): return l.visible)
+	shadowed = level.torch_lights().filter(func(l): return l.visible and l.shadow_enabled)
+	_check(lit.size() > ZorgAtmos.LOW_LIGHTS and lit.size() <= ZorgAtmos.HIGH_LIGHTS and shadowed.size() == mini(ZorgAtmos.HIGH_SHADOWS, lit.size()),
+		"quality High: %d torch lights, %d with shadows" % [lit.size(), shadowed.size()])
+	level.set_quality("low", false)
+
+	# Follow camera: only during a run, tracks the first living hero, and
+	# Build goes back to the fitted overview.
+	level._open_level(0)
+	var g1 = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[0]["golden"]))
+	for p in g1["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	for i in 5:
+		await process_frame
+	_check(not level.view_btn.visible, "follow camera: View button hidden while building")
+	level._on_cam_mode()
+	_check(not level.follow, "follow camera: no follow while building")
+	for i in 4:
+		level._on_step()
+	_check(level.view_btn.visible and level.view_btn.get_combined_minimum_size().y >= 52.0, "follow camera: View button shown during a run (>= 52 units)")
+	_key(KEY_C)
+	_check(level.follow and level.view_btn.text.contains("Hero"), "follow camera: key C switches to Follow hero")
+	await create_timer(1.5).timeout
+	var fig: Node3D = level.heroes._figures.get(0)
+	var hero_pos: Variant = fig.global_position if fig else null
+	_check(hero_pos != null and Vector2(level.rig.position.x - hero_pos.x, level.rig.position.z - hero_pos.z).length() < 0.6,
+		"follow camera: pivot tracks the hero (%s vs %s)" % [level.rig.position, hero_pos])
+	level._on_reset()
+	_check(not level.follow and not level.view_btn.visible and not level.cam_manual, "follow camera: Build returns to the fitted overview")
+	# Two heroes: when the followed one dies, the camera moves on to the next.
+	var hs: Node = level.heroes
+	hs.clear()
+	hs.apply_turn([{"type": "spawn", "heroId": 0, "cell": {"x": 0, "y": 0}, "roomId": "A:0"},
+		{"type": "spawn", "heroId": 1, "cell": {"x": 3, "y": 1}, "roomId": "A:0"}])
+	var first: Variant = hs.follow_point()
+	hs.apply_turn([{"type": "death", "heroId": 0}])
+	var second: Variant = hs.follow_point()
+	_check(first != null and second != null and is_equal_approx(first.x, 0.5) and is_equal_approx(second.x, 3.5),
+		"follow camera: switches to the next living hero after a death (%s -> %s)" % [first, second])
+	hs.clear()
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)

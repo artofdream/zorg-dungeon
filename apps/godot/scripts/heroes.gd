@@ -16,6 +16,18 @@ var overlay: Control     # layer above the room labels
 var _plates := {}        # hero id -> PanelContainer holding _hp_labels[id]
 var _floats: Array = []  # [Label, world position, age] hit numbers
 var _rects: Array[Rect2] = []   # this frame's HP label rects (room labels avoid them)
+var _dead := {}          # hero id -> true once the engine reports its death
+
+## Where the follow camera looks: the first living hero on the board (lowest
+## id), so it moves on to the next hero when one dies. null if none.
+func follow_point() -> Variant:
+	var ids: Array = _figures.keys()
+	ids.sort()
+	for id in ids:
+		var f: Node3D = _figures[id]
+		if not _dead.has(id) and is_instance_valid(f) and f.visible:
+			return f.global_position
+	return null
 
 func label_rects() -> Array[Rect2]:
 	return _rects.duplicate()
@@ -41,6 +53,7 @@ func clear() -> void:
 		(fl[0] as Node).queue_free()
 	_floats.clear()
 	_hp_labels.clear()
+	_dead.clear()
 	_hp.clear()
 	_gold.clear()
 	_tweens.clear()
@@ -240,6 +253,7 @@ func apply_turn(events: Array) -> String:
 				else:
 					lines.append("takes %d damage (HP %d)" % [int(e["amount"]), int(e["hp"])])
 			"death":
+				_dead[id] = true
 				var f: Node3D = _figures.get(id)
 				if f:
 					# Let this turn's move finish first, then fade.

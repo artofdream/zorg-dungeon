@@ -1,6 +1,6 @@
 class_name ZorgLook
 extends RefCounted
-## Procedural 2.5D look (round 6): shared materials and meshes, room tiles,
+## Procedural 2.5D look (round 6; round 9 stone noise, see atmos.gd): shared materials and meshes, room tiles,
 ## room props and hero figures. Built from Godot primitives only, so there
 ## are no asset files or licences. Visual only: nothing here reads or changes
 ## engine state.
@@ -26,15 +26,25 @@ static func mat(key: String) -> StandardMaterial3D:
 	m.roughness = 0.85
 	match key:
 		"wall":
-			m.albedo_color = Color(0.3, 0.28, 0.26)
+			m.albedo_color = Color(0.4, 0.36, 0.31)
+			ZorgAtmos.stone(m, 0.9)
 		"wall_cap":
-			m.albedo_color = Color(0.44, 0.41, 0.37)
+			m.albedo_color = Color(0.52, 0.47, 0.4)
+			ZorgAtmos.stone(m, 1.3)
 		"board_a":
-			m.albedo_color = Color(0.17, 0.18, 0.21)
+			m.albedo_color = Color(0.2, 0.19, 0.19)
 			m.roughness = 1.0
+			ZorgAtmos.stone(m, 0.35)
 		"board_b":
-			m.albedo_color = Color(0.21, 0.22, 0.25)
+			m.albedo_color = Color(0.25, 0.24, 0.23)
 			m.roughness = 1.0
+			ZorgAtmos.stone(m, 0.35)
+		"flame":
+			m.albedo_color = Color(1.0, 0.7, 0.25)
+			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			m.emission_enabled = true
+			m.emission = Color(1.0, 0.55, 0.15)
+			m.emission_energy_multiplier = 3.0
 		"fire":
 			m.albedo_color = Color(1.0, 0.36, 0.08)
 			m.emission_enabled = true
@@ -47,8 +57,12 @@ static func mat(key: String) -> StandardMaterial3D:
 			m.metallic_specular = 0.9
 		"water_bed":
 			m.albedo_color = Color(0.05, 0.12, 0.3)
+			m.emission_enabled = true
+			m.emission = Color(0.05, 0.2, 0.55)
+			m.emission_energy_multiplier = 0.5
 		"ice":
 			m.albedo_color = Color(0.86, 0.95, 1.0)
+			_readable(m)
 			m.roughness = 0.04
 			m.metallic = 0.25
 			m.metallic_specular = 1.0
@@ -65,6 +79,7 @@ static func mat(key: String) -> StandardMaterial3D:
 			m.emission = Color(0.4, 0.28, 0.0)
 		"hatch":
 			m.albedo_color = Color(0.45, 0.3, 0.15)
+			_readable(m)
 		"steel":
 			m.albedo_color = Color(0.75, 0.77, 0.8)
 			m.metallic = 0.8
@@ -95,12 +110,20 @@ static func mat(key: String) -> StandardMaterial3D:
 		_:
 			if key.begins_with("floor_"):
 				m.albedo_color = FLOORS.get(key.substr(6), Color(0.5, 0.5, 0.5))
+				_readable(m)
 			elif key.begins_with("dark_"):
 				m.albedo_color = mat(key.substr(5)).albedo_color.darkened(0.3)
 				m.emission_enabled = mat(key.substr(5)).emission_enabled
 				m.emission = mat(key.substr(5)).emission.darkened(0.3)
 	_mats[key] = m
 	return m
+
+## Round 9: the dungeon is dark, so room and element floors glow faintly in
+## their own colour and stay readable outside torch light.
+static func _readable(m: StandardMaterial3D) -> void:
+	m.emission_enabled = true
+	m.emission = m.albedo_color
+	m.emission_energy_multiplier = 0.22
 
 static func box_mesh(size: Vector3) -> BoxMesh:
 	var key := "box%s" % size

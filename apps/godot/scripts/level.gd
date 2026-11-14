@@ -94,6 +94,16 @@ var cam_grid: GridContainer
 var levels_btn: Button
 var levels_panel: PanelContainer
 var ui_scale := 1.0
+# Round 9 look and follow camera.
+var quality := "low"             # "low" | "high" (ZorgAtmos)
+var env: Environment
+var quality_btn: Button
+var view_btn: Button
+var follow := false              # true: the camera tracks the first living hero
+var torch_timer := 0.0
+var look_time := 0.0
+const FOLLOW_ZOOM := 16.0
+const FOLLOW_SMOOTH := 4.0       # 1/s, exponential ease of the pivot onto the hero
 const REFUSALS := {"before_first_action": "wait for the first hero action", "run_over": "the run is over",
 	"no_active_hero": "no hero is active", "consumed": "that spell is used up", "no_spell": "no such spell"}
 
@@ -175,6 +185,8 @@ func _build_ui() -> void:
 	ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_root.theme = ZorgHud.make_theme()
 	ui.add_child(ui_root)
+	ui.add_child(ZorgAtmos.vignette())
+	ui.move_child(ui.get_child(ui.get_child_count() - 1), 0)   # under the HUD
 	label_layer = _layer()
 	hero_layer = _layer()
 
@@ -228,7 +240,14 @@ func _build_ui() -> void:
 	picker.add_theme_constant_override("h_separation", 6)
 	picker.add_theme_constant_override("v_separation", 6)
 	lp.add_child(picker)
-	lp.add_child(_btn("Close", func(): levels_panel.visible = false))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	lp.add_child(row)
+	quality_btn = _btn("Graphics: " + quality.capitalize(), _toggle_quality)
+	quality_btn.custom_minimum_size.x = 180
+	quality_btn.tooltip_text = "High: more torches, shadows and glow. Low: faster."
+	row.add_child(quality_btn)
+	row.add_child(_btn("Close", func(): levels_panel.visible = false))
 
 	# Camera buttons (touch screens; mouse: wheel, Ctrl + wheel, Q/E, right-drag).
 	# Plain ASCII labels: the web build's default font has no arrow glyphs.
@@ -245,6 +264,12 @@ func _build_ui() -> void:
 			["< 90°", func(): _rotate(-90.0)], ["90° >", func(): _rotate(90.0)],
 			["Fit", _on_fit]]:
 		cam_grid.add_child(_btn(spec[0], spec[1]))
+	# Follow camera (round 9), next to Fit: only during a run; cycles
+	# Overview ("All") / Follow hero ("Hero").
+	view_btn = _btn("View: All", _on_cam_mode)
+	view_btn.tooltip_text = "Overview or follow the hero (key C)"
+	view_btn.visible = false
+	cam_grid.add_child(view_btn)
 
 	# Bottom bar: tray rooms (wrap upward if many), spells during a run, run controls.
 	bottom_bar = BoxContainer.new()
@@ -471,6 +496,7 @@ func _build_ghost() -> void:
 
 func _room_node(s: Dictionary) -> Node3D:
 	var root := ZorgLook.build_room(s["def"], ZorgEngine.base_tile(s["def"]))
+	root.set_meta("torch", ZorgAtmos.add_torch(root, ZorgEngine.base_tile(s["def"])))
 	var pile := ZorgLook.gold_pile()
 	pile.visible = false
 	root.add_child(pile)
@@ -504,6 +530,7 @@ func _place(id: String, slot: Vector2i) -> void:
 	_refresh_tray()
 	_refresh_validation()
 	_refresh_piles()
+	_refresh_torches()
 	_request_fit(1)
 
 func _unplace(id: String) -> void:
@@ -514,6 +541,7 @@ func _unplace(id: String) -> void:
 		room_nodes.erase(id)
 	_refresh_tray()
 	_refresh_validation()
+	_refresh_torches()
 	_request_fit(1)
 
 func _screen_to_slot(pos: Vector2) -> Variant:
@@ -713,6 +741,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_zoom_button(2.5)
 		elif event.keycode == KEY_F:
 			_on_fit()
+		elif event.keycode == KEY_C:
+			_on_cam_mode()
 		elif event.keycode == KEY_F3:
 			fps_label.visible = not fps_label.visible
 
@@ -812,30 +842,66 @@ func _on_board_press(pos: Vector2) -> void:
 
 # ------------------------------------------------------------------ light
 
-## One sun with soft shadows plus ambient light. Works on Compatibility
-## (web) and Mobile. On the web, `?shadows=0` turns shadows off, and they
-## also switch off by themselves if the first seconds run under 30 FPS.
-## `?fps=1` (or F3) shows an FPS counter.
+## Round 9: dark torch-lit dungeon (ZorgAtmos). A dim cool "moon" keeps
+## the shapes readable; torches carry the light. Quality Low (phones and
+## web by default): few torch lights, no shadows, no glow. High: more
+## torches, torch and sun shadows, glow. `?quality=low|high` on the web,
+## `--quality=` on the command line, or the Graphics button (saved).
+## `?shadows=0` still forces shadows off, and High drops to Low by itself
+## if the first seconds run under 30 FPS (unless High was asked for in
+## the URL or on the command line). `?fps=1` (or F3) shows FPS.
 func _setup_lighting() -> void:
-	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.08, 0.09, 0.12)
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.62, 0.66, 0.78)
-	env.ambient_light_energy = 0.3
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	quality = ZorgAtmos.default_quality(_url_flag("quality", ""))
+	env = ZorgAtmos.environment(quality == "high")
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 	var sun: DirectionalLight3D = $Sun
-	sun.light_color = Color(1.0, 0.95, 0.85)
-	sun.light_energy = 0.9
-	sun.shadow_enabled = _url_flag("shadows", "1") != "0"
+	sun.light_color = Color(0.62, 0.7, 1.0)
+	sun.light_energy = 0.32
 	sun.shadow_blur = 1.5
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 80.0
 	sun.shadow_bias = 0.05
 	sun.shadow_normal_bias = 1.0
+	_apply_quality()
+
+func _apply_quality() -> void:
+	var high := quality == "high"
+	$Sun.shadow_enabled = high and _url_flag("shadows", "1") != "0"
+	ZorgAtmos.set_quality(env, high)
+	if quality_btn:
+		quality_btn.text = "Graphics: " + ("High" if high else "Low")
+	_refresh_torches()
+
+func set_quality(q: String, save := true) -> void:
+	quality = "high" if q == "high" else "low"
+	if save:
+		ZorgAtmos.save_quality(quality)
+	_apply_quality()
+
+func _toggle_quality() -> void:
+	set_quality("low" if quality == "high" else "high")
+
+## Torch lights per quality: the rooms nearest the camera pivot get one
+## (LOW_LIGHTS or HIGH_LIGHTS); on High the nearest HIGH_SHADOWS cast shadows.
+func _refresh_torches() -> void:
+	var high := quality == "high"
+	var limit := ZorgAtmos.HIGH_LIGHTS if high else ZorgAtmos.LOW_LIGHTS
+	var shadows := ZorgAtmos.HIGH_SHADOWS if high and _url_flag("shadows", "1") != "0" else 0
+	var ids: Array = room_nodes.keys()
+	var pivot := Vector3(rig.position.x, 0, rig.position.z)
+	ids.sort_custom(func(a, b): return room_nodes[a].position.distance_to(pivot) < room_nodes[b].position.distance_to(pivot))
+	for i in ids.size():
+		var light: OmniLight3D = room_nodes[ids[i]].get_meta("torch")
+		light.visible = i < limit
+		light.shadow_enabled = i < shadows
+
+func torch_lights() -> Array:
+	var out: Array = []
+	for id in room_nodes:
+		out.append(room_nodes[id].get_meta("torch"))
+	return out
 
 ## Query parameter `name` on the web build, else `fallback`.
 func _url_flag(name: String, fallback: String) -> String:
@@ -846,7 +912,7 @@ func _url_flag(name: String, fallback: String) -> String:
 
 func _perf_tick(delta: float) -> void:
 	if fps_label and fps_label.visible:
-		fps_label.text = "%d FPS%s" % [Engine.get_frames_per_second(), "" if $Sun.shadow_enabled else " (no shadows)"]
+		fps_label.text = "%d FPS  %s" % [Engine.get_frames_per_second(), quality.capitalize()]
 	if perf_checked:
 		return
 	perf_time += delta
@@ -857,7 +923,10 @@ func _perf_tick(delta: float) -> void:
 	if perf_time >= 5.0:
 		perf_checked = true
 		var fps := perf_frames / (perf_time - 1.0)
-		if OS.has_feature("web") and fps < 30.0 and $Sun.shadow_enabled:
+		if fps < 30.0 and quality == "high" and not ZorgAtmos.forced(_url_flag("quality", "")):
+			set_quality("low", false)        # this session only; the saved choice stays
+			print("zorg: %.0f FPS on High, switching to Low" % fps)
+		elif OS.has_feature("web") and fps < 30.0 and $Sun.shadow_enabled:
 			$Sun.shadow_enabled = false
 			print("zorg: %.0f FPS with shadows, turning them off" % fps)
 
@@ -894,12 +963,15 @@ func _zoom_button(d: float) -> void:
 	_zoom_by(d)
 
 func _on_fit() -> void:
+	_set_follow(false)
 	cam_manual = false
 	_fit_camera(false)
 
 ## After a rotation (or a new level), glide the pivot back onto the dungeon
 ## so the board doesn't drift off screen; yaw lands exactly on 45° + n·90°.
 func _snap_camera() -> void:
+	if follow:
+		return                               # the follow camera keeps the hero centred
 	if not cam_manual:
 		_fit_camera(false)
 		return
@@ -1020,6 +1092,9 @@ func _fits(pts: Array[Vector3], size: Vector2) -> bool:
 	return box.size.x <= size.x and box.size.y <= size.y
 
 func _pan(delta_px: Vector2) -> void:
+	if follow:
+		_set_follow(false)                   # dragging the view takes over from the follow camera
+		cam_manual = true
 	var scale := zoom / 600.0
 	var right := Vector3(cos(deg_to_rad(yaw)), 0, -sin(deg_to_rad(yaw)))
 	var fwd := Vector3(-sin(deg_to_rad(yaw)), 0, -cos(deg_to_rad(yaw)))
@@ -1043,9 +1118,25 @@ func _process(delta: float) -> void:
 	if fit_wait > 0:
 		fit_wait -= 1
 	elif fit_pending != 0 and drag_id == "":
-		if fit_pending == 2 or not cam_manual:
+		if follow:
+			pass                                 # no auto-fit while following a hero
+		elif fit_pending == 2 or not cam_manual:
 			_fit_camera(fit_pending == 2)
 		fit_pending = 0
+	if follow:
+		var target: Variant = heroes.follow_point()
+		if target != null:
+			var goal_pos := Vector3(target.x, 0, target.z)
+			rig.position = rig.position.lerp(goal_pos, 1.0 - exp(-FOLLOW_SMOOTH * delta))
+	look_time += delta
+	torch_timer -= delta
+	if torch_timer <= 0.0:
+		torch_timer = 0.5
+		_refresh_torches()                   # nearest rooms to the pivot keep the lights
+	for id in room_nodes:
+		var light: OmniLight3D = room_nodes[id].get_meta("torch")
+		if light.visible:
+			ZorgAtmos.flicker(light, look_time)
 	_layout_labels()
 	for id in room_nodes:
 		var gate: Node3D = room_nodes[id].get_node_or_null("PortalGate")
@@ -1124,6 +1215,7 @@ func _ensure_recording() -> bool:
 	tray.visible = false
 	levels_panel.visible = false
 	status.text = "Extermination: Step or Play; cast spells between actions."
+	view_btn.visible = true
 	_request_fit(1)                          # the turn line now takes a row
 	_refresh_spells()
 	return true
@@ -1183,7 +1275,30 @@ func _on_step() -> void:
 		play_btn.text = "Play"
 		_advance()
 
+## View button / key C during a run: Overview <-> Follow hero.
+func _on_cam_mode() -> void:
+	if _building():
+		return
+	_set_follow(not follow)
+	if not follow:
+		cam_manual = false
+		_fit_camera(false)
+
+func _set_follow(on: bool) -> void:
+	follow = on
+	if view_btn:
+		view_btn.text = "View: Hero" if on else "View: All"
+	if on:
+		if cam_tween:
+			cam_tween.kill()
+		target_zoom = minf(target_zoom, FOLLOW_ZOOM)
+
 func _on_reset() -> void:
+	if follow:
+		_set_follow(false)
+		cam_manual = false                   # back to the fitted overview
+	if view_btn:
+		view_btn.visible = false
 	recording = {}
 	engine.state = {}
 	playing = false

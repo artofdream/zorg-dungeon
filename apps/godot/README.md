@@ -54,7 +54,16 @@ is green. The Warrior is broad and blue, with a helmet, shield and sword.
 The Elf is slim and green, with a pointed hat. Heroes hop from cell to cell,
 flash with a floating number when hurt or healed, and fade out when they
 die. Everything is built from Godot primitives in `scripts/look.gd`, with no
-asset files. One sun gives soft shadows, plus ambient light.
+asset files.
+**Look** (round 9, visual only, `scripts/atmos.gd`): a dark, torch-lit stone
+dungeon. Ambient light is dim, a faint cool "moon" keeps shapes readable,
+and there's fog and a vignette. Each room has a wall torch whose warm light
+flickers. Walls and floor slabs use procedural stone noise, and room and
+element floors glow faintly in their own colour. No asset files, so there
+are no licences to record. **Graphics** (in the level panel; saved):
+Low lights the 4 rooms nearest the view with no shadows and no glow. High
+lights up to 10 rooms, gives shadows to the 3 nearest torches and the sun,
+and adds glow. Phones and the web default to Low; desktop defaults to High.
 **Phone UI** (round 7, visual only): the HUD scales with screen DPI so one
 UI unit is about 1 dp on phones and 1 CSS px in mobile browsers (desktop and
 desktop web stay at the 1280×720 layout; in portrait the tray gets its own
@@ -106,9 +115,15 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    middle-drag or W/S. Right-drag or two-finger drag pans. `< 90°` / `90° >`
    (or Q/E) rotate 90°. Once you zoom or pan yourself, auto-fit stops until
    you press `Fit` (or F) or open a level.
-5. Web: add `?fps=1` to the URL (or press F3) for an FPS counter, and
-   `?shadows=0` to turn shadows off. Shadows also turn off by themselves if
-   the first seconds run under 30 FPS.
+   During a run, **View** (next to `Fit`, or C) switches between Overview
+   (`View: All`) and Follow hero (`View: Hero`).
+   Follow hero smoothly tracks the first living hero and moves on when that
+   hero dies. Panning, Fit, Build or a new level go back to the overview.
+5. Web: add `?fps=1` to the URL (or press F3) for an FPS counter,
+   `?quality=low|high` to pick the graphics quality (`-- --quality=` on the
+   command line), and `?shadows=0` to turn shadows off. If High runs under
+   30 FPS in the first seconds, it drops to Low for that session, unless the
+   URL or command line asked for High.
 
 ## Tests
 ```
