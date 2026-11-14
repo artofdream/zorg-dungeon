@@ -36,7 +36,7 @@ jobs:
   # Fail fast (before the 20-minute build) when the secret is missing.
   preflight:
     name: BUTLER_API_KEY is configured
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Require BUTLER_API_KEY
         env:
@@ -56,7 +56,7 @@ jobs:
   push:
     name: butler push to itch.io
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: production
     timeout-minutes: 30
     steps:
@@ -70,7 +70,7 @@ jobs:
           fi
           echo "BUTLER_API_KEY is set (value not shown)."
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0     # git describe needs history and tags
 
@@ -91,19 +91,19 @@ jobs:
           echo "$RUNNER_TEMP/butler" >> "$GITHUB_PATH"
           butler/butler -V
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zorg-godot-web
           path: itch/html5
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zorg-godot-windows-x86_64
           path: itch/windows
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zorg-godot-linux-x86_64
           path: itch/linux
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zorg-godot-android-debug-apk
           path: itch/android
