@@ -112,8 +112,14 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    Space.
    Keyboard only: Tab moves between buttons (amber focus ring) and Enter or
    Space presses one. On a tray room, it picks the room up; the arrow keys
-   then move the ghost, Enter drops it and Esc cancels. Backspace or Ctrl+Z
-   sends the last placed room back to the tray.
+   then move the ghost, Enter drops it and Esc cancels. Backspace, Ctrl+Z or
+   the on-screen **Undo** button sends the last placed room back to the tray.
+   After a win, **Next level >** under the banner opens the next level.
+   **?** (top right) lists what each room and element floor does, in the
+   words of GAME_SPEC.md; a one-time hint points to it on first launch.
+   Android Back (Esc on desktop and web) closes the open popup, drops a room
+   you picked up, or else asks "Quit Zorg?" (Stay / Quit). On the web, Quit
+   goes back to the previous page.
 4. Camera: the view fits your rooms (with margins clear of the HUD) when a
    level opens and after each placement. Zoom with `Zoom +` / `Zoom -`, the
    mouse wheel, pinch or +/-; tilt with `Tilt +` / `Tilt -`, Ctrl + wheel,

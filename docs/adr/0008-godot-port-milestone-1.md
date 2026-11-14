@@ -69,6 +69,11 @@ Only CC0 assets are allowed. The textured models made the phone GPU-bound,
 so Low also renders the 3D view at 0.75 resolution. Engine and goldens are
 unchanged.
 
+Round 11 fixes the medium findings of the round 8 UX audit: Back/Esc no
+longer quits at once, a "?" room legend (GAME_SPEC wording, checked by the
+smoke test) with a first-run hint, Next level on the win banner, an
+on-screen Undo while building, and no empty turn lines. UI only.
+
 ## Consequences
 
 ADR-0002's concern is handled by the parity gate, not by trust. Each new

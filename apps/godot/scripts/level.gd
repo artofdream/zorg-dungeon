@@ -9,6 +9,9 @@ extends Node3D
 ## touch targets, colour-swatch tray buttons, a Levels popup, on-screen
 ## zoom/tilt/turn/fit buttons, screen-space labels on backing plates that
 ## never collide, and a camera that fits the dungeon with margins.
+## Round 11 (UX audit, medium findings): Back/Esc closes a popup or asks
+## "Quit Zorg?", a "?" room legend with a first-run hint, "Next level" on
+## the win banner, an on-screen Undo while building, no empty turn lines.
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
@@ -99,6 +102,16 @@ var quality := "low"             # "low" | "high" (ZorgAtmos)
 var env: Environment
 var quality_btn: Button
 var view_btn: Button
+# Round 11 UX.
+var help_btn: Button
+var undo_btn: Button
+var next_btn: Button
+var help_dlg: Control            # modal: backdrop + room legend
+var help_box: VBoxContainer
+var quit_dlg: Control            # modal: "Quit Zorg?" Stay / Quit
+var quit_stay: Button
+var hint: PanelContainer         # first-run hint (dismissed once, saved)
+var settings_path := ZorgAtmos.SETTINGS
 var follow := false              # true: the camera tracks the first living hero
 var follow_zoomed := false       # the current zoom is already a follow close-up
 var torch_timer := 0.0
@@ -111,6 +124,7 @@ const REFUSALS := {"before_first_action": "wait for the first hero action", "run
 	"no_active_hero": "no hero is active", "consumed": "that spell is used up", "no_spell": "no such spell"}
 
 func _ready() -> void:
+	get_tree().set_quit_on_go_back(false)   # Android Back goes to back_pressed()
 	_setup_lighting()
 	_apply_ui_scale()
 	_build_ui()
@@ -147,6 +161,7 @@ func _open_level(i: int) -> void:
 		return
 	title.text = engine.level_name()
 	levels_btn.text = "Level " + String(engine.levels[i]["id"]).replace("deluxe-", "")
+	_apply_margins()                         # the ? button sits left of it
 	var rules: Array = engine.constraint_texts()
 	goal.text = "Goal: every hero dies before reaching Zorg's room." + ("" if rules.is_empty() else "  Rule: " + ", ".join(rules))
 	for b in picker.get_children():
@@ -210,6 +225,11 @@ func _build_ui() -> void:
 	result = _label(22)
 	result.add_theme_color_override("font_color", Color(1.0, 0.92, 0.45))
 	hud_top.add_child(result)
+	next_btn = _btn("Next level >", func(): _open_level(level_index + 1))
+	next_btn.custom_minimum_size.x = 150
+	next_btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	next_btn.visible = false
+	hud_top.add_child(next_btn)
 	log_label = _label(16)
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	hud_top.add_child(log_label)
@@ -220,6 +240,12 @@ func _build_ui() -> void:
 	levels_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	levels_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	ui_root.add_child(levels_btn)
+	help_btn = _btn("?", open_help)
+	help_btn.custom_minimum_size = Vector2(ZorgHud.TARGET, ZorgHud.TARGET)
+	help_btn.tooltip_text = "What each room does"
+	help_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	help_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	ui_root.add_child(help_btn)
 	fps_label = _label(16)
 	fps_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	fps_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -299,13 +325,160 @@ func _build_ui() -> void:
 	spell_bar.add_theme_constant_override("separation", 6)
 	spell_bar.size_flags_vertical = Control.SIZE_SHRINK_END
 	controls.add_child(spell_bar)
+	undo_btn = _btn("Undo", undo)
+	undo_btn.tooltip_text = "Take back the last room (Backspace / Ctrl+Z)"
 	play_btn = _btn("Play", _on_play)
 	step_btn = _btn("Step", _on_step)
-	for b in [play_btn, step_btn, _btn("Build", _on_reset)]:
+	for b in [undo_btn, play_btn, step_btn, _btn("Build", _on_reset)]:
 		b.custom_minimum_size.x = 76
 		b.size_flags_vertical = Control.SIZE_SHRINK_END
 		controls.add_child(b)
+	_build_hint()
+	_build_dialogs()
 	_apply_margins()
+
+## First-run hint under the goal line; "Got it" (or opening the legend)
+## hides it for good (saved in settings.cfg).
+func _build_hint() -> void:
+	hint = PanelContainer.new()
+	hint.add_theme_stylebox_override("panel", ZorgHud.plate())
+	hint.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	hint.add_child(row)
+	var l := _label(16)
+	l.text = "New here? Tap ? to see what each room does."
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(l)
+	row.add_child(_btn("Got it", dismiss_hint))
+	hint.visible = not ZorgHelp.hint_seen(settings_path)
+	hud_top.add_child(hint)
+	hud_top.move_child(hint, goal.get_index() + 1)
+
+func dismiss_hint() -> void:
+	if hint.visible:
+		hint.visible = false
+		ZorgHelp.set_hint_seen(settings_path, true)
+		_request_fit(1)
+
+func _modal(name: String) -> Array:
+	var root := Control.new()
+	root.name = name
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_STOP     # taps don't reach the board
+	root.visible = false
+	ui_root.add_child(root)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.offset_left = -64
+	dim.offset_top = -64
+	dim.offset_right = 64
+	dim.offset_bottom = 64
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(center)
+	var panel := PanelContainer.new()
+	center.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	panel.add_child(box)
+	return [root, box]
+
+func _build_dialogs() -> void:
+	var h: Array = _modal("HelpDialog")
+	help_dlg = h[0]
+	var hb: VBoxContainer = h[1]
+	var ht := _label(22)
+	ht.text = "Rooms (from the game rules)"
+	hb.add_child(ht)
+	var scroll := ScrollContainer.new()
+	scroll.name = "Scroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	hb.add_child(scroll)
+	help_box = VBoxContainer.new()
+	help_box.add_theme_constant_override("separation", 8)
+	help_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(help_box)
+	ZorgHelp.fill(help_box, 520)
+	var close := _btn("Close", close_help)
+	close.custom_minimum_size.x = 120
+	close.size_flags_horizontal = Control.SIZE_SHRINK_END
+	hb.add_child(close)
+
+	var q: Array = _modal("QuitDialog")
+	quit_dlg = q[0]
+	var qb: VBoxContainer = q[1]
+	var qt := _label(22)
+	qt.text = "Quit Zorg?"
+	qt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	qb.add_child(qt)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	qb.add_child(row)
+	quit_stay = _btn("Stay", func(): quit_dlg.visible = false)
+	quit_stay.custom_minimum_size.x = 120
+	row.add_child(quit_stay)
+	var qq := _btn("Quit", _quit)
+	qq.custom_minimum_size.x = 120
+	row.add_child(qq)
+
+func open_help() -> void:
+	dismiss_hint()
+	levels_panel.visible = false
+	var vp := ui_root.size                   # UI units, inside the safe area
+	var scroll: ScrollContainer = help_dlg.find_child("Scroll", true, false)
+	scroll.custom_minimum_size = Vector2(minf(680.0, vp.x - 60.0), maxf(140.0, vp.y - 150.0))
+	ZorgHelp.fill(help_box, scroll.custom_minimum_size.x - 160.0)
+	help_dlg.visible = true
+
+func close_help() -> void:
+	help_dlg.visible = false
+
+func _show_quit() -> void:
+	quit_dlg.visible = true
+	quit_stay.grab_focus.call_deferred()     # Enter = Stay, the safe choice
+
+func _quit() -> void:
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("history.length > 1 ? history.back() : location.assign('/')")
+	else:
+		get_tree().quit()
+
+## Android Back and Esc: close the top popup (quit dialog, legend, level
+## grid), else drop a room picked up for placing, else ask before quitting.
+func back_pressed() -> void:
+	if quit_dlg.visible:
+		quit_dlg.visible = false
+	elif help_dlg.visible:
+		close_help()
+	elif levels_panel.visible:
+		levels_panel.visible = false
+	elif selected != "" or kb_active:
+		_kb_cancel()
+	else:
+		_show_quit()
+
+func popup_open() -> bool:
+	return quit_dlg.visible or help_dlg.visible or levels_panel.visible
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST and quit_dlg != null:
+		back_pressed()
+
+## Undo button (and Backspace / Ctrl+Z): take back the last placed room.
+func undo() -> void:
+	if _building() and not place_order.is_empty():
+		_unplace(place_order.back())
+
+func _refresh_undo() -> void:
+	if undo_btn:
+		undo_btn.visible = _building()
+		undo_btn.disabled = place_order.is_empty()
 
 func _layer() -> Control:
 	var c := Control.new()
@@ -332,12 +505,14 @@ func _apply_margins() -> void:
 	# Portrait (narrow mobile browsers): tray on its own row above the controls,
 	# and the text column stops short of the Level button.
 	bottom_bar.vertical = vp.x < vp.y
-	var w := minf(clampf(vp.x * 0.55, 320.0, 640.0), vp.x - 2.0 * 8.0 - levels_btn.custom_minimum_size.x - 12.0)
+	var w := minf(clampf(vp.x * 0.55, 320.0, 640.0), vp.x - 2.0 * 8.0 - levels_btn.custom_minimum_size.x - ZorgHud.TARGET - 20.0)
 	title.custom_minimum_size.x = w
 	goal.custom_minimum_size.x = w
 	status.custom_minimum_size.x = w
 	log_label.custom_minimum_size.x = w
 	fps_label.offset_top = ZorgHud.TARGET + 6
+	help_btn.offset_right = -(levels_btn.get_combined_minimum_size().x + 8.0)
+	help_btn.offset_left = help_btn.offset_right - ZorgHud.TARGET
 	cam_grid.offset_left = -cam_grid.get_combined_minimum_size().x
 	cam_grid.offset_top = -cam_grid.get_combined_minimum_size().y / 2.0
 	cam_grid.offset_bottom = cam_grid.get_combined_minimum_size().y / 2.0
@@ -473,6 +648,7 @@ func _refresh_validation() -> void:
 		status.text = "Ready to play." if report["ok"] else "Build: " + ", ".join(parts) + "."
 	play_btn.disabled = not report["ok"] and _building()
 	step_btn.disabled = play_btn.disabled
+	_refresh_undo()
 
 # ------------------------------------------------------------------ 3D
 
@@ -726,8 +902,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_TAB and get_viewport().gui_get_focus_owner() == null:
 			levels_btn.grab_focus()          # Tab from nothing: start on the Level button
+		elif event.keycode == KEY_ESCAPE:
+			back_pressed()                   # same as Android Back
+			get_viewport().set_input_as_handled()
 		elif (event.keycode == KEY_BACKSPACE or (event.keycode == KEY_Z and event.ctrl_pressed)) and _building() and not place_order.is_empty():
-			_unplace(place_order.back())     # undo the last placement
+			undo()                           # undo the last placement
 		elif event.keycode == KEY_Q:
 			_rotate(-90.0)
 		elif event.keycode == KEY_E:
@@ -1242,6 +1421,7 @@ func _ensure_recording() -> bool:
 	levels_panel.visible = false
 	status.text = "Extermination: Step or Play; cast spells between actions."
 	view_btn.visible = true
+	_refresh_undo()
 	_request_fit(1)                          # the turn line now takes a row
 	_refresh_spells()
 	return true
@@ -1275,6 +1455,7 @@ func _show_result() -> void:
 	match String(sc["outcome"]):
 		"win":
 			result.text = "You win! Every hero died and the rules hold."
+			next_btn.visible = level_index + 1 < engine.levels.size()
 		"loss":
 			result.text = "You lose: a hero reached Zorg."
 		_:
@@ -1337,6 +1518,8 @@ func _on_reset() -> void:
 		play_btn.text = "Play"
 	heroes.clear()
 	result.text = ""
+	if next_btn:
+		next_btn.visible = false
 	log_label.text = ""
 	tray.visible = true
 	_request_fit(1)

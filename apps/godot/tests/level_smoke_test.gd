@@ -6,7 +6,8 @@ extends SceneTree
 ##  - drag a room straight out of the tray onto the board;
 ##  - drag onto an occupied spot: red ghost, nothing placed;
 ##  - rotate 90° and check the camera settles on a 45° + n·90° yaw;
-##  - round 9: torch light / shadow limits per quality and the follow camera.
+##  - round 9: torch light / shadow limits per quality and the follow camera;
+##  - round 11: Back/Esc, the ? legend and hint, Next level, Undo, turn lines.
 ## Optional: `-- --shot=path.png` saves a screenshot (needs a display).
 
 var level: Node
@@ -64,8 +65,102 @@ func _real_input_drag(cam: Camera3D) -> void:
 	_check(level.placed.get(room_id) == Vector2i(0, 0), "real-input drag from tray places %s at (0, 0)" % room_id)
 
 
+func _round11(engine: Node) -> void:
+	# (1) Back / Esc: close the top popup, else ask "Quit Zorg?" (Stay/Quit).
+	_check(not level.get_tree().quit_on_go_back, "back: Android Back doesn't quit the app by itself")
+	level._open_level(0)
+	await process_frame
+	level.levels_panel.visible = true
+	_key(KEY_ESCAPE)
+	_check(not level.levels_panel.visible and not level.quit_dlg.visible, "back: Esc closes the Levels popup first")
+	level.open_help()
+	level.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	_check(not level.help_dlg.visible and not level.quit_dlg.visible, "back: Android Back closes the room legend")
+	level.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	_check(level.quit_dlg.visible, "back: with nothing open, Back asks 'Quit Zorg?'")
+	level.quit_stay.pressed.emit()
+	_check(not level.quit_dlg.visible, "back: Stay closes the quit question")
+	_key(KEY_ESCAPE)
+	_check(level.quit_dlg.visible, "back: Esc asks 'Quit Zorg?' too")
+	_key(KEY_ESCAPE)
+	_check(not level.quit_dlg.visible, "back: Esc again closes it (stays in the game)")
+	level._kb_select("A:0")
+	_key(KEY_ESCAPE)
+	_check(not level.kb_active and level.selected == "" and not level.placed.has("A:0") and not level.quit_dlg.visible,
+		"back: Esc still cancels a keyboard placement, without the quit question")
+	level.selected = "A:0"
+	level.back_pressed()
+	_check(level.selected == "" and not level.quit_dlg.visible, "back: Back drops a tapped room before asking to quit")
+	level.get_viewport().gui_release_focus()
+
+	# (2) "?" legend: every room type and element, GAME_SPEC wording only.
+	level.help_btn.pressed.emit()
+	await process_frame
+	_check(level.help_dlg.visible, "help: ? opens the room legend")
+	var text := ""
+	for n in level.help_box.find_children("*", "Label", true, false):
+		text += (n as Label).text + "\n"
+	var keys: Array = ["A", "Z", "D(x)", "T(x, elem)", "P(n, f)", "O(x)", "fire", "water", "ice", "poison"]
+	var missing: Array = keys.filter(func(k): return not text.contains(k))
+	_check(missing.is_empty(), "help: legend covers A, Z, D, T, P, O and the element floors %s" % [missing])
+	var spec_path := ProjectSettings.globalize_path("res://").path_join("../../GAME_SPEC.md")
+	var spec := ZorgHelp.ascii(FileAccess.get_file_as_string(spec_path))
+	var invented: Array = ZorgHelp.spec_phrases().filter(func(t): return not spec.contains(t))
+	_check(spec != "" and invented.is_empty(), "help: every legend line is GAME_SPEC wording %s" % [invented])
+	level.close_help()
+	# First-run hint: shown until dismissed, then remembered.
+	ZorgHelp.set_hint_seen(level.settings_path, false)
+	level.hint.visible = true
+	var got_it: Button = level.hint.find_children("*", "Button", true, false)[0]
+	got_it.pressed.emit()
+	_check(not level.hint.visible and ZorgHelp.hint_seen(level.settings_path), "help: 'Got it' hides the first-run hint and saves it")
+	level.hint.visible = true
+	level.open_help()
+	_check(not level.hint.visible, "help: opening the legend also retires the hint")
+	level.close_help()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(level.settings_path))
+
+	# (3) Next level on the win banner.
+	level._open_level(0)
+	var g0 = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[0]["golden"]))
+	for p in g0["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	var guard := 0
+	while not level.run_over() and guard < 1000:
+		level._on_step()
+		guard += 1
+	level.next_btn.pressed.emit()
+	_check(level.level_index == 1 and level._building() and not level.next_btn.visible and level.result.text == "",
+		"next: Next level opens %s ready to build" % engine.levels[1]["id"])
+
+	# (4) Undo button while building (keyboard reachable), gone during a run.
+	level._open_level(0)
+	await process_frame
+	_check(level.undo_btn.visible and level.undo_btn.disabled, "undo: shown while building, disabled with nothing placed")
+	level._place("A:0", Vector2i(0, 0))
+	level._place("Z:0", Vector2i(1, 0))
+	_check(not level.undo_btn.disabled, "undo: enabled after a placement")
+	level.undo_btn.pressed.emit()
+	_check(level.placed.has("A:0") and not level.placed.has("Z:0"), "undo: the button takes back the last room")
+	level.undo_btn.grab_focus()
+	_key(KEY_ENTER)
+	await process_frame
+	_check(level.undo_btn.focus_mode == Control.FOCUS_ALL and not level.placed.has("A:0"), "undo: focusable, Enter on it undoes too")
+	level.get_viewport().gui_release_focus()
+	for p in g0["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	level._on_step()
+	_check(not level.undo_btn.visible, "undo: hidden during a run")
+	level._on_reset()
+	# Targets: the new buttons are at least 52 units (51 dp measured on the phone).
+	var targets: Array = [level.help_btn, level.undo_btn, level.next_btn, level.quit_stay, got_it]
+	_check(targets.all(func(b): return b.get_combined_minimum_size().y >= ZorgHud.TARGET and b.get_combined_minimum_size().x >= ZorgHud.TARGET),
+		"round 11 buttons are at least %d x %d units" % [ZorgHud.TARGET, ZorgHud.TARGET])
+
 func _initialize() -> void:
 	level = load("res://scenes/level.tscn").instantiate()
+	level.settings_path = "user://smoke_settings.cfg"   # leave the real settings alone
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(level.settings_path))
 	root.add_child(level)
 	await process_frame
 	var engine: Node = level.get_node("Engine")
@@ -82,9 +177,12 @@ func _initialize() -> void:
 			_check(level.spell_bar.get_child_count() > 0, "%s: spell bar shows the level's spells" % engine.levels[i]["id"])
 			_check(level.spell_bar.get_children().all(func(b): return b.disabled), "%s: spells are disabled before the first action (FR-33)" % engine.levels[i]["id"])
 		var guard := 0
+		var empty_turns := 0
 		while not level.run_over() and guard < 1000:
 			level._on_step()
 			guard += 1
+			if level.log_label.text.strip_edges().ends_with(":"):
+				empty_turns += 1
 			await process_frame
 			for c in casts:
 				if int(c["afterSteps"]) == int(engine.state["stepCount"]) and not level.run_over():
@@ -96,6 +194,9 @@ func _initialize() -> void:
 		# ported rules (5.8) leads with the outcome its golden records.
 		var want: String = {"win": "You win", "loss": "You lose", "unresolved": "Not won yet"}[String(case0["score"]["outcome"])]
 		_check(level.result.text.begins_with(want), "%s: %s banner (%s)" % [engine.levels[i]["id"], case0["score"]["outcome"], level.result.text])
+		_check(empty_turns == 0, "%s: no empty 'Turn N:' line (%d empty)" % [engine.levels[i]["id"], empty_turns])
+		var next_wanted: bool = String(case0["score"]["outcome"]) == "win" and i + 1 < engine.levels.size()
+		_check(level.next_btn.visible == next_wanted, "%s: Next level button %s" % [engine.levels[i]["id"], "shown" if next_wanted else "hidden"])
 		if not casts.is_empty():
 			await process_frame
 			_check(level.spell_bar.get_children().all(func(b): return b.disabled), "%s: no spell can be cast after the run ends" % engine.levels[i]["id"])
@@ -290,6 +391,9 @@ func _initialize() -> void:
 	_check(first != null and second != null and is_equal_approx(first.x, 0.5) and is_equal_approx(second.x, 3.5),
 		"follow camera: switches to the next living hero after a death (%s -> %s)" % [first, second])
 	hs.clear()
+
+	# Round 11 UX audit fixes.
+	await _round11(engine)
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
