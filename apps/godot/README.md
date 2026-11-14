@@ -182,6 +182,28 @@ inside the unzipped folder. A Windows build is in
 `zorg-godot-windows-x86_64`: unzip it and run `zorg.exe`. It's unsigned, so
 SmartScreen asks you to confirm.
 
+## itch.io uploads (deploy-itch)
+
+`.github/workflows/deploy-itch.yml` uploads the same four debug builds to
+<https://artofdream.itch.io/zorg-dungeon-maker> with
+[butler](https://itch.io/docs/butler/). It runs after a merge to `main` that
+touches `apps/godot/`, or by hand from the Actions tab. It runs `godot.yml`
+first (parity, smoke tests, exports), then pushes the channels `html5`,
+`windows`, `linux` and `android` with `--userversion` from `git describe`
+(the short commit hash while the repo has no tags). Butler 15.32.0 is
+downloaded from broth.itch.zone and checked against a pinned SHA-256.
+- **Owner setup (once):** create an itch.io API key (itch.io, Settings, API
+  keys) and store it as the repository secret `BUTLER_API_KEY`. Without it
+  the workflow stops at its first job with an error. It never falls back.
+- **Approval:** the push job uses the `production` environment, so each run
+  waits for the same approval as the other deploys. A newer run cancels an
+  older one, even one still waiting.
+- **Draft:** pushes don't publish the itch.io page. On the Edit game page,
+  set the kind to HTML and tick "played in the browser" on the `html5`
+  upload once.
+- The Linux export no longer writes a `zorg.sh` console wrapper: Godot left
+  the apostrophe in "Zorg's" unquoted, which made it a shell syntax error.
+
 ## Plan
 - **Style:** the game logic stays turn-based and the view is 3D, seen from an
   angled overhead camera. A first-person view would hide the board, and the
