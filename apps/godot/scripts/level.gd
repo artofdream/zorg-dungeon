@@ -100,6 +100,7 @@ var env: Environment
 var quality_btn: Button
 var view_btn: Button
 var follow := false              # true: the camera tracks the first living hero
+var follow_zoomed := false       # the current zoom is already a follow close-up
 var torch_timer := 0.0
 var look_time := 0.0
 var fps_log := 0.0
@@ -960,6 +961,8 @@ func _zoom_by(d: float) -> void:
 func _set_zoom(z: float) -> void:
 	var lo := FOLLOW_MIN if follow else minf(ZOOM_LIMITS.x, target_zoom)
 	target_zoom = clampf(z, lo, ZOOM_LIMITS.y)
+	if not follow and target_zoom >= ZOOM_LIMITS.x:
+		follow_zoomed = false                # the user zoomed back out to an overview distance
 
 func _tilt_by(d: float) -> void:
 	target_pitch = clampf(target_pitch + d, PITCH_LIMITS.x, PITCH_LIMITS.y)
@@ -1024,6 +1027,7 @@ func _ground_at(pos: Vector2) -> Vector3:
 ## inside _fit_area, for the yaw/tilt the camera is heading to. Binary
 ## search on the zoom, then shift the pivot so the box sits in the middle.
 func _fit_camera(instant: bool) -> void:
+	follow_zoomed = false                    # back to an overview distance
 	var lo := Vector2i(FIT_EMPTY.position)
 	var hi := FIT_EMPTY.end - Vector2i.ONE
 	if not placed.is_empty():
@@ -1304,10 +1308,12 @@ func _set_follow(on: bool) -> void:
 	if on:
 		if cam_tween:
 			cam_tween.kill()
-		# Close in from an overview distance only: a view that is already a
-		# close-up (follow, pan, View again) keeps its zoom instead of stacking.
-		if target_zoom >= ZOOM_LIMITS.x:
+		# Close in once per overview: until the camera refits or the user
+		# zooms back out to an overview distance, View again (e.g. after a pan) keeps the
+		# close-up instead of stacking another 60%.
+		if not follow_zoomed:
 			target_zoom = maxf(FOLLOW_MIN, target_zoom * FOLLOW_ZOOM)
+			follow_zoomed = true
 
 func _on_reset() -> void:
 	if follow:

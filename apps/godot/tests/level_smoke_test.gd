@@ -235,6 +235,18 @@ func _initialize() -> void:
 		"follow camera: pivot tracks the hero (%s vs %s)" % [level.rig.position, hero_pos])
 	level._on_reset()
 	_check(not level.follow and not level.view_btn.visible and not level.cam_manual, "follow camera: Build returns to the fitted overview")
+	# Bugbot (#99): a far overview (zoom 40) closes in to 24 once; View,
+	# pan, View keeps 24 instead of stacking to 14.4.
+	for i in 2:
+		level._on_step()
+	level._set_zoom(40.0)
+	_key(KEY_C)
+	var far_close: float = level.target_zoom
+	level._pan(Vector2(1, 0))
+	_key(KEY_C)
+	_check(is_equal_approx(far_close, 24.0) and is_equal_approx(level.target_zoom, far_close), "follow camera: from a far overview, View/pan/View doesn't stack (%.1f -> %.1f)" % [far_close, level.target_zoom])
+	level._on_reset()
+
 	# Two heroes: when the followed one dies, the camera moves on to the next.
 	var hs: Node = level.heroes
 	hs.clear()
