@@ -117,8 +117,9 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    you press `Fit` (or F) or open a level.
    During a run, **View** (next to `Fit`, or C) switches between Overview
    (`View: All`) and Follow hero (`View: Hero`).
-   Follow hero smoothly tracks the first living hero and moves on when that
-   hero dies. Panning, Fit, Build or a new level go back to the overview.
+   Follow hero zooms in, smoothly tracks the first living hero and moves on
+   when that hero dies. Panning, Fit, Build or a new level go back to the
+   overview.
 5. Web: add `?fps=1` to the URL (or press F3) for an FPS counter,
    `?quality=low|high` to pick the graphics quality (`-- --quality=` on the
    command line), and `?shadows=0` to turn shadows off. If High runs under
