@@ -9,6 +9,8 @@ extends SceneTree
 ##  - round 9: torch light / shadow limits per quality and the follow camera;
 ##  - round 11: Back/Esc, the ? legend and hint, Next level, Undo, turn lines;
 ##  - round 12: room labels never cover the HUD text on the end screens.
+##  - low-severity UX: button/panel/plate border contrast, swatch outlines,
+##    and the board fitting the width of a ~360 dp portrait window.
 ## Optional: `-- --shot=path.png` saves a screenshot (needs a display).
 
 var level: Node
@@ -244,6 +246,85 @@ func _round12(engine: Node) -> void:
 	win.content_scale_factor = scale0
 	level._on_reset()
 
+
+func _rel_lum(c: Color) -> float:
+	var ch := func(v: float) -> float:
+		return v / 12.92 if v <= 0.04045 else pow((v + 0.055) / 1.055, 2.4)
+	return 0.2126 * ch.call(c.r) + 0.7152 * ch.call(c.g) + 0.0722 * ch.call(c.b)
+
+func _contrast(a: Color, b: Color) -> float:
+	var lo := minf(_rel_lum(a), _rel_lum(b))
+	var hi := maxf(_rel_lum(a), _rel_lum(b))
+	return (hi + 0.05) / (lo + 0.05)
+
+func _round13() -> void:
+	# WCAG 1.4.11: enabled chrome borders are at least 3:1 on their fill.
+	# Disabled is exempt (1.4.3).
+	var theme: Theme = level.ui_root.theme
+	for kind in ["normal", "hover", "pressed"]:
+		var s: StyleBoxFlat = theme.get_stylebox(kind, "Button")
+		_check(_contrast(s.bg_color, s.border_color) >= 3.0,
+			"UX: Button %s border contrast %.2f:1 is at least 3:1" % [kind, _contrast(s.bg_color, s.border_color)])
+	var panel: StyleBoxFlat = theme.get_stylebox("panel", "PanelContainer")
+	_check(_contrast(panel.bg_color, panel.border_color) >= 3.0,
+		"UX: panel border contrast %.2f:1 is at least 3:1" % _contrast(panel.bg_color, panel.border_color))
+	var plate: StyleBoxFlat = ZorgHud.plate()
+	_check(_contrast(plate.bg_color, plate.border_color) >= 3.0,
+		"UX: plate border contrast %.2f:1 is at least 3:1" % _contrast(plate.bg_color, plate.border_color))
+	# Every legend swatch has a light outer pixel and a dark ring so muted
+	# browns and ice stay readable on the dark HUD.
+	var defs: Array = [
+		{"type": "A"}, {"type": "Z"}, {"type": "D"}, {"type": "T"}, {"type": "O"}, {"type": "P"},
+		{"type": "E", "element": "fire"}, {"type": "E", "element": "water"},
+		{"type": "E", "element": "ice"}, {"type": "E", "element": "poison"},
+	]
+	for def in defs:
+		var img: Image = ZorgHud.swatch(def).get_image()
+		var light: Color = img.get_pixel(0, 0)
+		var dark: Color = img.get_pixel(1, 1)
+		var mid: Color = img.get_pixel(img.get_width() / 2, img.get_height() / 2)
+		var ok := _rel_lum(light) > 0.7 and _rel_lum(dark) < 0.05 and mid.a > 0.9 and img.get_width() >= 22
+		_check(ok, "UX: swatch %s has a light/dark outline (edge lum %.2f / %.2f)" % [def, _rel_lum(light), _rel_lum(dark)])
+	# Narrow portrait (~360 dp): the visible board must sit inside the window.
+	# Headless windows stay 64x64, so this only runs under Xvfb (or a display).
+	var win := level.get_window()
+	var old := win.size
+	DisplayServer.window_set_size(Vector2i(360, 800))
+	win.size = Vector2i(360, 800)
+	level._on_resized()
+	for i in 40:
+		await process_frame
+	var vpsz := Vector2(level.get_viewport().size)
+	print("UX: portrait window %s viewport %s visible %s zoom %.1f scale %.2f" % [win.size, vpsz, level.get_viewport().get_visible_rect(), level.zoom, win.content_scale_factor])
+	if vpsz.x < 300:
+		print("UX: skip portrait board-fit (viewport is %s, needs a display)" % vpsz)
+	else:
+		level.cam_manual = false
+		level._fit_camera(true)
+		await process_frame
+		# unproject lives in visible_rect / canvas space, not window pixels.
+		var vis := level.get_viewport().get_visible_rect()
+		var hole: Rect2 = level._fit_area()
+		var clipped := 0
+		var n := 0
+		for x in [level.SLOTS_X.x, level.SLOTS_X.y + 1]:
+			for y in [level.SLOTS_Y.x, level.SLOTS_Y.y + 1]:
+				for h in [0.0, level.FIT_HEIGHT]:
+					var w := Vector3(x * level.ROOM, h, -y * level.ROOM)
+					n += 1
+					var q: Vector2 = level.camera.unproject_position(w)
+					if level.camera.is_position_behind(w) or not vis.grow(-2.0).has_point(q):
+						clipped += 1
+						if clipped <= 4:
+							print("UX: clipped corner %s -> %s behind=%s vis=%s hole=%s" % [w, q, level.camera.is_position_behind(w), vis, hole])
+		_check(clipped == 0 and n > 0,
+			"UX: %d/%d board corners fit inside a %s portrait canvas (zoom %.1f, area %s)" % [n - clipped, n, vis.size, level.zoom, hole])
+	DisplayServer.window_set_size(old)
+	win.size = old
+	level._on_resized()
+	for i in 10:
+		await process_frame
+
 func _initialize() -> void:
 	level = load("res://scenes/level.tscn").instantiate()
 	level.settings_path = "user://smoke_settings.cfg"   # leave the real settings alone
@@ -431,9 +512,12 @@ func _initialize() -> void:
 	var close_zoom: float = level.target_zoom
 	level._pan(Vector2(1, 0))
 	level._zoom_by(-4.0)
-	_check(not level.follow and level.target_zoom <= close_zoom + 0.01, "follow camera: Zoom + after a pan out of follow doesn't zoom out (%.1f -> %.1f)" % [close_zoom, level.target_zoom])
+	var after_zoom_in: float = level.target_zoom
+	_check(not level.follow and after_zoom_in <= close_zoom + 0.01, "follow camera: Zoom + after a pan out of follow doesn't zoom out (%.1f -> %.1f)" % [close_zoom, after_zoom_in])
 	_key(KEY_C)
-	_check(level.follow and is_equal_approx(level.target_zoom, close_zoom), "follow camera: View after a pan doesn't stack the zoom (%.1f)" % level.target_zoom)
+	# Don't stack another 60%; keep the zoom as it is after the Zoom + (which
+	# may have closed in a little when the overview is farther than 12).
+	_check(level.follow and is_equal_approx(level.target_zoom, after_zoom_in), "follow camera: View after a pan doesn't stack the zoom (%.1f)" % level.target_zoom)
 	await create_timer(1.5).timeout
 	var fig: Node3D = level.heroes._figures.get(0)
 	var hero_pos: Variant = fig.global_position if fig else null
@@ -445,6 +529,9 @@ func _initialize() -> void:
 		"follow camera: pivot tracks the hero (%s vs %s)" % [level.rig.position, hero_pos])
 	level._on_reset()
 	_check(not level.follow and not level.view_btn.visible and not level.cam_manual, "follow camera: Build returns to the fitted overview")
+	# Let the reset refit so follow_zoomed clears before the next View.
+	for i in 8:
+		await process_frame
 	# Bugbot (#99): a far overview (zoom 40) closes in to 24 once; View,
 	# pan, View keeps 24 instead of stacking to 14.4.
 	for i in 2:
@@ -484,6 +571,8 @@ func _initialize() -> void:
 	# Round 12: end screens (wins on 1.1/2.2/5.2; 5.5 has no winning golden,
 	# so its loss screen) at desktop scale and at the phone's 1.75.
 	await _round12(engine)
+	# Low-severity UX (borders, swatches, 360 dp portrait board fit).
+	await _round13()
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)

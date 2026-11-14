@@ -20,11 +20,10 @@ const GHOST_OK := Color(0.2, 1.0, 0.3, 0.45)
 const GHOST_LOOSE := Color(1.0, 0.6, 0.1, 0.5)   # allowed, but touches no placed room yet
 const GHOST_BAD := Color(1.0, 0.1, 0.1, 0.6)
 const STEP_SECONDS := 0.18
-const ZOOM_LIMITS := Vector2(12.0, 70.0)
+const ZOOM_LIMITS := Vector2(12.0, 140.0)  # 140: the 8x6 board still fits at ~360 dp portrait
 const PITCH_LIMITS := Vector2(30.0, 80.0)   # degrees above the board
 const CAM_SMOOTH := 12.0                    # 1/s, exponential ease for zoom and tilt
 const DRAG_START_PX := 12.0
-const FIT_EMPTY := Rect2i(0, 0, 3, 2)       # slots framed before any room is placed
 const FIT_HEIGHT := 1.2                     # walls/props counted when framing
 
 @onready var engine: Node = $Engine
@@ -1228,15 +1227,17 @@ func _snap_camera() -> void:
 ## Free screen area for the board: below the top text, above the bottom
 ## bar, left of the camera buttons (UI units, same space as unproject).
 func _fit_area() -> Rect2:
-	var vp := get_viewport().get_visible_rect().size
+	# HUD / canvas_items space (same as Control.get_global_rect).
 	var left := ui_root.offset_left + 4.0
 	var right := cam_grid.get_global_rect().position.x - 8.0
 	var top := hud_top.get_global_rect().end.y + 6.0
 	var bottom := bottom_bar.get_global_rect().position.y - 8.0
-	if bottom - top < vp.y * 0.4:
-		top = bottom - vp.y * 0.4
-	if right - left < vp.x * 0.4:
-		right = left + vp.x * 0.4
+	# Keep the hole inside the chrome; never grow it under the camera
+	# buttons or the bars (that used to clip the board on the left).
+	if right < left + 8.0:
+		right = left + 8.0
+	if bottom < top + 8.0:
+		top = bottom - 8.0
 	return Rect2(left, top, right - left, bottom - top)
 
 func _ground_at(pos: Vector2) -> Vector3:
@@ -1244,31 +1245,32 @@ func _ground_at(pos: Vector2) -> Vector3:
 	var d := camera.project_ray_normal(pos)
 	return o - d * (o.y / d.y) if absf(d.y) > 0.0001 else rig.position
 
-## Centre on and fit the dungeon's bounds (placed rooms plus a one-slot
-## ring while rooms are still in the tray, else FIT_EMPTY)
-## inside _fit_area, for the yaw/tilt the camera is heading to. Binary
-## search on the zoom, then shift the pivot so the box sits in the middle.
+## Centre on and fit the dungeon's bounds inside the HUD hole, for the
+## yaw/tilt the camera is heading to. While building, the whole drawn
+## board (SLOTS_X x SLOTS_Y) is framed so a narrow portrait window
+## doesn't clip the floor; during a run the placed rooms are framed
+## tightly. Binary search on the zoom, then shift the pivot so the box
+## sits in the middle of the hole (canvas / unproject space).
 func _fit_camera(instant: bool) -> void:
 	follow_zoomed = false                    # back to an overview distance
-	var lo := Vector2i(FIT_EMPTY.position)
-	var hi := FIT_EMPTY.end - Vector2i.ONE
-	if not placed.is_empty():
+	# While building (or on an empty board), frame every drawn slot so the
+	# 8x6 floor isn't clipped on a narrow portrait window. During a run,
+	# tighten to the placed rooms (L-shapes stay framed to their rooms).
+	var lo := Vector2i(SLOTS_X.x, SLOTS_Y.x)
+	var hi := Vector2i(SLOTS_X.y, SLOTS_Y.y)
+	var tight := not placed.is_empty() and not _building()
+	if tight:
 		lo = Vector2i(1 << 20, 1 << 20)
 		hi = -lo
 		for id in placed:
 			lo = lo.min(placed[id])
 			hi = hi.max(placed[id])
-		if _building() and placed.size() < engine.supplied().size():
-			lo -= Vector2i.ONE              # rooms left in the tray: keep the
-			hi += Vector2i.ONE              # neighbouring drop spots on screen
 	var x0 := lo.x * ROOM
 	var x1 := (hi.x + 1) * ROOM
 	var z0 := -lo.y * ROOM
 	var z1 := -(hi.y + 1) * ROOM
-	# Corners of each placed room once the tray is empty (an L-shaped dungeon
-	# is framed tighter than its bounding box), else of the whole box.
 	var boxes: Array = [[x0, x1, z0, z1]]
-	if not placed.is_empty() and (not _building() or placed.size() >= engine.supplied().size()):
+	if tight:
 		boxes = []
 		for id in placed:
 			var sl: Vector2i = placed[id]
@@ -1279,7 +1281,7 @@ func _fit_camera(instant: bool) -> void:
 			for z in [bx[2], bx[3]]:
 				for h in [0.0, FIT_HEIGHT]:
 					pts.append(Vector3(x, h, z))
-	var area := _fit_area()
+	var area := _fit_area()                 # canvas / unproject space (not the 360-wide window)
 	var saved := [rig.position, yaw, pitch, zoom]
 	rig.position = Vector3((x0 + x1) / 2.0, 0, (z0 + z1) / 2.0)
 	yaw = target_yaw
