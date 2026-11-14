@@ -102,6 +102,7 @@ var view_btn: Button
 var follow := false              # true: the camera tracks the first living hero
 var torch_timer := 0.0
 var look_time := 0.0
+var fps_log := 0.0
 const FOLLOW_ZOOM := 16.0
 const FOLLOW_SMOOTH := 4.0       # 1/s, exponential ease of the pivot onto the hero
 const REFUSALS := {"before_first_action": "wait for the first hero action", "run_over": "the run is over",
@@ -913,6 +914,10 @@ func _url_flag(name: String, fallback: String) -> String:
 func _perf_tick(delta: float) -> void:
 	if fps_label and fps_label.visible:
 		fps_label.text = "%d FPS  %s" % [Engine.get_frames_per_second(), quality.capitalize()]
+		fps_log -= delta
+		if fps_log <= 0.0:                  # also in the log (adb logcat), for phone tests
+			fps_log = 2.0
+			print("zorg: fps %d quality %s" % [Engine.get_frames_per_second(), quality])
 	if perf_checked:
 		return
 	perf_time += delta
