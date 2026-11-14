@@ -203,19 +203,19 @@ func _initialize() -> void:
 
 	# Round 10: every room is built from the vendored CC0 KayKit models: stone
 	# block walls, floor tiles and a wall sconce on its torch.
-	var block: Mesh = ZorgLook.parts("floor_foundation_allsides")[0][0]
 	var sconce: Mesh = ZorgLook.parts("torch_mounted")[0][0]
 	var with_walls := 0
 	var with_sconce := 0
 	for id in level.room_nodes:
 		var rn: Node3D = level.room_nodes[id]
-		if rn.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.mesh == block):
+		var merged: Array = rn.find_children("Merged*", "MeshInstance3D", false, false)
+		if merged.any(func(m): return "floor_foundation_allsides" in m.get_meta("pieces", [])) and merged.size() <= 8:
 			with_walls += 1
 		var torch: Node = rn.get_node_or_null("Torch")
 		if torch and torch.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.mesh == sconce):
 			with_sconce += 1
 	_check(level.room_nodes.size() >= 6 and with_walls == level.room_nodes.size() and with_sconce == level.room_nodes.size(),
-		"models: %d rooms, %d with KayKit walls, %d with a wall sconce" % [level.room_nodes.size(), with_walls, with_sconce])
+		"models: %d rooms, %d with merged KayKit walls (<= 8 meshes), %d with a wall sconce" % [level.room_nodes.size(), with_walls, with_sconce])
 
 	# Follow camera: only during a run, tracks the first living hero, and
 	# Build goes back to the fitted overview.

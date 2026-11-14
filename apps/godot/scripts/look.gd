@@ -48,6 +48,38 @@ static func _collect(n: Node, t: Transform3D, out: Array) -> void:
 	for c in n.get_children():
 		_collect(c, tt, out)
 
+## Queue a KayKit piece for a merged mesh (see flush): rooms draw their floor
+## tiles and walls as one mesh per material instead of ~40 small ones, which
+## keeps phone frame rates up.
+static func queue_piece(batch: Dictionary, piece: String, pos: Vector3, s: Vector3, m: Material, shadows := true, yaw := 0.0) -> void:
+	var key := [m, shadows]
+	if not batch.has(key):
+		batch[key] = []
+	var base := Transform3D(Basis(Vector3.UP, yaw) * Basis.from_scale(s), pos)
+	for pr in parts(piece):
+		batch[key].append([pr[0], base * (pr[1] as Transform3D), piece])
+
+## One MeshInstance3D per (material, shadows) with every queued piece merged
+## in; each remembers the piece names it holds (meta "pieces").
+static func flush(parent: Node3D, batch: Dictionary) -> void:
+	for key in batch:
+		var st := SurfaceTool.new()
+		var names := {}
+		for it in batch[key]:
+			var mesh: Mesh = it[0]
+			for si in mesh.get_surface_count():
+				st.append_from(mesh, si, it[1])
+			names[it[2]] = true
+		var mi := MeshInstance3D.new()
+		mi.name = "Merged"
+		mi.mesh = st.commit()
+		mi.material_override = key[0]
+		if not key[1]:
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.set_meta("pieces", names.keys())
+		parent.add_child(mi)
+	batch.clear()
+
 ## One KayKit piece at pos, scaled by s and turned by yaw (radians), with
 ## material m (the shared atlas look if null). Returns its first mesh node.
 static func add_piece(parent: Node3D, piece: String, pos: Vector3, s: Vector3, m: Material = null, yaw := 0.0, shadows := true) -> MeshInstance3D:
@@ -244,6 +276,7 @@ const _TILE_TOP := 0.05
 ## the room does. Positions are local to the room.
 static func build_room(def: Dictionary, tile: Array) -> Node3D:
 	var root := Node3D.new()
+	var batch := {}
 	var slab := box_mesh(Vector3(0.96, FLOOR_H, 0.96))
 	var tile_s := Vector3(TILE_SCALE, _TILE_Y, TILE_SCALE)
 	var tile_y := FLOOR_H - _TILE_TOP * _TILE_Y
@@ -255,10 +288,10 @@ static func build_room(def: Dictionary, tile: Array) -> Node3D:
 			var p := c + Vector3(0, FLOOR_H / 2.0, 0)
 			var kind := String(tile[ly][lx])
 			if kind == "wall":
-				add_piece(root, "floor_foundation_allsides", c, block_s, mat("wall"))
+				queue_piece(batch, "floor_foundation_allsides", c, block_s, mat("wall"))
 				# Worn stone slab on top, darker than any floor, so a wall top
 				# never reads as floor.
-				add_piece(root, "floor_tile_small", c + Vector3(0, WALL_H - 0.02, 0), Vector3(TILE_SCALE, 0.5, TILE_SCALE), mat("wall_top"), 0.0, false)
+				queue_piece(batch, "floor_tile_small", c + Vector3(0, WALL_H - 0.02, 0), Vector3(TILE_SCALE, 0.5, TILE_SCALE), mat("wall_top"), false)
 				continue
 			var look := cell_floor(kind, def)
 			if look == "water":
@@ -267,10 +300,11 @@ static func build_room(def: Dictionary, tile: Array) -> Node3D:
 				add_mesh(root, box_mesh(Vector3(0.98, 0.04, 0.98)), mat("water"), p + Vector3(0, 0.1, 0), false)
 			elif kind == "light":
 				# Toll hatch: a wooden trapdoor with a coin on it.
-				add_piece(root, "floor_wood_small", c + Vector3(0, tile_y, 0), tile_s, mat("hatch"), 0.0, false)
-				add_piece(root, "coin", c + Vector3(0, FLOOR_H + 0.04, 0), Vector3.ONE * 0.9, mat("gold"))
+				queue_piece(batch, "floor_wood_small", c + Vector3(0, tile_y, 0), tile_s, mat("hatch"), false)
+				queue_piece(batch, "coin", c + Vector3(0, FLOOR_H + 0.04, 0), Vector3.ONE * 0.9, mat("gold"))
 			else:
-				add_piece(root, "floor_tile_small", c + Vector3(0, tile_y, 0), tile_s, mat(look), 0.0, false)
+				queue_piece(batch, "floor_tile_small", c + Vector3(0, tile_y, 0), tile_s, mat(look), false)
+	flush(root, batch)
 	_add_prop(root, def, tile)
 	return root
 
