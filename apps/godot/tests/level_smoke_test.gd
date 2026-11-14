@@ -93,6 +93,25 @@ func _round11(engine: Node) -> void:
 	_check(level.selected == "" and not level.quit_dlg.visible, "back: Back drops a tapped room before asking to quit")
 	level.get_viewport().gui_release_focus()
 
+	# Keys behind a popup: no undo, step or camera change while it is up.
+	level._place("A:0", Vector2i(0, 0))
+	level._place("Z:0", Vector2i(1, 0))
+	var zoom_before: float = level.target_zoom
+	for popup in ["help", "quit"]:
+		if popup == "help":
+			level.open_help()
+		else:
+			level.back_pressed()
+		_key(KEY_BACKSPACE)
+		_key(KEY_SPACE)
+		_key(KEY_MINUS)
+		_check(level.placed.has("Z:0") and level._building() and is_equal_approx(level.target_zoom, zoom_before),
+			"back: Backspace/Space/- do nothing behind the %s popup" % popup)
+		_key(KEY_ESCAPE)
+	_check(not level.popup_open(), "back: Esc closed both popups")
+	level._unplace("Z:0")
+	level._unplace("A:0")
+
 	# (2) "?" legend: every room type and element, GAME_SPEC wording only.
 	level.help_btn.pressed.emit()
 	await process_frame

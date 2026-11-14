@@ -897,6 +897,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_camera()
 		elif selected != "" and _building() and not kb_active:
 			_show_ghost(selected, event.position)     # hover preview (mouse)
+	elif event is InputEventKey and event.pressed and event.keycode != KEY_ESCAPE and popup_open():
+		get_viewport().set_input_as_handled()  # a popup is up: no undo/step/camera keys behind it
 	elif event is InputEventKey and event.pressed and kb_active and _kb_key(event):
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo:
