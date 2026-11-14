@@ -100,10 +100,11 @@ var env: Environment
 var quality_btn: Button
 var view_btn: Button
 var follow := false              # true: the camera tracks the first living hero
+var follow_overview := -1.0     # zoom the 60% follow distance is taken from; -1 = sample next time
 var torch_timer := 0.0
 var look_time := 0.0
 var fps_log := 0.0
-const FOLLOW_ZOOM := 0.6         # follow view zooms to 60% of the current distance
+const FOLLOW_ZOOM := 0.6         # follow view zooms to 60% of the overview distance
 const FOLLOW_MIN := 7.0          # ... and may come closer than the normal zoom limit
 const FOLLOW_SMOOTH := 4.0       # 1/s, exponential ease of the pivot onto the hero
 const REFUSALS := {"before_first_action": "wait for the first hero action", "run_over": "the run is over",
@@ -687,7 +688,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			var pts := touches.values()
 			var d := (pts[0] as Vector2).distance_to(pts[1])
 			if pinch_start > 0:
-				target_zoom = clampf(zoom_start * pinch_start / maxf(d, 1.0), ZOOM_LIMITS.x, ZOOM_LIMITS.y)
+				# Same floor as the zoom buttons. A two-finger pan always runs
+				# this before it leaves follow, so the overview floor would
+				# snap a close-up (below ZOOM_LIMITS.x) back out.
+				var span := zoom_start * pinch_start / maxf(d, 1.0)
+				target_zoom = clampf(span, _zoom_floor(zoom_start), ZOOM_LIMITS.y)
 				cam_manual = true
 			cam_manual = true
 			_pan((event.position - before) * 0.5)
@@ -951,8 +956,21 @@ func _rotate(deg: float) -> void:
 		target_yaw = yaw)
 	_snap_camera()
 
+## Nearest zoom. Follow may pass the overview floor, and so may a close-up
+## left behind once follow ends. `from_zoom` keeps a pinch that started in
+## that close-up from snapping out if a later sample crosses the floor.
+func _zoom_floor(from_zoom: float) -> float:
+	if follow or minf(from_zoom, target_zoom) < ZOOM_LIMITS.x:
+		return FOLLOW_MIN
+	return ZOOM_LIMITS.x
+
 func _zoom_by(d: float) -> void:
-	target_zoom = clampf(target_zoom + d, FOLLOW_MIN if follow else ZOOM_LIMITS.x, ZOOM_LIMITS.y)
+	var next := clampf(target_zoom + d, _zoom_floor(target_zoom), ZOOM_LIMITS.y)
+	# A real change back in the normal range is a new overview distance.
+	# A clamp that does not move the zoom must not forget the old one.
+	if not follow and next >= ZOOM_LIMITS.x and next != target_zoom:
+		follow_overview = -1.0
+	target_zoom = next
 
 func _tilt_by(d: float) -> void:
 	target_pitch = clampf(target_pitch + d, PITCH_LIMITS.x, PITCH_LIMITS.y)
@@ -1079,6 +1097,7 @@ func _fit_camera(instant: bool) -> void:
 	if cam_tween:
 		cam_tween.kill()
 	target_zoom = best
+	follow_overview = -1.0             # this fit is the overview distance
 	if instant:
 		rig.position = target_pos
 		zoom = best
@@ -1297,7 +1316,11 @@ func _set_follow(on: bool) -> void:
 	if on:
 		if cam_tween:
 			cam_tween.kill()
-		target_zoom = maxf(FOLLOW_MIN, target_zoom * FOLLOW_ZOOM)
+		# Pan leaves the close-up in place. Multiplying that zoom again
+		# would stack (overview -> 60% -> 36% -> FOLLOW_MIN).
+		if follow_overview < 0.0:
+			follow_overview = target_zoom
+		target_zoom = maxf(FOLLOW_MIN, follow_overview * FOLLOW_ZOOM)
 
 func _on_reset() -> void:
 	if follow:
