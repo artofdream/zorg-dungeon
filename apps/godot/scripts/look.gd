@@ -79,7 +79,10 @@ static func mat(key: String) -> StandardMaterial3D:
 			m.albedo_color = Color(1.0, 0.94, 0.86)
 		"wall":
 			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
-			m.albedo_color = Color(0.62, 0.55, 0.48)   # dark tops, so walls never read as floor
+			m.albedo_color = Color(0.85, 0.76, 0.66)
+		"wall_top":
+			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
+			m.albedo_color = Color(0.5, 0.47, 0.45)
 		"board_a":
 			m.albedo_color = Color(0.25, 0.24, 0.24)
 			m.roughness = 1.0
@@ -253,6 +256,9 @@ static func build_room(def: Dictionary, tile: Array) -> Node3D:
 			var kind := String(tile[ly][lx])
 			if kind == "wall":
 				add_piece(root, "floor_foundation_allsides", c, block_s, mat("wall"))
+				# Worn stone slab on top, darker than any floor, so a wall top
+				# never reads as floor.
+				add_piece(root, "floor_tile_small", c + Vector3(0, WALL_H - 0.02, 0), Vector3(TILE_SCALE, 0.5, TILE_SCALE), mat("wall_top"), 0.0, false)
 				continue
 			var look := cell_floor(kind, def)
 			if look == "water":
