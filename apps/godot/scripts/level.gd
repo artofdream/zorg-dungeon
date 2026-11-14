@@ -460,8 +460,17 @@ func _quit() -> void:
 static func is_embedded() -> bool:
 	if not OS.has_feature("web"):
 		return false
-	var r = JavaScriptBridge.eval("(function(){try{return window.self !== window.top}catch(e){return true}})()", true)
-	return r == true
+	var r = JavaScriptBridge.eval("(function(){try{return window.self !== window.top ? 1 : 0}catch(e){return 1}})()", true)
+	return embedded_from_js(r)
+
+## The web bridge hands JS booleans back as ints (1/0), not bools, and
+## int == bool is a script error in Godot 4; accept bool, number or text.
+static func embedded_from_js(r: Variant) -> bool:
+	match typeof(r):
+		TYPE_BOOL: return r
+		TYPE_INT, TYPE_FLOAT: return r != 0
+		TYPE_STRING: return String(r) in ["1", "true"]
+	return false
 
 ## Embedded: no Quit button, and Back/Esc with nothing open does nothing.
 func set_embedded(on: bool) -> void:

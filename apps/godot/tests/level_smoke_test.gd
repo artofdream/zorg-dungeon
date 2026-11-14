@@ -114,6 +114,9 @@ func _round11(engine: Node) -> void:
 	level.get_viewport().gui_release_focus()
 	# Web in an iframe (itch.io): no Quit; Back/Esc only closes popups.
 	_check(not level.embedded and level.quit_btn.visible, "embed: top level (not embedded) keeps the Quit button")
+	var js_values: Array = [[true, true], [1, true], [1.0, true], ["1", true], [false, false], [0, false], [null, false], ["0", false]]
+	_check(js_values.all(func(v): return level.embedded_from_js(v[0]) == v[1]),
+		"embed: the JS answer is read right whether it comes back as bool, int or text (the web bridge returns 1/0)")
 	level.set_embedded(true)
 	_check(not level.quit_btn.visible, "embed: inside an iframe the Quit button is hidden")
 	_key(KEY_ESCAPE)
