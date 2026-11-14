@@ -24,23 +24,9 @@ if [ ! -f "$CADDY_ENV" ]; then
   exit 1
 fi
 # Check keys are non-empty without printing values (lengths only).
-python3 - "$CADDY_ENV" <<'PY'
-import sys
-path = sys.argv[1]
-vals = {}
-for line in open(path, encoding="utf-8"):
-    line = line.rstrip("\n")
-    if not line or line.startswith("#") or "=" not in line:
-        continue
-    k, _, v = line.partition("=")
-    vals[k] = v
-user_len = len(vals.get("ZORG_AUTH_USER") or "")
-hash_len = len(vals.get("ZORG_AUTH_HASH") or "")
-print(f"caddy.env: user_len={user_len} hash_len={hash_len}")
-if user_len < 1 or hash_len < 20:
-    sys.stderr.write("::error::ZORG_AUTH_USER or ZORG_AUTH_HASH is empty in /etc/zorg/caddy.env; not starting Caddy.\n")
-    sys.exit(1)
-PY
+# format-caddy-env.py undoes the single quotes deploy-web writes so
+# Compose will not interpolate `$` in the bcrypt hash.
+python3 deploy/scripts/format-caddy-env.py --check "$CADDY_ENV"
 
 echo "==> build + start web"
 "${C[@]}" up -d --build web

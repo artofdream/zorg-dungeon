@@ -107,13 +107,18 @@ jobs:
             exit 1
           fi
           printf '::add-mask::%s\n' "$HASH"
+          printf '::add-mask::%s\n' "'$HASH'"
           echo "hashed site-login password (hash not printed; len=${#HASH})"
 
           # 2. Deliver the site-login user and hash over SSH stdin (never
           #    on a command line, never echoed) into a root-only staging
           #    file. deploy-host.sh moves it to /etc/zorg/caddy.env
           #    (compose env_file, required). 0600, same pattern as Grafana.
-          printf 'ZORG_AUTH_USER=%s\nZORG_AUTH_HASH=%s\n' "$ZORG_AUTH_USER" "$HASH" \
+          #    Single-quote the bcrypt hash: Compose interpolates `$` in
+          #    env_file values, which would truncate the hash so the real
+          #    password never matches (Bugbot on #108).
+          FORMATTED="$(ZORG_AUTH_HASH="$HASH" python3 deploy/scripts/format-caddy-env.py)"
+          printf '%s' "$FORMATTED" \
             | remote 'sudo install -d -m 700 -o root -g root /etc/zorg && sudo sh -c "umask 077; cat > /etc/zorg/caddy.env.new" && sudo chown root:root /etc/zorg/caddy.env.new && sudo chmod 600 /etc/zorg/caddy.env.new'
 
           # 3. Deliver the Grafana admin password and secret_key over SSH stdin

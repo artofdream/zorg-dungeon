@@ -80,9 +80,11 @@ How it is applied:
 3. `deploy-web` hashes the password with `caddy:2-alpine caddy hash-password`
    (stdin, hash masked in logs), writes `/etc/zorg/caddy.env.new` over SSH
    (root, 0600), and `deploy/scripts/deploy-host.sh` stages it to
-   `/etc/zorg/caddy.env`. Compose gives that file to the Caddy container
-   (`env_file`, required). The Caddyfile uses `{$ZORG_AUTH_USER}` and
-   `{$ZORG_AUTH_HASH}`.
+   `/etc/zorg/caddy.env`. The bcrypt hash is written single-quoted so
+   Compose does not interpolate the `$` characters in it (otherwise the
+   hash can be truncated and the real password never matches). Compose
+   gives that file to the Caddy container (`env_file`, required). The
+   Caddyfile uses `{$ZORG_AUTH_USER}` and `{$ZORG_AUTH_HASH}`.
 4. If the secrets, the env file or the hash are missing or empty, the deploy
    fails and Caddy refuses to start. It will not serve the Maker or `/godot/`
    openly. Verified with Caddy 2.10: `basic_auth` errors with "username and

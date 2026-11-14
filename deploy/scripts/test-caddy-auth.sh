@@ -154,6 +154,51 @@ fi
 # Never print HASH. Length only.
 echo "hash_len=${#HASH}"
 
+echo "==> format-caddy-env self-test (Compose $ interpolation)"
+python3 "$ROOT/deploy/scripts/format-caddy-env.py" --self-test
+
+# docker run -e does not interpolate `$`, so it cannot catch the
+# Compose env_file bug. When Docker is in use, also push the hash
+# through the same env_file shape as compose.prod.yaml.
+if [ "$USE_DOCKER" = 1 ]; then
+  if ! docker compose version >/dev/null 2>&1; then
+    echo "::error::docker compose is required to prove env_file does not mangle the bcrypt hash"
+    exit 1
+  fi
+  echo "==> compose env_file must deliver the bcrypt hash intact"
+  COMPOSE_DIR="$WORKDIR/compose-probe"
+  mkdir -p "$COMPOSE_DIR"
+  ZORG_AUTH_USER="$TEST_USER" ZORG_AUTH_HASH="$HASH" \
+    python3 "$ROOT/deploy/scripts/format-caddy-env.py" > "$COMPOSE_DIR/caddy.env"
+  cat > "$COMPOSE_DIR/compose.yaml" << 'YAML'
+services:
+  probe:
+    image: alpine:3.20
+    env_file:
+      - path: ./caddy.env
+        required: true
+    command: ["printenv", "ZORG_AUTH_HASH"]
+YAML
+  set +e
+  got="$(docker compose -f "$COMPOSE_DIR/compose.yaml" --project-directory "$COMPOSE_DIR" run --rm --no-deps -T probe 2>"$WORKDIR/compose-probe.err" | tr -d '\r\n')"
+  compose_ec=$?
+  set -e
+  docker compose -f "$COMPOSE_DIR/compose.yaml" --project-directory "$COMPOSE_DIR" down -v >/dev/null 2>&1 || true
+  if [ "$compose_ec" -ne 0 ]; then
+    echo "::error::docker compose env_file probe failed to run (exit $compose_ec)"
+    # Do not print stderr if it could contain the hash; show only the last status line.
+    echo "compose probe failed; values not printed"
+    exit 1
+  fi
+  if [ "$got" = "$HASH" ]; then
+    echo "ok   compose env_file preserved the bcrypt hash"
+  else
+    echo "FAIL compose env_file mangled the bcrypt hash (values not printed; got_len=${#got} want_len=${#HASH})"
+    exit 1
+  fi
+fi
+
+
 pick_port() {
   python3 - << 'PY'
 import socket
