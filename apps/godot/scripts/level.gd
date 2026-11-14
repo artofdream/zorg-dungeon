@@ -100,6 +100,7 @@ var env: Environment
 var quality_btn: Button
 var view_btn: Button
 var follow := false              # true: the camera tracks the first living hero
+var follow_close := 0.0          # last applied follow zoom (0 = none); don't stack closer
 var torch_timer := 0.0
 var look_time := 0.0
 var fps_log := 0.0
@@ -1086,6 +1087,7 @@ func _fit_camera(instant: bool) -> void:
 	if cam_tween:
 		cam_tween.kill()
 	target_zoom = best
+	follow_close = 0.0                       # a fit is an overview, so follow may close in
 	if instant:
 		rig.position = target_pos
 		zoom = best
@@ -1304,10 +1306,12 @@ func _set_follow(on: bool) -> void:
 	if on:
 		if cam_tween:
 			cam_tween.kill()
-		# Close in from an overview distance only: a view that is already a
-		# close-up (follow, pan, View again) keeps its zoom instead of stacking.
-		if target_zoom >= ZOOM_LIMITS.x:
+		# Close in from an overview only. A 0.6x close-up of a 20+ view stays
+		# at or above ZOOM_LIMITS.x, so that limit is not "already a close-up".
+		# View after a pan keeps this zoom; a farther zoom may close in again.
+		if target_zoom > follow_close:
 			target_zoom = maxf(FOLLOW_MIN, target_zoom * FOLLOW_ZOOM)
+			follow_close = target_zoom
 
 func _on_reset() -> void:
 	if follow:

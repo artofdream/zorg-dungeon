@@ -228,6 +228,17 @@ func _initialize() -> void:
 	_check(not level.follow and level.target_zoom <= close_zoom + 0.01, "follow camera: Zoom + after a pan out of follow doesn't zoom out (%.1f -> %.1f)" % [close_zoom, level.target_zoom])
 	_key(KEY_C)
 	_check(level.follow and is_equal_approx(level.target_zoom, close_zoom), "follow camera: View after a pan doesn't stack the zoom (%.1f)" % level.target_zoom)
+	# A 24 overview (the default, a larger board, or a zoomed-out view) closes
+	# in to 14.4, still >= ZOOM_LIMITS.x. View, pan, View must keep 14.4.
+	level._set_follow(false)
+	level.follow_close = 0.0
+	level.target_zoom = 24.0
+	level._set_follow(true)
+	var wide_close: float = level.target_zoom
+	level._pan(Vector2(1, 0))
+	_key(KEY_C)
+	_check(is_equal_approx(wide_close, 24.0 * level.FOLLOW_ZOOM) and is_equal_approx(level.target_zoom, wide_close),
+		"follow camera: View after a pan keeps a close-up above the zoom limit (%.2f -> %.2f)" % [wide_close, level.target_zoom])
 	await create_timer(1.5).timeout
 	var fig: Node3D = level.heroes._figures.get(0)
 	var hero_pos: Variant = fig.global_position if fig else null
