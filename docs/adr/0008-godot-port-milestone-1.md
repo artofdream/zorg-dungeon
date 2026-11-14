@@ -62,6 +62,11 @@ Round 9 changes only the look. It adds a dark torch-lit atmosphere with
 Low/High quality and a follow-hero camera. Everything is procedural, with
 no assets. Engine and goldens are unchanged.
 
+Round 10 replaces the placeholder shapes with CC0 low-poly models (KayKit
+Dungeon Remastered and Adventurers, by Kay Lousberg), trimmed and vendored
+under `apps/godot/assets/kaykit/` and listed in `apps/godot/CREDITS.md`.
+Only CC0 assets are allowed. Engine and goldens are unchanged.
+
 ## Consequences
 
 ADR-0002's concern is handled by the parity gate, not by trust. Each new

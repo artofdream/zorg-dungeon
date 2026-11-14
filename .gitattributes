@@ -3,6 +3,7 @@
 
 # Binary files
 *.png binary
+*.glb binary
 *.jpg binary
 *.jpeg binary
 *.gif binary

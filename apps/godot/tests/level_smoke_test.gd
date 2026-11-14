@@ -201,6 +201,22 @@ func _initialize() -> void:
 		"quality High: %d torch lights, %d with shadows" % [lit.size(), shadowed.size()])
 	level.set_quality("low", false)
 
+	# Round 10: every room is built from the vendored CC0 KayKit models: stone
+	# block walls, floor tiles and a wall sconce on its torch.
+	var block: Mesh = ZorgLook.parts("floor_foundation_allsides")[0][0]
+	var sconce: Mesh = ZorgLook.parts("torch_mounted")[0][0]
+	var with_walls := 0
+	var with_sconce := 0
+	for id in level.room_nodes:
+		var rn: Node3D = level.room_nodes[id]
+		if rn.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.mesh == block):
+			with_walls += 1
+		var torch: Node = rn.get_node_or_null("Torch")
+		if torch and torch.find_children("*", "MeshInstance3D", true, false).any(func(m): return m.mesh == sconce):
+			with_sconce += 1
+	_check(level.room_nodes.size() >= 6 and with_walls == level.room_nodes.size() and with_sconce == level.room_nodes.size(),
+		"models: %d rooms, %d with KayKit walls, %d with a wall sconce" % [level.room_nodes.size(), with_walls, with_sconce])
+
 	# Follow camera: only during a run, tracks the first living hero, and
 	# Build goes back to the fitted overview.
 	level._open_level(0)
@@ -231,6 +247,10 @@ func _initialize() -> void:
 	await create_timer(1.5).timeout
 	var fig: Node3D = level.heroes._figures.get(0)
 	var hero_pos: Variant = fig.global_position if fig else null
+	var anim: AnimationPlayer = fig.find_child("AnimationPlayer", true, false) if fig else null
+	_check(anim != null and anim.is_playing() and anim.current_animation == "Idle" and (fig.get_meta("mats") as Array).size() > 0
+		and fig.get_meta("mats").all(func(m): return m is StandardMaterial3D and m.emission_enabled),
+		"models: the hero is a KayKit figure playing Idle, with its own flashable materials")
 	_check(hero_pos != null and Vector2(level.rig.position.x - hero_pos.x, level.rig.position.z - hero_pos.z).length() < 0.6,
 		"follow camera: pivot tracks the hero (%s vs %s)" % [level.rig.position, hero_pos])
 	level._on_reset()
