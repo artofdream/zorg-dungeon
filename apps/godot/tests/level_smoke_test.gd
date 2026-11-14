@@ -220,6 +220,14 @@ func _initialize() -> void:
 	_key(KEY_C)
 	_check(level.follow and level.view_btn.text.contains("Hero"), "follow camera: key C switches to Follow hero")
 	_check(level.target_zoom < overview_zoom * 0.7, "follow camera: zooms in closer than the overview (%.1f -> %.1f)" % [overview_zoom, level.target_zoom])
+	# Bugbot (#98): a pan leaves follow without stacking the close-up, and
+	# zooming in from the close-up never zooms out.
+	var close_zoom: float = level.target_zoom
+	level._pan(Vector2(1, 0))
+	level._zoom_by(-4.0)
+	_check(not level.follow and level.target_zoom <= close_zoom + 0.01, "follow camera: Zoom + after a pan out of follow doesn't zoom out (%.1f -> %.1f)" % [close_zoom, level.target_zoom])
+	_key(KEY_C)
+	_check(level.follow and is_equal_approx(level.target_zoom, close_zoom), "follow camera: View after a pan doesn't stack the zoom (%.1f)" % level.target_zoom)
 	await create_timer(1.5).timeout
 	var fig: Node3D = level.heroes._figures.get(0)
 	var hero_pos: Variant = fig.global_position if fig else null

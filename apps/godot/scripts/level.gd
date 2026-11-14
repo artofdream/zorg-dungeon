@@ -687,7 +687,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var pts := touches.values()
 			var d := (pts[0] as Vector2).distance_to(pts[1])
 			if pinch_start > 0:
-				target_zoom = clampf(zoom_start * pinch_start / maxf(d, 1.0), ZOOM_LIMITS.x, ZOOM_LIMITS.y)
+				_set_zoom(zoom_start * pinch_start / maxf(d, 1.0))
 				cam_manual = true
 			cam_manual = true
 			_pan((event.position - before) * 0.5)
@@ -952,7 +952,14 @@ func _rotate(deg: float) -> void:
 	_snap_camera()
 
 func _zoom_by(d: float) -> void:
-	target_zoom = clampf(target_zoom + d, FOLLOW_MIN if follow else ZOOM_LIMITS.x, ZOOM_LIMITS.y)
+	_set_zoom(target_zoom + d)
+
+## Zoom within the limits. The follow close-up may sit below ZOOM_LIMITS.x;
+## from there (even after follow ends) zooming in stops where it is and
+## zooming out works, so no gesture or button snaps the camera the wrong way.
+func _set_zoom(z: float) -> void:
+	var lo := FOLLOW_MIN if follow else minf(ZOOM_LIMITS.x, target_zoom)
+	target_zoom = clampf(z, lo, ZOOM_LIMITS.y)
 
 func _tilt_by(d: float) -> void:
 	target_pitch = clampf(target_pitch + d, PITCH_LIMITS.x, PITCH_LIMITS.y)
@@ -1297,7 +1304,10 @@ func _set_follow(on: bool) -> void:
 	if on:
 		if cam_tween:
 			cam_tween.kill()
-		target_zoom = maxf(FOLLOW_MIN, target_zoom * FOLLOW_ZOOM)
+		# Close in from an overview distance only: a view that is already a
+		# close-up (follow, pan, View again) keeps its zoom instead of stacking.
+		if target_zoom >= ZOOM_LIMITS.x:
+			target_zoom = maxf(FOLLOW_MIN, target_zoom * FOLLOW_ZOOM)
 
 func _on_reset() -> void:
 	if follow:
