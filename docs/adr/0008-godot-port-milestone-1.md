@@ -65,7 +65,9 @@ no assets. Engine and goldens are unchanged.
 Round 10 replaces the placeholder shapes with CC0 low-poly models (KayKit
 Dungeon Remastered and Adventurers, by Kay Lousberg), trimmed and vendored
 under `apps/godot/assets/kaykit/` and listed in `apps/godot/CREDITS.md`.
-Only CC0 assets are allowed. Engine and goldens are unchanged.
+Only CC0 assets are allowed. The textured models made the phone GPU-bound,
+so Low also renders the 3D view at 0.75 resolution. Engine and goldens are
+unchanged.
 
 ## Consequences
 

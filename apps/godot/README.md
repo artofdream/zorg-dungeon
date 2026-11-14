@@ -59,7 +59,8 @@ dungeon. Ambient light is dim, a faint cool "moon" keeps shapes readable,
 and there's fog and a vignette. Each room has a wall torch whose warm light
 flickers. Walls and floor slabs use procedural stone noise, and room and
 element floors glow faintly in their own colour. **Graphics** (in the level panel; saved):
-Low lights the 4 rooms nearest the view with no shadows and no glow. High
+Low lights the 4 rooms nearest the view with no shadows and no glow, and
+renders the 3D view at 0.75 resolution (the HUD stays sharp). High
 lights up to 10 rooms, gives shadows to the 3 nearest torches and the sun,
 and adds glow. Phones and the web default to Low; desktop defaults to High.
 **Models** (round 10, visual only): walls, floor tiles, wall sconces, the
