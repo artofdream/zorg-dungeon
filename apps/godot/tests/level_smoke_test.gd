@@ -265,6 +265,16 @@ func _initialize() -> void:
 	level._pan(Vector2(1, 0))
 	_key(KEY_C)
 	_check(is_equal_approx(far_close, 24.0) and is_equal_approx(level.target_zoom, far_close), "follow camera: from a far overview, View/pan/View doesn't stack (%.1f -> %.1f)" % [far_close, level.target_zoom])
+	# Bugbot (#100): zooming IN from that far close-up (24 -> 20) and View
+	# again keeps 20; only a zoom out to an overview distance re-arms it.
+	level._pan(Vector2(1, 0))
+	level._set_zoom(20.0)
+	_key(KEY_C)
+	var after_in: float = level.target_zoom
+	level._pan(Vector2(1, 0))
+	level._set_zoom(30.0)
+	_key(KEY_C)
+	_check(is_equal_approx(after_in, 20.0) and is_equal_approx(level.target_zoom, 18.0), "follow camera: zoom in keeps the close-up, zoom out re-arms it (%.1f, %.1f)" % [after_in, level.target_zoom])
 	level._on_reset()
 
 	# Two heroes: when the followed one dies, the camera moves on to the next.

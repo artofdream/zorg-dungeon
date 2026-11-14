@@ -960,9 +960,12 @@ func _zoom_by(d: float) -> void:
 ## zooming out works, so no gesture or button snaps the camera the wrong way.
 func _set_zoom(z: float) -> void:
 	var lo := FOLLOW_MIN if follow else minf(ZOOM_LIMITS.x, target_zoom)
+	var before := target_zoom
 	target_zoom = clampf(z, lo, ZOOM_LIMITS.y)
-	if not follow and target_zoom >= ZOOM_LIMITS.x:
-		follow_zoomed = false                # the user zoomed back out to an overview distance
+	# Only a zoom OUT to an overview distance re-arms the close-in; zooming
+	# in from a far close-up (40 -> 24 -> 20) must not let View stack again.
+	if not follow and target_zoom > before and target_zoom >= ZOOM_LIMITS.x:
+		follow_zoomed = false
 
 func _tilt_by(d: float) -> void:
 	target_pitch = clampf(target_pitch + d, PITCH_LIMITS.x, PITCH_LIMITS.y)
