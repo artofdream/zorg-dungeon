@@ -215,8 +215,11 @@ func _initialize() -> void:
 	for i in 4:
 		level._on_step()
 	_check(level.view_btn.visible and level.view_btn.get_combined_minimum_size().y >= 52.0, "follow camera: View button shown during a run (>= 52 units)")
+	await create_timer(0.5).timeout
+	var overview_zoom: float = level.target_zoom
 	_key(KEY_C)
 	_check(level.follow and level.view_btn.text.contains("Hero"), "follow camera: key C switches to Follow hero")
+	_check(level.target_zoom < overview_zoom * 0.7, "follow camera: zooms in closer than the overview (%.1f -> %.1f)" % [overview_zoom, level.target_zoom])
 	await create_timer(1.5).timeout
 	var fig: Node3D = level.heroes._figures.get(0)
 	var hero_pos: Variant = fig.global_position if fig else null

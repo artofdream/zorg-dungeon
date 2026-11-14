@@ -55,7 +55,7 @@ static func environment(high: bool) -> Environment:
 	env.background_color = Color(0.015, 0.014, 0.02)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.5, 0.55, 0.75)
-	env.ambient_light_energy = 0.14
+	env.ambient_light_energy = 0.17
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = 1.05
 	env.fog_enabled = true
