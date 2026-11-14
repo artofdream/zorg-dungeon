@@ -36,6 +36,6 @@ jobs:
     # not the live site, and are unchanged.
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Probe Caddy basic_auth
         run: bash deploy/scripts/test-caddy-auth.sh
