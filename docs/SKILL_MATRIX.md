@@ -76,12 +76,36 @@ flowchart TB
 | `companion-plain-docs` | Shared Grok skill · sand-workflow `companion-plain-docs` | CF-007: [[PLAYER_GUIDE]] still said only Warrior/Elf after phases 4–7. | Plain English + mermaid on [knowledge.zorg.artof.link](https://knowledge.zorg.artof.link). [[GAME_SPEC]] wins. Adoption: [#50](https://github.com/artofdream/zorg-dungeon/issues/50). |
 | `persona-journey-validation` | Shared Grok skill · sand-workflow `persona-journey-validation` | ~8yo first-play audit; standing personas; UX issues [#36](https://github.com/artofdream/zorg-dungeon/issues/36)–[#48](https://github.com/artofdream/zorg-dungeon/issues/48) (also [#30](https://github.com/artofdream/zorg-dungeon/issues/30)–[#35](https://github.com/artofdream/zorg-dungeon/issues/35)). | Live Maker audit → named personas → issues → fix. Compose with [#51](https://github.com/artofdream/zorg-dungeon/issues/51). Adoption: [#50](https://github.com/artofdream/zorg-dungeon/issues/50). |
 | `corpus-quarantine-honesty` | Shared Grok skill · sand-workflow `corpus-quarantine-honesty` · **created** (zorg-evidenced) | CF-005 N11 / N18; S5; green corpus must not silently include broken levels. Tracked: [#52](https://github.com/artofdream/zorg-dungeon/issues/52). | Quarantine paths, CI skip, [[FINDINGS]] link. Never promote an NFR on quarantined fixtures. Adoption: [#50](https://github.com/artofdream/zorg-dungeon/issues/50). |
+| `engine-parity-goldens` | Repo skill · **created** (zorg-evidenced, Godot port) · Simulated (CI tests only) | Two engines (TS + GDScript) can drift without anyone noticing. In [#84](https://github.com/artofdream/zorg-dungeon/pull/84), a deliberate tie-order mutation failed 2 cases. Each of rounds [#85](https://github.com/artofdream/zorg-dungeon/pull/85)–[#89](https://github.com/artofdream/zorg-dungeon/pull/89) added its own golden cases. See [[LEARNINGS-godot]]. | Recipe below. TS records, GDScript replays, CI fails on drift. Plant a bug once per new rule. Unported rules fail closed ([[NFR-8]]). Cite [[0008-godot-port-milestone-1]]. |
+| `adb-phone-test` | Repo skill · **created** (zorg-evidenced, rounds 7–8) · Probed only on the one test phone, only in the session that ran it | Per-run debug keys forced an uninstall. `screenrecord` stops at 180 s. `input` can't pinch. Back quits the app ([#92](https://github.com/artofdream/zorg-dungeon/pull/92)–[#95](https://github.com/artofdream/zorg-dungeon/pull/95)). | Recipe below. Touch only the Zorg debug app, never other apps or user data. Change no settings beyond install. Clean up the sdcard. Never ask for or copy the user's Android developer credentials. |
 | [[AGENTS]] | Project playbook | Multi-agent chat amnesia and tool-specific drift. | First file every session. Producer does not merge (S7). |
 | [[GAME_SPEC]] | Project playbook | Companion prose drifting from rules. | Source of truth. IDs frozen. A companion sentence never overrides it. |
 | [[STATUS_LEDGER]] | Project playbook | Status words used as marketing. | Proof or `Unknown` / `Planned`. Update only your rows. |
 | [[FINDINGS]] | Project playbook | Same miss twice with only a paragraph. | CF + sensor when `Recurrence` ≥ 2. |
 | `docs/journal/` | Project playbook | Next agent cannot see the last chat. | End-of-slice handoff on `main`. |
 | `docs/adr/` | Project playbook | Architecture re-litigated every session. | Read the decision before changing shape. |
+
+## Repo skills: recipes (Godot port)
+
+These are Documented recipes, not status promotions. Background is in [[LEARNINGS-godot]].
+
+### `engine-parity-goldens`
+
+1. Port the rule into the GDScript engine (`apps/godot/engine`). The TS engine stays the reference ([[NFR-1]], [[NFR-10]]).
+2. Add the fixed placements to `packages/engine/scripts/godot-golden.mjs`. Run it to rewrite `apps/godot/tests/golden/*.json`. Run it with `--check` to confirm there's no drift.
+3. Run `godot --headless --path apps/godot --script res://tests/parity_test.gd`. Every case must match.
+4. Plant a bug in the new rule locally. Watch at least one case fail, revert, and write the result in the PR.
+5. If a rule has no shipped fixture, compare against a small TS table instead (as was done for poison ticks, tolls and portals).
+6. Say **Simulated** (CI tests), never Live.
+
+### `adb-phone-test`
+
+1. Download the CI debug APK. Record its SHA-256.
+2. Check the package list for the Zorg package only. Run `adb uninstall` first, because every CI run uses a new debug key. Then `adb install`.
+3. Drive the app with `input tap` and `input swipe`. There's no pinch, so use the zoom buttons. Back quits the app.
+4. Use `screencap` for stills. Use `screenrecord --time-limit` of 180 s or less, stopped with `pkill -2`. Use `logcat -d --pid <zorg pid>` for the log.
+5. Pull the media, then delete everything you wrote to the phone's sdcard. Confirm nothing is left.
+6. Never open other apps, read user data, change settings beyond install, or copy credentials. Commit no media that shows personal data.
 
 ## Cross-project fit
 

@@ -14,6 +14,8 @@ game. Build a dungeon, then watch scripted heroes try to kill you through it.
 - [`docs/STATUS_LEDGER.md`](./docs/STATUS_LEDGER.md) /
   [`docs/FINDINGS.md`](./docs/FINDINGS.md) — what's actually proven, and
   what's been caught and fixed.
+- [`docs/LEARNINGS-godot.md`](./docs/LEARNINGS-godot.md) — what the Godot
+  port taught us, in plain English.
 - [`docs/SKILL_MATRIX.md`](./docs/SKILL_MATRIX.md) — which agent skills
   apply, who loads them, why they were chosen, and
   [Keep Learning and Apply](https://gitlab.com/artof-group/adaptive-experience-architecture/-/work_items/434)

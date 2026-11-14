@@ -9,9 +9,30 @@
     "honesty": "Documented aid until knowledge.zorg.artof.link probe; C rooms / Gunner duration / FR-4 stay author-deferred"
   },
   "eras": [
-    { "id": "boot", "label": "Boot + journal", "from": "2026-09-10", "to": "2026-09-12" },
-    { "id": "engine", "label": "Engine phases", "from": "2026-09-12", "to": "2026-09-14" },
-    { "id": "knowledge", "label": "Knowledge site", "from": "2026-09-14", "to": "2026-09-21" }
+    {
+      "id": "boot",
+      "label": "Boot + journal",
+      "from": "2026-09-10",
+      "to": "2026-09-12"
+    },
+    {
+      "id": "engine",
+      "label": "Engine phases",
+      "from": "2026-09-12",
+      "to": "2026-09-14"
+    },
+    {
+      "id": "knowledge",
+      "label": "Knowledge site",
+      "from": "2026-09-14",
+      "to": "2026-09-21"
+    },
+    {
+      "id": "godot",
+      "label": "Godot port",
+      "from": "2026-11-12",
+      "to": "2026-11-13"
+    }
   ],
   "milestones": [
     {
@@ -76,6 +97,114 @@
       "summary": "Dated evolution IR",
       "href": "./index.html",
       "tag": "docs"
+    },
+    {
+      "id": "m-godot-84",
+      "date": "2026-11-12",
+      "era": "godot",
+      "title": "#84 M1",
+      "summary": "Warrior parity",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/84",
+      "tag": "godot"
+    },
+    {
+      "id": "m-godot-85",
+      "date": "2026-11-12",
+      "era": "godot",
+      "title": "#85 R2",
+      "summary": "Fire room",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/85",
+      "tag": "godot"
+    },
+    {
+      "id": "m-godot-86",
+      "date": "2026-11-12",
+      "era": "godot",
+      "title": "#86 R3",
+      "summary": "Water·ice·Elf",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/86",
+      "tag": "godot"
+    },
+    {
+      "id": "m-godot-87",
+      "date": "2026-11-12",
+      "era": "godot",
+      "title": "#87 R4",
+      "summary": "Spells",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/87",
+      "tag": "godot"
+    },
+    {
+      "id": "m-godot-88",
+      "date": "2026-11-12",
+      "era": "godot",
+      "title": "#88 Web",
+      "summary": "/godot/ preview",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/88",
+      "tag": "deploy"
+    },
+    {
+      "id": "m-godot-89",
+      "date": "2026-11-13",
+      "era": "godot",
+      "title": "#89 R5",
+      "summary": "Portals·gold",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/89",
+      "tag": "godot"
+    },
+    {
+      "id": "m-godot-90",
+      "date": "2026-11-13",
+      "era": "godot",
+      "title": "#90 R6",
+      "summary": "2.5D look",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/90",
+      "tag": "godot"
+    },
+    {
+      "id": "m-godot-91",
+      "date": "2026-11-13",
+      "era": "godot",
+      "title": "#91 fix",
+      "summary": "Bugbot",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/91",
+      "tag": "bugbot"
+    },
+    {
+      "id": "m-godot-92",
+      "date": "2026-11-13",
+      "era": "godot",
+      "title": "#92 R7",
+      "summary": "Phone UX",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/92",
+      "tag": "phone"
+    },
+    {
+      "id": "m-godot-93",
+      "date": "2026-11-13",
+      "era": "godot",
+      "title": "#93 fix",
+      "summary": "Bugbot",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/93",
+      "tag": "bugbot"
+    },
+    {
+      "id": "m-godot-94",
+      "date": "2026-11-13",
+      "era": "godot",
+      "title": "#94 R8",
+      "summary": "UX audit",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/94",
+      "tag": "ux"
+    },
+    {
+      "id": "m-godot-95",
+      "date": "2026-11-13",
+      "era": "godot",
+      "title": "#95 fix",
+      "summary": "Bugbot",
+      "href": "https://github.com/artofdream/zorg-dungeon/pull/95",
+      "tag": "bugbot"
     }
   ],
   "cards": [
@@ -85,7 +214,8 @@
       "items": [
         "Curated journal eras — not every commit",
         "GAME_SPEC wins on conflict",
-        "Documented ≠ Live playability"
+        "Documented ≠ Live playability",
+        "Godot dates are PR merge days (UTC); links open the PR"
       ]
     },
     {

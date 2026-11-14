@@ -9,6 +9,7 @@ Cite `GAME_SPEC.md` / companion docs. Do not invent room `C`, Gunner duration, o
 | File | Kind | Topic |
 |------|------|--------|
 | [`zorg-knowledge-workflow.architecture.json`](./zorg-knowledge-workflow.architecture.json) + [`.html`](./zorg-knowledge-workflow.architecture.html) | architecture | Knowledge Pages pipeline + same-origin `/archify/` |
+| [`zorg-runtime.architecture.json`](./zorg-runtime.architecture.json) + [`.html`](./zorg-runtime.architecture.html) | architecture | Runtime: TS engine + React Maker, Godot port kept in parity by golden recordings (ADR-0008), debug exports, approval-gated deploys, Pages |
 | [`index.html`](./index.html) | index | Thin listing of diagrams |
 
 ### Honesty
@@ -18,11 +19,12 @@ Cite `GAME_SPEC.md` / companion docs. Do not invent room `C`, Gunner duration, o
   - `https://knowledge.zorg.artof.link/archify/`
   - `https://knowledge.zorg.artof.link/archify/zorg-knowledge-workflow.architecture.html`
   - `https://knowledge.zorg.artof.link/archify/zorg-knowledge-workflow.architecture.json`
+  - `https://knowledge.zorg.artof.link/archify/zorg-runtime.architecture.html`
 - Do not claim Live / production status from this folder alone. A this-session HTTPS GET after merge closes the Pages probe.
 
 ### Regenerate
 
-Generated with Archify **v3.2.0** (`archify/package.json` version 3.2.0). Render in a scratch directory, validate, then copy **only** the `.json` and `.html` back into this folder:
+Generated with Archify **v3.2.0** (`archify/package.json` version 3.2.0). Render each map the same way (swap in `zorg-runtime.architecture.*` for the runtime map) in a scratch directory, validate, then copy **only** the `.json` and `.html` back into this folder:
 
 ```bash
 export ARCHIFY_UPDATE_CHECK_DISABLED=1

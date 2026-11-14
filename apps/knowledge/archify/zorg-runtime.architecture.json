@@ -1,0 +1,487 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Zorg runtime — TS engine, Godot port, deploys (Documented aid)",
+    "output": "zorg-runtime.architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "spec",
+      "type": "security",
+      "label": "GAME_SPEC.md",
+      "sublabel": "FR · NFR (formal IDs)",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "SoT"
+    },
+    {
+      "id": "ts",
+      "type": "backend",
+      "label": "TS engine",
+      "sublabel": "packages/engine",
+      "pos": [
+        240,
+        50
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "reference"
+    },
+    {
+      "id": "golden",
+      "type": "database",
+      "label": "Golden recordings",
+      "sublabel": "godot-golden.mjs → JSON",
+      "pos": [
+        440,
+        50
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "ADR-0008"
+    },
+    {
+      "id": "gd",
+      "type": "backend",
+      "label": "GDScript engine",
+      "sublabel": "apps/godot/engine",
+      "pos": [
+        640,
+        50
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "parity"
+    },
+    {
+      "id": "scenes",
+      "type": "frontend",
+      "label": "Godot scenes",
+      "sublabel": "replay engine events",
+      "pos": [
+        840,
+        50
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "maker",
+      "type": "frontend",
+      "label": "React Maker",
+      "sublabel": "apps/web",
+      "pos": [
+        40,
+        210
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "ci",
+      "type": "security",
+      "label": "ci workflow",
+      "sublabel": "build · test · e2e",
+      "pos": [
+        240,
+        210
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "gate"
+    },
+    {
+      "id": "godotci",
+      "type": "security",
+      "label": "godot workflow",
+      "sublabel": "drift · parity · smoke",
+      "pos": [
+        440,
+        210
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "gate"
+    },
+    {
+      "id": "exports",
+      "type": "messagebus",
+      "label": "Debug exports",
+      "sublabel": "Web · Android · Windows · Linux",
+      "pos": [
+        640,
+        210
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "CI artifacts"
+    },
+    {
+      "id": "apk",
+      "type": "external",
+      "label": "Debug APK",
+      "sublabel": "per-run key · sideload",
+      "pos": [
+        840,
+        210
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "Simulated"
+    },
+    {
+      "id": "deployweb",
+      "type": "backend",
+      "label": "deploy-web",
+      "sublabel": "compose + Caddy + nginx",
+      "pos": [
+        40,
+        370
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "approval",
+      "type": "security",
+      "label": "production env",
+      "sublabel": "manual approval",
+      "pos": [
+        240,
+        370
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "gate"
+    },
+    {
+      "id": "deploygodot",
+      "type": "backend",
+      "label": "deploy-godot",
+      "sublabel": "web export → static",
+      "pos": [
+        440,
+        370
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "knowci",
+      "type": "backend",
+      "label": "deploy-knowledge",
+      "sublabel": "build.mjs → dist/",
+      "pos": [
+        640,
+        370
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "pages",
+      "type": "cloud",
+      "label": "GitHub Pages",
+      "sublabel": "from main",
+      "pos": [
+        840,
+        370
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "caddy",
+      "type": "security",
+      "label": "Caddy",
+      "sublabel": "TLS edge · zorg.artof.link",
+      "pos": [
+        240,
+        540
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "Lightsail"
+    },
+    {
+      "id": "nginx",
+      "type": "backend",
+      "label": "nginx (React)",
+      "sublabel": "/ · HTML no-cache",
+      "pos": [
+        40,
+        540
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "Probed"
+    },
+    {
+      "id": "godotweb",
+      "type": "frontend",
+      "label": "/godot/ static",
+      "sublabel": "Godot web build",
+      "pos": [
+        440,
+        540
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "Probed"
+    },
+    {
+      "id": "knowsite",
+      "type": "cloud",
+      "label": "Knowledge site",
+      "sublabel": "knowledge.zorg.artof.link",
+      "pos": [
+        840,
+        540
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "/archify/ · /chronify/"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Parity gate (ADR-0008)",
+      "wraps": [
+        "ts",
+        "golden",
+        "gd"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "production environment approval",
+      "wraps": [
+        "deployweb",
+        "approval",
+        "deploygodot"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Lightsail host",
+      "wraps": [
+        "caddy",
+        "nginx",
+        "godotweb"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c1",
+      "from": "spec",
+      "to": "ts",
+      "label": "FR / NFR"
+    },
+    {
+      "id": "c2",
+      "from": "ts",
+      "to": "golden",
+      "label": "record",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c3",
+      "from": "golden",
+      "to": "gd",
+      "label": "must match",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c4",
+      "from": "gd",
+      "to": "scenes",
+      "label": "events"
+    },
+    {
+      "id": "c5",
+      "from": "ts",
+      "to": "maker",
+      "label": "import",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c6",
+      "from": "maker",
+      "to": "ci",
+      "label": "PR"
+    },
+    {
+      "id": "c7",
+      "from": "scenes",
+      "to": "godotci",
+      "label": "PR",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c8",
+      "from": "godotci",
+      "to": "exports",
+      "label": "export"
+    },
+    {
+      "id": "c9",
+      "from": "exports",
+      "to": "apk",
+      "label": "artifact",
+      "variant": "dashed"
+    },
+    {
+      "id": "c10",
+      "from": "ci",
+      "to": "approval",
+      "label": "main",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c11",
+      "from": "approval",
+      "to": "deployweb",
+      "label": "approve",
+      "variant": "security"
+    },
+    {
+      "id": "c12",
+      "from": "approval",
+      "to": "deploygodot",
+      "label": "approve",
+      "variant": "security"
+    },
+    {
+      "id": "c13",
+      "from": "knowci",
+      "to": "pages",
+      "label": "deploy"
+    },
+    {
+      "id": "c14",
+      "from": "pages",
+      "to": "knowsite",
+      "label": "serve",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c15",
+      "from": "deployweb",
+      "to": "nginx",
+      "label": "apply",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c16",
+      "from": "caddy",
+      "to": "nginx",
+      "label": "/"
+    },
+    {
+      "id": "c17",
+      "from": "caddy",
+      "to": "godotweb",
+      "label": "/godot/*"
+    },
+    {
+      "id": "c18",
+      "from": "deploygodot",
+      "to": "godotweb",
+      "label": "publish",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Documented aid — not Live",
+      "items": [
+        "A readable map of the runtime, not a production status claim. GAME_SPEC wins; C rooms, Gunner duration and FR-4 stay author-deferred.",
+        "Formal IDs: NFR-1 and NFR-10 (deterministic engine), NFR-8 (fail closed on unported rules). Decision: ADR-0008."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Parity via golden recordings",
+      "items": [
+        "godot-golden.mjs runs the TS engine on fixed placements and records every turn; the godot workflow fails if the recording is stale or the GDScript replay differs.",
+        "Simulated: CI tests only. The Godot scenes replay engine events and never decide an outcome."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Exports",
+      "items": [
+        "Web build is published at /godot/ by deploy-godot. Android debug APK, Windows and Linux builds are CI artifacts only.",
+        "The Android debug key is generated per CI run, so a new APK needs an uninstall first. No release signing, no store upload."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Deploy approval",
+      "items": [
+        "deploy-web and deploy-godot run in the production environment and wait for a manual approval. Runs stack up until approved; a newer waiting run can replace an older one.",
+        "Probed 2026-11-14: /godot/ still served the round-6 build while the round-7 and round-8 deploys waited."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Caching",
+      "items": [
+        "Probed 2026-11-14 (HTTPS HEAD): Cache-Control no-cache on /, /index.html, SPA fallback routes and /godot/."
+      ]
+    }
+  ]
+}
