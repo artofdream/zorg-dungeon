@@ -58,6 +58,10 @@ Round 8 fixes the high findings of a UX audit (WCAG 2.2 AA, Material, HIG):
 mobile-web scaling by CSS px, a portrait layout, a visible keyboard focus
 ring, and keyboard placement with undo. Engine and goldens are unchanged.
 
+Round 9 changes only the look. It adds a dark torch-lit atmosphere with
+Low/High quality and a follow-hero camera. Everything is procedural, with
+no assets. Engine and goldens are unchanged.
+
 ## Consequences
 
 ADR-0002's concern is handled by the parity gate, not by trust. Each new
