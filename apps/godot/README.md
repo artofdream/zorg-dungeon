@@ -120,7 +120,8 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    words of GAME_SPEC.md; a one-time hint points to it on first launch.
    Android Back (Esc on desktop and web) closes the open popup, drops a room
    you picked up, or else asks "Quit Zorg?" (Stay / Quit). On the web, Quit
-   goes back to the previous page.
+   goes back to the previous page; inside an iframe (itch.io) there is no
+   Quit, and Back/Esc only closes popups.
 4. Camera: the view fits your rooms (with margins clear of the HUD) when a
    level opens and after each placement. Zoom with `Zoom +` / `Zoom -`, the
    mouse wheel, pinch or +/-; tilt with `Tilt +` / `Tilt -`, Ctrl + wheel,
