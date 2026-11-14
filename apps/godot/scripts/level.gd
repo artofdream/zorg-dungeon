@@ -1321,6 +1321,7 @@ func _process(delta: float) -> void:
 	pitch = target_pitch if absf(target_pitch - pitch) < 0.01 else lerpf(pitch, target_pitch, k)
 	_update_camera()
 	result.visible = result.text != ""        # empty lines take no room from the board
+	status.visible = not result.visible      # round 12: the banner replaces "Extermination: ..." 
 	log_label.visible = log_label.text != "" or not _building()
 	if fit_wait > 0:
 		fit_wait -= 1
@@ -1385,6 +1386,7 @@ func _layout_labels() -> void:
 		items.append([plate, Rect2(best - Vector2(size.x / 2.0, 0), size)])
 	items.sort_custom(func(a, b): return a[1].position.y < b[1].position.y)
 	var taken: Array[Rect2] = heroes.label_rects()
+	taken.append_array(hud_text_rects())     # round 12: never over the HUD text
 	for it in items:
 		var r: Rect2 = it[1]
 		for tries in 8:
@@ -1398,6 +1400,25 @@ func _layout_labels() -> void:
 				break
 		taken.append(r)
 		(it[0] as Control).position = r.position - label_layer.get_global_rect().position
+
+## Screen rects of the visible top-left HUD lines (title, goal, status,
+## result, Next level, turn line, hint), sized to the text actually drawn
+## rather than the full column width.
+func hud_text_rects() -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	for c in hud_top.get_children():
+		var ctl := c as Control
+		if ctl == null or not ctl.is_visible_in_tree():
+			continue
+		var r := ctl.get_global_rect()
+		if ctl is Label:
+			var l := ctl as Label
+			if l.text.strip_edges() == "":
+				continue
+			var sz := l.get_theme_font("font").get_multiline_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, r.size.x, l.get_theme_font_size("font_size"))
+			r.size.x = minf(sz.x + 8.0, r.size.x)
+		out.append(r)
+	return out
 
 func camera_settled() -> bool:
 	return yaw == target_yaw and is_equal_approx(fmod(yaw - 45.0, 90.0), 0.0)

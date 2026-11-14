@@ -7,7 +7,8 @@ extends SceneTree
 ##  - drag onto an occupied spot: red ghost, nothing placed;
 ##  - rotate 90° and check the camera settles on a 45° + n·90° yaw;
 ##  - round 9: torch light / shadow limits per quality and the follow camera;
-##  - round 11: Back/Esc, the ? legend and hint, Next level, Undo, turn lines.
+##  - round 11: Back/Esc, the ? legend and hint, Next level, Undo, turn lines;
+##  - round 12: room labels never cover the HUD text on the end screens.
 ## Optional: `-- --shot=path.png` saves a screenshot (needs a display).
 
 var level: Node
@@ -175,6 +176,55 @@ func _round11(engine: Node) -> void:
 	var targets: Array = [level.help_btn, level.undo_btn, level.next_btn, level.quit_stay, got_it]
 	_check(targets.all(func(b): return b.get_combined_minimum_size().y >= ZorgHud.TARGET and b.get_combined_minimum_size().x >= ZorgHud.TARGET),
 		"round 11 buttons are at least %d x %d units" % [ZorgHud.TARGET, ZorgHud.TARGET])
+
+## Visible HUD text lines, measured from the drawn text (not the column).
+func _hud_text(l: Node) -> Array:
+	var out: Array = []
+	for c in l.hud_top.get_children():
+		if not (c is Control) or not c.is_visible_in_tree():
+			continue
+		var r: Rect2 = c.get_global_rect()
+		if c is Label:
+			if c.text.strip_edges() == "":
+				continue
+			var sz: Vector2 = c.get_theme_font("font").get_multiline_string_size(c.text, HORIZONTAL_ALIGNMENT_LEFT, r.size.x, c.get_theme_font_size("font_size"))
+			r.size.x = minf(sz.x, r.size.x)
+			out.append([c.text.substr(0, 20), r])
+		else:
+			out.append([String(c.name), r])
+	return out
+
+func _round12(engine: Node) -> void:
+	var ids: Array = engine.levels.map(func(e): return e["id"])
+	var win := level.get_window()
+	var scale0: float = win.content_scale_factor
+	for scale in [1.0, 1.75]:
+		win.content_scale_factor = scale
+		for lv in ["deluxe-1.1", "deluxe-2.2", "deluxe-5.2", "deluxe-5.5"]:
+			var idx: int = ids.find(lv)
+			level._open_level(idx)
+			var g = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[idx]["golden"]))
+			for p in g["cases"][0]["placements"]:
+				level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+			level._on_play()                 # real Play pace, so each turn's animations run
+			var guard := 0
+			while not level.run_over() and guard < 3000:
+				await process_frame
+				guard += 1
+			# Let the death fades and hit numbers finish (what the player sees).
+			await create_timer(1.5).timeout
+			var text := _hud_text(level)
+			var plates: Array = level.label_layer.get_children() + level.hero_layer.get_children()
+			plates = plates.filter(func(c): return c is Control and c.is_visible_in_tree() and c.modulate.a > 0.05 and not c.is_queued_for_deletion())
+			var hits: Array = []
+			for pl in plates:
+				for t in text:
+					if (pl as Control).get_global_rect().intersects(t[1]):
+						hits.append("%s over '%s'" % [pl.get_child(0).text if pl.get_child_count() > 0 and pl.get_child(0) is Label else pl.name, t[0]])
+			_check(level.result.text != "" and text.size() >= 3 and plates.size() >= 3 and hits.is_empty(),
+				"end screen %s at UI scale %.2f: %d labels, %d HUD lines, no overlap %s" % [lv, scale, plates.size(), text.size(), hits])
+	win.content_scale_factor = scale0
+	level._on_reset()
 
 func _initialize() -> void:
 	level = load("res://scenes/level.tscn").instantiate()
@@ -413,6 +463,9 @@ func _initialize() -> void:
 
 	# Round 11 UX audit fixes.
 	await _round11(engine)
+	# Round 12: end screens (wins on 1.1/2.2/5.2; 5.5 has no winning golden,
+	# so its loss screen) at desktop scale and at the phone's 1.75.
+	await _round12(engine)
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
