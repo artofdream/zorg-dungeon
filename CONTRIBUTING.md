@@ -94,8 +94,10 @@ How it is applied:
    `/healthz` and `/grafana/` still answer without a login. `deploy-godot`'s
    `/godot/` probe uses the same secrets. Playwright journey probes in `ci`
    talk to a local app, not the live site, and do not need them.
-6. Rotate by changing the secrets and re-running `deploy-web`. Do not edit
-   `/etc/zorg/caddy.env` by hand in normal operation.
+6. Rotate by changing the secrets and re-running `deploy-web`. The host
+   script recreates Caddy when `/etc/zorg/caddy.env` changes, so the new
+   hash is loaded (Compose does not treat env_file *content* as a config
+   change). Do not edit `/etc/zorg/caddy.env` by hand in normal operation.
 
 itch.io hosts its own copy of the web build and is not affected.
 `knowledge.zorg.artof.link` (GitHub Pages) is not affected. Prometheus
