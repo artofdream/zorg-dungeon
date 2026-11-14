@@ -53,3 +53,7 @@ The whole game must be playable without a mouse:
 - Q and E rotate. Backspace or Ctrl+Z undoes the last placement. Space steps the run.
 
 A 3 px amber focus ring (about 12:1 contrast) shows only for keyboard navigation, because Godot's default `show_focus_state_on_pointer_event` setting hides it for clicks. When the player taps or clicks again, the keyboard state must be cleared (#95). The smoke test plays level 1.1 keyboard-only.
+
+## 9. Uploading to itch.io
+
+`deploy-itch` reuses `godot.yml` through `workflow_call`, so itch.io gets the exact builds the tests passed on. A preflight job fails before the long build if `BUTLER_API_KEY` is missing. Pin butler by version and SHA-256 (broth.itch.zone has no checksum file, so hash the archive once). butler pushes builds but never publishes a Draft page, and the HTML5 "played in the browser" flag has to be set once by hand. Inside itch's iframe, `window.self !== window.top`, and the web bridge returns that JS boolean as an int (1/0), so compare carefully (#106).

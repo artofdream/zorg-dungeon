@@ -9,6 +9,9 @@ on:
       - "packages/engine/**"
       - ".github/workflows/godot.yml"
   workflow_dispatch:
+  # deploy-itch.yml reuses this whole workflow (tests + the four exports)
+  # and then uploads its artifacts to itch.io.
+  workflow_call:
 
 permissions:
   contents: read
@@ -89,6 +92,10 @@ jobs:
           mkdir -p build/linux
           godot --headless --path . --export-debug Linux build/linux/zorg.x86_64
           test -s build/linux/zorg.x86_64
+          # No zorg.sh console wrapper (export_presets.cfg): Godot writes the
+          # product name into it unquoted, and the apostrophe in "Zorg's"
+          # made it a shell syntax error.
+          test ! -e build/linux/zorg.sh || { echo "::error::build/linux/zorg.sh should not be exported"; exit 1; }
           ls -la build/linux
       - name: Export Windows x86_64 (debug, unsigned)
         run: |
