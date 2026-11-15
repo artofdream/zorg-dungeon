@@ -112,17 +112,23 @@ static func mat(key: String) -> StandardMaterial3D:
 		"wall":
 			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
 			m.albedo_color = Color(0.85, 0.76, 0.66)
+			# A little fill so a wall still reads in a room whose torch is off.
+			m.emission_enabled = true
+			m.emission = Color(0.45, 0.4, 0.34)
+			m.emission_energy_multiplier = 0.18
 		"wall_top":
 			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
-			m.albedo_color = Color(0.5, 0.47, 0.45)
+			m.albedo_color = Color(0.62, 0.58, 0.54)
 		"board_a":
-			m.albedo_color = Color(0.25, 0.24, 0.24)
+			m.albedo_color = Color(0.5, 0.48, 0.46)
 			m.roughness = 1.0
 			ZorgAtmos.stone(m, 0.35)
+			_board_fill(m)
 		"board_b":
-			m.albedo_color = Color(0.31, 0.3, 0.28)
+			m.albedo_color = Color(0.68, 0.64, 0.58)
 			m.roughness = 1.0
 			ZorgAtmos.stone(m, 0.35)
+			_board_fill(m)
 		"flame":
 			m.albedo_color = Color(1.0, 0.7, 0.25)
 			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -206,12 +212,21 @@ static func mat(key: String) -> StandardMaterial3D:
 	_mats[key] = m
 	return m
 
-## Round 9: the dungeon is dark, so room and element floors glow faintly in
-## their own colour and stay readable outside torch light.
+## Room and element floors glow faintly in their own colour so they stay
+## readable on a slot whose torch light is off (the quality cap).
 static func _readable(m: StandardMaterial3D) -> void:
 	m.emission_enabled = true
 	m.emission = m.albedo_color
-	m.emission_energy_multiplier = 0.22
+	m.emission_energy_multiplier = 0.32
+
+## Empty-board checker. Emission is what keeps the grid visible when no
+## omni light reaches it; the two albedos stay far enough apart to read
+## as a grid against the black background.
+static func _board_fill(m: StandardMaterial3D) -> void:
+	m.emission_enabled = true
+	m.emission = m.albedo_color
+	m.emission_energy_multiplier = 0.35
+	m.normal_scale = 0.25
 
 static func box_mesh(size: Vector3) -> BoxMesh:
 	var key := "box%s" % size

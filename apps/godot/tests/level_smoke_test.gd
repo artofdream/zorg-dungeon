@@ -459,17 +459,27 @@ func _initialize() -> void:
 	for p in g5["cases"][0]["placements"]:
 		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
 	level.set_quality("low", false)
+	var rooms: int = level.room_nodes.size()
 	var lit: Array = level.torch_lights().filter(func(l): return l.visible)
 	var shadowed: Array = level.torch_lights().filter(func(l): return l.visible and l.shadow_enabled)
-	_check(lit.size() <= ZorgAtmos.LOW_LIGHTS and lit.size() > 0 and shadowed.is_empty() and not level.get_node("Sun").shadow_enabled
+	_check(lit.size() == mini(rooms, ZorgAtmos.LOW_LIGHTS) and shadowed.is_empty() and not level.get_node("Sun").shadow_enabled
 		and is_equal_approx(level.get_viewport().scaling_3d_scale, ZorgAtmos.LOW_3D_SCALE),
-		"quality Low: %d torch lights (max %d), no shadows, 3D scale %.2f" % [lit.size(), ZorgAtmos.LOW_LIGHTS, level.get_viewport().scaling_3d_scale])
+		"quality Low: %d/%d torch lights (cap %d), no shadows, 3D scale %.2f" % [lit.size(), rooms, ZorgAtmos.LOW_LIGHTS, level.get_viewport().scaling_3d_scale])
 	level.set_quality("high", false)
 	lit = level.torch_lights().filter(func(l): return l.visible)
 	shadowed = level.torch_lights().filter(func(l): return l.visible and l.shadow_enabled)
-	_check(lit.size() > ZorgAtmos.LOW_LIGHTS and lit.size() <= ZorgAtmos.HIGH_LIGHTS and shadowed.size() == mini(ZorgAtmos.HIGH_SHADOWS, lit.size())
+	_check(lit.size() == mini(rooms, ZorgAtmos.HIGH_LIGHTS) and shadowed.size() == mini(ZorgAtmos.HIGH_SHADOWS, lit.size())
 		and is_equal_approx(level.get_viewport().scaling_3d_scale, 1.0),
 		"quality High: %d torch lights, %d with shadows, 3D scale %.2f" % [lit.size(), shadowed.size(), level.get_viewport().scaling_3d_scale])
+	# The board has to stay readable with no torch at all: warm ambient,
+	# light fog, and an emissive checker. This locks the values a dark
+	# Compatibility render measured as unreadable (ambient 0.17, fog 0.012).
+	var board_a: StandardMaterial3D = ZorgLook.mat("board_a")
+	var board_b: StandardMaterial3D = ZorgLook.mat("board_b")
+	_check(level.env.ambient_light_energy >= 0.5 and level.env.fog_density <= 0.008
+		and board_a.emission_enabled and board_b.emission_enabled
+		and board_b.albedo_color.get_luminance() > board_a.albedo_color.get_luminance() + 0.08,
+		"board readable without a torch (ambient %.2f, fog %.3f)" % [level.env.ambient_light_energy, level.env.fog_density])
 	level.set_quality("low", false)
 
 	# Round 10: every room is built from the vendored CC0 KayKit models: stone
@@ -487,6 +497,34 @@ func _initialize() -> void:
 			with_sconce += 1
 	_check(level.room_nodes.size() >= 6 and with_walls == level.room_nodes.size() and with_sconce == level.room_nodes.size(),
 		"models: %d rooms, %d with merged KayKit walls (<= 8 meshes), %d with a wall sconce" % [level.room_nodes.size(), with_walls, with_sconce])
+
+	# Declared cosmetic lights (visual-lights.json). Damage rooms get a
+	# brazier. The omni cap still holds: torches first, then braziers.
+	var one2: int = engine.levels.map(func(e): return e["id"]).find("deluxe-1.2")
+	level._open_level(one2)
+	var g12 = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[one2]["golden"]))
+	for p in g12["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	level.set_quality("low", false)
+	var d_rooms := 0
+	var braziers := 0
+	var omnis := 0
+	var torch_on := 0
+	for id in level.room_nodes:
+		var rn: Node3D = level.room_nodes[id]
+		if String(id).begins_with("D:"):
+			d_rooms += 1
+			if rn.get_node_or_null("Brazier") and rn.get_node_or_null("Brazier/Flame"):
+				braziers += 1
+		for light in rn.get_meta("lights", []):
+			if (light as OmniLight3D).visible:
+				omnis += 1
+		if (rn.get_meta("torch") as OmniLight3D).visible:
+			torch_on += 1
+	_check(d_rooms == 3 and braziers == 3 and torch_on == 5 and omnis <= ZorgAtmos.HIGH_LIGHTS and omnis >= torch_on,
+		"1.2 lights: %d damage braziers, %d torches on, %d omnis (cap %d)" % [braziers, torch_on, omnis, ZorgAtmos.HIGH_LIGHTS])
+	_check(ZorgAtmos.specs_for("deluxe-1.2", "D:0", "D").size() == 1 and ZorgAtmos.specs_for("nope", "A:0", "A").is_empty(),
+		"declared lights: D rooms have a brazier spec, other types do not")
 
 	# Follow camera: only during a run, tracks the first living hero, and
 	# Build goes back to the fitted overview.

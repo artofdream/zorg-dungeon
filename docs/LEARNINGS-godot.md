@@ -68,3 +68,29 @@ and never puts them in the URL or the logs. The itch.io copy of the game is
 hosted by itch.io and is not affected. See
 [CONTRIBUTING.md](../CONTRIBUTING.md#site-login-shared-username-and-password).
 
+## 11. A dark board is the light values, on both renderers
+
+The itch.io web build of level 1.2 looked blue-black: the HUD was fine, and
+the checkerboard sat in the background. That build uses Godot's
+Compatibility renderer (`gl_compatibility` / WebGL 2). The phone and
+desktop builds use the Mobile renderer. Rendering the same frame on both
+(llvmpipe, Godot 4.7.2) gave the same pixels: an empty board tile about
+`(0.03, 0.04, 0.09)` against black, contrast about 1.07. Turning the
+torches off only dropped a room floor from about `0.11` to `0.06`, so the
+omni lights were working. They were just too dim, and only the nearest
+rooms had one.
+
+The crush was the round-9 setup: ambient energy `0.17` with a cool blue
+colour, sun energy `0.32`, filmic tonemap, fog density `0.012` toward
+near-black, and board albedo around `0.25` multiplied by a dark stone
+texture. Raising ambient alone to `0.55` barely moved the tile. The board
+needs its own fill (lighter checker plus a little emission), a warmer
+ambient and sun, and lighter fog. Measure a screenshot before changing it
+again. The smoke test locks ambient `>= 0.5` and fog `<= 0.008`.
+
+Phone budget: Low still skips shadows and still draws the 3D view at 0.75
+scale. It now allows 6 unshadowed omni lights (one torch per room in the
+current levels) and High allows 8, which is the Compatibility per-object
+cap. Extra lights are declared in `apps/godot/levels/visual-lights.json`.
+The rules engine never reads that file. See [[FINDINGS]] CF-013.
+
