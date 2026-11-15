@@ -1,0 +1,15 @@
+{
+  "note": "Cosmetic lights only. The rules engine never reads this file, and godot-golden.mjs does not write it. Each room already has a wall torch. Entries here add extra lights that share the Low/High omni budget in scripts/atmos.gd (6 on Low, 8 on High, no shadows on Low). byRoom key is \"levelId/roomId\" and replaces that room's type list.",
+  "byRoomType": {
+    "D": [
+      {
+        "kind": "brazier",
+        "at": [1.0, 0.0, 1.0],
+        "color": [1.0, 0.52, 0.2],
+        "energy": 2.4,
+        "range": 4.4
+      }
+    ]
+  },
+  "byRoom": {}
+}

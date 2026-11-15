@@ -54,15 +54,21 @@ is green. The Warrior is broad and blue, with a helmet, shield and sword.
 The Elf is slim and green, with a pointed hat. Heroes hop from cell to cell,
 flash with a floating number when hurt or healed, and fade out when they
 die. These were Godot primitives until round 10 (see **Models** below).
-**Look** (round 9, visual only, `scripts/atmos.gd`): a dark, torch-lit stone
-dungeon. Ambient light is dim, a faint cool "moon" keeps shapes readable,
-and there's fog and a vignette. Each room has a wall torch whose warm light
-flickers. Walls and floor slabs use procedural stone noise, and room and
-element floors glow faintly in their own colour. **Graphics** (in the level panel; saved):
-Low lights the 4 rooms nearest the view with no shadows and no glow, and
+**Look** (round 9, visual only, `scripts/atmos.gd`): a torch-lit stone
+dungeon. A warm fill (not a dim blue moon) keeps the checkerboard, walls
+and heroes readable on the Compatibility renderer the web build uses and
+on the Mobile renderer phones and desktop use. Fog and a vignette stay
+light enough that they don't paint the board black. Each room has a wall
+torch whose warm light flickers. Damage rooms also get a procedural
+brazier from `levels/visual-lights.json` (cosmetic only; the rules engine
+never reads that file). Walls use the KayKit atlas, the empty board is a
+stone checker that glows faintly, and room and element floors glow faintly
+in their own colour. **Graphics** (in the level panel; saved):
+Low lights the 6 nearest omni lights with no shadows and no glow, and
 renders the 3D view at 0.75 resolution (the HUD stays sharp). High
-lights up to 10 rooms, gives shadows to the 3 nearest torches and the sun,
-and adds glow. Phones and the web default to Low; desktop defaults to High.
+lights up to 8 (the Compatibility per-object cap), gives shadows to the
+3 nearest torches and the sun, and adds glow. Phones and the web default
+to Low; desktop defaults to High.
 **Models** (round 10, visual only): walls, floor tiles, wall sconces, the
 spawn door, exit grate, spikes, portal pillars, coins and toll hatches are
 CC0 low-poly KayKit models, and the Warrior and Elf are KayKit's Knight and

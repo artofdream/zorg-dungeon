@@ -266,3 +266,21 @@ Ubuntu 26 on 2026-10-19. Build, typecheck, lint and test had all passed;
 main's last green `ci` was 2026-10-28, before the label moved. The fix pins
 `ci` to `ubuntu-24.04` without changing any web behaviour. Recurrence 1.
 Bumping Playwright later can drop the pin.
+
+
+## CF-013: Godot board unreadable on the web build
+- Status: Resolved
+- Recurrence: 1
+- Linked: [PR #112](https://github.com/artofdream/zorg-dungeon/pull/112)
+- Sensor added: apps/godot/tests/level_smoke_test.gd
+
+The itch.io HTML5 build of level 1.2 (Contractual Obligation) showed a
+readable HUD and a blue-black board. `apps/godot/README.md` said a faint
+cool moon kept shapes readable. A Compatibility render and a Mobile render
+of the same frame were both near-black (empty tile contrast about 1.07
+against the background). Cause: ambient energy 0.17, cool sun energy 0.32,
+filmic tonemap, and fog density 0.012, not a web-only lighting bug. Torches
+were on and only warmed the nearest rooms. The fix is visual (warmer fill,
+emissive checker, brighter torches, declared braziers). No engine rule
+changed. Recurrence 1. The smoke test now rejects the old ambient and fog
+values. See [[LEARNINGS-godot]].

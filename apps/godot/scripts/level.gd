@@ -706,7 +706,11 @@ func _build_ghost() -> void:
 
 func _room_node(s: Dictionary) -> Node3D:
 	var root := ZorgLook.build_room(s["def"], ZorgEngine.base_tile(s["def"]))
-	root.set_meta("torch", ZorgAtmos.add_torch(root, ZorgEngine.base_tile(s["def"])))
+	var torch := ZorgAtmos.add_torch(root, ZorgEngine.base_tile(s["def"]))
+	var level_id := String(engine.loaded.get("level", {}).get("id", ""))
+	var extras: Array = ZorgAtmos.add_declared(root, level_id, String(s["id"]), String(s["def"].get("type", "")))
+	root.set_meta("torch", torch)
+	root.set_meta("lights", [torch] + extras)
 	var pile := ZorgLook.gold_pile()
 	pile.visible = false
 	root.add_child(pile)
@@ -1057,10 +1061,11 @@ func _on_board_press(pos: Vector2) -> void:
 
 # ------------------------------------------------------------------ light
 
-## Round 9: dark torch-lit dungeon (ZorgAtmos). A dim cool "moon" keeps
-## the shapes readable; torches carry the light. Quality Low (phones and
-## web by default): few torch lights, no shadows, no glow. High: more
-## torches, torch and sun shadows, glow. `?quality=low|high` on the web,
+## Round 9 look, lifted so the board stays readable on Compatibility (web)
+## and Mobile (phone and desktop). A warm fill keeps tiles, walls and
+## heroes visible; torches and declared braziers add the warm pools.
+## Quality Low (phones and web by default): few omni lights, no shadows,
+## no glow. High: more lights, torch and sun shadows, glow. `?quality=low|high` on the web,
 ## `--quality=` on the command line, or the Graphics button (saved).
 ## `?shadows=0` still forces shadows off, and High drops to Low by itself
 ## if the first seconds run under 30 FPS (unless High was asked for in
@@ -1072,8 +1077,8 @@ func _setup_lighting() -> void:
 	we.environment = env
 	add_child(we)
 	var sun: DirectionalLight3D = $Sun
-	sun.light_color = Color(0.62, 0.7, 1.0)
-	sun.light_energy = 0.32
+	sun.light_color = Color(1.0, 0.94, 0.84)
+	sun.light_energy = 0.95
 	sun.shadow_blur = 1.5
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 80.0
@@ -1099,8 +1104,10 @@ func set_quality(q: String, save := true) -> void:
 func _toggle_quality() -> void:
 	set_quality("low" if quality == "high" else "high")
 
-## Torch lights per quality: the rooms nearest the camera pivot get one
-## (LOW_LIGHTS or HIGH_LIGHTS); on High the nearest HIGH_SHADOWS cast shadows.
+## Omni lights per quality. Every room's wall torch is first, nearest
+## rooms first, then declared extras (braziers). The cap is LOW_LIGHTS or
+## HIGH_LIGHTS. On High the nearest HIGH_SHADOWS of that list cast shadows,
+## which lands on torches rather than extras.
 func _refresh_torches() -> void:
 	var high := quality == "high"
 	var limit := ZorgAtmos.HIGH_LIGHTS if high else ZorgAtmos.LOW_LIGHTS
@@ -1108,8 +1115,15 @@ func _refresh_torches() -> void:
 	var ids: Array = room_nodes.keys()
 	var pivot := Vector3(rig.position.x, 0, rig.position.z)
 	ids.sort_custom(func(a, b): return room_nodes[a].position.distance_to(pivot) < room_nodes[b].position.distance_to(pivot))
-	for i in ids.size():
-		var light: OmniLight3D = room_nodes[ids[i]].get_meta("torch")
+	var queue: Array = []
+	for id in ids:
+		queue.append(room_nodes[id].get_meta("torch"))
+	for id in ids:
+		for light in room_nodes[id].get_meta("lights", []):
+			if light != room_nodes[id].get_meta("torch"):
+				queue.append(light)
+	for i in queue.size():
+		var light: OmniLight3D = queue[i]
 		light.visible = i < limit
 		light.shadow_enabled = i < shadows
 
@@ -1376,9 +1390,9 @@ func _process(delta: float) -> void:
 		torch_timer = 0.5
 		_refresh_torches()                   # nearest rooms to the pivot keep the lights
 	for id in room_nodes:
-		var light: OmniLight3D = room_nodes[id].get_meta("torch")
-		if light.visible:
-			ZorgAtmos.flicker(light, look_time)
+		for light in room_nodes[id].get_meta("lights", []):
+			if (light as OmniLight3D).visible:
+				ZorgAtmos.flicker(light, look_time)
 	_layout_labels()
 	for id in room_nodes:
 		var gate: Node3D = room_nodes[id].get_node_or_null("PortalGate")
