@@ -271,7 +271,7 @@ Bumping Playwright later can drop the pin.
 ## CF-013: Godot board unreadable on the web build
 - Status: Resolved
 - Recurrence: 1
-- Linked: branch `agent/grok/godot-lighting`
+- Linked: [PR #112](https://github.com/artofdream/zorg-dungeon/pull/112)
 - Sensor added: apps/godot/tests/level_smoke_test.gd
 
 The itch.io HTML5 build of level 1.2 (Contractual Obligation) showed a
