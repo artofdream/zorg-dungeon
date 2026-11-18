@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/end_banner.gd" id="1"]
+
+[node name="EndBanner" type="VBoxContainer"]
+visible = false
+mouse_filter = 2
+theme_override_constants/separation = 2
+script = ExtResource("1")

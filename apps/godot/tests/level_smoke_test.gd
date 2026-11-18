@@ -8,7 +8,8 @@ extends SceneTree
 ##  - rotate 90° and check the camera settles on a 45° + n·90° yaw;
 ##  - round 9: torch light / shadow limits per quality and the follow camera;
 ##  - round 11: Back/Esc, the ? legend and hint, Next level, Undo, turn lines;
-##  - the FPS readout: hidden until F3, then a non-zero top-right label.
+##  - the FPS readout: hidden until F3, then a non-zero top-right label;
+##  - the end banner: win and loss lines have a non-zero size in the HUD column.
 ##  - round 12: room labels never cover the HUD text on the end screens.
 ##  - low-severity UX: button/panel/plate border contrast, swatch outlines,
 ##    and the board fitting the width of a ~360 dp portrait window.
@@ -174,7 +175,7 @@ func _round11(engine: Node) -> void:
 		guard += 1
 	level.next_btn.pressed.emit()
 	_check(level.level_index == 1 and level._building() and not level.next_btn.visible and level.result.text == "",
-		"next: Next level opens %s ready to build" % engine.levels[1]["id"])
+		"next: Next level signal opens %s ready to build" % engine.levels[1]["id"])
 
 	# (4) Undo button while building (keyboard reachable), gone during a run.
 	level._open_level(0)
@@ -205,6 +206,20 @@ func _hud_text(l: Node) -> Array:
 	var out: Array = []
 	for c in l.hud_top.get_children():
 		if not (c is Control) or not c.is_visible_in_tree():
+			continue
+		if c is ZorgEndBanner:
+			for child in c.get_children():
+				if not (child is Control) or not child.is_visible_in_tree():
+					continue
+				var br: Rect2 = child.get_global_rect()
+				if child is Label:
+					if child.text.strip_edges() == "":
+						continue
+					var bz: Vector2 = child.get_theme_font("font").get_multiline_string_size(child.text, HORIZONTAL_ALIGNMENT_LEFT, br.size.x, child.get_theme_font_size("font_size"))
+					br.size.x = minf(bz.x, br.size.x)
+					out.append([child.text.substr(0, 20), br])
+				else:
+					out.append([String(child.name), br])
 			continue
 		var r: Rect2 = c.get_global_rect()
 		if c is Label:
@@ -397,6 +412,21 @@ func _initialize() -> void:
 		_check(empty_turns == 0, "%s: no empty 'Turn N:' line (%d empty)" % [engine.levels[i]["id"], empty_turns])
 		var next_wanted: bool = String(case0["score"]["outcome"]) == "win" and i + 1 < engine.levels.size()
 		_check(level.next_btn.visible == next_wanted, "%s: Next level button %s" % [engine.levels[i]["id"], "shown" if next_wanted else "hidden"])
+		var outcome := String(case0["score"]["outcome"])
+		if outcome == "win" or outcome == "loss":
+			var banner: ZorgEndBanner = level.end_banner
+			var br: Rect2 = banner.get_global_rect()
+			var hr: Rect2 = level.hud_top.get_global_rect()
+			var title_r: Rect2 = level.title.get_global_rect()
+			_check(banner.is_showing() and br.size.x > 1.0 and br.size.y > 1.0
+				and br.position.x >= hr.position.x - 1.0 and br.end.x <= hr.end.x + 1.0
+				and br.position.y + 1.0 >= title_r.end.y,
+				"%s: end banner shown, non-zero, in the HUD column under the title (%s in %s)" % [engine.levels[i]["id"], br, hr])
+			_check(level.result.get_global_rect().size.y > 1.0, "%s: banner line has a non-zero height" % engine.levels[i]["id"])
+			if next_wanted:
+				var nr: Rect2 = level.next_btn.get_global_rect()
+				_check(nr.size.x > 1.0 and nr.size.y > 1.0 and nr.position.y >= level.result.get_global_rect().position.y,
+					"%s: Next level sits in the banner under the line (%s)" % [engine.levels[i]["id"], nr])
 		if not casts.is_empty():
 			await process_frame
 			_check(level.spell_bar.get_children().all(func(b): return b.disabled), "%s: no spell can be cast after the run ends" % engine.levels[i]["id"])

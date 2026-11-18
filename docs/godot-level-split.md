@@ -23,8 +23,8 @@ test reads.
 | PR | Component | Why this order |
 |---|---|---|
 | 1 | Quit dialog | A modal. It is not in the HUD column, and it never reads the board or the engine. Done on main (#115, anchor fix #116). `level.gd` 1601 → 1588. |
-| 2 | FPS readout | One label (`?fps=1` or F3). The 30 FPS drop to Low stays with lighting. This slice. Top-right anchors in `_init`. `level.gd` 1588 → 1593. |
-| 3 | End banner | The result line and the Next level button. The level screen still reads `engine.score()` and passes the sentence in. The nodes stay under the top HUD column so label collision rects do not move. |
+| 2 | FPS readout | One label (`?fps=1` or F3). The 30 FPS drop to Low stays with lighting. Done on main (#117). Top-right anchors in `_init`. `level.gd` 1588 → 1593. |
+| 3 | End banner | The result line and the Next level button. The level screen still reads `engine.score()` and passes the sentence in. This slice. Top-left anchors in `_init`, inside the HUD column. `level.gd` 1593 → 1591. |
 | 4 | Help and the first-run hint | The "?" legend. Wording stays in `scripts/help.gd`. Dismissing the hint asks the level screen to refit the camera. |
 | 5 | Level picker | The level grid and the Graphics button. Choosing a level or a quality is a signal. Applying it stays on the level screen. |
 | 6 | Lighting | World environment, sun, torch budget, flicker, and the 30 FPS fallback. `levels/visual-lights.json` stays cosmetic. `set_quality`, `torch_lights`, and `env` stay as forwards for the smoke test. |
@@ -45,7 +45,7 @@ Parent calls are methods. Child replies are signals.
 |---|---|---|
 | Quit dialog (`scenes/quit_dialog.tscn`) | `open()`, `close()`, `set_quit_offered(on)` | `quit_requested` (player pressed Quit), `dismissed` (closed without quitting) |
 | FPS readout (`scenes/fps_readout.tscn`) | `set_visible_fps(on)`, `set_line(text)`, `set_top_offset(y)`, `toggle()` | `toggled(shown)` |
-| End banner | `show_line(text, show_next)`, `clear()` | `next_level_pressed` |
+| End banner (`scenes/end_banner.tscn`) | `show_line(text, show_next)`, `clear()`, `apply_visibility()` | `next_level_pressed` |
 | Help and hint | `open(viewport_size)`, `close()`, `show_hint(on)` | `closed`, `hint_dismissed` |
 | Level picker | `set_open(on)`, `set_current(index)`, `set_quality_label(text)` | `level_selected(index)`, `closed`, `quality_toggled` |
 | Lighting | `set_quality(q, save)`, `note_rooms(nodes)`, `tick(delta, pivot)` | `quality_changed(q)` |
@@ -68,5 +68,12 @@ already swallows that key, and calls `toggle()`. The readout emits
 `toggled`. The level screen still writes the line (`set_line`) and still
 drops High to Low under 30 FPS. `level.gd` is 1593 lines after this slice
 (1588 before it, 1601 before the quit dialog).
+
+Slice 3 is the end banner. Its anchors are `PRESET_TOP_LEFT`, set in
+`_init` before `add_child`. It lives in the top HUD column, not as a
+full-rect overlay, and it reports the same text rects the column used
+before so room labels do not move. The level screen still calls
+`engine.score()` and passes the sentence to `show_line`. The banner
+emits `next_level_pressed`. `level.gd` is 1591 lines after this slice.
 
 See [[LEARNINGS-godot]].
