@@ -14,6 +14,8 @@ extends Node3D
 ## the win banner, an on-screen Undo while building, no empty turn lines.
 ## The quit question is scenes/quit_dialog.tscn. It emits quit_requested;
 ## this screen still chooses history.back() on the web, or quitting the app.
+## The FPS counter is scenes/fps_readout.tscn. F3 toggles it (signal
+## toggled). This screen still writes the line and still drops High to Low.
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
@@ -65,7 +67,8 @@ var target_zoom := 24.0
 var pitch := 53.13               # atan(0.8 / 0.6): the round 1-5 angle
 var target_pitch := 53.13
 var yaw_tween: Tween
-var fps_label: Label
+var fps_readout: ZorgFpsReadout
+var fps_shown := false
 var perf_frames := 0
 var perf_time := 0.0
 var perf_checked := false
@@ -250,11 +253,10 @@ func _build_ui() -> void:
 	help_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	help_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	ui_root.add_child(help_btn)
-	fps_label = _label(16)
-	fps_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	fps_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	fps_label.visible = _url_flag("fps", "0") == "1"
-	ui_root.add_child(fps_label)
+	fps_readout = preload("res://scenes/fps_readout.tscn").instantiate() as ZorgFpsReadout
+	fps_readout.toggled.connect(_on_fps_toggled)
+	fps_readout.set_visible_fps(_url_flag("fps", "0") == "1")
+	ui_root.add_child(fps_readout)
 
 	levels_panel = PanelContainer.new()
 	levels_panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -528,7 +530,7 @@ func _apply_margins() -> void:
 	goal.custom_minimum_size.x = w
 	status.custom_minimum_size.x = w
 	log_label.custom_minimum_size.x = w
-	fps_label.offset_top = ZorgHud.TARGET + 6
+	fps_readout.set_top_offset(ZorgHud.TARGET + 6)
 	help_btn.offset_right = -(levels_btn.get_combined_minimum_size().x + 8.0)
 	help_btn.offset_left = help_btn.offset_right - ZorgHud.TARGET
 	cam_grid.offset_left = -cam_grid.get_combined_minimum_size().x
@@ -950,7 +952,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_C:
 			_on_cam_mode()
 		elif event.keycode == KEY_F3:
-			fps_label.visible = not fps_label.visible
+			fps_readout.toggle()
 
 ## Keyboard placement: pick a tray room with Enter/Space, move the ghost with
 ## the arrow keys, Enter/Space drops it (only on an allowed spot), Esc cancels.
@@ -1127,9 +1129,12 @@ func _url_flag(name: String, fallback: String) -> String:
 	var q = JavaScriptBridge.eval("new URLSearchParams(location.search).get('%s')" % name, true)
 	return fallback if q == null else String(q)
 
+func _on_fps_toggled(shown: bool) -> void:
+	fps_shown = shown
+
 func _perf_tick(delta: float) -> void:
-	if fps_label and fps_label.visible:
-		fps_label.text = "%d FPS  %s" % [Engine.get_frames_per_second(), quality.capitalize()]
+	if fps_shown:
+		fps_readout.set_line("%d FPS  %s" % [Engine.get_frames_per_second(), quality.capitalize()])
 		fps_log -= delta
 		if fps_log <= 0.0:                  # also in the log (adb logcat), for phone tests
 			fps_log = 2.0

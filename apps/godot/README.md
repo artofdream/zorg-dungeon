@@ -323,6 +323,7 @@ downloaded from broth.itch.zone and checked against a pinned SHA-256.
 - **Level screen split:** `scripts/level.gd` is being split into scenes
   that signal this screen. The order and the signals are
   `docs/godot-level-split.md`. The rules copy and the golden files stay
-  put. The first scene is `scenes/quit_dialog.tscn`.
+  put. The quit question is `scenes/quit_dialog.tscn`. The FPS counter
+  is `scenes/fps_readout.tscn`.
 
 See `docs/adr/0008-godot-port-milestone-1.md`.

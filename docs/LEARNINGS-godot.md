@@ -106,5 +106,7 @@ changed. The smoke test still addresses `quit_dlg`, `quit_stay`, and
 Set a full-rect control's anchors before it enters the tree (`_init`,
 or before `add_child`). `set_anchors_preset` inside `_ready` leaves the
 control at 0×0, and the smoke test now checks that the quit dialog
-covers the HUD.
+covers the HUD. The FPS readout uses `PRESET_TOP_RIGHT` in `_init`, not
+full-rect, and the smoke test checks that F3 shows a non-zero label at
+the top right.
 
