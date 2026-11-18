@@ -12,6 +12,8 @@ extends Node3D
 ## Round 11 (UX audit, medium findings): Back/Esc closes a popup or asks
 ## "Quit Zorg?", a "?" room legend with a first-run hint, "Next level" on
 ## the win banner, an on-screen Undo while building, no empty turn lines.
+## The quit question is scenes/quit_dialog.tscn. It emits quit_requested;
+## this screen still chooses history.back() on the web, or quitting the app.
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
@@ -107,7 +109,7 @@ var undo_btn: Button
 var next_btn: Button
 var help_dlg: Control            # modal: backdrop + room legend
 var help_box: VBoxContainer
-var quit_dlg: Control            # modal: "Quit Zorg?" Stay / Quit
+var quit_dlg: ZorgQuitDialog     # scenes/quit_dialog.tscn: "Quit Zorg?" Stay / Quit
 var quit_stay: Button
 var quit_btn: Button
 var embedded := false            # web build inside an iframe (itch.io): no Quit
@@ -411,23 +413,11 @@ func _build_dialogs() -> void:
 	close.size_flags_horizontal = Control.SIZE_SHRINK_END
 	hb.add_child(close)
 
-	var q: Array = _modal("QuitDialog")
-	quit_dlg = q[0]
-	var qb: VBoxContainer = q[1]
-	var qt := _label(22)
-	qt.text = "Quit Zorg?"
-	qt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	qb.add_child(qt)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	qb.add_child(row)
-	quit_stay = _btn("Stay", func(): quit_dlg.visible = false)
-	quit_stay.custom_minimum_size.x = 120
-	row.add_child(quit_stay)
-	quit_btn = _btn("Quit", _quit)
-	quit_btn.custom_minimum_size.x = 120
-	row.add_child(quit_btn)
+	quit_dlg = preload("res://scenes/quit_dialog.tscn").instantiate() as ZorgQuitDialog
+	ui_root.add_child(quit_dlg)
+	quit_stay = quit_dlg.stay_button
+	quit_btn = quit_dlg.quit_button
+	quit_dlg.quit_requested.connect(_quit)
 	set_embedded(embedded)
 
 func open_help() -> void:
@@ -443,8 +433,7 @@ func close_help() -> void:
 	help_dlg.visible = false
 
 func _show_quit() -> void:
-	quit_dlg.visible = true
-	quit_stay.grab_focus.call_deferred()     # Enter = Stay, the safe choice
+	quit_dlg.open()                          # Enter = Stay, the safe choice
 
 func _quit() -> void:
 	if OS.has_feature("web"):
@@ -474,17 +463,15 @@ static func embedded_from_js(r: Variant) -> bool:
 ## Embedded: no Quit button, and Back/Esc with nothing open does nothing.
 func set_embedded(on: bool) -> void:
 	embedded = on
-	if quit_btn:
-		quit_btn.visible = not on
-	if on and quit_dlg and quit_dlg.visible:
-		quit_dlg.visible = false
+	if quit_dlg:
+		quit_dlg.set_quit_offered(not on)
 	print("zorg: embedded %s (Quit %s)" % [on, "hidden" if on else "shown"])
 
 ## Android Back and Esc: close the top popup (quit dialog, legend, level
 ## grid), else drop a room picked up for placing, else ask before quitting.
 func back_pressed() -> void:
 	if quit_dlg.visible:
-		quit_dlg.visible = false
+		quit_dlg.close()
 	elif help_dlg.visible:
 		close_help()
 	elif levels_panel.visible:

@@ -320,5 +320,9 @@ downloaded from broth.itch.zone and checked against a pinned SHA-256.
 - **Next:** more rooms and heroes, each with its own golden cases. Room C,
   the Gunner duration and FR-4 stay blocked until the game author answers
   (NFR-8).
+- **Level screen split:** `scripts/level.gd` is being split into scenes
+  that signal this screen. The order and the signals are
+  `docs/godot-level-split.md`. The rules copy and the golden files stay
+  put. The first scene is `scenes/quit_dialog.tscn`.
 
 See `docs/adr/0008-godot-port-milestone-1.md`.
