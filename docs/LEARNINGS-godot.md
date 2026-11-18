@@ -94,3 +94,13 @@ current levels) and High allows 8, which is the Compatibility per-object
 cap. Extra lights are declared in `apps/godot/levels/visual-lights.json`.
 The rules engine never reads that file. See [[FINDINGS]] CF-013.
 
+## 12. Split the level screen one scene at a time
+
+`scripts/level.gd` owns the board, the camera, the HUD, and the run
+playback. The order and the signals are [[godot-level-split]]. Each pull
+request takes one component. The level screen keeps calling the engine
+node. A scene does not pick a path, a score, or a winner ([[NFR-1]]).
+Leave `engine/zorg_engine.gd` and `tests/golden/` alone unless a rule
+changed. The smoke test still addresses `quit_dlg`, `quit_stay`, and
+`quit_btn` on the level node. Those are the dialog's own controls.
+
