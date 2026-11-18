@@ -9,7 +9,8 @@ extends SceneTree
 ##  - round 9: torch light / shadow limits per quality and the follow camera;
 ##  - round 11: Back/Esc, the ? legend and hint, Next level, Undo, turn lines;
 ##  - the FPS readout: hidden until F3, then a non-zero top-right label;
-##  - the end banner: win and loss lines have a non-zero size in the HUD column.
+##  - the end banner: win and loss lines have a non-zero size in the HUD column;
+##  - the room legend covers the HUD, and the first-run hint sits under the goal.
 ##  - round 12: room labels never cover the HUD text on the end screens.
 ##  - low-severity UX: button/panel/plate border contrast, swatch outlines,
 ##    and the board fitting the width of a ~360 dp portrait window.
@@ -141,6 +142,12 @@ func _round11(engine: Node) -> void:
 	level.help_btn.pressed.emit()
 	await process_frame
 	_check(level.help_dlg.visible, "help: ? opens the room legend")
+	var legend_r: Rect2 = level.help_dlg.get_global_rect()
+	var hud_r: Rect2 = level.ui_root.get_global_rect()
+	_check(legend_r.size.x > 1.0 and legend_r.size.y > 1.0 and legend_r.grow(1.0).encloses(hud_r),
+		"help: legend covers the HUD and has a non-zero size (%s vs %s)" % [legend_r, hud_r])
+	_check(level.help_box.get_combined_minimum_size().y > 1.0,
+		"help: legend body has a non-zero size %s" % level.help_box.get_combined_minimum_size())
 	var text := ""
 	for n in level.help_box.find_children("*", "Label", true, false):
 		text += (n as Label).text + "\n"
@@ -154,11 +161,19 @@ func _round11(engine: Node) -> void:
 	level.close_help()
 	# First-run hint: shown until dismissed, then remembered.
 	ZorgHelp.set_hint_seen(level.settings_path, false)
-	level.hint.visible = true
+	level.hint.show_hint(true)
+	await process_frame
+	var hint_r: Rect2 = level.hint.get_global_rect()
+	var goal_r: Rect2 = level.goal.get_global_rect()
+	var col_r: Rect2 = level.hud_top.get_global_rect()
+	_check(level.hint.visible and hint_r.size.x > 1.0 and hint_r.size.y > 1.0
+		and hint_r.position.y + 1.0 >= goal_r.position.y
+		and hint_r.position.x >= col_r.position.x - 1.0 and hint_r.end.x <= col_r.end.x + 1.0,
+		"help: hint is non-zero under the goal in the HUD column (%s)" % hint_r)
 	var got_it: Button = level.hint.find_children("*", "Button", true, false)[0]
 	got_it.pressed.emit()
 	_check(not level.hint.visible and ZorgHelp.hint_seen(level.settings_path), "help: 'Got it' hides the first-run hint and saves it")
-	level.hint.visible = true
+	level.hint.show_hint(true)
 	level.open_help()
 	_check(not level.hint.visible, "help: opening the legend also retires the hint")
 	level.close_help()
