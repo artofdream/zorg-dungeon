@@ -8,6 +8,7 @@ extends SceneTree
 ##  - rotate 90° and check the camera settles on a 45° + n·90° yaw;
 ##  - round 9: torch light / shadow limits per quality and the follow camera;
 ##  - round 11: Back/Esc, the ? legend and hint, Next level, Undo, turn lines;
+##  - the FPS readout: hidden until F3, then a non-zero top-right label.
 ##  - round 12: room labels never cover the HUD text on the end screens.
 ##  - low-severity UX: button/panel/plate border contrast, swatch outlines,
 ##    and the board fitting the width of a ~360 dp portrait window.
@@ -327,12 +328,41 @@ func _round13() -> void:
 	for i in 10:
 		await process_frame
 
+func _fps_readout() -> void:
+	var fps: ZorgFpsReadout = level.fps_readout
+	_check(fps != null, "fps: readout exists")
+	if fps == null:
+		return
+	_check(not fps.visible, "fps: hidden until ?fps=1 or F3")
+	_check(is_equal_approx(fps.offset_top, ZorgHud.TARGET + 6.0),
+		"fps: sits under the top buttons (offset %s)" % fps.offset_top)
+	_key(KEY_F3)
+	await process_frame
+	await process_frame
+	_check(fps.visible, "fps: F3 shows the readout")
+	_check(fps.size.x > 0.0 and fps.size.y > 0.0, "fps: shown readout has a non-zero size %s" % fps.size)
+	_check(fps.text.contains("FPS"), "fps: line is the counter (%s)" % fps.text)
+	var ui: Control = level.ui_root
+	var r := fps.get_global_rect()
+	var u := ui.get_global_rect()
+	_check(absf(r.end.x - u.end.x) <= 2.0 and r.position.y >= u.position.y - 1.0 and r.end.y <= u.position.y + ZorgHud.TARGET + 48.0,
+		"fps: readout is at the top right (%s vs %s)" % [r, u])
+	level.back_pressed()
+	_key(KEY_F3)
+	await process_frame
+	_check(level.quit_dlg.visible and fps.visible, "fps: F3 does nothing behind the quit question")
+	level.quit_dlg.close()
+	_key(KEY_F3)
+	await process_frame
+	_check(not fps.visible and not level.quit_dlg.visible, "fps: F3 hides the readout again")
+
 func _initialize() -> void:
 	level = load("res://scenes/level.tscn").instantiate()
 	level.settings_path = "user://smoke_settings.cfg"   # leave the real settings alone
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(level.settings_path))
 	root.add_child(level)
 	await process_frame
+	await _fps_readout()
 	var engine: Node = level.get_node("Engine")
 	for i in engine.levels.size():
 		level._open_level(i)

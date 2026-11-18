@@ -22,8 +22,8 @@ test reads.
 
 | PR | Component | Why this order |
 |---|---|---|
-| 1 | Quit dialog | A modal. It is not in the HUD column, and it never reads the board or the engine. Back, Stay, and the iframe case are already in the smoke test. |
-| 2 | FPS readout | One label (`?fps=1` or F3). The 30 FPS drop to Low stays with lighting. |
+| 1 | Quit dialog | A modal. It is not in the HUD column, and it never reads the board or the engine. Done on main (#115, anchor fix #116). `level.gd` 1601 → 1588. |
+| 2 | FPS readout | One label (`?fps=1` or F3). The 30 FPS drop to Low stays with lighting. This slice. Top-right anchors in `_init`. `level.gd` 1588 → 1593. |
 | 3 | End banner | The result line and the Next level button. The level screen still reads `engine.score()` and passes the sentence in. The nodes stay under the top HUD column so label collision rects do not move. |
 | 4 | Help and the first-run hint | The "?" legend. Wording stays in `scripts/help.gd`. Dismissing the hint asks the level screen to refit the camera. |
 | 5 | Level picker | The level grid and the Graphics button. Choosing a level or a quality is a signal. Applying it stays on the level screen. |
@@ -44,7 +44,7 @@ Parent calls are methods. Child replies are signals.
 | Component | Methods the level screen calls | Signals the component emits |
 |---|---|---|
 | Quit dialog (`scenes/quit_dialog.tscn`) | `open()`, `close()`, `set_quit_offered(on)` | `quit_requested` (player pressed Quit), `dismissed` (closed without quitting) |
-| FPS readout | `set_visible_fps(on)`, `set_line(text)` | `toggled(on)` if F3 moves into the readout; otherwise the level screen keeps the key |
+| FPS readout (`scenes/fps_readout.tscn`) | `set_visible_fps(on)`, `set_line(text)`, `set_top_offset(y)`, `toggle()` | `toggled(shown)` |
 | End banner | `show_line(text, show_next)`, `clear()` | `next_level_pressed` |
 | Help and hint | `open(viewport_size)`, `close()`, `show_hint(on)` | `closed`, `hint_dismissed` |
 | Level picker | `set_open(on)`, `set_current(index)`, `set_quality_label(text)` | `level_selected(index)`, `closed`, `quality_toggled` |
@@ -61,5 +61,12 @@ still owns Back/Esc ordering
 then the quit question) and still decides `history.back()` on the web
 versus `SceneTree.quit()` everywhere else. The dialog never sees that
 choice: it only emits `quit_requested`.
+
+Slice 2 is the FPS readout. Its anchors are `PRESET_TOP_RIGHT`, set in
+`_init` before `add_child`. F3 stays on the level screen, because a popup
+already swallows that key, and calls `toggle()`. The readout emits
+`toggled`. The level screen still writes the line (`set_line`) and still
+drops High to Low under 30 FPS. `level.gd` is 1593 lines after this slice
+(1588 before it, 1601 before the quit dialog).
 
 See [[LEARNINGS-godot]].
