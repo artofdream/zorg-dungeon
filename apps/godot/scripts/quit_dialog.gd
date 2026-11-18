@@ -12,12 +12,18 @@ signal quit_requested
 var stay_button: Button
 var quit_button: Button
 
-func _ready() -> void:
+## Anchors before the node enters the tree. set_anchors_preset() inside
+## _ready (after add_child) keeps the control at 0×0: Godot preserves the
+## empty size by writing negative offsets. The old modal helper set the
+## preset first, then parented the control. _init runs during instantiate,
+## still before the level screen calls add_child.
+func _init() -> void:
 	name = "QuitDialog"
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP     # taps don't reach the board
 	visible = false
 
+func _ready() -> void:
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.55)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
