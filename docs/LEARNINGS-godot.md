@@ -103,4 +103,8 @@ node. A scene does not pick a path, a score, or a winner ([[NFR-1]]).
 Leave `engine/zorg_engine.gd` and `tests/golden/` alone unless a rule
 changed. The smoke test still addresses `quit_dlg`, `quit_stay`, and
 `quit_btn` on the level node. Those are the dialog's own controls.
+Set a full-rect control's anchors before it enters the tree (`_init`,
+or before `add_child`). `set_anchors_preset` inside `_ready` leaves the
+control at 0×0, and the smoke test now checks that the quit dialog
+covers the HUD.
 

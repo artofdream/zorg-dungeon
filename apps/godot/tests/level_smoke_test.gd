@@ -81,6 +81,8 @@ func _round11(engine: Node) -> void:
 	_check(not level.help_dlg.visible and not level.quit_dlg.visible, "back: Android Back closes the room legend")
 	level.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	_check(level.quit_dlg.visible, "back: with nothing open, Back asks 'Quit Zorg?'")
+	_check(level.quit_dlg.get_global_rect().grow(1.0).encloses(level.ui_root.get_global_rect()),
+		"quit dialog covers the HUD (%s vs %s)" % [level.quit_dlg.get_global_rect(), level.ui_root.get_global_rect()])
 	level.quit_stay.pressed.emit()
 	_check(not level.quit_dlg.visible, "back: Stay closes the quit question")
 	_key(KEY_ESCAPE)

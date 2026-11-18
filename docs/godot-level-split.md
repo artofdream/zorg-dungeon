@@ -53,7 +53,10 @@ Parent calls are methods. Child replies are signals.
 | Board build | `set_tray(entries)`, `set_building(on)`, `cancel()` | `place_requested(id, slot)`, `move_requested(id, slot)`, `undo_requested` |
 | Run playback | `set_spells(list, allowed)`, `set_turn_line(text)`, `set_playing(on)` | `play_toggled`, `step_requested`, `cast_requested(spell_id)` |
 
-PR 1 is the quit dialog. The level screen still owns Back/Esc ordering
+PR 1 is the quit dialog. Its full-rect anchors are set in `_init`,
+before the level screen parents it. `set_anchors_preset` inside `_ready`
+leaves the overlay at 0×0, so clicks reach the board. The level screen
+still owns Back/Esc ordering
 (quit dialog, then legend, then the level grid, then a picked-up room,
 then the quit question) and still decides `history.back()` on the web
 versus `SceneTree.quit()` everywhere else. The dialog never sees that
