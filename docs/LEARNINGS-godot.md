@@ -108,5 +108,7 @@ or before `add_child`). `set_anchors_preset` inside `_ready` leaves the
 control at 0×0, and the smoke test now checks that the quit dialog
 covers the HUD. The FPS readout uses `PRESET_TOP_RIGHT` in `_init`, not
 full-rect, and the smoke test checks that F3 shows a non-zero label at
-the top right.
+the top right. The end banner uses `PRESET_TOP_LEFT` in `_init` and stays
+inside the HUD column. Its line rects are the same measurement the column
+used, so room labels do not jump. The smoke test checks a win and a loss.
 

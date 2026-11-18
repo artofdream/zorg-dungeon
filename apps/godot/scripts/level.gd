@@ -86,6 +86,7 @@ var goal: Label
 var picker: GridContainer
 var tray: HFlowContainer
 var status: Label
+var end_banner: ZorgEndBanner
 var result: Label
 var log_label: Label
 var play_btn: Button
@@ -229,14 +230,11 @@ func _build_ui() -> void:
 	status = _label(16)
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	hud_top.add_child(status)
-	result = _label(22)
-	result.add_theme_color_override("font_color", Color(1.0, 0.92, 0.45))
-	hud_top.add_child(result)
-	next_btn = _btn("Next level >", func(): _open_level(level_index + 1))
-	next_btn.custom_minimum_size.x = 150
-	next_btn.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	next_btn.visible = false
-	hud_top.add_child(next_btn)
+	end_banner = preload("res://scenes/end_banner.tscn").instantiate() as ZorgEndBanner
+	end_banner.next_level_pressed.connect(func(): _open_level(level_index + 1))
+	hud_top.add_child(end_banner)
+	result = end_banner.line_label
+	next_btn = end_banner.next_button
 	log_label = _label(16)
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	hud_top.add_child(log_label)
@@ -1360,8 +1358,7 @@ func _process(delta: float) -> void:
 	zoom = target_zoom if absf(target_zoom - zoom) < 0.01 else lerpf(zoom, target_zoom, k)
 	pitch = target_pitch if absf(target_pitch - pitch) < 0.01 else lerpf(pitch, target_pitch, k)
 	_update_camera()
-	result.visible = result.text != ""        # empty lines take no room from the board
-	status.visible = not result.visible      # round 12: the banner replaces "Extermination: ..." 
+	status.visible = not end_banner.apply_visibility()   # banner replaces "Extermination: ..." 
 	log_label.visible = log_label.text != "" or not _building()
 	if fit_wait > 0:
 		fit_wait -= 1
@@ -1447,6 +1444,8 @@ func _layout_labels() -> void:
 func hud_text_rects() -> Array[Rect2]:
 	var out: Array[Rect2] = []
 	for c in hud_top.get_children():
+		if c is ZorgEndBanner:
+			out.append_array((c as ZorgEndBanner).line_rects()); continue
 		var ctl := c as Control
 		if ctl == null or not ctl.is_visible_in_tree():
 			continue
@@ -1515,23 +1514,24 @@ func _show_result() -> void:
 	_request_fit(1)                          # the result banner takes a row
 	var sc: Dictionary = engine.score()
 	recording["outcome"] = engine.state["outcome"]
+	var text := "Not won yet."
+	var show_next := false
 	match String(sc["outcome"]):
 		"win":
-			result.text = "You win! Every hero died and the rules hold."
-			next_btn.visible = level_index + 1 < engine.levels.size()
+			text = "You win! Every hero died and the rules hold."
+			show_next = level_index + 1 < engine.levels.size()
 		"loss":
-			result.text = "You lose: a hero reached Zorg."
+			text = "You lose: a hero reached Zorg."
 		_:
 			var failed: Array = []
 			for c in sc["constraints"]:
 				if c["status"] != "held":
 					failed.append("%s (%s)" % [c["id"], c["status"]])
 			if not failed.is_empty():
-				result.text = "Not won yet: rule not met " + ", ".join(failed)
+				text = "Not won yet: rule not met " + ", ".join(failed)
 			elif String(recording.get("outcome", "")) == "stalemate":
-				result.text = "Not won yet: a hero is stuck and can't move."
-			else:
-				result.text = "Not won yet."
+				text = "Not won yet: a hero is stuck and can't move."
+	end_banner.show_line(text, show_next)
 
 func _on_play() -> void:
 	if _ensure_recording():
@@ -1580,9 +1580,7 @@ func _on_reset() -> void:
 	if play_btn:
 		play_btn.text = "Play"
 	heroes.clear()
-	result.text = ""
-	if next_btn:
-		next_btn.visible = false
+	end_banner.clear()
 	log_label.text = ""
 	tray.visible = true
 	_request_fit(1)
