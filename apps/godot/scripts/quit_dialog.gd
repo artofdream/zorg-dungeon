@@ -14,7 +14,8 @@ var quit_button: Button
 
 func _ready() -> void:
 	name = "QuitDialog"
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Parent already has a size. Preset alone keeps this control 0x0.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP     # taps don't reach the board
 	visible = false
 
