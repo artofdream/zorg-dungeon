@@ -1,6 +1,6 @@
 # Learnings from the Godot port (rounds 1–8)
 
-Plain-English notes from PRs #84–#95, kept so the next agent doesn't rediscover them. The decision record is [[0008-godot-port-milestone-1]]. The repeatable recipes are rows in [[SKILL_MATRIX]] (`engine-parity-goldens`, `adb-phone-test`). [[GAME_SPEC]] wins on any rule question.
+Plain-English notes from PRs #84–#95, kept so the next agent doesn't rediscover them. The decision record is [[0008-godot-port-milestone-1]]. The repeatable recipes are rows in [[SKILL_MATRIX]] (`engine-parity-goldens`, `adb-phone-test`) and the SKILL.md files under `.cursor/skills/` (`godot-headless-verify`, `debug-apk-reinstall`, `godot-cosmetic-lights`, `zorg-pr`). [[GAME_SPEC]] wins on any rule question.
 
 ## 1. Two engines, one set of answers
 
@@ -14,7 +14,7 @@ The TypeScript engine in `packages/engine` is the referee ([[NFR-1]], [[NFR-10]]
 
 ## 2. Debug APKs need an uninstall first
 
-CI makes a new throwaway debug key on every run. Android refuses to update an app signed with a different key, so every new APK needs `adb uninstall` before `adb install`. This also wipes the app's saved data, which is fine for a debug build. There's no release signing and no store upload. The user's Android developer account is never used.
+CI makes a new throwaway debug key on every run. Android then reports `INSTALL_FAILED_UPDATE_INCOMPATIBLE` if `link.artof.zorg` is already installed. Uninstall that package only (`adb uninstall link.artof.zorg`), then `adb install`. The steps are `.cursor/skills/debug-apk-reinstall/SKILL.md`. This also wipes the app's saved data, which is fine for a debug build. There's no release signing and no store upload. The user's Android developer account is never used.
 
 ## 3. Caching hid new builds
 

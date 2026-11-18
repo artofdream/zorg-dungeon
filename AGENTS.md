@@ -232,6 +232,8 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
   AEA matrix [!512](https://gitlab.com/artof-group/adaptive-experience-architecture/-/merge_requests/512))
   (published as `skills.html`). See [[SKILL_MATRIX]]. Compose with
   persona-journey / kid-rules pages; do not rewrite that copy here.
+  `.cursor/skills/<name>/SKILL.md` — the short recipes for the Godot
+  loop and for opening a PR (§9). Load the file. The matrix says why.
 - `scripts/*.mjs` — the governance checks, runnable locally
   (`pnpm governance`) exactly as CI runs them.
 
@@ -259,7 +261,8 @@ godot --headless --path apps/godot --script res://tests/level_smoke_test.gd
 `pnpm test` does not start Godot. The `ci` workflow does not either. The
 `godot` workflow does, on pull requests that touch `apps/godot/**`,
 `packages/engine/**`, or `.github/workflows/godot.yml`. Exports and the
-web boot check are in §8.
+web boot check are in §8. Exit codes, the stock 4.7.2 binary, and the
+web boot check are the `godot-headless-verify` skill in §9.
 
 ## 8. Godot port
 
@@ -307,7 +310,8 @@ The copy is checked against a recording from the TypeScript engine:
 
 After a change to `packages/engine`, run the golden script without
 `--check` and commit the files it writes, then run the parity script.
-The recipe is the `engine-parity-goldens` row in [[SKILL_MATRIX]].
+The history row is `engine-parity-goldens` in [[SKILL_MATRIX]]. The
+commands and exit codes are `.cursor/skills/godot-headless-verify/SKILL.md`.
 
 ### Test harness
 
@@ -379,9 +383,11 @@ Debug exports use the same flags as CI, from `apps/godot`, after
 `godot --headless --path . --import`. The Android export needs
 `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER`,
 and `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`. CI creates a throwaway debug
-keystore for that run and discards it. Each new APK needs an uninstall
-before install, because the key changes. There is no release keystore in
-this repo.
+keystore for that run and discards it. Android then reports a signature
+mismatch if `link.artof.zorg` is already installed. Uninstall that
+package only, then install again. Steps:
+`.cursor/skills/debug-apk-reinstall/SKILL.md`. There is no release
+keystore in this repo.
 
 ```
 godot --headless --path . --export-debug Linux build/linux/zorg.x86_64
@@ -399,3 +405,17 @@ apostrophe in the product name made that wrapper a shell error) and that
 ```
 node tests/web_boot_check.mjs build/web
 ```
+
+## 9. Repo skills
+
+Load the `SKILL.md` before re-deriving the commands. [[SKILL_MATRIX]]
+keeps the longer history (including `engine-parity-goldens` and
+`adb-phone-test`). These four files are the recipes that kept getting
+rewritten into PR bodies and into §7–§8.
+
+| Skill | Scope | Why? | What |
+|---|---|---|---|
+| `godot-headless-verify` | Godot 4.7.2 headless checks and the `godot` workflow | Rounds [#84](https://github.com/artofdream/zorg-dungeon/pull/84)–[#98](https://github.com/artofdream/zorg-dungeon/pull/98) and the [#113](https://github.com/artofdream/zorg-dungeon/pull/113) docs refresh each restated the golden script, `parity_test.gd`, `level_smoke_test.gd`, and the web boot check. Exit codes lived in the scripts and in `.github/workflows/godot.yml`, so the next agent re-derived them. | [`.cursor/skills/godot-headless-verify/SKILL.md`](.cursor/skills/godot-headless-verify/SKILL.md). Stock `4.7.2-stable` binary. Regenerate or `--check` the recording. Run the two `SceneTree` scripts and `web_boot_check.mjs`. Read the same exit codes CI reads. |
+| `debug-apk-reinstall` | Android debug APK from the `godot` workflow | CI discards the debug key every run. Phone rounds [#92](https://github.com/artofdream/zorg-dungeon/pull/92)–[#95](https://github.com/artofdream/zorg-dungeon/pull/95) and [[LEARNINGS-godot]] kept hitting the update refusal. The package name lived only in `apps/godot/export_presets.cfg`. | [`.cursor/skills/debug-apk-reinstall/SKILL.md`](.cursor/skills/debug-apk-reinstall/SKILL.md). Download `zorg-godot-android-debug-apk`, record its SHA-256, install it, and `adb uninstall link.artof.zorg` only after `INSTALL_FAILED_UPDATE_INCOMPATIBLE`. |
+| `godot-cosmetic-lights` | `apps/godot/levels/visual-lights.json` | [#112](https://github.com/artofdream/zorg-dungeon/pull/112), CF-013, and the 2026-11-15 journal: the dark board was the light setup. Braziers went in that JSON. The rules engine and the golden files stayed as they were. [#113](https://github.com/artofdream/zorg-dungeon/pull/113) had to say again that the golden script never writes the file. | [`.cursor/skills/godot-cosmetic-lights/SKILL.md`](.cursor/skills/godot-cosmetic-lights/SKILL.md). Edit the JSON for an extra brazier or omni. Leave `packages/engine`, the GDScript rules, and the golden files alone. Re-run the headless smoke test. |
+| `zorg-pr` | Pull requests on this repo | Grok rounds [#84](https://github.com/artofdream/zorg-dungeon/pull/84)–[#113](https://github.com/artofdream/zorg-dungeon/pull/113) each used `agent/grok/<task>`, a small diff, and a "do not merge" line. [#91](https://github.com/artofdream/zorg-dungeon/pull/91), [#93](https://github.com/artofdream/zorg-dungeon/pull/93), [#95](https://github.com/artofdream/zorg-dungeon/pull/95), [#98](https://github.com/artofdream/zorg-dungeon/pull/98), and [#104](https://github.com/artofdream/zorg-dungeon/pull/104) were separate Bugbot follow-ups. [#107](https://github.com/artofdream/zorg-dungeon/pull/107) and [#113](https://github.com/artofdream/zorg-dungeon/pull/113) still had to say the PR does not approve `production` deploys. | [`.cursor/skills/zorg-pr/SKILL.md`](.cursor/skills/zorg-pr/SKILL.md). Branch `agent/grok/<task>`. Keep the PR small. When Godot or the engine changes, parity exits 0 and the debug APK artifact is on the run. Leave merge and deploy approval to the owner. |

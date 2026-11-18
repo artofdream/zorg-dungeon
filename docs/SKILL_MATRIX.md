@@ -93,7 +93,7 @@ These are Documented recipes, not status promotions. Background is in [[LEARNING
 
 1. Port the rule into the GDScript engine (`apps/godot/engine`). The TS engine stays the reference ([[NFR-1]], [[NFR-10]]).
 2. Add the fixed placements to `packages/engine/scripts/godot-golden.mjs`. Run it to rewrite `apps/godot/tests/golden/*.json`. Run it with `--check` to confirm there's no drift.
-3. Run `godot --headless --path apps/godot --script res://tests/parity_test.gd`. Every case must match.
+3. Run `godot --headless --path apps/godot --script res://tests/parity_test.gd`. Every case must match. Exit codes and the web boot check: `.cursor/skills/godot-headless-verify/SKILL.md`.
 4. Plant a bug in the new rule locally. Watch at least one case fail, revert, and write the result in the PR.
 5. If a rule has no shipped fixture, compare against a small TS table instead (as was done for poison ticks, tolls and portals).
 6. Say **Simulated** (CI tests), never Live.
@@ -101,11 +101,22 @@ These are Documented recipes, not status promotions. Background is in [[LEARNING
 ### `adb-phone-test`
 
 1. Download the CI debug APK. Record its SHA-256.
-2. Check the package list for the Zorg package only. Run `adb uninstall` first, because every CI run uses a new debug key. Then `adb install`.
+2. Check the package list for the Zorg package only. The package is `link.artof.zorg`. Uninstall that package only, and only after a signature mismatch. Steps: `.cursor/skills/debug-apk-reinstall/SKILL.md`.
 3. Drive the app with `input tap` and `input swipe`. There's no pinch, so use the zoom buttons. Back quits the app.
 4. Use `screencap` for stills. Use `screenrecord --time-limit` of 180 s or less, stopped with `pkill -2`. Use `logcat -d --pid <zorg pid>` for the log.
 5. Pull the media, then delete everything you wrote to the phone's sdcard. Confirm nothing is left.
 6. Never open other apps, read user data, change settings beyond install, or copy credentials. Commit no media that shows personal data.
+
+### SKILL.md files (load these; this page stays the history)
+
+The commands that kept being copied into PR bodies and into [[AGENTS]] live under `.cursor/skills/`. [[AGENTS]] §9 is the same four rows. These are Documented recipes, not a [[STATUS_LEDGER]] promotion.
+
+| Skill | Scope | Why? (historical evidence) | What (recipe / responsibility) |
+|---|---|---|---|
+| `godot-headless-verify` | Godot 4.7.2 headless + `godot` workflow | [#84](https://github.com/artofdream/zorg-dungeon/pull/84)–[#98](https://github.com/artofdream/zorg-dungeon/pull/98) and [#113](https://github.com/artofdream/zorg-dungeon/pull/113) restated golden, parity, smoke, and web boot. Exit codes were only in the scripts and `godot.yml`. | `.cursor/skills/godot-headless-verify/SKILL.md` |
+| `debug-apk-reinstall` | Debug APK artifact `zorg-godot-android-debug-apk` | Per-run debug keys on [#92](https://github.com/artofdream/zorg-dungeon/pull/92)–[#95](https://github.com/artofdream/zorg-dungeon/pull/95). Package name only in `export_presets.cfg`. | `.cursor/skills/debug-apk-reinstall/SKILL.md`. Uninstall `link.artof.zorg` only after `INSTALL_FAILED_UPDATE_INCOMPATIBLE`. |
+| `godot-cosmetic-lights` | `apps/godot/levels/visual-lights.json` | [#112](https://github.com/artofdream/zorg-dungeon/pull/112) / CF-013. Golden script never writes that file ([#113](https://github.com/artofdream/zorg-dungeon/pull/113)). | `.cursor/skills/godot-cosmetic-lights/SKILL.md` |
+| `zorg-pr` | PRs on this repo | `agent/grok/<task>` on [#84](https://github.com/artofdream/zorg-dungeon/pull/84)–[#113](https://github.com/artofdream/zorg-dungeon/pull/113). Separate Bugbot PRs [#91](https://github.com/artofdream/zorg-dungeon/pull/91), [#93](https://github.com/artofdream/zorg-dungeon/pull/93), [#95](https://github.com/artofdream/zorg-dungeon/pull/95), [#98](https://github.com/artofdream/zorg-dungeon/pull/98), [#104](https://github.com/artofdream/zorg-dungeon/pull/104). [#107](https://github.com/artofdream/zorg-dungeon/pull/107) and [#113](https://github.com/artofdream/zorg-dungeon/pull/113) still said the author does not approve `production` deploys. | `.cursor/skills/zorg-pr/SKILL.md` |
 
 ## Cross-project fit
 
