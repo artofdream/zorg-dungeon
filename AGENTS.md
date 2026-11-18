@@ -195,12 +195,24 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
 
 ## 6. Repo shape
 
-- `packages/engine` — pure TypeScript simulation/rules engine. No DOM, no
-  UI framework. This is what `NFR-1` (determinism) and `NFR-10` (AI
-  testability) are actually about — keep it that way.
+- `packages/engine` — pure TypeScript simulation. No DOM, no UI framework.
+  It decides win, loss, score, and every turn ([[NFR-1]], [[NFR-10]]).
+  The web app and the Godot port present those outcomes. See §8.
 - `apps/web` — the Maker (construction-phase editor) and the extermination
-  playback view. Currently a 2D canvas app; see `docs/adr/0002-*.md` for
-  the planned path to 3D and to Android/tablet via Capacitor.
+  playback view. Still a 2D canvas app (Vite + React).
+  [[0002-typescript-monorepo-2d-to-3d]] keeps a later 3D pass, and a
+  Capacitor Android shell of this web app, as the plan for `apps/web`.
+  The 3D game you can run today is `apps/godot`.
+- `apps/godot` — Godot 4.7.2, GDScript only
+  ([[0008-godot-port-milestone-1]]). Thirteen levels, a GDScript copy of
+  the engine slice those levels need, and the 3D view. Evidence is
+  **Simulated**: the `godot` workflow and the headless scripts. A debug
+  APK installed by hand is not a ledger promotion. Play and export notes
+  live in `apps/godot/README.md`. Lessons live in [[LEARNINGS-godot]].
+- `apps/knowledge` — the static knowledge site. Build it with
+  `node apps/knowledge/scripts/build.mjs` (also part of `pnpm build`).
+  The `deploy-knowledge` workflow (`.github/workflows/knowledge.yml`)
+  publishes `apps/knowledge/dist` to GitHub Pages.
 - `docs/adr` — why we built it this way. `docs/journal` — what happened,
   day by day (the "second brain"). `docs/STATUS_LEDGER.md` and
   `docs/FINDINGS.md` — the honesty/antifragility ledgers above.
@@ -210,7 +222,8 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
   (published as `learn.html`). `docs/PLAYER_JOURNEYS.md` — persona UX
   validation cases (published as `journeys.html`). Not a rules rewrite.
   `docs/LEARNINGS-godot.md` — plain-English lessons from the Godot port
-  (parity, debug APKs, caching, deploy approvals, adb, UI scale, keyboard).
+  (parity, debug APKs, caching, deploy approvals, adb, UI scale, keyboard,
+  itch.io, the shared site login, and board lighting).
   `docs/SKILL_MATRIX.md` — which agent skills apply, who must load them,
   why they were chosen after the 2026-09 build, and how each row
   **Keep Learning and Apply**
@@ -226,7 +239,163 @@ See `docs/adr/0003-multi-agent-collaboration.md` for the full rationale.
 
 ```
 pnpm install
-pnpm build            # all workspaces
-pnpm test             # all workspaces
-pnpm governance       # requirements trace + honesty ledger + findings + docs graph
+pnpm build            # engine (tsc), web (Vite), knowledge site
+pnpm typecheck        # workspaces that define it (engine, web)
+pnpm lint             # workspaces that define it
+pnpm test             # Vitest in engine and web. Does not run Godot.
+pnpm governance       # requirements trace, honesty ledger, findings,
+                      # docs graph, archify honesty
+```
+
+Godot 4.7.2 (the standard build, not .NET), from the repo root:
+
+```
+pnpm --filter @zorg/engine build
+node packages/engine/scripts/godot-golden.mjs --check
+godot --headless --path apps/godot --script res://tests/parity_test.gd
+godot --headless --path apps/godot --script res://tests/level_smoke_test.gd
+```
+
+`pnpm test` does not start Godot. The `ci` workflow does not either. The
+`godot` workflow does, on pull requests that touch `apps/godot/**`,
+`packages/engine/**`, or `.github/workflows/godot.yml`. Exports and the
+web boot check are in §8.
+
+## 8. Godot port
+
+### Outcomes
+
+The TypeScript engine in `packages/engine` decides game outcomes. Godot
+only presents them. The parity tests enforce that.
+
+Godot ships a GDScript copy, `apps/godot/engine/zorg_engine.gd`
+(`ZorgEngine`), so a build can step without Node.
+`apps/godot/scripts/engine_node.gd` steps that copy one action at a time.
+The parity test drives the same copy through `run_turns`. Scenes draw the events
+the copy returns. They do not pick a path, a score, or a winner. A rule
+the copy does not implement fails closed ([[NFR-8]]).
+
+The copy is checked against a recording from the TypeScript engine:
+
+1. `packages/engine/scripts/godot-golden.mjs` loads the thirteen fixture
+   texts named in that script, parses them with the TypeScript engine, and
+   runs each fixed placement. A case records validation codes. A valid
+   layout also records every turn's events, `runOutcome`, and `score`.
+   Spell cases also record `casts` (`afterSteps`, `spellId`), `castLog`
+   (`ok` or the refusal code), and `castWindow` (whether a cast would be
+   allowed after every turn). A successful cast is its own turn, and
+   `cast` is its first event. Before writing, the script checks that the
+   turns flatten to the same events `simulate()` returns.
+2. It writes `apps/godot/levels/<id>.json` and
+   `apps/godot/levels/index.json` (what the game loads),
+   `apps/godot/tests/golden/<id>.json` (43 cases),
+   `apps/godot/tests/golden/elements.json` (24 ticks: fire, water, ice,
+   and poison, each with three immunity sets, visited and not, from
+   `elementalTick`), and `apps/godot/tests/golden/gold-portals.json`
+   (20 toll rows from `payToll`, 36 portal rows from `evalPortalIndex`).
+   It does not write `apps/godot/levels/visual-lights.json`.
+3. `--check` rebuilds that text in memory and exits 1 if a committed file
+   differs. The `godot` workflow's `golden` job runs this after
+   `pnpm --filter @zorg/engine build`.
+4. `apps/godot/tests/parity_test.gd` is a headless `SceneTree`
+   (`godot --headless --script`). It replays each case through
+   `ZorgEngine` and fails unless validation codes, turns, outcome, and
+   score match the recording. Spell cases also check the cast log and the
+   cast window. It then checks the tick table (`elemental_tick`) and the
+   toll and portal tables (`pay_toll`, `portal_index`). The process exits
+   1 on any miss.
+
+After a change to `packages/engine`, run the golden script without
+`--check` and commit the files it writes, then run the parity script.
+The recipe is the `engine-parity-goldens` row in [[SKILL_MATRIX]].
+
+### Test harness
+
+Keep this custom headless harness. GUT and gdUnit4 stay out of the repo.
+
+`parity_test.gd` and `level_smoke_test.gd` are `SceneTree` scripts. CI
+starts them with `godot --headless --script` and reads the exit code.
+The smoke script also runs once under Xvfb, with
+`--rendering-driver opengl3`, so a real GUI drag is exercised, and it
+can save a screenshot. `apps/godot/tests/web_boot_check.mjs` serves the
+web export to headless Chrome and passes only if the export boots
+single-threaded, with `crossOriginIsolated === false` and no page
+exception.
+
+The oracle is JSON the TypeScript engine already wrote. One stock Godot
+4.7.2 binary and an exit code compare the GDScript copy to it. The
+`godot` workflow downloads that binary and does not install a test addon.
+GUT or gdUnit4 would add a second runner beside that compare.
+[[0002-typescript-monorepo-2d-to-3d]] treats engine-native test frameworks
+as extra weight on headless CI and on the requirements trace. This
+harness keeps the check next to the golden files.
+
+### Heroes, monsters, and any later AI
+
+Movement that is already a rule lives in `packages/engine` and is part of
+the outcome ([[FR-19]] through [[FR-31]], including Warrior [[FR-20]] and
+Elf [[FR-21]]). The Godot copy ports Warrior and Elf for the shipped
+levels. Anything else fails closed ([[NFR-8]]).
+
+If a Utility AI, or any other AI for heroes or monsters, is added later,
+it stays in a sandbox and off the win/loss path. It cannot change an
+outcome the engine decided ([[NFR-1]]).
+
+### Renderers, lights, assets
+
+`apps/godot/project.godot` sets `renderer/rendering_method` to `mobile`
+and `renderer/rendering_method.web` to `gl_compatibility`. The web export
+uses the Compatibility renderer (WebGL 2). Android, Linux, and Windows
+use the Mobile renderer.
+
+Extra lights are cosmetic. They live in
+`apps/godot/levels/visual-lights.json`, which `scripts/atmos.gd` reads.
+Damage rooms (type D) get a brazier from `byRoomType`. A `byRoom` entry
+keyed `levelId/roomId` replaces that room's type list. Low quality (the
+default on phones and on the web) uses at most 6 omni lights, no shadows,
+and draws the 3D view at 0.75 scale. High (the desktop default) allows 8
+omni lights, the Compatibility per-object cap. The rules engine never
+reads this file, and the golden script never writes it.
+
+The models in the repo are the CC0 KayKit files under
+`apps/godot/assets/kaykit/`, listed in `apps/godot/CREDITS.md`.
+[[0008-godot-port-milestone-1]] allows only CC0 files to be vendored.
+Licensed packs from Humble, Zenva, and Packt are never committed to this
+public repo. They live in a private asset store.
+
+### CI and exports
+
+| Workflow | When it runs | What it does |
+|---|---|---|
+| `ci` (`.github/workflows/ci.yml`) | every pull request, and every push to `main` | `pnpm install --frozen-lockfile`, `build`, `typecheck`, `lint`, `test`, then Playwright journey probes. A second job probes Caddy basic auth. Ubuntu 24.04, Node 20. Does not run Godot. |
+| `governance` | every pull request, and every push to `main` | the scripts behind `pnpm governance`. No `pnpm install`. |
+| `godot` | pull requests that touch `apps/godot/**`, `packages/engine/**`, or the workflow; also `workflow_dispatch` and `workflow_call` | Godot 4.7.2-stable. `golden` job: `godot-golden.mjs --check`. Then import, parity, headless smoke, Xvfb smoke, and debug exports for Linux, Windows, Web, and the Android APK. Then `web_boot_check.mjs`. Read-only: no deploy. Artifacts: `zorg-godot-linux-x86_64`, `zorg-godot-windows-x86_64`, `zorg-godot-web`, `zorg-godot-android-debug-apk`, screenshots. |
+| `deploy-web` | push to `main` that touches `apps/web/**`, `packages/engine/**`, the root manifests (`package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `tsconfig.base.json`), `deploy/**`, or the workflow, or by hand | `production` environment (a person approves). Publishes the Maker and Grafana. Agents do not approve. |
+| `deploy-godot` | push to `main` that touches `apps/godot/**` or the workflow, or by hand | `production` environment. Publishes the web export at `https://zorg.artof.link/godot/` on the existing host. Same shared site login as the Maker. |
+| `deploy-itch` | push to `main` that touches `apps/godot/**` or the workflow, or by hand | Calls the `godot` workflow, then butler pushes `html5`, `windows`, `linux`, and `android`. `production` environment. The itch.io page stays a draft. |
+| `deploy-knowledge` | push to `main` that touches `docs/**`, `GAME_SPEC.md`, `AGENTS.md`, `apps/knowledge/**`, or the workflow, or by hand | Builds the knowledge site and deploys GitHub Pages. |
+
+Debug exports use the same flags as CI, from `apps/godot`, after
+`godot --headless --path . --import`. The Android export needs
+`GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER`,
+and `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`. CI creates a throwaway debug
+keystore for that run and discards it. Each new APK needs an uninstall
+before install, because the key changes. There is no release keystore in
+this repo.
+
+```
+godot --headless --path . --export-debug Linux build/linux/zorg.x86_64
+godot --headless --path . --export-debug Windows build/windows/zorg.exe
+godot --headless --path . --export-debug Web build/web/index.html
+godot --headless --path . --export-debug Android build/android/zorg-debug.apk
+```
+
+The web preset turns thread support off, so the export does not need
+COOP/COEP headers. CI checks that `build/linux/zorg.sh` is absent (the
+apostrophe in the product name made that wrapper a shell error) and that
+`build/web/index.html` has threads disabled. The boot check, from
+`apps/godot`, needs Node 22 and Chrome:
+
+```
+node tests/web_boot_check.mjs build/web
 ```

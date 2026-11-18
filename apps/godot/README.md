@@ -1,7 +1,68 @@
-# Zorg — Godot 4 port (round 7)
+# Zorg — Godot 4.7.2 port
 
-A small playable slice of Zorg's Dungeon Maker in Godot 4.7.2 (GDScript
-only). The **Level** button in the top right opens a grid of thirteen real levels:
+A playable slice of Zorg's Dungeon Maker in Godot 4.7.2 (GDScript only).
+The TypeScript engine in `packages/engine` decides every win, loss, score,
+and turn (NFR-1, NFR-10). This app only presents that result. The decision
+record is `docs/adr/0008-godot-port-milestone-1.md`. Agent rules are
+`AGENTS.md` §8.
+
+## Who decides
+
+`packages/engine` is the referee. Godot keeps a GDScript copy,
+`engine/zorg_engine.gd` (`ZorgEngine`), so a build can step without Node.
+`scripts/engine_node.gd` calls that copy one action at a time. Scenes draw
+the events it returns. They do not pick a path, a score, or a winner. A
+rule the copy does not implement fails closed (NFR-8).
+
+The copy is checked, not trusted:
+
+1. `packages/engine/scripts/godot-golden.mjs` runs the TypeScript engine on
+   fixed placements for the thirteen shipped levels and writes the files
+   below. `--check` rebuilds them in memory and exits 1 if a committed file
+   differs. Before it writes a run, it checks that the turns flatten to the
+   same events `simulate()` returns.
+2. `tests/parity_test.gd` is a headless `SceneTree`. It replays every case
+   through `ZorgEngine` and exits 1 unless validation codes, every turn,
+   the outcome, and the score match. Spell cases also check the cast log
+   and the cast window.
+
+Files the golden script writes (43 placement cases):
+
+| File | What it is |
+|---|---|
+| `levels/<id>.json`, `levels/index.json` | The levels the game loads, plus the picker. Generated from the fixture texts named in the script. |
+| `tests/golden/<id>.json` | One recording per level. A valid layout stores every turn, `runOutcome`, and `score`. Spell cases also store `casts` (`afterSteps`, `spellId`), `castLog` (`ok` or the refusal), and `castWindow`. A successful cast is its own turn, and `cast` is its first event. |
+| `tests/golden/elements.json` | 24 ticks from `elementalTick`: fire, water, ice, poison × three immunity sets × visited or not. |
+| `tests/golden/gold-portals.json` | 20 toll rows from `payToll`, and 36 portal-formula rows from `evalPortalIndex`. |
+
+The golden script does not write `levels/visual-lights.json`. That file is
+cosmetic. `scripts/atmos.gd` reads it. The rules engine never does.
+
+**Test harness.** Keep `tests/parity_test.gd` and `tests/level_smoke_test.gd`
+(both headless `SceneTree` scripts) and `tests/web_boot_check.mjs`. GUT and
+gdUnit4 stay out. The thing CI has to prove is that the GDScript copy matches
+the TypeScript recording, and it does that with one stock Godot 4.7.2 binary,
+`--headless --script`, and an exit code. A second test framework would sit
+beside that compare. ADR-0002 already treats engine-native test frameworks as
+extra weight on headless CI.
+
+**Later AI.** Warrior and Elf steps that already decide a run are engine
+rules (FR-20, FR-21, and FR-19 through FR-31). The copy ports Warrior and
+Elf for these levels. If a Utility AI, or any other AI for heroes or
+monsters, is added later, it stays in a sandbox and off the win/loss path.
+It cannot change an outcome the engine decided (NFR-1).
+
+**Art.** The models in this repo are CC0 KayKit, under `assets/kaykit/`,
+listed in [CREDITS.md](CREDITS.md). Licensed packs from Humble, Zenva, and
+Packt are never committed to this public repo. They live in a private asset
+store.
+
+**Renderers.** `project.godot` sets `renderer/rendering_method` to `mobile`
+and `renderer/rendering_method.web` to `gl_compatibility`. The web export
+uses the Compatibility renderer (WebGL 2). Android, Linux, and Windows use
+the Mobile renderer.
+
+The **Level** button in the top right opens a grid of thirteen real levels:
 
 | Level | Rooms | Hero | Rule / spells |
 |---|---|---|---|
@@ -146,25 +207,56 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    URL or command line asked for High.
 
 ## Tests
+From the repo root, with Godot 4.7.2 (standard build, not .NET):
+
 ```
 pnpm install && pnpm --filter @zorg/engine build
-node packages/engine/scripts/godot-golden.mjs --check   # TS engine recording is current
+node packages/engine/scripts/godot-golden.mjs --check   # TS recording is current
 godot --headless --path apps/godot --script res://tests/parity_test.gd
 godot --headless --path apps/godot --script res://tests/level_smoke_test.gd
 ```
-The golden script runs the TypeScript engine on fixed placements for each
-level (43 in total) and records every turn to `tests/golden/<level>.json`.
-Spell cases also list the casts (`afterSteps`, `spellId`), each cast's result
-(`ok` or the refusal reason), and, after every turn, whether a cast would be
-allowed. A cast is its own turn, with `cast` as its first event. The script
-also writes a 24-row element tick table to `tests/golden/elements.json`, a
-20-row toll table and a 36-row portal formula table to
-`tests/golden/gold-portals.json`, and
-it writes the level files the game loads (`levels/*.json`, plus
-`levels/index.json` for the picker) from the real fixtures.
-The parity test replays the same placements in GDScript and fails on any
-difference. If you change `packages/engine`, run the golden script without
-`--check` and commit the result.
+
+What those commands check is under **Who decides**. `level_smoke_test.gd`
+is the other half of the harness: it drives the Level scene (place the
+first golden layout of every level, step to the banner, drag, camera,
+lights, and the UI checks named in the file). CI runs it twice. Once
+headless. Once under Xvfb with `--rendering-driver opengl3` and
+`--shot`, so a real GUI drag runs. If you change `packages/engine`, run
+the golden script without `--check` and commit the files it writes, then
+run the parity script.
+
+The `godot` workflow (`.github/workflows/godot.yml`) runs that sequence
+on a pull request that touches `apps/godot/**`, `packages/engine/**`, or
+the workflow itself. Godot is 4.7.2-stable. After the tests it writes
+four debug exports and runs `tests/web_boot_check.mjs` (Node 22, headless
+Chrome) against the web one. It uploads `zorg-godot-linux-x86_64`,
+`zorg-godot-windows-x86_64`, `zorg-godot-web`,
+`zorg-godot-android-debug-apk`, and screenshots. It does not deploy.
+`pnpm test` and the `ci` workflow do not run any of this.
+
+## Debug exports
+From `apps/godot`, after `godot --headless --path . --import`. The Android
+export needs `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`,
+`GODOT_ANDROID_KEYSTORE_DEBUG_USER`, and
+`GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`. CI mints a throwaway debug
+keystore per run and discards it. There is no release keystore in this
+repo.
+
+```
+godot --headless --path . --export-debug Linux build/linux/zorg.x86_64
+godot --headless --path . --export-debug Windows build/windows/zorg.exe
+godot --headless --path . --export-debug Web build/web/index.html
+godot --headless --path . --export-debug Android build/android/zorg-debug.apk
+```
+
+The web preset is single-threaded (`variant/thread_support` off), so it
+needs no COOP/COEP headers. It uses the Compatibility renderer. The
+Linux, Windows, and Android exports use the Mobile renderer. CI rejects
+a `build/linux/zorg.sh` wrapper. From `apps/godot`:
+
+```
+node tests/web_boot_check.mjs build/web
+```
 
 ## Install the debug APK (sideload)
 Open the PR's **godot** workflow run on GitHub and download the artifact
@@ -178,9 +270,7 @@ starting it.
 
 ## Try the Godot preview
 
-In a PC browser: <https://zorg.artof.link/godot/> (same shared sign-in as the Maker; see [CONTRIBUTING.md](../../CONTRIBUTING.md#site-login-shared-username-and-password)), once the web-preview PR
-has merged and `deploy-godot` has run (`deploy-godot` publishes every merge
-that touches `apps/godot/`). It's a single-threaded debug build, so it needs
+In a PC browser: <https://zorg.artof.link/godot/> (same shared sign-in as the Maker; see [CONTRIBUTING.md](../../CONTRIBUTING.md#site-login-shared-username-and-password)). `deploy-godot` publishes that page after a merge to `main` that touches `apps/godot/`, once a person approves the `production` environment. Until that approval, the URL keeps serving the previous export. It's a single-threaded debug build, so it needs
 no special server headers. The first load fetches about 10 MB (the engine,
 compressed). The same build is in the `zorg-godot-web` CI artifact, which
 you can serve with any static server, for example `python3 -m http.server`
@@ -220,13 +310,13 @@ downloaded from broth.itch.zone and checked against a pinned SHA-256.
   from the TS engine, so one PR can change both and CI checks them together.
   Split it into its own repo once it stands alone, or if large art or audio
   needs Git LFS.
-- **Distribution:** (1) For now, sideload the debug APK from CI, with no
-  store. (2) Once the game is fun, publish on itch.io: the Android APK,
-  desktop builds, and maybe a Godot web build. (3) Use the Play Store only if
-  you later want it public. Start with a manual upload of a release build to
-  the internal testing track. Automate uploads through the Google Play
-  Developer API only if releases become frequent. None of that exists yet:
-  there's no release signing, no store credentials and no upload automation.
+- **Distribution:** Sideload the debug APK from the `godot` workflow
+  artifact. `deploy-godot` publishes the web export, and `deploy-itch`
+  uploads the same four debug builds (html5, windows, linux, android) with
+  butler. Both deploys wait for the `production` environment. The itch.io
+  page stays a draft. Play Store upload, release signing, and store
+  credentials are not in this repo. A later public release would start as
+  a manual upload of a release build to the Play internal testing track.
 - **Next:** more rooms and heroes, each with its own golden cases. Room C,
   the Gunner duration and FR-4 stay blocked until the game author answers
   (NFR-8).
