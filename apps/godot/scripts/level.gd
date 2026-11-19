@@ -84,6 +84,7 @@ var fit_wait := 0
 var title: Label
 var goal: Label
 var picker: GridContainer
+var level_picker: ZorgLevelPicker
 var tray: HFlowContainer
 var status: Label
 var end_banner: ZorgEndBanner
@@ -160,7 +161,7 @@ func _open_level(i: int) -> void:
 	place_order.clear()
 	kb_active = false
 	selected = ""
-	levels_panel.visible = false
+	level_picker.set_open(false)
 	var err: String = engine.load_level_file(engine.levels[i]["file"])
 	if err != "":
 		title.text = "Cannot load level"
@@ -168,12 +169,11 @@ func _open_level(i: int) -> void:
 		tray.visible = false
 		return
 	title.text = engine.level_name()
-	levels_btn.text = "Level " + String(engine.levels[i]["id"]).replace("deluxe-", "")
+	level_picker.set_caption("Level " + String(engine.levels[i]["id"]).replace("deluxe-", ""))
 	_apply_margins()                         # the ? button sits left of it
 	var rules: Array = engine.constraint_texts()
 	goal.text = "Goal: every hero dies before reaching Zorg's room." + ("" if rules.is_empty() else "  Rule: " + ", ".join(rules))
-	for b in picker.get_children():
-		b.modulate = Color(1, 1, 0.5) if b.get_index() == i else Color.WHITE
+	level_picker.set_current(i)
 	_refresh_tray()
 	_refresh_validation()
 	_refresh_spells()
@@ -182,13 +182,10 @@ func _open_level(i: int) -> void:
 	_request_fit(2)
 
 func _build_picker() -> void:
-	for i in engine.levels.size():
-		var idx: int = i
-		var e: Dictionary = engine.levels[i]
-		var b := _btn(String(e["id"]).replace("deluxe-", ""), func(): _open_level(idx))
-		b.custom_minimum_size = Vector2(72, ZorgHud.TARGET)
-		b.tooltip_text = String(e["name"])
-		picker.add_child(b)
+	var rows: Array = []
+	for e in engine.levels:
+		rows.append({"label": String(e["id"]).replace("deluxe-", ""), "tip": String(e["name"])})
+	level_picker.set_entries(rows)
 
 # ------------------------------------------------------------------ UI
 
@@ -239,12 +236,6 @@ func _build_ui() -> void:
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	hud_top.add_child(log_label)
 
-	# Top right: the current level; tap it for the level grid.
-	levels_btn = _btn("Levels", func(): levels_panel.visible = not levels_panel.visible)
-	levels_btn.custom_minimum_size = Vector2(134, ZorgHud.TARGET)
-	levels_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	levels_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	ui_root.add_child(levels_btn)
 	help_btn = _btn("?", open_help)
 	help_btn.custom_minimum_size = Vector2(ZorgHud.TARGET, ZorgHud.TARGET)
 	help_btn.tooltip_text = "What each room does"
@@ -256,31 +247,15 @@ func _build_ui() -> void:
 	fps_readout.set_visible_fps(_url_flag("fps", "0") == "1")
 	ui_root.add_child(fps_readout)
 
-	levels_panel = PanelContainer.new()
-	levels_panel.set_anchors_preset(Control.PRESET_CENTER)
-	levels_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	levels_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	levels_panel.visible = false
-	ui_root.add_child(levels_panel)
-	var lp := VBoxContainer.new()
-	lp.add_theme_constant_override("separation", 8)
-	levels_panel.add_child(lp)
-	var lt := _label(18)
-	lt.text = "Choose a level"
-	lp.add_child(lt)
-	picker = GridContainer.new()
-	picker.columns = 5
-	picker.add_theme_constant_override("h_separation", 6)
-	picker.add_theme_constant_override("v_separation", 6)
-	lp.add_child(picker)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	lp.add_child(row)
-	quality_btn = _btn("Graphics: " + quality.capitalize(), _toggle_quality)
-	quality_btn.custom_minimum_size.x = 180
-	quality_btn.tooltip_text = "High: more torches, shadows and glow. Low: faster."
-	row.add_child(quality_btn)
-	row.add_child(_btn("Close", func(): levels_panel.visible = false))
+	level_picker = preload("res://scenes/level_picker.tscn").instantiate() as ZorgLevelPicker
+	level_picker.level_picked.connect(_open_level)
+	level_picker.quality_toggled.connect(_toggle_quality)
+	ui_root.add_child(level_picker)
+	levels_btn = level_picker.level_button
+	levels_panel = level_picker.panel
+	picker = level_picker.grid
+	quality_btn = level_picker.quality_button
+	level_picker.set_quality_label("Graphics: " + quality.capitalize())
 
 	# Camera buttons (touch screens; mouse: wheel, Ctrl + wheel, Q/E, right-drag).
 	# Plain ASCII labels: the web build's default font has no arrow glyphs.
@@ -365,7 +340,7 @@ func _build_dialogs() -> void:
 
 func open_help() -> void:
 	hint.dismiss()
-	levels_panel.visible = false
+	level_picker.set_open(false)
 	help_dlg.open(ui_root.size)
 
 func close_help() -> void:
@@ -413,8 +388,8 @@ func back_pressed() -> void:
 		quit_dlg.close()
 	elif help_dlg.visible:
 		close_help()
-	elif levels_panel.visible:
-		levels_panel.visible = false
+	elif level_picker.panel.visible:
+		level_picker.close_panel()
 	elif selected != "" or kb_active:
 		_kb_cancel()
 	elif not embedded:
@@ -1017,8 +992,8 @@ func _apply_quality() -> void:
 	$Sun.shadow_enabled = high and _url_flag("shadows", "1") != "0"
 	ZorgAtmos.set_quality(env, high)
 	get_viewport().scaling_3d_scale = 1.0 if high else ZorgAtmos.LOW_3D_SCALE
-	if quality_btn:
-		quality_btn.text = "Graphics: " + ("High" if high else "Low")
+	if level_picker:
+		level_picker.set_quality_label("Graphics: " + ("High" if high else "Low"))
 	_refresh_torches()
 
 func set_quality(q: String, save := true) -> void:
@@ -1419,7 +1394,7 @@ func _ensure_recording() -> bool:
 	ghost.visible = false
 	_refresh_tray()
 	tray.visible = false
-	levels_panel.visible = false
+	level_picker.set_open(false)
 	status.text = "Extermination: Step or Play; cast spells between actions."
 	view_btn.visible = true
 	_refresh_undo()
