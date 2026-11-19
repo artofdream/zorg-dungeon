@@ -327,5 +327,6 @@ downloaded from broth.itch.zone and checked against a pinned SHA-256.
   is `scenes/fps_readout.tscn`. The win/loss line is `scenes/end_banner.tscn`.
   The room legend is `scenes/help_dialog.tscn`. The first-run hint is
   `scenes/hint_panel.tscn`. The level grid is `scenes/level_picker.tscn`.
+  The sun and torch budget are `scenes/level_lighting.tscn`.
 
 See `docs/adr/0008-godot-port-milestone-1.md`.

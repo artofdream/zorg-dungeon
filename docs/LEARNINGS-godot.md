@@ -114,5 +114,7 @@ used, so room labels do not jump. The smoke test checks a win and a loss.
 The room legend is its own full-rect scene. The first-run hint is its own
 plate. Dismissing the hint still saves `hint_seen` from the level screen.
 The level grid is its own scene. The level screen passes the list of
-levels in, and Back/Esc still closes that grid.
+levels in, and Back/Esc still closes that grid. The sun, fill light, torch
+budget, and the 30 FPS quality drop live in their own node. The level
+screen still forwards `set_quality`, `torch_lights`, and `env`.
 
