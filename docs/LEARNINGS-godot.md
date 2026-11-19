@@ -116,5 +116,8 @@ plate. Dismissing the hint still saves `hint_seen` from the level screen.
 The level grid is its own scene. The level screen passes the list of
 levels in, and Back/Esc still closes that grid. The sun, fill light, torch
 budget, and the 30 FPS quality drop live in their own node. The level
-screen still forwards `set_quality`, `torch_lights`, and `env`.
+screen still forwards `set_quality`, `torch_lights`, and `env`. The
+orbit camera and its pad live in their own scene. The pad's anchors are
+`PRESET_CENTER_RIGHT`, set in `_init`. The level screen still forwards
+fit and follow, and the camera does not read the rules engine.
 
