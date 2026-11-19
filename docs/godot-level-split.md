@@ -26,7 +26,7 @@ test reads.
 | 2 | FPS readout | One label (`?fps=1` or F3). The 30 FPS drop to Low stays with lighting. Done on main (#117). Top-right anchors in `_init`. `level.gd` 1588 → 1593. |
 | 3 | End banner | The result line and the Next level button. The level screen still reads `engine.score()` and passes the sentence in. Done on main (#118). Top-left anchors in `_init`, inside the HUD column. `level.gd` 1593 → 1591. |
 | 4 | Help and the first-run hint | The "?" legend. Wording stays in `scripts/help.gd`. Dismissing the hint asks the level screen to refit the camera. Done on main (#119). Legend is full-rect; the hint is top-left in the HUD column. `level.gd` 1591 → 1530. |
-| 5 | Level picker | The level grid and the Graphics button. The level screen passes the level list in. This slice. Full-rect root, corner button top-right, grid centered. `level.gd` 1530 → 1505. |
+| 5 | Level picker | The level grid and the Graphics button. The level screen passes the level list in. This slice. Full-rect root, corner button top-right, grid centered. `level.gd` 1530 → 1506. |
 | 6 | Lighting | World environment, sun, torch budget, flicker, and the 30 FPS fallback. `levels/visual-lights.json` stays cosmetic. `set_quality`, `torch_lights`, and `env` stay as forwards for the smoke test. |
 | 7 | Camera | Rig, zoom, tilt, yaw, fit, follow, and the on-screen pad. Gesture-heavy. The smoke test calls the fit and follow methods, so those stay as forwards. |
 | 8 | Board build | Tray, ghost, drag, keyboard placement, and Undo. This is the Xvfb drag. Do it after the HUD pieces so the only change is input routing. |
@@ -89,6 +89,6 @@ the corner button is `PRESET_TOP_RIGHT`, and the grid panel is
 `PRESET_CENTER`, all set in `_init` before `add_child`. The level screen
 passes the level list in. `level_picked` opens that level.
 `quality_toggled` still changes the graphics quality on the level screen.
-Back/Esc ordering stays there. `level.gd` is 1505 lines after this slice.
+Back/Esc ordering stays there. `level.gd` is 1506 lines after this slice.
 
 See [[LEARNINGS-godot]].
