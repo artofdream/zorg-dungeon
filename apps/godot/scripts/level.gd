@@ -69,9 +69,6 @@ var target_pitch := 53.13
 var yaw_tween: Tween
 var fps_readout: ZorgFpsReadout
 var fps_shown := false
-var perf_frames := 0
-var perf_time := 0.0
-var perf_checked := false
 var touches := {}
 var pinch_start := 0.0
 var zoom_start := 0.0
@@ -105,6 +102,7 @@ var levels_panel: PanelContainer
 var ui_scale := 1.0
 # Round 9 look and follow camera.
 var quality := "low"             # "low" | "high" (ZorgAtmos)
+var lighting: ZorgLevelLighting
 var env: Environment
 var quality_btn: Button
 var view_btn: Button
@@ -122,8 +120,6 @@ var hint: ZorgHint               # first-run hint (dismissed once, saved)
 var settings_path := ZorgAtmos.SETTINGS
 var follow := false              # true: the camera tracks the first living hero
 var follow_zoomed := false       # the current zoom is already a follow close-up
-var torch_timer := 0.0
-var look_time := 0.0
 var fps_log := 0.0
 const FOLLOW_ZOOM := 0.6         # follow view zooms to 60% of the current distance
 const FOLLOW_MIN := 7.0          # ... and may come closer than the normal zoom limit
@@ -963,77 +959,31 @@ func _on_board_press(pos: Vector2) -> void:
 
 # ------------------------------------------------------------------ light
 
-## Round 9 look, lifted so the board stays readable on Compatibility (web)
-## and Mobile (phone and desktop). A warm fill keeps tiles, walls and
-## heroes visible; torches and declared braziers add the warm pools.
-## Quality Low (phones and web by default): few omni lights, no shadows,
-## no glow. High: more lights, torch and sun shadows, glow. `?quality=low|high` on the web,
-## `--quality=` on the command line, or the Graphics button (saved).
-## `?shadows=0` still forces shadows off, and High drops to Low by itself
-## if the first seconds run under 30 FPS (unless High was asked for in
-## the URL or on the command line). `?fps=1` (or F3) shows FPS.
 func _setup_lighting() -> void:
-	quality = ZorgAtmos.default_quality(_url_flag("quality", ""))
-	env = ZorgAtmos.environment(quality == "high")
-	var we := WorldEnvironment.new()
-	we.environment = env
-	add_child(we)
-	var sun: DirectionalLight3D = $Sun
-	sun.light_color = Color(1.0, 0.94, 0.84)
-	sun.light_energy = 0.95
-	sun.shadow_blur = 1.5
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	sun.directional_shadow_max_distance = 80.0
-	sun.shadow_bias = 0.05
-	sun.shadow_normal_bias = 1.0
-	_apply_quality()
+	lighting = preload("res://scenes/level_lighting.tscn").instantiate() as ZorgLevelLighting
+	lighting.quality_changed.connect(_on_quality_changed)
+	add_child(lighting)
+	lighting.setup($Sun, _url_flag("quality", ""), _url_flag("shadows", "1"))
+	quality = lighting.quality
+	env = lighting.env
 
-func _apply_quality() -> void:
-	var high := quality == "high"
-	$Sun.shadow_enabled = high and _url_flag("shadows", "1") != "0"
-	ZorgAtmos.set_quality(env, high)
-	get_viewport().scaling_3d_scale = 1.0 if high else ZorgAtmos.LOW_3D_SCALE
+func _on_quality_changed(q: String) -> void:
+	quality = q
 	if level_picker:
-		level_picker.set_quality_label("Graphics: " + ("High" if high else "Low"))
+		level_picker.set_quality_label("Graphics: " + ("High" if q == "high" else "Low"))
 	_refresh_torches()
 
 func set_quality(q: String, save := true) -> void:
-	quality = "high" if q == "high" else "low"
-	if save:
-		ZorgAtmos.save_quality(quality)
-	_apply_quality()
+	lighting.set_quality(q, save)
 
 func _toggle_quality() -> void:
 	set_quality("low" if quality == "high" else "high")
 
-## Omni lights per quality. Every room's wall torch is first, nearest
-## rooms first, then declared extras (braziers). The cap is LOW_LIGHTS or
-## HIGH_LIGHTS. On High the nearest HIGH_SHADOWS of that list cast shadows,
-## which lands on torches rather than extras.
 func _refresh_torches() -> void:
-	var high := quality == "high"
-	var limit := ZorgAtmos.HIGH_LIGHTS if high else ZorgAtmos.LOW_LIGHTS
-	var shadows := ZorgAtmos.HIGH_SHADOWS if high and _url_flag("shadows", "1") != "0" else 0
-	var ids: Array = room_nodes.keys()
-	var pivot := Vector3(rig.position.x, 0, rig.position.z)
-	ids.sort_custom(func(a, b): return room_nodes[a].position.distance_to(pivot) < room_nodes[b].position.distance_to(pivot))
-	var queue: Array = []
-	for id in ids:
-		queue.append(room_nodes[id].get_meta("torch"))
-	for id in ids:
-		for light in room_nodes[id].get_meta("lights", []):
-			if light != room_nodes[id].get_meta("torch"):
-				queue.append(light)
-	for i in queue.size():
-		var light: OmniLight3D = queue[i]
-		light.visible = i < limit
-		light.shadow_enabled = i < shadows
+	lighting.refresh(room_nodes, Vector3(rig.position.x, 0, rig.position.z))
 
 func torch_lights() -> Array:
-	var out: Array = []
-	for id in room_nodes:
-		out.append(room_nodes[id].get_meta("torch"))
-	return out
+	return lighting.torch_lights(room_nodes)
 
 ## Query parameter `name` on the web build, else `fallback`.
 func _url_flag(name: String, fallback: String) -> String:
@@ -1046,33 +996,18 @@ func _on_fps_toggled(shown: bool) -> void:
 	fps_shown = shown
 
 func _perf_tick(delta: float) -> void:
-	if fps_shown:
-		fps_readout.set_line("%d FPS  %s" % [Engine.get_frames_per_second(), quality.capitalize()])
-		fps_log -= delta
-		if fps_log <= 0.0:                  # also in the log (adb logcat), for phone tests
-			fps_log = 2.0
-			var vp := get_viewport().get_viewport_rid()
-			RenderingServer.viewport_set_measure_render_time(vp, true)
-			print("zorg: fps %d quality %s cpu %.1f gpu %.1f process %.1f ms draws %d prims %d" % [Engine.get_frames_per_second(), quality,
-				RenderingServer.viewport_get_measured_render_time_cpu(vp), RenderingServer.viewport_get_measured_render_time_gpu(vp),
-				Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
-				Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)])
-	if perf_checked:
+	if not fps_shown:
 		return
-	perf_time += delta
-	perf_frames += 1
-	if perf_time < 1.0:
-		perf_frames = 0                     # skip the first second (loading)
-		return
-	if perf_time >= 5.0:
-		perf_checked = true
-		var fps := perf_frames / (perf_time - 1.0)
-		if fps < 30.0 and quality == "high" and not ZorgAtmos.forced(_url_flag("quality", "")):
-			set_quality("low", false)        # this session only; the saved choice stays
-			print("zorg: %.0f FPS on High, switching to Low" % fps)
-		elif OS.has_feature("web") and fps < 30.0 and $Sun.shadow_enabled:
-			$Sun.shadow_enabled = false
-			print("zorg: %.0f FPS with shadows, turning them off" % fps)
+	fps_readout.set_line("%d FPS  %s" % [Engine.get_frames_per_second(), quality.capitalize()])
+	fps_log -= delta
+	if fps_log <= 0.0:                  # also in the log (adb logcat), for phone tests
+		fps_log = 2.0
+		var vp := get_viewport().get_viewport_rid()
+		RenderingServer.viewport_set_measure_render_time(vp, true)
+		print("zorg: fps %d quality %s cpu %.1f gpu %.1f process %.1f ms draws %d prims %d" % [Engine.get_frames_per_second(), quality,
+			RenderingServer.viewport_get_measured_render_time_cpu(vp), RenderingServer.viewport_get_measured_render_time_gpu(vp),
+			Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+			Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)])
 
 # ------------------------------------------------------------------ camera
 
@@ -1288,15 +1223,7 @@ func _process(delta: float) -> void:
 		if target != null:
 			var goal_pos := Vector3(target.x, 0, target.z)
 			rig.position = rig.position.lerp(goal_pos, 1.0 - exp(-FOLLOW_SMOOTH * delta))
-	look_time += delta
-	torch_timer -= delta
-	if torch_timer <= 0.0:
-		torch_timer = 0.5
-		_refresh_torches()                   # nearest rooms to the pivot keep the lights
-	for id in room_nodes:
-		for light in room_nodes[id].get_meta("lights", []):
-			if (light as OmniLight3D).visible:
-				ZorgAtmos.flicker(light, look_time)
+	lighting.tick(delta, Vector3(rig.position.x, 0, rig.position.z), room_nodes)
 	_layout_labels()
 	for id in room_nodes:
 		var gate: Node3D = room_nodes[id].get_node_or_null("PortalGate")

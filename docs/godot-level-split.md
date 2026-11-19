@@ -26,8 +26,8 @@ test reads.
 | 2 | FPS readout | One label (`?fps=1` or F3). The 30 FPS drop to Low stays with lighting. Done on main (#117). Top-right anchors in `_init`. `level.gd` 1588 → 1593. |
 | 3 | End banner | The result line and the Next level button. The level screen still reads `engine.score()` and passes the sentence in. Done on main (#118). Top-left anchors in `_init`, inside the HUD column. `level.gd` 1593 → 1591. |
 | 4 | Help and the first-run hint | The "?" legend. Wording stays in `scripts/help.gd`. Dismissing the hint asks the level screen to refit the camera. Done on main (#119). Legend is full-rect; the hint is top-left in the HUD column. `level.gd` 1591 → 1530. |
-| 5 | Level picker | The level grid and the Graphics button. The level screen passes the level list in. This slice. Full-rect root, corner button top-right, grid centered. `level.gd` 1530 → 1506. |
-| 6 | Lighting | World environment, sun, torch budget, flicker, and the 30 FPS fallback. `levels/visual-lights.json` stays cosmetic. `set_quality`, `torch_lights`, and `env` stay as forwards for the smoke test. |
+| 5 | Level picker | The level grid and the Graphics button. The level screen passes the level list in. Done on main (#120, Tab fix #121). `level.gd` 1530 → 1506. |
+| 6 | Lighting | World environment, sun, torch budget, flicker, and the 30 FPS fallback. This slice. `levels/visual-lights.json` stays cosmetic. `set_quality`, `torch_lights`, and `env` stay as forwards. `level.gd` 1506 → 1433. |
 | 7 | Camera | Rig, zoom, tilt, yaw, fit, follow, and the on-screen pad. Gesture-heavy. The smoke test calls the fit and follow methods, so those stay as forwards. |
 | 8 | Board build | Tray, ghost, drag, keyboard placement, and Undo. This is the Xvfb drag. Do it after the HUD pieces so the only change is input routing. |
 | 9 | Run playback | Play, Step, the spell bar, and the turn line. Last, because it sits beside `engine.step()` and `engine.cast()`. It shows the events those calls return. |
@@ -48,7 +48,7 @@ Parent calls are methods. Child replies are signals.
 | End banner (`scenes/end_banner.tscn`) | `show_line(text, show_next)`, `clear()`, `apply_visibility()` | `next_level_pressed` |
 | Help and hint (`scenes/help_dialog.tscn`, `scenes/hint_panel.tscn`) | `open(area)`, `close_dialog()`, `show_hint(on)`, `dismiss()` | `closed`, `hint_dismissed` |
 | Level picker (`scenes/level_picker.tscn`) | `set_entries(rows)`, `set_current(index)`, `set_caption(text)`, `set_quality_label(text)`, `set_open(on)`, `close_panel()` | `level_picked(index)`, `closed`, `quality_toggled` |
-| Lighting | `set_quality(q, save)`, `note_rooms(nodes)`, `tick(delta, pivot)` | `quality_changed(q)` |
+| Lighting (`scenes/level_lighting.tscn`) | `setup(sun, quality_url, shadows_flag)`, `set_quality(q, save)`, `refresh(rooms, pivot)`, `torch_lights(rooms)`, `tick(delta, pivot, rooms)` | `quality_changed(q)` |
 | Camera | `fit(instant)`, `set_follow(on, point)`, `pan`, `zoom_by`, `tilt_by`, `rotate` | `became_manual` |
 | Board build | `set_tray(entries)`, `set_building(on)`, `cancel()` | `place_requested(id, slot)`, `move_requested(id, slot)`, `undo_requested` |
 | Run playback | `set_spells(list, allowed)`, `set_turn_line(text)`, `set_playing(on)` | `play_toggled`, `step_requested`, `cast_requested(spell_id)` |
@@ -90,5 +90,12 @@ the corner button is `PRESET_TOP_RIGHT`, and the grid panel is
 passes the level list in. `level_picked` opens that level.
 `quality_toggled` still changes the graphics quality on the level screen.
 Back/Esc ordering stays there. `level.gd` is 1506 lines after this slice.
+
+Slice 6 is the lighting. It is a `Node`, not a control, so it has no
+anchors. It configures the existing `Level/Sun`, adds the world
+environment, and keeps the torch budget, flicker, and the 30 FPS drop.
+`quality_changed` updates the Graphics label. `set_quality`,
+`torch_lights`, and `env` on the level screen forward to it.
+`level.gd` is 1433 lines after this slice.
 
 See [[LEARNINGS-godot]].
