@@ -68,18 +68,18 @@ var follow: bool:
 var level_index := 0
 var placed := {}          # room id -> Vector2i slot
 var room_nodes := {}      # room id -> Node3D
-var selected := ""        # tray room waiting for a tap on the board
-var kb_active := false    # keyboard placement: arrows move kb_slot, Enter drops
-var kb_slot := Vector2i.ZERO
 var place_order: Array = []   # placement history, for undo (Backspace / Ctrl+Z)
-
-# One drag at a time, from the tray or from the board.
-var drag_id := ""
-var drag_from_tray := false
-var drag_active := false
-var drag_origin := Vector2.ZERO
+var board_build: ZorgBoardBuild
 var ghost: MeshInstance3D
 var ghost_mat: StandardMaterial3D
+var selected: String:
+	get: return board_build.selected
+	set(v): board_build.selected = v
+var kb_active: bool:
+	get: return board_build.kb_active
+	set(v): board_build.kb_active = v
+var drag_id: String:
+	get: return board_build.drag_id
 
 var recording: Dictionary = {}   # {"turns": [...]} once a run has started
 var turn_index := 0
@@ -150,8 +150,61 @@ func _attach_camera() -> void:
 	cam.fit_pressed.connect(_on_fit)
 	cam.view_pressed.connect(_on_cam_mode)
 
+func _attach_board() -> void:
+	board_build = preload("res://scenes/board_build.tscn").instantiate() as ZorgBoardBuild
+	board_build.set_ghost_size(ROOM)
+	add_child(board_build)
+	ghost = board_build.ghost
+	ghost_mat = board_build.ghost_mat
+	board_build.place_requested.connect(_place)
+	board_build.move_requested.connect(_place)
+	board_build.unplace_requested.connect(_unplace)
+	board_build.undo_requested.connect(undo)
+	board_build.configure(placed, place_order, {
+		"building": _building,
+		"screen_to_slot": _screen_to_slot,
+		"allowed": spot_allowed,
+		"loose": spot_loose,
+		"in_board": _in_board,
+		"center": slot_center,
+		"unproject": _unproject_board,
+		"label": _label_of,
+		"has_room": _has_room,
+		"preview": _preview_room,
+		"refresh_tray": _refresh_tray,
+		"refresh_validation": _refresh_validation,
+		"set_status": _set_status,
+		"get_status": _get_status,
+		"focus_play": _focus_play,
+		"occupant": _room_at_slot,
+	})
+
+func _unproject_board(world: Vector3) -> Vector2:
+	return camera.unproject_position(world)
+
+func _label_of(id: String) -> String:
+	var s := _supplied(id)
+	return id if s.is_empty() else _label_for(s["def"])
+
+func _has_room(id: String) -> bool:
+	return room_nodes.has(id)
+
+func _preview_room(id: String, at: Vector3) -> void:
+	if room_nodes.has(id):
+		room_nodes[id].position = at
+
+func _set_status(text: String) -> void:
+	status.text = text
+
+func _get_status() -> String:
+	return status.text
+
+func _focus_play() -> void:
+	play_btn.grab_focus()
+
 func _ready() -> void:
 	_attach_camera()
+	_attach_board()
 	get_tree().set_quit_on_go_back(false)   # Android Back goes to back_pressed()
 	embedded = is_embedded()
 	_setup_lighting()
@@ -161,7 +214,6 @@ func _ready() -> void:
 	heroes.overlay = hero_layer
 	get_viewport().size_changed.connect(_on_resized)
 	_build_board()
-	_build_ghost()
 	var err: String = engine.load_index()
 	if err != "":
 		status.text = err
@@ -291,12 +343,8 @@ func _build_ui() -> void:
 	bottom_bar.alignment = BoxContainer.ALIGNMENT_END
 	bottom_bar.add_theme_constant_override("separation", 8)
 	ui_root.add_child(bottom_bar)
-	tray = HFlowContainer.new()
-	tray.add_theme_constant_override("h_separation", 6)
-	tray.add_theme_constant_override("v_separation", 6)
-	tray.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tray.size_flags_vertical = Control.SIZE_SHRINK_END
-	tray.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Tray was built in the board scene's _init, before this add.
+	tray = board_build.tray
 	bottom_bar.add_child(tray)
 	# Spell bar (FR-32/FR-33): one button per spell, usable by tap or mouse,
 	# enabled only between completed actions while the run is going.
@@ -309,8 +357,7 @@ func _build_ui() -> void:
 	spell_bar.add_theme_constant_override("separation", 6)
 	spell_bar.size_flags_vertical = Control.SIZE_SHRINK_END
 	controls.add_child(spell_bar)
-	undo_btn = _btn("Undo", undo)
-	undo_btn.tooltip_text = "Take back the last room (Backspace / Ctrl+Z)"
+	undo_btn = board_build.undo_button
 	play_btn = _btn("Play", _on_play)
 	step_btn = _btn("Step", _on_step)
 	for b in [undo_btn, play_btn, step_btn, _btn("Build", _on_reset)]:
@@ -538,27 +585,17 @@ func _supplied(id: String) -> Dictionary:
 ## Tray buttons react on press (not release) so one finger can drag a room
 ## straight out of the tray; a press + release without moving is a tap.
 func _refresh_tray() -> void:
-	for c in tray.get_children():
-		c.queue_free()
+	var rows: Array = []
 	for s in engine.supplied():
 		if placed.has(s["id"]):
 			continue
-		var id: String = s["id"]
-		var b := Button.new()
-		b.text = _label_for(s["def"])
-		b.icon = ZorgHud.swatch(s["def"])
-		b.custom_minimum_size = Vector2(64, ZorgHud.TARGET)
-		b.tooltip_text = "Drag onto the board, or tap then tap a spot"
-		if selected == id:
-			# From the HUD theme directly: b isn't in the tree yet.
-			b.add_theme_stylebox_override("normal", ui_root.theme.get_stylebox("pressed", "Button"))
-		b.button_down.connect(func():
-			# Enter/Space on a focused tray button: keyboard placement (WCAG 2.1.1).
-			if Input.is_action_pressed("ui_accept") and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-				_kb_select.call_deferred(id)
-			else:
-				_begin_drag(id, true, get_viewport().get_mouse_position()))
-		tray.add_child(b)
+		rows.append({
+			"id": s["id"],
+			"text": _label_for(s["def"]),
+			"icon": ZorgHud.swatch(s["def"]),
+			"selected": selected == s["id"],
+		})
+	board_build.set_tray(rows, ui_root.theme)
 
 func _building() -> bool:
 	return recording.is_empty()
@@ -597,18 +634,6 @@ func _build_board() -> void:
 		for y in range(SLOTS_Y.x, SLOTS_Y.y + 1):
 			var m := ZorgLook.mat("board_a" if (x + y) % 2 == 0 else "board_b")
 			ZorgLook.add_mesh(board, ZorgLook.box_mesh(Vector3(ROOM - 0.1, 0.1, ROOM - 0.1)), m, slot_center(x, y) + Vector3(0, -0.1, 0), false)
-
-func _build_ghost() -> void:
-	ghost = MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(ROOM - 0.2, 0.4, ROOM - 0.2)
-	ghost.mesh = bm
-	ghost_mat = StandardMaterial3D.new()
-	ghost_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	ghost_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	ghost.material_override = ghost_mat
-	ghost.visible = false
-	add_child(ghost)
 
 func _room_node(s: Dictionary) -> Node3D:
 	var root := ZorgLook.build_room(s["def"], ZorgEngine.base_tile(s["def"]))
@@ -706,81 +731,24 @@ func spot_loose(id: String, slot: Vector2i) -> bool:
 			return false
 	return others > 0
 
-func _show_ghost(id: String, screen_pos: Vector2) -> void:
-	var slot = _screen_to_slot(screen_pos)
-	if slot == null:
-		ghost.visible = false
-		return
-	var ok := spot_allowed(id, slot)
-	var loose := ok and spot_loose(id, slot)
-	ghost.visible = true
-	ghost.position = slot_center(slot.x, slot.y) + Vector3(0, 0.3, 0)
-	ghost_mat.albedo_color = GHOST_BAD if not ok else (GHOST_LOOSE if loose else GHOST_OK)
-	var label := _label_for(_supplied(id)["def"])
-	if not ok:
-		status.text = "Can't place here: %s." % ("off the board" if not _in_board(slot) else "another room is there")
-	elif loose:
-		status.text = "%s here would not touch any room yet." % label
-	else:
-		status.text = "Drop %s here." % label
-
 # ------------------------------------------------------------------ input
 
 func _begin_drag(id: String, from_tray: bool, pos: Vector2) -> void:
-	if not _building():
-		return
-	drag_id = id
-	drag_from_tray = from_tray
-	drag_active = false
-	drag_origin = pos
+	board_build.begin_drag(id, from_tray, pos)
 
 ## Drop (or tap) at `pos`. Public so the smoke test can drive it.
 func end_drag(pos: Vector2) -> void:
-	var id := drag_id
-	drag_id = ""
-	ghost.visible = false
-	if id == "":
-		return
-	if not drag_active:
-		if drag_from_tray:
-			kb_active = false                # a tap or click takes over from the keyboard
-			selected = "" if selected == id else id
-			_refresh_tray()
-		else:
-			_unplace(id)                     # tap a placed room: back to the tray
-		return
-	var slot = _screen_to_slot(pos)
-	if spot_allowed(id, slot):
-		_place(id, slot)
-	elif drag_from_tray:
-		_refresh_validation()                # red spot: room stays in the tray
-	else:
-		_place(id, placed[id])               # red spot: snap back
-	drag_active = false
+	board_build.end_drag(pos)
 
 func drag_to(pos: Vector2) -> void:
-	if drag_id == "":
-		return
-	if not drag_active and pos.distance_to(drag_origin) > DRAG_START_PX:
-		drag_active = true
-		selected = ""
-	if drag_active:
-		_show_ghost(drag_id, pos)
-		if not drag_from_tray and room_nodes.has(drag_id):
-			var slot = _screen_to_slot(pos)
-			if slot != null:
-				room_nodes[drag_id].position = slot_center(slot.x, slot.y) + Vector3(0, 0.8, 0)
+	board_build.drag_to(pos)
 
 ## Drag motion/release must be seen even when the press began on a tray
 ## Button, so it is handled here before the GUI.
 func _input(event: InputEvent) -> void:
 	if drag_id == "" or touches.size() >= 2:
 		return
-	if event is InputEventMouseMotion:
-		drag_to(event.position)
-	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
-		end_drag(event.position)
-		get_viewport().set_input_as_handled()
+	board_build.handle_drag_input(event)
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Fingers: two-finger pinch zoom + pan. One finger arrives as emulated mouse.
@@ -793,10 +761,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var pts := touches.values()
 			pinch_start = (pts[0] as Vector2).distance_to(pts[1])
 			zoom_start = target_zoom
-			if drag_id != "" and not drag_from_tray and placed.has(drag_id):
-				_place(drag_id, placed[drag_id])
-			drag_id = ""
-			ghost.visible = false
+			board_build.abort_pinch()
 		return
 	if event is InputEventScreenDrag:
 		if touches.size() >= 2 and touches.has(event.index):
@@ -828,7 +793,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				_zoom_button(wheel * 2.5)
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			_on_board_press(event.position)
+			board_build.on_board_press(event.position)
 	elif event is InputEventMouseMotion:
 		if event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
 			_tilt_by(-event.relative.y * 0.25)          # middle-drag tilts
@@ -837,10 +802,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_pan(event.relative)
 			_update_camera()
 		elif selected != "" and _building() and not kb_active:
-			_show_ghost(selected, event.position)     # hover preview (mouse)
+			board_build.show_ghost(selected, event.position)     # hover preview (mouse)
 	elif event is InputEventKey and event.pressed and event.keycode != KEY_ESCAPE and popup_open():
 		get_viewport().set_input_as_handled()  # a popup is up: no undo/step/camera keys behind it
-	elif event is InputEventKey and event.pressed and kb_active and _kb_key(event):
+	elif event is InputEventKey and event.pressed and kb_active and board_build.kb_key(event):
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_TAB and get_viewport().gui_get_focus_owner() == null:
@@ -874,96 +839,10 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Keyboard placement: pick a tray room with Enter/Space, move the ghost with
 ## the arrow keys, Enter/Space drops it (only on an allowed spot), Esc cancels.
 func _kb_select(id: String) -> void:
-	if not _building() or placed.has(id):
-		return
-	selected = id
-	kb_active = true
-	kb_slot = Vector2i.ZERO
-	for other in place_order:               # start next to the last placed room
-		var base: Vector2i = placed[other]
-		for d in [Vector2i(1, 0), Vector2i(0, -1), Vector2i(-1, 0), Vector2i(0, 1)]:
-			if spot_allowed(id, base + d):
-				kb_slot = base + d
-				break
-	get_viewport().gui_release_focus()      # arrows now reach _unhandled_input
-	_refresh_tray()
-	_kb_show()
-
-func _kb_show() -> void:
-	_show_ghost(selected, camera.unproject_position(slot_center(kb_slot.x, kb_slot.y)))
-	status.text += "  Arrows move, Enter places, Esc cancels."
-
-func _kb_key(e: InputEventKey) -> bool:
-	# Tap/click placement, a drag or a run start can end the selection first.
-	if selected == "" or not _building() or placed.has(selected):
-		kb_active = false
-		if _building():
-			ghost.visible = false
-			_refresh_validation()            # drop the arrows/Enter/Esc prompt
-		return false
-	if e.keycode == KEY_TAB:                 # leaving for the buttons cancels the pick-up
-		_kb_cancel()
-		return false
-	var moves := {KEY_LEFT: Vector2i(-1, 0), KEY_RIGHT: Vector2i(1, 0), KEY_UP: Vector2i(0, 1), KEY_DOWN: Vector2i(0, -1)}
-	if moves.has(e.keycode):
-		var next: Vector2i = kb_slot + moves[e.keycode]
-		if _in_board(next):
-			kb_slot = next
-		_kb_show()
-		return true
-	if e.echo:
-		return false
-	if e.keycode == KEY_ENTER or e.keycode == KEY_KP_ENTER or e.keycode == KEY_SPACE:
-		if spot_allowed(selected, kb_slot):
-			var id := selected
-			selected = ""
-			kb_active = false
-			ghost.visible = false
-			_place(id, kb_slot)
-			_kb_refocus.call_deferred()
-		else:
-			_kb_show()
-		return true
-	if e.keycode == KEY_ESCAPE:
-		_kb_cancel()
-		_kb_refocus.call_deferred()
-		return true
-	return false
+	board_build.kb_select(id)
 
 func _kb_cancel() -> void:
-	selected = ""
-	kb_active = false
-	ghost.visible = false
-	_refresh_tray()
-	_refresh_validation()
-
-## After a keyboard drop, focus the next tray room (or Play once all are placed).
-func _kb_refocus() -> void:
-	for b in tray.get_children():
-		if not b.is_queued_for_deletion():
-			b.grab_focus()
-			return
-	play_btn.grab_focus()
-
-func _on_board_press(pos: Vector2) -> void:
-	if not _building():
-		return
-	var slot = _screen_to_slot(pos)
-	if selected != "":
-		# Tap-to-place: only on an allowed spot; a red spot keeps the selection.
-		if spot_allowed(selected, slot):
-			var id := selected
-			selected = ""
-			kb_active = false
-			ghost.visible = false
-			_place(id, slot)
-		else:
-			_show_ghost(selected, pos)
-		return
-	if slot != null:
-		var here := _room_at_slot(slot)
-		if here != "":
-			_begin_drag(here, false, pos)
+	board_build.cancel()
 
 # ------------------------------------------------------------------ light
 
@@ -1176,14 +1055,11 @@ func _ensure_recording() -> bool:
 		status.text = err
 		return false
 	recording = {"turns": []}
-	kb_active = false
 	turn_index = 0
 	heroes.clear()
 	heroes.names = engine.hero_names()
-	selected = ""
-	ghost.visible = false
+	board_build.set_building(false)
 	_refresh_tray()
-	tray.visible = false
 	level_picker.set_open(false)
 	status.text = "Extermination: Step or Play; cast spells between actions."
 	view_btn.visible = true
@@ -1275,7 +1151,7 @@ func _on_reset() -> void:
 	heroes.clear()
 	end_banner.clear()
 	log_label.text = ""
-	tray.visible = true
+	board_build.set_building(true)
 	_request_fit(1)
 	_refresh_tray()
 	_refresh_validation()
