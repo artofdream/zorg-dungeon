@@ -77,8 +77,15 @@ func _round11(engine: Node) -> void:
 	level._open_level(0)
 	await process_frame
 	level.levels_panel.visible = true
+	await process_frame
+	_check(level.levels_panel.size.x > 1.0 and level.levels_panel.size.y > 1.0
+		and level.picker.get_child_count() > 1,
+		"picker: open grid has a non-zero size (%s) and %d levels" % [level.levels_panel.size, level.picker.get_child_count()])
 	_key(KEY_ESCAPE)
 	_check(not level.levels_panel.visible and not level.quit_dlg.visible, "back: Esc closes the Levels popup first")
+	level.picker.get_child(1).pressed.emit()
+	_check(level.level_index == 1 and not level.levels_panel.visible, "picker: level_picked opens that level and closes the grid")
+	level._open_level(0)
 	level.open_help()
 	level.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	_check(not level.help_dlg.visible and not level.quit_dlg.visible, "back: Android Back closes the room legend")
