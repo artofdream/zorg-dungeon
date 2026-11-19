@@ -256,6 +256,12 @@ func _build_ui() -> void:
 	picker = level_picker.grid
 	quality_btn = level_picker.quality_button
 	level_picker.set_quality_label("Graphics: " + quality.capitalize())
+	# Tab walks later siblings. The Level button has to be the sibling
+	# immediately before ?; the grid stays in the picker (after the FPS
+	# line) so an open grid still stacks above those two buttons and is
+	# skipped while it is hidden.
+	levels_btn.reparent(ui_root, false)
+	ui_root.move_child(levels_btn, help_btn.get_index())
 
 	# Camera buttons (touch screens; mouse: wheel, Ctrl + wheel, Q/E, right-drag).
 	# Plain ASCII labels: the web build's default font has no arrow glyphs.
