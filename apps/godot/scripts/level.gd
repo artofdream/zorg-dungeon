@@ -236,6 +236,11 @@ func _build_ui() -> void:
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	hud_top.add_child(log_label)
 
+	level_picker = preload("res://scenes/level_picker.tscn").instantiate() as ZorgLevelPicker
+	level_picker.level_picked.connect(_open_level)
+	level_picker.quality_toggled.connect(_toggle_quality)
+	levels_btn = level_picker.level_button
+	levels_btn.reparent(ui_root)
 	help_btn = _btn("?", open_help)
 	help_btn.custom_minimum_size = Vector2(ZorgHud.TARGET, ZorgHud.TARGET)
 	help_btn.tooltip_text = "What each room does"
@@ -247,11 +252,7 @@ func _build_ui() -> void:
 	fps_readout.set_visible_fps(_url_flag("fps", "0") == "1")
 	ui_root.add_child(fps_readout)
 
-	level_picker = preload("res://scenes/level_picker.tscn").instantiate() as ZorgLevelPicker
-	level_picker.level_picked.connect(_open_level)
-	level_picker.quality_toggled.connect(_toggle_quality)
 	ui_root.add_child(level_picker)
-	levels_btn = level_picker.level_button
 	levels_panel = level_picker.panel
 	picker = level_picker.grid
 	quality_btn = level_picker.quality_button
