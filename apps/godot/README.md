@@ -329,6 +329,7 @@ downloaded from broth.itch.zone and checked against a pinned SHA-256.
   `scenes/hint_panel.tscn`. The level grid is `scenes/level_picker.tscn`.
   The sun and torch budget are `scenes/level_lighting.tscn`.   The orbit
   camera and its pad are `scenes/level_camera.tscn`. The tray, ghost, and
-  Undo button are `scenes/board_build.tscn`.
+  Undo button are `scenes/board_build.tscn`. Play, Step, the spell
+  buttons, and the turn line are `scenes/run_playback.tscn`.
 
 See `docs/adr/0008-godot-port-milestone-1.md`.

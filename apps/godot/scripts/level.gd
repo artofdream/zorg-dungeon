@@ -23,7 +23,6 @@ const SLOTS_Y := Vector2i(-2, 3)
 const GHOST_OK := Color(0.2, 1.0, 0.3, 0.45)
 const GHOST_LOOSE := Color(1.0, 0.6, 0.1, 0.5)   # allowed, but touches no placed room yet
 const GHOST_BAD := Color(1.0, 0.1, 0.1, 0.6)
-const STEP_SECONDS := 0.18
 const DRAG_START_PX := 12.0
 const FIT_HEIGHT := 1.2                     # walls/props counted when framing
 
@@ -83,8 +82,7 @@ var drag_id: String:
 
 var recording: Dictionary = {}   # {"turns": [...]} once a run has started
 var turn_index := 0
-var playing := false
-var play_timer := 0.0
+var playback: ZorgRunPlayback
 
 # camera
 var fps_readout: ZorgFpsReadout
@@ -202,9 +200,26 @@ func _get_status() -> String:
 func _focus_play() -> void:
 	play_btn.grab_focus()
 
+func _attach_playback() -> void:
+	playback = preload("res://scenes/run_playback.tscn").instantiate() as ZorgRunPlayback
+	add_child(playback)
+	log_label = playback.turn_line
+	spell_bar = playback.spell_bar
+	play_btn = playback.play_button
+	step_btn = playback.step_button
+	playback.play_toggled.connect(_on_play)
+	playback.step_requested.connect(_on_step)
+	playback.cast_requested.connect(cast_spell)
+	playback.advance_requested.connect(_on_auto_advance)
+
+func _on_auto_advance() -> void:
+	if not _advance():
+		playback.set_playing(false)
+
 func _ready() -> void:
 	_attach_camera()
 	_attach_board()
+	_attach_playback()
 	get_tree().set_quit_on_go_back(false)   # Android Back goes to back_pressed()
 	embedded = is_embedded()
 	_setup_lighting()
@@ -304,8 +319,7 @@ func _build_ui() -> void:
 	hud_top.add_child(end_banner)
 	result = end_banner.line_label
 	next_btn = end_banner.next_button
-	log_label = _label(16)
-	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	# Turn line was built in the playback scene's _init, before this add.
 	hud_top.add_child(log_label)
 
 	level_picker = preload("res://scenes/level_picker.tscn").instantiate() as ZorgLevelPicker
@@ -353,13 +367,10 @@ func _build_ui() -> void:
 	controls.size_flags_horizontal = Control.SIZE_SHRINK_END
 	controls.size_flags_vertical = Control.SIZE_SHRINK_END
 	bottom_bar.add_child(controls)
-	spell_bar = HBoxContainer.new()
-	spell_bar.add_theme_constant_override("separation", 6)
-	spell_bar.size_flags_vertical = Control.SIZE_SHRINK_END
+	# Spell bar, Play, and Step were built in _init. Spell bar stays first
+	# in this row, then Undo, Play, Step, Build (Tab).
 	controls.add_child(spell_bar)
 	undo_btn = board_build.undo_button
-	play_btn = _btn("Play", _on_play)
-	step_btn = _btn("Step", _on_step)
 	for b in [undo_btn, play_btn, step_btn, _btn("Build", _on_reset)]:
 		b.custom_minimum_size.x = 76
 		b.size_flags_vertical = Control.SIZE_SHRINK_END
@@ -510,34 +521,14 @@ func _on_resized() -> void:
 	if not cam_manual:
 		_request_fit(2)
 
-func _spell_label(def: Dictionary) -> String:
-	match String(def["type"]):
-		"Attack": return "Attack(%d)" % int(def["damage"])
-		"Teleport": return "Teleport(%d)" % int(def["steps"])
-	return String(def["type"])
-
 func _refresh_spells() -> void:
-	for c in spell_bar.get_children():
-		c.queue_free()
-	spell_bar.visible = not _building()
-	var list: Array = engine.spells()
-	var allowed: bool = engine.can_cast()
-	for i in list.size():
-		var idx: int = i
-		var sp: Dictionary = list[i]
-		var b := _btn(_spell_label(sp["def"]), func(): cast_spell(idx))
-		b.custom_minimum_size = Vector2(120, ZorgHud.TARGET)
-		b.disabled = sp["consumed"] or not allowed
-		if sp["consumed"]:
-			b.text += " (used)"  # ASCII: the web build has no system font fallback
-		spell_bar.add_child(b)
+	playback.set_spells(engine.spells(), engine.can_cast(), not _building())
 
 ## Cast spell `id` now (between actions). Public so the smoke test can use it.
 func cast_spell(id: int) -> bool:
 	if not _ensure_recording():
 		return false
-	playing = false
-	play_btn.text = "Play"
+	playback.set_playing(false)
 	var r: Dictionary = engine.cast(id)
 	if not r["ok"]:
 		status.text = "Can't cast now: %s." % REFUSALS.get(r["error"], r["error"])
@@ -545,7 +536,7 @@ func cast_spell(id: int) -> bool:
 		return false
 	recording["turns"].append(r["events"])
 	turn_index += 1
-	log_label.text = "Turn %d: %s" % [turn_index, heroes.apply_turn(r["events"])]
+	playback.set_turn_line("Turn %d: %s" % [turn_index, heroes.apply_turn(r["events"])])
 	_refresh_piles()
 	_refresh_spells()
 	if engine.over():
@@ -961,7 +952,7 @@ func _update_camera() -> void:
 func _process(delta: float) -> void:
 	cam.ease(delta)
 	status.visible = not end_banner.apply_visibility()   # banner replaces "Extermination: ..." 
-	log_label.visible = log_label.text != "" or not _building()
+	playback.apply_turn_visible(not _building())
 	cam.consume_fit(drag_id == "")
 	cam.follow_step(delta, heroes.follow_point() if follow else null)
 	lighting.tick(delta, Vector3(rig.position.x, 0, rig.position.z), room_nodes)
@@ -971,13 +962,7 @@ func _process(delta: float) -> void:
 		if gate:
 			gate.rotation.y += delta * 1.2
 	_perf_tick(delta)
-	if playing:
-		play_timer -= delta
-		if play_timer <= 0:
-			play_timer = STEP_SECONDS
-			if not _advance():
-				playing = false
-				play_btn.text = "Play"
+	playback.tick(delta)
 
 ## Room labels sit on a plate at each room's back corner (topmost on
 ## screen). Overlaps are pushed down below the label they hit, so labels
@@ -1079,7 +1064,7 @@ func _advance() -> bool:
 	for e in events:
 		if e["type"] == "spawn":
 			heroes.set_start_hp(int(e["heroId"]), engine.hero_hp(int(e["heroId"])), engine.hero_gold(int(e["heroId"])))
-	log_label.text = "Turn %d: %s" % [turn_index, line]
+	playback.set_turn_line("Turn %d: %s" % [turn_index, line])
 	_refresh_piles()
 	_refresh_spells()
 	if engine.over():
@@ -1115,14 +1100,11 @@ func _show_result() -> void:
 
 func _on_play() -> void:
 	if _ensure_recording():
-		playing = not playing
-		play_timer = 0.0
-		play_btn.text = "Pause" if playing else "Play"
+		playback.set_playing(not playback.is_playing())
 
 func _on_step() -> void:
 	if _ensure_recording():
-		playing = false
-		play_btn.text = "Play"
+		playback.set_playing(false)
 		_advance()
 
 ## View button / key C during a run: Overview <-> Follow hero.
@@ -1145,12 +1127,10 @@ func _on_reset() -> void:
 		view_btn.visible = false
 	recording = {}
 	engine.state = {}
-	playing = false
-	if play_btn:
-		play_btn.text = "Play"
+	playback.set_playing(false)
 	heroes.clear()
 	end_banner.clear()
-	log_label.text = ""
+	playback.set_turn_line("")
 	board_build.set_building(true)
 	_request_fit(1)
 	_refresh_tray()
