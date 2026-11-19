@@ -29,8 +29,8 @@ test reads.
 | 5 | Level picker | The level grid and the Graphics button. The level screen passes the level list in. Done on main (#120, Tab fix #121). `level.gd` 1530 → 1506. |
 | 6 | Lighting | World environment, sun, torch budget, flicker, and the 30 FPS fallback. Done on main (#122). `levels/visual-lights.json` stays cosmetic. `set_quality`, `torch_lights`, and `env` stay as forwards. `level.gd` 1506 → 1433. |
 | 7 | Camera | Rig, zoom, tilt, yaw, fit, follow, and the on-screen pad. Done on main (#123). The smoke test calls the fit and follow methods, so those stay as forwards. `level.gd` 1433 → 1284. |
-| 8 | Board build | Tray, ghost, drag, keyboard placement, and Undo. This slice. The smoke test still drives drag and keyboard placement through the level screen. Spot checks stay there. `level.gd` 1284 → 1160. |
-| 9 | Run playback | Play, Step, the spell bar, and the turn line. Last, because it sits beside `engine.step()` and `engine.cast()`. It shows the events those calls return. |
+| 8 | Board build | Tray, ghost, drag, keyboard placement, and Undo. Done on main (#124). The smoke test still drives drag and keyboard placement through the level screen. Spot checks stay there. `level.gd` 1284 → 1160. |
+| 9 | Run playback | Play, Step, the spell bar, and the turn line. This slice. The level screen still calls `engine.step()` and `engine.cast()` and passes the text in. `level.gd` 1160 → 1140. |
 
 After these, `level.gd` should load the level, keep the placement map the
 engine start call needs, step and cast through the engine node, and wire
@@ -51,7 +51,7 @@ Parent calls are methods. Child replies are signals.
 | Lighting (`scenes/level_lighting.tscn`) | `setup(sun, quality_url, shadows_flag)`, `set_quality(q, save)`, `refresh(rooms, pivot)`, `torch_lights(rooms)`, `tick(delta, pivot, rooms)` | `quality_changed(q)` |
 | Camera (`scenes/level_camera.tscn`) | `fit(...)`, `set_follow(on)`, `pan(delta)`, `zoom_by(d)`, `tilt_by(d)`, `rotate_by(deg)`, `ease(delta)`, `consume_fit(allow)`, `follow_step(delta, point)` | `became_manual`, `needs_fit(instant)`, `zoom_step(delta)`, `tilt_step(delta)`, `turn_step(degrees)`, `fit_pressed`, `view_pressed` |
 | Board build (`scenes/board_build.tscn`) | `set_tray(rows, theme)`, `set_building(on)`, `cancel()`, `begin_drag`, `drag_to`, `end_drag`, `kb_select`, `kb_key` | `place_requested(id, slot)`, `move_requested(id, slot)`, `unplace_requested(id)`, `undo_requested` |
-| Run playback | `set_spells(list, allowed)`, `set_turn_line(text)`, `set_playing(on)` | `play_toggled`, `step_requested`, `cast_requested(spell_id)` |
+| Run playback (`scenes/run_playback.tscn`) | `set_spells(list, allowed, show)`, `set_turn_line(text)`, `set_playing(on)`, `apply_turn_visible(running)`, `tick(delta)` | `play_toggled`, `step_requested`, `cast_requested(spell_id)`, `advance_requested` |
 
 PR 1 is the quit dialog. Its full-rect anchors are set in `_init`,
 before the level screen parents it. `set_anchors_preset` inside `_ready`
@@ -116,5 +116,15 @@ whether a spot is free and still calls the rules engine to validate a
 layout. The board emits `place_requested`, `move_requested`,
 `unplace_requested`, and `undo_requested`. `level.gd` is 1160 lines after
 this slice (1284 before it).
+
+Slice 9 is the run playback, and it finishes this split. Play, Step, the
+spell buttons, and the turn line live in `scenes/run_playback.tscn`. They
+are children of the HUD column and the bottom bar, so they take no
+anchors. Play stays between Undo and Step, and the spell bar stays
+before Undo, so Tab order is unchanged. The level screen still calls
+`engine.step()` and `engine.cast()` and passes the sentence to
+`set_turn_line`. The playback node does not read the rules engine.
+`level.gd` is 1140 lines after this slice (1160 before it, 1601 before
+the split).
 
 See [[LEARNINGS-godot]].

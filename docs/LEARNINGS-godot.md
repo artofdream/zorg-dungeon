@@ -122,5 +122,7 @@ orbit camera and its pad live in their own scene. The pad's anchors are
 fit and follow, and the camera does not read the rules engine. The tray,
 ghost, drag, and keyboard placement live in their own node. That node
 asks the level screen whether a spot is free, and it does not read the
-rules engine.
+rules engine. Play, Step, the spell buttons, and the turn line live in
+their own node. The level screen still calls `engine.step()` and
+`engine.cast()` and passes the sentence in.
 
