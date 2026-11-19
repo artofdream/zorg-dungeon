@@ -27,8 +27,8 @@ test reads.
 | 3 | End banner | The result line and the Next level button. The level screen still reads `engine.score()` and passes the sentence in. Done on main (#118). Top-left anchors in `_init`, inside the HUD column. `level.gd` 1593 → 1591. |
 | 4 | Help and the first-run hint | The "?" legend. Wording stays in `scripts/help.gd`. Dismissing the hint asks the level screen to refit the camera. Done on main (#119). Legend is full-rect; the hint is top-left in the HUD column. `level.gd` 1591 → 1530. |
 | 5 | Level picker | The level grid and the Graphics button. The level screen passes the level list in. Done on main (#120, Tab fix #121). `level.gd` 1530 → 1506. |
-| 6 | Lighting | World environment, sun, torch budget, flicker, and the 30 FPS fallback. This slice. `levels/visual-lights.json` stays cosmetic. `set_quality`, `torch_lights`, and `env` stay as forwards. `level.gd` 1506 → 1433. |
-| 7 | Camera | Rig, zoom, tilt, yaw, fit, follow, and the on-screen pad. Gesture-heavy. The smoke test calls the fit and follow methods, so those stay as forwards. |
+| 6 | Lighting | World environment, sun, torch budget, flicker, and the 30 FPS fallback. Done on main (#122). `levels/visual-lights.json` stays cosmetic. `set_quality`, `torch_lights`, and `env` stay as forwards. `level.gd` 1506 → 1433. |
+| 7 | Camera | Rig, zoom, tilt, yaw, fit, follow, and the on-screen pad. This slice. The smoke test calls the fit and follow methods, so those stay as forwards. `level.gd` 1433 → 1284. |
 | 8 | Board build | Tray, ghost, drag, keyboard placement, and Undo. This is the Xvfb drag. Do it after the HUD pieces so the only change is input routing. |
 | 9 | Run playback | Play, Step, the spell bar, and the turn line. Last, because it sits beside `engine.step()` and `engine.cast()`. It shows the events those calls return. |
 
@@ -49,7 +49,7 @@ Parent calls are methods. Child replies are signals.
 | Help and hint (`scenes/help_dialog.tscn`, `scenes/hint_panel.tscn`) | `open(area)`, `close_dialog()`, `show_hint(on)`, `dismiss()` | `closed`, `hint_dismissed` |
 | Level picker (`scenes/level_picker.tscn`) | `set_entries(rows)`, `set_current(index)`, `set_caption(text)`, `set_quality_label(text)`, `set_open(on)`, `close_panel()` | `level_picked(index)`, `closed`, `quality_toggled` |
 | Lighting (`scenes/level_lighting.tscn`) | `setup(sun, quality_url, shadows_flag)`, `set_quality(q, save)`, `refresh(rooms, pivot)`, `torch_lights(rooms)`, `tick(delta, pivot, rooms)` | `quality_changed(q)` |
-| Camera | `fit(instant)`, `set_follow(on, point)`, `pan`, `zoom_by`, `tilt_by`, `rotate` | `became_manual` |
+| Camera (`scenes/level_camera.tscn`) | `fit(...)`, `set_follow(on)`, `pan(delta)`, `zoom_by(d)`, `tilt_by(d)`, `rotate_by(deg)`, `ease(delta)`, `consume_fit(allow)`, `follow_step(delta, point)` | `became_manual`, `needs_fit(instant)`, `zoom_step(delta)`, `tilt_step(delta)`, `turn_step(degrees)`, `fit_pressed`, `view_pressed` |
 | Board build | `set_tray(entries)`, `set_building(on)`, `cancel()` | `place_requested(id, slot)`, `move_requested(id, slot)`, `undo_requested` |
 | Run playback | `set_spells(list, allowed)`, `set_turn_line(text)`, `set_playing(on)` | `play_toggled`, `step_requested`, `cast_requested(spell_id)` |
 
@@ -97,5 +97,15 @@ environment, and keeps the torch budget, flicker, and the 30 FPS drop.
 `quality_changed` updates the Graphics label. `set_quality`,
 `torch_lights`, and `env` on the level screen forward to it.
 `level.gd` is 1433 lines after this slice.
+
+Slice 7 is the camera. The rig is the root of `scenes/level_camera.tscn`
+and stays at `Level/CameraRig`. The pad is a control: its anchors are
+`PRESET_CENTER_RIGHT`, set in `_init` before the level screen parents it,
+after the level picker and before the bottom bar, so Tab order is
+unchanged. Gesture keys stay on the level screen, because a popup
+already swallows them. `became_manual` fires when the player takes over
+zoom or pan. Fit and follow stay as forwards. The camera does not read
+the rules engine. `level.gd` is 1284 lines after this slice (1433 before
+it).
 
 See [[LEARNINGS-godot]].

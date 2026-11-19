@@ -17,10 +17,6 @@ script = ExtResource("2")
 [node name="Heroes" type="Node3D" parent="."]
 script = ExtResource("3")
 
-[node name="CameraRig" type="Node3D" parent="."]
-
-[node name="Camera3D" type="Camera3D" parent="CameraRig"]
-
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 10, 0)
 shadow_enabled = true

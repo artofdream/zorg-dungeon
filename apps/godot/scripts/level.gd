@@ -24,9 +24,6 @@ const GHOST_OK := Color(0.2, 1.0, 0.3, 0.45)
 const GHOST_LOOSE := Color(1.0, 0.6, 0.1, 0.5)   # allowed, but touches no placed room yet
 const GHOST_BAD := Color(1.0, 0.1, 0.1, 0.6)
 const STEP_SECONDS := 0.18
-const ZOOM_LIMITS := Vector2(12.0, 140.0)  # 140: the 8x6 board still fits at ~360 dp portrait
-const PITCH_LIMITS := Vector2(30.0, 80.0)   # degrees above the board
-const CAM_SMOOTH := 12.0                    # 1/s, exponential ease for zoom and tilt
 const DRAG_START_PX := 12.0
 const FIT_HEIGHT := 1.2                     # walls/props counted when framing
 
@@ -34,8 +31,38 @@ const FIT_HEIGHT := 1.2                     # walls/props counted when framing
 @onready var board: Node3D = $Board
 @onready var rooms_root: Node3D = $Rooms
 @onready var heroes: Node3D = $Heroes
-@onready var rig: Node3D = $CameraRig
-@onready var camera: Camera3D = $CameraRig/Camera3D
+var cam: ZorgLevelCamera
+var rig: Node3D
+var camera: Camera3D
+var yaw: float:
+	get: return cam.yaw
+	set(v): cam.yaw = v
+var target_yaw: float:
+	get: return cam.target_yaw
+	set(v): cam.target_yaw = v
+var zoom: float:
+	get: return cam.zoom
+	set(v): cam.zoom = v
+var target_zoom: float:
+	get: return cam.target_zoom
+	set(v): cam.target_zoom = v
+var pitch: float:
+	get: return cam.pitch
+	set(v): cam.pitch = v
+var target_pitch: float:
+	get: return cam.target_pitch
+	set(v): cam.target_pitch = v
+var cam_manual: bool:
+	get: return cam.manual
+	set(v):
+		var was := cam.manual
+		cam.manual = v
+		# Right-drag and pinch assign this flag. The pad and the wheel go
+		# through zoom_button, which emits the same signal itself.
+		if v and not was:
+			cam.became_manual.emit()
+var follow: bool:
+	get: return cam.follow
 @onready var ui: CanvasLayer = $UI
 
 var level_index := 0
@@ -60,22 +87,11 @@ var playing := false
 var play_timer := 0.0
 
 # camera
-var yaw := 45.0
-var target_yaw := 45.0
-var zoom := 24.0
-var target_zoom := 24.0
-var pitch := 53.13               # atan(0.8 / 0.6): the round 1-5 angle
-var target_pitch := 53.13
-var yaw_tween: Tween
 var fps_readout: ZorgFpsReadout
 var fps_shown := false
 var touches := {}
 var pinch_start := 0.0
 var zoom_start := 0.0
-var cam_tween: Tween
-var cam_manual := false          # user zoomed/panned: stop auto-fit until Fit or a new level
-var fit_pending := 0             # 1 = smooth refit, 2 = instant (after the HUD re-lays out)
-var fit_wait := 0
 
 # ui
 var title: Label
@@ -118,16 +134,24 @@ var quit_btn: Button
 var embedded := false            # web build inside an iframe (itch.io): no Quit
 var hint: ZorgHint               # first-run hint (dismissed once, saved)
 var settings_path := ZorgAtmos.SETTINGS
-var follow := false              # true: the camera tracks the first living hero
-var follow_zoomed := false       # the current zoom is already a follow close-up
 var fps_log := 0.0
-const FOLLOW_ZOOM := 0.6         # follow view zooms to 60% of the current distance
-const FOLLOW_MIN := 7.0          # ... and may come closer than the normal zoom limit
-const FOLLOW_SMOOTH := 4.0       # 1/s, exponential ease of the pivot onto the hero
 const REFUSALS := {"before_first_action": "wait for the first hero action", "run_over": "the run is over",
 	"no_active_hero": "no hero is active", "consumed": "that spell is used up", "no_spell": "no such spell"}
 
+func _attach_camera() -> void:
+	cam = preload("res://scenes/level_camera.tscn").instantiate() as ZorgLevelCamera
+	add_child(cam)
+	rig = cam
+	camera = cam.camera_3d
+	cam.needs_fit.connect(_fit_camera)
+	cam.zoom_step.connect(_zoom_button)
+	cam.tilt_step.connect(_tilt_by)
+	cam.turn_step.connect(_rotate)
+	cam.fit_pressed.connect(_on_fit)
+	cam.view_pressed.connect(_on_cam_mode)
+
 func _ready() -> void:
+	_attach_camera()
 	get_tree().set_quit_on_go_back(false)   # Android Back goes to back_pressed()
 	embedded = is_embedded()
 	_setup_lighting()
@@ -254,27 +278,11 @@ func _build_ui() -> void:
 	quality_btn = level_picker.quality_button
 	level_picker.set_quality_label("Graphics: " + quality.capitalize())
 
-	# Camera buttons (touch screens; mouse: wheel, Ctrl + wheel, Q/E, right-drag).
-	# Plain ASCII labels: the web build's default font has no arrow glyphs.
-	cam_grid = GridContainer.new()
-	cam_grid.columns = 2
-	cam_grid.add_theme_constant_override("h_separation", 6)
-	cam_grid.add_theme_constant_override("v_separation", 6)
-	cam_grid.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
-	cam_grid.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	cam_grid.grow_vertical = Control.GROW_DIRECTION_BOTH
+	# Camera pad. Anchors were set in the camera scene's _init, before this add.
+	# Sibling order stays: picker, then this pad, then the bottom bar (Tab).
+	cam_grid = cam.pad
 	ui_root.add_child(cam_grid)
-	for spec in [["Zoom +", func(): _zoom_button(-4.0)], ["Zoom -", func(): _zoom_button(4.0)],
-			["Tilt +", func(): _tilt_by(8.0)], ["Tilt -", func(): _tilt_by(-8.0)],
-			["< 90°", func(): _rotate(-90.0)], ["90° >", func(): _rotate(90.0)],
-			["Fit", _on_fit]]:
-		cam_grid.add_child(_btn(spec[0], spec[1]))
-	# Follow camera (round 9), next to Fit: only during a run; cycles
-	# Overview ("All") / Follow hero ("Hero").
-	view_btn = _btn("View: All", _on_cam_mode)
-	view_btn.tooltip_text = "Overview or follow the hero (key C)"
-	view_btn.visible = false
-	cam_grid.add_child(view_btn)
+	view_btn = cam.view_button
 
 	# Bottom bar: tray rooms (wrap upward if many), spells during a run, run controls.
 	bottom_bar = BoxContainer.new()
@@ -1010,73 +1018,41 @@ func _perf_tick(delta: float) -> void:
 			Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)])
 
 # ------------------------------------------------------------------ camera
+# Framing lives on scenes/level_camera.tscn. These forwards keep the calls
+# the smoke test and the input path already use. The camera does not read
+# the rules engine.
 
-## Smooth 90° turn (ease out); lands exactly on target_yaw, so the yaw is
-## always 45° + n·90° once settled.
 func _rotate(deg: float) -> void:
-	target_yaw += deg
-	if yaw_tween:
-		yaw_tween.kill()
-	yaw_tween = create_tween()
-	yaw_tween.tween_property(self, "yaw", target_yaw, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	yaw_tween.tween_callback(func():
-		yaw = fposmod(target_yaw, 360.0)
-		target_yaw = yaw)
+	cam.rotate_by(deg)
 	_snap_camera()
 
 func _zoom_by(d: float) -> void:
-	_set_zoom(target_zoom + d)
+	cam.zoom_by(d)
 
-## Zoom within the limits. The follow close-up may sit below ZOOM_LIMITS.x;
-## from there (even after follow ends) zooming in stops where it is and
-## zooming out works, so no gesture or button snaps the camera the wrong way.
 func _set_zoom(z: float) -> void:
-	var lo := FOLLOW_MIN if follow else minf(ZOOM_LIMITS.x, target_zoom)
-	var before := target_zoom
-	target_zoom = clampf(z, lo, ZOOM_LIMITS.y)
-	# Only a zoom OUT to an overview distance re-arms the close-in; zooming
-	# in from a far close-up (40 -> 24 -> 20) must not let View stack again.
-	if not follow and target_zoom > before and target_zoom >= ZOOM_LIMITS.x:
-		follow_zoomed = false
+	cam.set_zoom(z)
 
 func _tilt_by(d: float) -> void:
-	target_pitch = clampf(target_pitch + d, PITCH_LIMITS.x, PITCH_LIMITS.y)
-	_request_fit(1)
+	cam.tilt_by(d)
 
-## Refit once the HUD has re-laid out (containers sort at the end of a frame).
 func _request_fit(mode: int) -> void:
-	fit_pending = maxi(fit_pending, mode)
-	fit_wait = 2
+	cam.request_fit(mode)
 
-## On-screen +/- buttons, wheel and keys: the user takes over the zoom.
 func _zoom_button(d: float) -> void:
-	cam_manual = true
-	_zoom_by(d)
+	cam.zoom_button(d)
 
 func _on_fit() -> void:
 	_set_follow(false)
 	cam_manual = false
 	_fit_camera(false)
 
-## After a rotation (or a new level), glide the pivot back onto the dungeon
-## so the board doesn't drift off screen; yaw lands exactly on 45° + n·90°.
 func _snap_camera() -> void:
 	if follow:
 		return                               # the follow camera keeps the hero centred
 	if not cam_manual:
 		_fit_camera(false)
 		return
-	var lo := Vector3(INF, 0, INF)
-	var hi := Vector3(-INF, 0, -INF)
-	for id in placed:
-		var c := slot_center(placed[id].x, placed[id].y)
-		lo = lo.min(c)
-		hi = hi.max(c)
-	var center := slot_center(2, 0) if placed.is_empty() else (lo + hi) / 2.0
-	if cam_tween:
-		cam_tween.kill()
-	cam_tween = create_tween()
-	cam_tween.tween_property(rig, "position", center, 0.25)
+	cam.snap_to(placed, ROOM)
 
 ## Free screen area for the board: below the top text, above the bottom
 ## bar, left of the camera buttons (UI units, same space as unproject).
@@ -1094,135 +1070,21 @@ func _fit_area() -> Rect2:
 		top = bottom - 8.0
 	return Rect2(left, top, right - left, bottom - top)
 
-func _ground_at(pos: Vector2) -> Vector3:
-	var o := camera.project_ray_origin(pos)
-	var d := camera.project_ray_normal(pos)
-	return o - d * (o.y / d.y) if absf(d.y) > 0.0001 else rig.position
-
-## Centre on and fit the dungeon's bounds inside the HUD hole, for the
-## yaw/tilt the camera is heading to. While building, the whole drawn
-## board (SLOTS_X x SLOTS_Y) is framed so a narrow portrait window
-## doesn't clip the floor; during a run the placed rooms are framed
-## tightly. Binary search on the zoom, then shift the pivot so the box
-## sits in the middle of the hole (canvas / unproject space).
 func _fit_camera(instant: bool) -> void:
-	follow_zoomed = false                    # back to an overview distance
-	# While building (or on an empty board), frame every drawn slot so the
-	# 8x6 floor isn't clipped on a narrow portrait window. During a run,
-	# tighten to the placed rooms (L-shapes stay framed to their rooms).
-	var lo := Vector2i(SLOTS_X.x, SLOTS_Y.x)
-	var hi := Vector2i(SLOTS_X.y, SLOTS_Y.y)
-	var tight := not placed.is_empty() and not _building()
-	if tight:
-		lo = Vector2i(1 << 20, 1 << 20)
-		hi = -lo
-		for id in placed:
-			lo = lo.min(placed[id])
-			hi = hi.max(placed[id])
-	var x0 := lo.x * ROOM
-	var x1 := (hi.x + 1) * ROOM
-	var z0 := -lo.y * ROOM
-	var z1 := -(hi.y + 1) * ROOM
-	var boxes: Array = [[x0, x1, z0, z1]]
-	if tight:
-		boxes = []
-		for id in placed:
-			var sl: Vector2i = placed[id]
-			boxes.append([sl.x * ROOM, (sl.x + 1) * ROOM, -sl.y * ROOM, -(sl.y + 1) * ROOM])
-	var pts: Array[Vector3] = []
-	for bx in boxes:
-		for x in [bx[0], bx[1]]:
-			for z in [bx[2], bx[3]]:
-				for h in [0.0, FIT_HEIGHT]:
-					pts.append(Vector3(x, h, z))
-	var area := _fit_area()                 # canvas / unproject space (not the 360-wide window)
-	var saved := [rig.position, yaw, pitch, zoom]
-	rig.position = Vector3((x0 + x1) / 2.0, 0, (z0 + z1) / 2.0)
-	yaw = target_yaw
-	pitch = target_pitch
-	var best := ZOOM_LIMITS.y
-	for round in 2:
-		var a := ZOOM_LIMITS.x
-		var b := ZOOM_LIMITS.y
-		for i in 14:
-			zoom = (a + b) / 2.0
-			_update_camera()
-			if _fits(pts, area.size):
-				b = zoom
-			else:
-				a = zoom
-		best = b
-		zoom = best
-		_update_camera()
-		var box := Rect2(camera.unproject_position(pts[0]), Vector2.ZERO)
-		for p in pts:
-			box = box.expand(camera.unproject_position(p))
-		var screen_mid := get_viewport().get_visible_rect().size / 2.0
-		rig.position = _ground_at(screen_mid - (area.get_center() - box.get_center()))
-	var target_pos := rig.position
-	rig.position = saved[0]
-	yaw = saved[1]
-	pitch = saved[2]
-	zoom = saved[3]
-	_update_camera()
-	if cam_tween:
-		cam_tween.kill()
-	target_zoom = best
-	if instant:
-		rig.position = target_pos
-		zoom = best
-		_update_camera()
-	else:
-		cam_tween = create_tween()
-		cam_tween.tween_property(rig, "position", target_pos, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-
-## True when the projected points' bounding box fits in `size`.
-func _fits(pts: Array[Vector3], size: Vector2) -> bool:
-	var box := Rect2()
-	for i in pts.size():
-		if camera.is_position_behind(pts[i]):
-			return false
-		var q := camera.unproject_position(pts[i])
-		box = Rect2(q, Vector2.ZERO) if i == 0 else box.expand(q)
-	return box.size.x <= size.x and box.size.y <= size.y
+	cam.fit(instant, placed, _building(), _fit_area(), ROOM, SLOTS_X, SLOTS_Y, FIT_HEIGHT, get_viewport().get_visible_rect().size)
 
 func _pan(delta_px: Vector2) -> void:
-	if follow:
-		_set_follow(false)                   # dragging the view takes over from the follow camera
-		cam_manual = true
-	var scale := zoom / 600.0
-	var right := Vector3(cos(deg_to_rad(yaw)), 0, -sin(deg_to_rad(yaw)))
-	var fwd := Vector3(-sin(deg_to_rad(yaw)), 0, -cos(deg_to_rad(yaw)))
-	rig.position -= right * delta_px.x * scale
-	rig.position += fwd * delta_px.y * scale
+	cam.pan(delta_px)
 
 func _update_camera() -> void:
-	rig.rotation_degrees.y = yaw
-	var p := deg_to_rad(pitch)
-	camera.position = Vector3(0, zoom * sin(p), zoom * cos(p))
-	camera.look_at(rig.global_position, Vector3.UP)
+	cam.update_transform()
 
 func _process(delta: float) -> void:
-	# Zoom and tilt ease toward their targets (frame-rate independent).
-	var k := 1.0 - exp(-CAM_SMOOTH * delta)
-	zoom = target_zoom if absf(target_zoom - zoom) < 0.01 else lerpf(zoom, target_zoom, k)
-	pitch = target_pitch if absf(target_pitch - pitch) < 0.01 else lerpf(pitch, target_pitch, k)
-	_update_camera()
+	cam.ease(delta)
 	status.visible = not end_banner.apply_visibility()   # banner replaces "Extermination: ..." 
 	log_label.visible = log_label.text != "" or not _building()
-	if fit_wait > 0:
-		fit_wait -= 1
-	elif fit_pending != 0 and drag_id == "":
-		if follow:
-			pass                                 # no auto-fit while following a hero
-		elif fit_pending == 2 or not cam_manual:
-			_fit_camera(fit_pending == 2)
-		fit_pending = 0
-	if follow:
-		var target: Variant = heroes.follow_point()
-		if target != null:
-			var goal_pos := Vector3(target.x, 0, target.z)
-			rig.position = rig.position.lerp(goal_pos, 1.0 - exp(-FOLLOW_SMOOTH * delta))
+	cam.consume_fit(drag_id == "")
+	cam.follow_step(delta, heroes.follow_point() if follow else null)
 	lighting.tick(delta, Vector3(rig.position.x, 0, rig.position.z), room_nodes)
 	_layout_labels()
 	for id in room_nodes:
@@ -1397,18 +1259,7 @@ func _on_cam_mode() -> void:
 		_fit_camera(false)
 
 func _set_follow(on: bool) -> void:
-	follow = on
-	if view_btn:
-		view_btn.text = "View: Hero" if on else "View: All"
-	if on:
-		if cam_tween:
-			cam_tween.kill()
-		# Close in once per overview: until the camera refits or the user
-		# zooms back out to an overview distance, View again (e.g. after a pan) keeps the
-		# close-up instead of stacking another 60%.
-		if not follow_zoomed:
-			target_zoom = maxf(FOLLOW_MIN, target_zoom * FOLLOW_ZOOM)
-			follow_zoomed = true
+	cam.set_follow(on)
 
 func _on_reset() -> void:
 	if follow:
