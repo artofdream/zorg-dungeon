@@ -111,13 +111,13 @@ var view_btn: Button
 var help_btn: Button
 var undo_btn: Button
 var next_btn: Button
-var help_dlg: Control            # modal: backdrop + room legend
+var help_dlg: ZorgHelpDialog
 var help_box: VBoxContainer
 var quit_dlg: ZorgQuitDialog     # scenes/quit_dialog.tscn: "Quit Zorg?" Stay / Quit
 var quit_stay: Button
 var quit_btn: Button
 var embedded := false            # web build inside an iframe (itch.io): no Quit
-var hint: PanelContainer         # first-run hint (dismissed once, saved)
+var hint: ZorgHint               # first-run hint (dismissed once, saved)
 var settings_path := ZorgAtmos.SETTINGS
 var follow := false              # true: the camera tracks the first living hero
 var follow_zoomed := false       # the current zoom is already a follow close-up
@@ -341,78 +341,21 @@ func _build_ui() -> void:
 	_build_dialogs()
 	_apply_margins()
 
-## First-run hint under the goal line; "Got it" (or opening the legend)
-## hides it for good (saved in settings.cfg).
 func _build_hint() -> void:
-	hint = PanelContainer.new()
-	hint.add_theme_stylebox_override("panel", ZorgHud.plate())
-	hint.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	hint.add_child(row)
-	var l := _label(16)
-	l.text = "New here? Tap ? to see what each room does."
-	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(l)
-	row.add_child(_btn("Got it", dismiss_hint))
-	hint.visible = not ZorgHelp.hint_seen(settings_path)
+	hint = preload("res://scenes/hint_panel.tscn").instantiate() as ZorgHint
+	hint.hint_dismissed.connect(_on_hint_dismissed)
+	hint.show_hint(not ZorgHelp.hint_seen(settings_path))
 	hud_top.add_child(hint)
 	hud_top.move_child(hint, goal.get_index() + 1)
 
-func dismiss_hint() -> void:
-	if hint.visible:
-		hint.visible = false
-		ZorgHelp.set_hint_seen(settings_path, true)
-		_request_fit(1)
-
-func _modal(name: String) -> Array:
-	var root := Control.new()
-	root.name = name
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP     # taps don't reach the board
-	root.visible = false
-	ui_root.add_child(root)
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.55)
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.offset_left = -64
-	dim.offset_top = -64
-	dim.offset_right = 64
-	dim.offset_bottom = 64
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(dim)
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(center)
-	var panel := PanelContainer.new()
-	center.add_child(panel)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
-	panel.add_child(box)
-	return [root, box]
+func _on_hint_dismissed() -> void:
+	ZorgHelp.set_hint_seen(settings_path, true)
+	_request_fit(1)
 
 func _build_dialogs() -> void:
-	var h: Array = _modal("HelpDialog")
-	help_dlg = h[0]
-	var hb: VBoxContainer = h[1]
-	var ht := _label(22)
-	ht.text = "Rooms (from the game rules)"
-	hb.add_child(ht)
-	var scroll := ScrollContainer.new()
-	scroll.name = "Scroll"
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	hb.add_child(scroll)
-	help_box = VBoxContainer.new()
-	help_box.add_theme_constant_override("separation", 8)
-	help_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(help_box)
-	ZorgHelp.fill(help_box, 520)
-	var close := _btn("Close", close_help)
-	close.custom_minimum_size.x = 120
-	close.size_flags_horizontal = Control.SIZE_SHRINK_END
-	hb.add_child(close)
-
+	help_dlg = preload("res://scenes/help_dialog.tscn").instantiate() as ZorgHelpDialog
+	ui_root.add_child(help_dlg)
+	help_box = help_dlg.legend
 	quit_dlg = preload("res://scenes/quit_dialog.tscn").instantiate() as ZorgQuitDialog
 	ui_root.add_child(quit_dlg)
 	quit_stay = quit_dlg.stay_button
@@ -421,16 +364,12 @@ func _build_dialogs() -> void:
 	set_embedded(embedded)
 
 func open_help() -> void:
-	dismiss_hint()
+	hint.dismiss()
 	levels_panel.visible = false
-	var vp := ui_root.size                   # UI units, inside the safe area
-	var scroll: ScrollContainer = help_dlg.find_child("Scroll", true, false)
-	scroll.custom_minimum_size = Vector2(minf(680.0, vp.x - 60.0), maxf(140.0, vp.y - 150.0))
-	ZorgHelp.fill(help_box, scroll.custom_minimum_size.x - 160.0)
-	help_dlg.visible = true
+	help_dlg.open(ui_root.size)
 
 func close_help() -> void:
-	help_dlg.visible = false
+	help_dlg.close_dialog()
 
 func _show_quit() -> void:
 	quit_dlg.open()                          # Enter = Stay, the safe choice

@@ -111,4 +111,6 @@ full-rect, and the smoke test checks that F3 shows a non-zero label at
 the top right. The end banner uses `PRESET_TOP_LEFT` in `_init` and stays
 inside the HUD column. Its line rects are the same measurement the column
 used, so room labels do not jump. The smoke test checks a win and a loss.
+The room legend is its own full-rect scene. The first-run hint is its own
+plate. Dismissing the hint still saves `hint_seen` from the level screen.
 

@@ -325,5 +325,7 @@ downloaded from broth.itch.zone and checked against a pinned SHA-256.
   `docs/godot-level-split.md`. The rules copy and the golden files stay
   put. The quit question is `scenes/quit_dialog.tscn`. The FPS counter
   is `scenes/fps_readout.tscn`. The win/loss line is `scenes/end_banner.tscn`.
+  The room legend is `scenes/help_dialog.tscn`. The first-run hint is
+  `scenes/hint_panel.tscn`.
 
 See `docs/adr/0008-godot-port-milestone-1.md`.

@@ -24,8 +24,8 @@ test reads.
 |---|---|---|
 | 1 | Quit dialog | A modal. It is not in the HUD column, and it never reads the board or the engine. Done on main (#115, anchor fix #116). `level.gd` 1601 → 1588. |
 | 2 | FPS readout | One label (`?fps=1` or F3). The 30 FPS drop to Low stays with lighting. Done on main (#117). Top-right anchors in `_init`. `level.gd` 1588 → 1593. |
-| 3 | End banner | The result line and the Next level button. The level screen still reads `engine.score()` and passes the sentence in. This slice. Top-left anchors in `_init`, inside the HUD column. `level.gd` 1593 → 1591. |
-| 4 | Help and the first-run hint | The "?" legend. Wording stays in `scripts/help.gd`. Dismissing the hint asks the level screen to refit the camera. |
+| 3 | End banner | The result line and the Next level button. The level screen still reads `engine.score()` and passes the sentence in. Done on main (#118). Top-left anchors in `_init`, inside the HUD column. `level.gd` 1593 → 1591. |
+| 4 | Help and the first-run hint | The "?" legend. Wording stays in `scripts/help.gd`. Dismissing the hint asks the level screen to refit the camera. This slice. Legend is full-rect; the hint is top-left in the HUD column. `level.gd` 1591 → 1530. |
 | 5 | Level picker | The level grid and the Graphics button. Choosing a level or a quality is a signal. Applying it stays on the level screen. |
 | 6 | Lighting | World environment, sun, torch budget, flicker, and the 30 FPS fallback. `levels/visual-lights.json` stays cosmetic. `set_quality`, `torch_lights`, and `env` stay as forwards for the smoke test. |
 | 7 | Camera | Rig, zoom, tilt, yaw, fit, follow, and the on-screen pad. Gesture-heavy. The smoke test calls the fit and follow methods, so those stay as forwards. |
@@ -46,7 +46,7 @@ Parent calls are methods. Child replies are signals.
 | Quit dialog (`scenes/quit_dialog.tscn`) | `open()`, `close()`, `set_quit_offered(on)` | `quit_requested` (player pressed Quit), `dismissed` (closed without quitting) |
 | FPS readout (`scenes/fps_readout.tscn`) | `set_visible_fps(on)`, `set_line(text)`, `set_top_offset(y)`, `toggle()` | `toggled(shown)` |
 | End banner (`scenes/end_banner.tscn`) | `show_line(text, show_next)`, `clear()`, `apply_visibility()` | `next_level_pressed` |
-| Help and hint | `open(viewport_size)`, `close()`, `show_hint(on)` | `closed`, `hint_dismissed` |
+| Help and hint (`scenes/help_dialog.tscn`, `scenes/hint_panel.tscn`) | `open(area)`, `close_dialog()`, `show_hint(on)`, `dismiss()` | `closed`, `hint_dismissed` |
 | Level picker | `set_open(on)`, `set_current(index)`, `set_quality_label(text)` | `level_selected(index)`, `closed`, `quality_toggled` |
 | Lighting | `set_quality(q, save)`, `note_rooms(nodes)`, `tick(delta, pivot)` | `quality_changed(q)` |
 | Camera | `fit(instant)`, `set_follow(on, point)`, `pan`, `zoom_by`, `tilt_by`, `rotate` | `became_manual` |
@@ -75,5 +75,13 @@ full-rect overlay, and it reports the same text rects the column used
 before so room labels do not move. The level screen still calls
 `engine.score()` and passes the sentence to `show_line`. The banner
 emits `next_level_pressed`. `level.gd` is 1591 lines after this slice.
+
+Slice 4 is the room legend and the first-run hint. The legend's anchors
+are `PRESET_FULL_RECT`, set in `_init` before `add_child`. The hint's
+anchors are `PRESET_TOP_LEFT`, also in `_init`, and it stays in the HUD
+column under the goal. Wording stays in `scripts/help.gd`. "Got it" emits
+`hint_dismissed`; the level screen still writes `hint_seen` and refits
+the camera. Back/Esc ordering stays on the level screen. `level.gd` is
+1530 lines after this slice.
 
 See [[LEARNINGS-godot]].
