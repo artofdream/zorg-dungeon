@@ -118,8 +118,10 @@ die. These were Godot primitives until round 10 (see **Models** below).
 **Look** (round 9, visual only, `scripts/atmos.gd`): a torch-lit stone
 dungeon. A warm fill (not a dim blue moon) keeps the checkerboard, walls
 and heroes readable on the Compatibility renderer the web build uses and
-on the Mobile renderer phones and desktop use. Fog and a vignette stay
-light enough that they don't paint the board black. Each room has a wall
+on the Mobile renderer phones and desktop use. Fog is a light warm
+haze and a vignette stays light enough that they don't paint the board
+black. A few unshaded dust motes drift near the camera (12 on Low, 24
+on High; frozen if the engine reports reduced motion). Each room has a wall
 torch whose warm light flickers. Damage rooms also get a procedural
 brazier from `levels/visual-lights.json` (cosmetic only; the rules engine
 never reads that file). Walls use the KayKit atlas, the empty board is a

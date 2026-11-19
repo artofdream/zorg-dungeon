@@ -86,7 +86,9 @@ near-black, and board albedo around `0.25` multiplied by a dark stone
 texture. Raising ambient alone to `0.55` barely moved the tile. The board
 needs its own fill (lighter checker plus a little emission), a warmer
 ambient and sun, and lighter fog. Measure a screenshot before changing it
-again. The smoke test locks ambient `>= 0.5` and fog `<= 0.008`.
+again. The smoke test locks ambient `>= 0.5` and fog `<= 0.008`. A later
+pass warms the fog colour and adds a few unshaded dust motes. It does
+not lower the ambient or raise the fog past that lock.
 
 Phone budget: Low still skips shadows and still draws the 3D view at 0.75
 scale. It now allows 6 unshadowed omni lights (one torch per room in the

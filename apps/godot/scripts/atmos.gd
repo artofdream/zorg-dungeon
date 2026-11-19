@@ -77,8 +77,9 @@ static func environment(high: bool) -> Environment:
 	env.tonemap_exposure = 1.2
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_EXPONENTIAL
-	env.fog_light_color = Color(0.09, 0.08, 0.1)
-	env.fog_density = 0.004
+	# Warm haze, still under the smoke cap (density <= 0.008, ambient >= 0.5).
+	env.fog_light_color = Color(0.18, 0.11, 0.08)
+	env.fog_density = 0.0055
 	env.fog_sky_affect = 0.0
 	set_quality(env, high)
 	return env
@@ -94,7 +95,7 @@ static func vignette() -> TextureRect:
 	var g := Gradient.new()
 	g.set_color(0, Color(0, 0, 0, 0))
 	g.add_point(0.55, Color(0, 0, 0, 0))
-	g.set_color(g.get_point_count() - 1, Color(0, 0, 0, 0.5))
+	g.set_color(g.get_point_count() - 1, Color(0.05, 0.02, 0.0, 0.4))
 	var t := GradientTexture2D.new()
 	t.gradient = g
 	t.fill = GradientTexture2D.FILL_RADIAL
