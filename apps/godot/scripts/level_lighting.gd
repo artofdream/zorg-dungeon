@@ -16,6 +16,7 @@ var _look_time := 0.0
 var _perf_frames := 0
 var _perf_time := 0.0
 var _perf_checked := false
+var _dust: CPUParticles3D
 
 ## Configure the existing Level/Sun and add the world environment.
 ## quality_url and shadows_flag are the web query values (or the fallbacks).
@@ -35,6 +36,8 @@ func setup(sun_light: DirectionalLight3D, quality_url: String, shadows_flag: Str
 	sun.directional_shadow_max_distance = 80.0
 	sun.shadow_bias = 0.05
 	sun.shadow_normal_bias = 1.0
+	_dust = _make_dust()
+	add_child(_dust)
 	_apply()
 
 func set_quality(q: String, save := true) -> void:
@@ -49,6 +52,11 @@ func _apply() -> void:
 	sun.shadow_enabled = high and _shadows != "0"
 	ZorgAtmos.set_quality(env, high)
 	get_viewport().scaling_3d_scale = 1.0 if high else ZorgAtmos.LOW_3D_SCALE
+	if _dust:
+		_dust.amount = 24 if high else 12
+		# No in-game reduced-motion setting. Freeze the motes when the
+		# engine reports one, and otherwise keep them slow.
+		_dust.speed_scale = 0.0 if _reduce_motion() else 1.0
 
 ## Omni lights per quality. Every room's wall torch is first, nearest
 ## rooms first, then declared extras (braziers). The cap is LOW_LIGHTS or
@@ -89,7 +97,46 @@ func tick(delta: float, pivot: Vector3, room_nodes: Dictionary) -> void:
 		for light in room_nodes[id].get_meta("lights", []):
 			if (light as OmniLight3D).visible:
 				ZorgAtmos.flicker(light, _look_time)
+	if _dust:
+		_dust.global_position = Vector3(pivot.x, 1.4, pivot.z)
 	_perf(delta)
+
+## A handful of unshaded quads. No texture, no shadows, no collision.
+func _make_dust() -> CPUParticles3D:
+	var dust := CPUParticles3D.new()
+	dust.name = "Dust"
+	dust.amount = 12
+	dust.lifetime = 10.0
+	dust.preprocess = 8.0
+	dust.randomness = 0.5
+	dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	dust.emission_box_extents = Vector3(8.0, 1.4, 8.0)
+	dust.direction = Vector3(0, 1, 0)
+	dust.spread = 70.0
+	dust.gravity = Vector3(0, 0.03, 0)
+	dust.initial_velocity_min = 0.03
+	dust.initial_velocity_max = 0.1
+	dust.scale_amount_min = 0.35
+	dust.scale_amount_max = 1.0
+	dust.color = Color(1.0, 0.72, 0.38, 0.55)
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.22, 0.22)
+	dust.mesh = quad
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.disable_receive_shadows = true
+	dust.material_override = mat
+	dust.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	dust.local_coords = false
+	return dust
+
+func _reduce_motion() -> bool:
+	if DisplayServer.has_method("accessibility_should_reduce_motion"):
+		return bool(DisplayServer.call("accessibility_should_reduce_motion"))
+	return false
 
 func _perf(delta: float) -> void:
 	if _perf_checked:
