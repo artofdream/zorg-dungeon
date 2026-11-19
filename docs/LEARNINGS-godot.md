@@ -119,5 +119,8 @@ budget, and the 30 FPS quality drop live in their own node. The level
 screen still forwards `set_quality`, `torch_lights`, and `env`. The
 orbit camera and its pad live in their own scene. The pad's anchors are
 `PRESET_CENTER_RIGHT`, set in `_init`. The level screen still forwards
-fit and follow, and the camera does not read the rules engine.
+fit and follow, and the camera does not read the rules engine. The tray,
+ghost, drag, and keyboard placement live in their own node. That node
+asks the level screen whether a spot is free, and it does not read the
+rules engine.
 
