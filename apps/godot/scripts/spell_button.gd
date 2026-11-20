@@ -27,12 +27,15 @@ var _pressing := false
 var _press_for := 0.0
 var _icon: TextureRect
 var _badge: Label
-var _overlay: PanelContainer
-var _overlay_label: Label
 var _pulse: Tween
 var _hovered := false
 var _catcher: Control
 var _suppress_press := false
+var _tip := ""
+# Same idea as ZorgCamPadButton: one plate on the HUD canvas so the name
+# is not clipped by the bottom bar.
+static var _hint: PanelContainer
+static var _hint_label: Label
 
 
 func _init() -> void:
@@ -67,17 +70,6 @@ func _init() -> void:
 	_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_badge.visible = false
 	add_child(_badge)
-	_overlay = PanelContainer.new()
-	_overlay.name = "Overlay"
-	_overlay.add_theme_stylebox_override("panel", ZorgHud.plate())
-	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_overlay.visible = false
-	_overlay.z_index = 20
-	_overlay_label = Label.new()
-	_overlay_label.add_theme_font_size_override("font_size", 16)
-	_overlay_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_overlay.add_child(_overlay_label)
-	add_child(_overlay)
 	mouse_entered.connect(func() -> void: _set_hover(true))
 	mouse_exited.connect(func() -> void: _set_hover(false))
 	focus_entered.connect(func() -> void: _set_hover(true))
@@ -107,11 +99,11 @@ func apply(id: int, spell: Dictionary, allowed: bool, block_reason: String) -> v
 		tip += " (used)"
 	elif disabled and block_reason != "":
 		tip += " — %s" % block_reason
+	_tip = tip
 	tooltip_text = tip
 	_catcher.tooltip_text = tip
 	_catcher.mouse_filter = Control.MOUSE_FILTER_STOP if disabled else Control.MOUSE_FILTER_IGNORE
 	accessibility_name = title
-	_overlay_label.text = tip
 	_icon.texture = _texture_for(kind)
 	_icon.modulate = Color(0.55, 0.57, 0.62) if disabled else Color.WHITE
 	if kind == "Attack":
@@ -196,7 +188,7 @@ func _set_hover(on: bool) -> void:
 	else:
 		preview_ended.emit(spell_id)
 		if not _pressing:
-			_overlay.visible = false
+			_hide_hint()
 
 
 func _on_down() -> void:
@@ -207,12 +199,16 @@ func _on_down() -> void:
 		preview_started.emit(spell_id)
 
 
+func hint_visible() -> bool:
+	return _hint != null and is_instance_valid(_hint) and _hint.visible
+
+
 func _on_up() -> void:
-	if _overlay.visible or _press_for >= LONG_PRESS:
+	if hint_visible() or _press_for >= LONG_PRESS:
 		_suppress_press = true
 	_pressing = false
 	set_process(false)
-	_overlay.visible = false
+	_hide_hint()
 
 
 func _on_native_pressed() -> void:
@@ -248,7 +244,48 @@ func _process(delta: float) -> void:
 	if not _pressing:
 		return
 	_press_for += delta
-	if _press_for >= LONG_PRESS and not _overlay.visible:
-		_overlay.visible = true
-		_overlay.reset_size()
-		_overlay.position = Vector2((size.x - _overlay.get_combined_minimum_size().x) / 2.0, -_overlay.get_combined_minimum_size().y - 4.0)
+	if _press_for >= LONG_PRESS and not hint_visible():
+		_show_hint()
+
+
+func _show_hint() -> void:
+	var h := _hint_plate()
+	_hint_label.text = _tip
+	h.visible = true
+	h.reset_size()
+	var r := get_global_rect()
+	var sz := h.get_combined_minimum_size()
+	# Spell bar sits at the bottom: put the plate above the button.
+	h.global_position = Vector2(r.position.x + (r.size.x - sz.x) / 2.0, r.position.y - sz.y - 8.0)
+
+
+func _hide_hint() -> void:
+	if _hint and is_instance_valid(_hint):
+		_hint.visible = false
+
+
+func _hint_plate() -> PanelContainer:
+	if _hint and is_instance_valid(_hint):
+		return _hint
+	var plate := PanelContainer.new()
+	plate.name = "SpellHintOverlay"
+	plate.visible = false
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.add_theme_stylebox_override("panel", ZorgHud.plate())
+	var lab := Label.new()
+	lab.add_theme_font_size_override("font_size", 16)
+	lab.add_theme_color_override("font_color", Color(0.95, 0.96, 1.0))
+	lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.add_child(lab)
+	var host: Node = self
+	while host:
+		var pnode: Node = host.get_parent()
+		if pnode is CanvasLayer and host is Control:
+			break
+		host = pnode
+	if host == null or not (host is Control):
+		host = get_parent()
+	host.add_child(plate)
+	_hint = plate
+	_hint_label = lab
+	return plate

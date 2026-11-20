@@ -1042,7 +1042,7 @@ func _spell_visibility(engine: Node) -> void:
 		"spell vis: disabled tooltip explains the closed window (%s)" % btn.tooltip_text)
 	btn._on_down()
 	btn._process(ZorgSpellButton.LONG_PRESS)
-	_check(btn.get_node("Overlay").visible, "spell vis: long-press on a disabled button shows the name and reason")
+	_check(btn.hint_visible(), "spell vis: long-press on a disabled button shows the name and reason")
 	btn._on_up()
 	level._on_step()
 	await process_frame
@@ -1059,7 +1059,7 @@ func _spell_visibility(engine: Node) -> void:
 	level.heroes.clear_attack_preview()
 	btn._on_down()
 	btn._process(ZorgSpellButton.LONG_PRESS)
-	_check(btn.get_node("Overlay").visible, "spell vis: long-press on a ready button shows the name")
+	_check(btn.hint_visible(), "spell vis: long-press on a ready button shows the name")
 	btn._on_up()
 	btn.pressed.emit()
 	_check(not bool(engine.state["spells"][0]["consumed"]),
