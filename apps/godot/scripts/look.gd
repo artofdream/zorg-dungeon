@@ -252,6 +252,18 @@ static func set_board_focus(r: Rect2, fade: float) -> void:
 	m.set_shader_parameter("focus_max", r.end)
 	m.set_shader_parameter("fade", fade)
 
+## Build overlay on the board: one texel per slot (RGBA: tint and
+## strength), the first slot (x, y) it covers, and how much to show
+## (`mix` 0 hides it, during a run). `fill` is the in-slot fill strength;
+## the slot outline always shows at full strength. Visual only.
+static func set_board_cells(tex: Texture2D, origin: Vector2i, size: Vector2i, mix: float, fill: float) -> void:
+	var m := board_mat()
+	m.set_shader_parameter("cell_tex", tex)
+	m.set_shader_parameter("cells_origin", Vector2(origin))
+	m.set_shader_parameter("cells_size", Vector2(size))
+	m.set_shader_parameter("cell_mix", mix)
+	m.set_shader_parameter("cell_fill", fill)
+
 ## Glowing octagon rune in a room's colour (one shared material per colour).
 static func rune_mat(c: Color) -> StandardMaterial3D:
 	var key := "rune_%s" % c.to_html(false)

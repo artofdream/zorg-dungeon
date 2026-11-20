@@ -176,7 +176,8 @@ func yaw_by(deg: float) -> void:
 	manual = true
 	if _yaw_tween:
 		_yaw_tween.kill()
-	target_yaw += deg
+	stop_glide()                         # a fit/snap glide aimed for the old yaw
+	target_yaw = yaw + deg                # take over from the current angle, not a turn's old destination
 	yaw = target_yaw
 
 
@@ -216,11 +217,25 @@ func pan(delta_px: Vector2) -> void:
 	if not manual:
 		became_manual.emit()
 	manual = true
+	# Fluidity: a running fit/snap glide must not fight the finger (it used
+	# to pull the view back for up to 0.35 s after a placement or Play).
+	stop_glide()
 	var scale := zoom / 600.0
 	var right := Vector3(cos(deg_to_rad(yaw)), 0, -sin(deg_to_rad(yaw)))
 	var fwd := Vector3(-sin(deg_to_rad(yaw)), 0, -cos(deg_to_rad(yaw)))
 	position -= right * delta_px.x * scale
 	position += fwd * delta_px.y * scale
+
+
+## Stop the pivot glide (fit / snap tween) where it is.
+func stop_glide() -> void:
+	if _move_tween and _move_tween.is_valid():
+		_move_tween.kill()
+	_move_tween = null
+
+
+func is_gliding() -> bool:
+	return _move_tween != null and _move_tween.is_valid() and _move_tween.is_running()
 
 
 func update_transform() -> void:

@@ -171,9 +171,13 @@ func layout_spell_hint(view_size: Vector2, bottom: Rect2, col_w: float = 0.0) ->
 func tick(delta: float) -> void:
 	if not _playing:
 		return
+	# Fluidity: keep the overshoot so the cadence is STEP_SECONDS on average
+	# at any frame rate (resetting to STEP_SECONDS rounded every step up to
+	# a whole frame: 0.20 s at 30 FPS). One step per frame at most, and no
+	# catch-up burst after a long frame.
 	_timer -= delta
 	if _timer <= 0.0:
-		_timer = STEP_SECONDS
+		_timer = maxf(_timer + STEP_SECONDS, 0.0)
 		advance_requested.emit()
 
 

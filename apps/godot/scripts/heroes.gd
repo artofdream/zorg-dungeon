@@ -22,6 +22,12 @@ var _preview_nums: Array = []  # sticky preview labels
 var _waiting_preview: Control
 var _chrome_bottom := -1.0  # overlay-space y of the top of the bottom chrome
 var _chrome_top := -1.0     # canvas y; HP labels stay below the HUD text column
+## Fluidity: seconds one turn's moves may take (Play sets it to its step
+## cadence; INF while stepping by hand). A long ice slide is compressed to
+## fit, so the next turn never kills it halfway and cuts the corner.
+const STEP_MOVE_SECONDS := 0.13
+const MIN_MOVE_SECONDS := 0.015
+var move_budget := INF
 
 ## Where the follow camera looks: the first living hero on the board (lowest
 ## id), so it moves on to the next hero when one dies. null if none.
@@ -212,15 +218,21 @@ func _fade_out(f: Node3D) -> void:
 	tw.chain().tween_callback(func(): f.visible = false)
 
 ## One cell of movement: slide, with a small hop, facing the way it goes.
-func _step_to(tw: Tween, f: Node3D, to: Vector3) -> void:
+func _step_to(tw: Tween, f: Node3D, to: Vector3, secs: float = STEP_MOVE_SECONDS) -> void:
 	var body: Node3D = f.get_meta("body")
 	tw.tween_callback(func():
 		var d := to - f.position
 		if d.length() > 0.01:
 			f.rotation.y = atan2(d.x, d.z))
-	tw.tween_property(f, "position", to, 0.13).set_trans(Tween.TRANS_SINE)
-	tw.parallel().tween_property(body, "position:y", 0.16, 0.065).set_ease(Tween.EASE_OUT)
-	tw.parallel().tween_property(body, "position:y", 0.0, 0.065).set_ease(Tween.EASE_IN).set_delay(0.065)
+	tw.tween_property(f, "position", to, secs).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(body, "position:y", 0.16, secs / 2.0).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(body, "position:y", 0.0, secs / 2.0).set_ease(Tween.EASE_IN).set_delay(secs / 2.0)
+
+## Seconds per cell for a hero that moves `cells` cells this turn.
+func move_seconds(cells: int) -> float:
+	if cells <= 0:
+		return STEP_MOVE_SECONDS
+	return clampf(move_budget / float(cells), MIN_MOVE_SECONDS, STEP_MOVE_SECONDS)
 
 ## Apply one turn's events. Returns a short line for the log. Moves in one
 ## turn (an ice slide) chain into one tween; a teleport or the waiting room
@@ -228,6 +240,11 @@ func _step_to(tw: Tween, f: Node3D, to: Vector3) -> void:
 func apply_turn(events: Array) -> String:
 	var lines: Array = []
 	var moved := {}
+	var cells := {}
+	for e in events:
+		if String(e["type"]) == "move":
+			var hid := int(e.get("heroId", -1))
+			cells[hid] = int(cells.get(hid, 0)) + 1
 	for e in events:
 		var id := int(e.get("heroId", -1))
 		match String(e["type"]):
@@ -245,7 +262,7 @@ func apply_turn(events: Array) -> String:
 						_stop_tween(id)
 						_tweens[id] = f.create_tween()   # dies with the figure
 						moved[id] = true
-					_step_to(_tweens[id], f, cell_to_world(e["to"]))
+					_step_to(_tweens[id], f, cell_to_world(e["to"]), move_seconds(int(cells.get(id, 1))))
 			"enter":
 				lines.append("enters %s" % e["roomId"])
 			"pickup":

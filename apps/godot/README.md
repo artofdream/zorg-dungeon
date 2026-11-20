@@ -210,9 +210,15 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
 2. In the Project Manager, choose **Import** and pick `apps/godot/project.godot`.
 3. Press **F5**. Drag a room out of the tray onto the board, or tap it and
    then tap a square. A green ghost shows where it will land. A red ghost
-   means you can't place it there (off the board or the square is taken), and
-   dropping it there leaves the room where it was. An orange ghost means the
-   spot is free but doesn't touch any placed room yet. You can drag a placed room
+   means you can't place it there (off the board or the square is taken).
+   Dropping it there shakes the red ghost, shows "Can't place here: ..."
+   above the tray for a moment, and leaves the room where it was. An orange
+   ghost means the spot is free but doesn't touch any placed room yet. While
+   building, a faint grid outlines every free square and squares next to a
+   placed room glow green; while you drag a room, squares where it would
+   touch a room turn green and the rest amber. Tray slots keep their order:
+   a placed room leaves an empty outline in its slot instead of the row
+   moving. You can drag a placed room
    to move it, or tap it to send it back to the tray. Once every room is
    placed and connected, **Play** and **Step** unlock. You can also step with
    Space.
@@ -220,6 +226,8 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    Space presses one. On a tray room, it picks the room up; the arrow keys
    then move the ghost, Enter drops it and Esc cancels. Backspace, Ctrl+Z or
    the on-screen **Undo** button sends the last placed room back to the tray.
+   Undo stays on screen during and after a run: there it goes back to build
+   (like **Build**, your rooms stay) and then takes back the last room.
    After a win, **Next level >** under the banner opens the next level.
    **?** (top right) lists what each room and element floor does, in the
    words of GAME_SPEC.md; a one-time hint points to it on first launch.

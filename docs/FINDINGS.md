@@ -286,3 +286,25 @@ were on and only warmed the nearest rooms. The fix is visual (warmer fill,
 emissive checker, brighter torches, declared braziers). No engine rule
 changed. Recurrence 1. The smoke test now rejects the old ambient and fog
 values. See [[LEARNINGS-godot]].
+
+
+## CF-014: Godot board motion fought the player and skipped frames of a run
+- Status: Resolved
+- Recurrence: 1
+- Linked: PR (this branch, agent/grok/board-ux-fluidity)
+- Sensor added: apps/godot/tests/level_smoke_test.gd
+
+A web play-through looked laggy. On the box (no GPU), a Compatibility
+frame under Xvfb/llvmpipe took 21–46 ms, while the level screen's own
+`_process` took 0.03–0.1 ms. Most of that is box-only software
+rendering. Four real motion causes were found in the presentation
+layer, none in the rules:
+the fit/snap glide (a 0.25–0.35 s tween) kept moving the pivot while a
+finger panned; a free yaw drag during a 90° turn jumped to the turn's
+destination; Play reset its step timer each step, so the cadence
+rounded up to whole frames (0.20 s instead of 0.18 s at 30 FPS); and a
+multi-cell ice slide (9 cells, 1.17 s) was killed by the next Play step
+after 0.18 s, so the figure cut the corner. Pan and yaw now stop the
+glide, yaw continues from the current angle, the timer keeps its
+overshoot, and a turn's moves fit inside one Play step. No engine rule
+changed. Recurrence 1. The smoke test now checks each of these.
