@@ -4,8 +4,8 @@ extends Node3D
 ## dungeon's outer edges, a narrow corridor between them and the rooms, and
 ## a few props there (a gold-filled chest beside each gold room, barrels and
 ## crates). Built when a run starts and cleared for Build, so empty slots
-## stay clear while you place rooms. Walls on the camera side drop to a low
-## broken rim so they never hide the floor, heroes, labels or tap targets;
+## stay clear while you place rooms. Walls whose outward normal faces the camera drop to a low
+## broken rim (updated when yaw crosses a 90° sector) so they never hide the floor, heroes, labels or tap targets;
 ## the dressing is never inside a room and nothing here reads the rules
 ## engine (NFR-1). Pieces are CC0 KayKit (see CREDITS.md).
 
@@ -26,7 +26,7 @@ const DIRS := [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)]
 ## Per direction: [tall merged meshes, low rim merged meshes].
 var _sides := {}
 var _props: Array[Node3D] = []
-var _back := Vector3.ZERO
+var _sector := -1                       # 90° yaw bucket; -1 = unset
 var prop_cap := LOW_PROPS
 
 ## World centre of a slot (same formula as the level's slot_center).
@@ -46,7 +46,7 @@ func clear() -> void:
 		c.queue_free()
 	_sides.clear()
 	_props.clear()
-	_back = Vector3.ZERO
+	_sector = -1
 
 func count_props() -> int:
 	return _props.size()
@@ -86,7 +86,7 @@ func build(slots: Dictionary, types: Dictionary) -> void:
 	for sp in spots:
 		_add_prop(sp[1], sp[2], sp[3])
 	set_prop_cap(prop_cap)
-	_back = Vector3.ZERO
+	_sector = -1
 
 ## One exposed edge: a run of wall pieces CORRIDOR outside the room, with
 ## outer corners extended and inner corners trimmed so lines meet.
@@ -167,13 +167,26 @@ func set_prop_cap(cap: int) -> void:
 		_props[i].visible = i < cap
 
 ## Tall walls on the sides facing away from the camera, a low rim on the
-## sides facing it. `cam_back` is the camera's +Z (towards the viewer).
+## sides whose outward normal faces the camera. Recomputed when yaw
+## crosses a 90° sector (centres 45, 135, 225, 315) — a visibility swap,
+## not a mesh rebuild. `cam_back` is the camera's +Z (towards the viewer).
 func face(cam_back: Vector3) -> void:
-	var b := Vector3(cam_back.x, 0, cam_back.z).normalized()
-	if b.is_equal_approx(_back):
+	var b := Vector3(cam_back.x, 0, cam_back.z)
+	if b.length_squared() < 0.0001:
 		return
-	_back = b
+	face_yaw(rad_to_deg(atan2(b.x, b.z)))
+
+
+func face_yaw(yaw_deg: float) -> void:
+	var sector := int(floor(fposmod(yaw_deg, 360.0) / 90.0))
+	if sector == _sector:
+		return
+	_sector = sector
+	# Same two sides as the sector's centre, so walls don't flicker as yaw
+	# crosses a cardinal.
+	var mid := 45.0 + float(sector) * 90.0
+	var back := Vector3(sin(deg_to_rad(mid)), 0, cos(deg_to_rad(mid)))
 	for d in _sides:
-		var away: bool = _normal(d).dot(b) < 0.05
+		var away: bool = _normal(d).dot(back) < 0.0
 		(_sides[d][0] as Node3D).visible = away
 		(_sides[d][1] as Node3D).visible = not away

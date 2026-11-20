@@ -159,12 +159,49 @@ func set_follow(on: bool) -> void:
 			follow_zoomed = true
 
 
-## Smooth 90° turn (ease out); lands exactly on target_yaw, so the yaw is
-## always 45° + n·90° once settled.
+## Smooth 90° turn (ease out) from the current yaw. Does not snap to the
+## 45° + n·90° grid; Fit / double-tap does that (snap_yaw_to_sector).
 func rotate_by(deg: float) -> void:
-	target_yaw += deg
+	_tween_yaw(target_yaw + deg)
+
+
+## Free yaw, from a right/middle drag or a two-finger twist. Takes over
+## from Follow hero the same way pan() does.
+func yaw_by(deg: float) -> void:
+	if follow:
+		set_follow(false)
+		if not manual:
+			became_manual.emit()
+		manual = true
 	if _yaw_tween:
 		_yaw_tween.kill()
+	target_yaw += deg
+	yaw = target_yaw
+
+
+## Snap yaw to the nearest 45° + n·90° sector (45, 135, 225, 315).
+func snap_yaw_to_sector() -> void:
+	var y := fposmod(target_yaw, 360.0)
+	var best := 45.0
+	var best_d := 999.0
+	for n in 5:
+		var c := 45.0 + float(n) * 90.0
+		var d := absf(fposmod(y - c + 180.0, 360.0) - 180.0)
+		if d < best_d:
+			best_d = d
+			best = fposmod(c, 360.0)
+	_tween_yaw(best)
+
+
+func _tween_yaw(to: float) -> void:
+	if _yaw_tween:
+		_yaw_tween.kill()
+	# Shortest turn, including across 0°.
+	while to - yaw > 180.0:
+		to -= 360.0
+	while yaw - to > 180.0:
+		to += 360.0
+	target_yaw = to
 	_yaw_tween = create_tween()
 	_yaw_tween.tween_property(self, "yaw", target_yaw, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_yaw_tween.tween_callback(func() -> void:

@@ -215,6 +215,19 @@ flowchart TD
   spend --> idle
 ```
 
+## Godot board controls
+
+The Godot board is presentation only: it does not change outcomes ([[NFR-1]], [[0008-godot-port-milestone-1]]). Pitch stays clamped. Wall-hatch direction while placing rooms is unchanged ([[NFR-6]], [[FR-7]]). During a run, corridor walls whose outward normal faces the camera drop to a low rim so they do not hide heroes, labels or taps; the low sides update when the yaw crosses a 90° sector.
+
+- **Pan:** left-drag, or one finger. A move past a short threshold is a pan, not a room tap.
+- **Rotate yaw freely:** right-drag or middle-drag; on a phone or tablet, a two-finger twist. This leaves Follow hero, the same way a pan does.
+- **Zoom:** `Zoom +` / `Zoom -`, the mouse wheel, a two-finger pinch, or `+` / `-`.
+- **Tilt:** `Tilt +` / `Tilt -`, Ctrl (or Shift) + wheel, or W/S.
+- **90° turn:** `< 90°` / `90° >`, or Q/E, from the current yaw (not only from the 45° grid).
+- **Fit:** the `Fit` button, F, or a double-tap. Snaps yaw to the nearest 45° + n·90° sector (45, 135, 225, 315) and frames the rooms. Auto-fit after a placement does not run once you have zoomed, panned or orbited; Fit turns it back on.
+
+If this list and the running app disagree, trust the app and [[0008-godot-port-milestone-1]]; this page is a companion.
+
 ## How honesty works
 
 The knowledge site is not allowed to say “this rule works” just because a page exists. [[STATUS_LEDGER]] is the claim table: one row per FR/NFR, and only five status words ([[AGENTS]] §2).

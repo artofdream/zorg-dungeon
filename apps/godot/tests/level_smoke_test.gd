@@ -6,6 +6,8 @@ extends SceneTree
 ##  - drag a room straight out of the tray onto the board;
 ##  - drag onto an occupied spot: red ghost, nothing placed;
 ##  - rotate 90° and check the camera settles on a 45° + n·90° yaw;
+##  - free yaw (100°) works, Fit snaps to the 135°/45° sector, and near
+##    walls stay low at two different yaws;
 ##  - round 9: torch light / shadow limits per quality and the follow camera;
 ##  - round 11: Back/Esc, the ? legend and hint, Next level, Undo, turn lines;
 ##  - the FPS readout: hidden until F3, then a non-zero top-right label;
@@ -427,6 +429,64 @@ func _camera_look_checks() -> void:
 		"camera look: default %.0f°, follow tilts to %.0f° and back to %.0f°; a user tilt in follow is kept (%.0f°)" % [ZorgLevelCamera.DEFAULT_PITCH, tilted, back, c.target_pitch])
 	c.target_pitch = ZorgLevelCamera.DEFAULT_PITCH
 
+## Free yaw, Fit snap, and view-dependent low walls at two headings.
+func _camera_orbit_checks(engine: Node) -> void:
+	var i58: int = engine.levels.map(func(e): return e["id"]).find("deluxe-5.8")
+	level._open_level(i58)
+	var g = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[i58]["golden"]))
+	for p in g["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	level.set_quality("low", false)
+	level._on_step()
+	await process_frame
+	# From the default 45°, a free yaw of +55° is 100°.
+	level._yaw_by(55.0)
+	level._update_camera()
+	await process_frame
+	_check(is_equal_approx(fposmod(level.yaw, 360.0), 100.0) and is_equal_approx(fposmod(level.target_yaw, 360.0), 100.0),
+		"free yaw: 100° works (yaw %.1f, target %.1f)" % [level.yaw, level.target_yaw])
+	_check(_near_walls_low(), "dressing: near walls are low at yaw 100°")
+	# 90° buttons step from the current (free) yaw, not from the sector grid.
+	level._rotate(90.0)
+	await create_timer(0.8).timeout
+	_check(is_equal_approx(fposmod(level.yaw, 360.0), 190.0),
+		"free yaw: 90° step from 100° lands on 190° (yaw %.1f)" % level.yaw)
+	level._yaw_by(-90.0)
+	level._update_camera()
+	# Fit snaps 100° to the 135° sector.
+	level._on_fit()
+	await create_timer(0.8).timeout
+	_check(level.camera_settled() and is_equal_approx(fposmod(level.yaw, 360.0), 135.0),
+		"free yaw: Fit snaps 100° back to the 135° sector (yaw %.1f)" % level.yaw)
+	_check(_near_walls_low(), "dressing: near walls are low at yaw 135°")
+	# A rotate gesture leaves Follow hero, same as a pan.
+	level._on_cam_mode()
+	_check(level.follow, "free yaw: follow can be turned on before a rotate gesture")
+	level._yaw_by(5.0)
+	_check(not level.follow, "free yaw: a rotate gesture takes over from follow")
+	level._on_fit()
+	await create_timer(0.8).timeout
+
+
+func _near_walls_low() -> bool:
+	var dr: ZorgDungeonDressing = level.dressing
+	if dr == null:
+		return false
+	level.cam.update_transform()
+	dr.face_yaw(level.yaw)
+	var back: Vector3 = level.get_viewport().get_camera_3d().global_transform.basis.z
+	var flat := Vector3(back.x, 0, back.z)
+	var tall_n := 0
+	var tall_ok := true
+	for c in dr.get_children():
+		if String(c.name).begins_with("Walls_") and c.visible:
+			tall_n += 1
+			var parts := String(c.name).split("_")
+			var n := Vector3(int(parts[1]), 0, -int(parts[2]))
+			tall_ok = tall_ok and n.dot(flat) < 0.0
+	return tall_n == 2 and tall_ok
+
+
 func _round13() -> void:
 	# WCAG 1.4.11: enabled chrome borders are at least 3:1 on their fill.
 	# Disabled is exempt (1.4.3).
@@ -835,6 +895,7 @@ func _initialize() -> void:
 	await _readability_render(engine)
 	await _dressing_checks(engine)
 	_camera_look_checks()
+	await _camera_orbit_checks(engine)
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)

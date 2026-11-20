@@ -152,15 +152,16 @@ The light caps (6 Low, 8 High), shadows and the FPS fallback are unchanged.
 During a run (not while building, so empty slots stay clear) tall,
 irregular KayKit stone walls with arches, broken stretches and wall
 sconces stand a 1.2-unit corridor outside the dungeon's outer edges
-(`scripts/dungeon_dressing.gd`, one merged mesh per side). Sides facing
-the camera drop to a low broken rim, so walls never hide the floor,
+(`scripts/dungeon_dressing.gd`, one merged mesh per side). Sides whose outward normal faces the camera drop to a low broken rim
+(updated when you rotate past a 90° sector), so walls never hide the floor,
 heroes, labels or taps. The corridor holds a gold-filled chest beside each
 gold (O) room and a few barrels and crates (6 on Low, 12 on High); sconce
 and chest glows are halos, not lights, so the omni budget is unchanged.
 The default camera looks in from 42° above the board (was 53°) and
 Follow hero tilts 8° lower still (given back when you leave it, unless you
-tilted meanwhile); Fit, Zoom, Tilt, rotate, View and the portrait fit are
-unchanged.
+tilted meanwhile). Yaw can turn freely (right-drag or middle-drag, or a
+two-finger twist); `< 90°` / `90° >` still step 90° from the current
+heading; Fit or a double-tap snaps back to the nearest 45° + n·90° sector.
 Under Xvfb the smoke test measures the rendered 1.2 board: room floor vs
 an empty slot, empty slot vs the black beyond, and room colours apart.
 **Phone UI** (round 7, visual only): the HUD scales with screen DPI so one
@@ -218,15 +219,19 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    Quit, and Back/Esc only closes popups.
 4. Camera: the view fits your rooms (with margins clear of the HUD) when a
    level opens and after each placement. Zoom with `Zoom +` / `Zoom -`, the
-   mouse wheel, pinch or +/-; tilt with `Tilt +` / `Tilt -`, Ctrl + wheel,
-   middle-drag or W/S. Right-drag or two-finger drag pans. `< 90°` / `90° >`
-   (or Q/E) rotate 90°. Once you zoom or pan yourself, auto-fit stops until
-   you press `Fit` (or F) or open a level.
+   mouse wheel, a two-finger pinch, or +/-. Tilt with `Tilt +` / `Tilt -`,
+   Ctrl + wheel, or W/S (pitch stays clamped). Left-drag or one finger pans.
+   Right-drag or middle-drag, or a two-finger twist, rotates yaw freely. A
+   drag or twist past a short threshold is never a room tap. `< 90°` /
+   `90° >` (or Q/E) rotate 90° from the current yaw. `Fit` (or F, or a
+   double-tap) snaps yaw to the nearest 45° + n·90° sector and frames the
+   board. Once you zoom, pan or orbit yourself, auto-fit stops until you
+   press `Fit` or open a level.
    During a run, **View** (next to `Fit`, or C) switches between Overview
    (`View: All`) and Follow hero (`View: Hero`).
    Follow hero zooms in, smoothly tracks the first living hero and moves on
-   when that hero dies. Panning, Fit, Build or a new level go back to the
-   overview.
+   when that hero dies. Panning, a rotate gesture, Fit, Build or a new
+   level go back to the overview.
 5. Web: add `?fps=1` to the URL (or press F3) for an FPS counter,
    `?quality=low|high` to pick the graphics quality (`-- --quality=` on the
    command line), and `?shadows=0` to turn shadows off. If High runs under
