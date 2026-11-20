@@ -62,6 +62,7 @@ func build(slots: Dictionary, types: Dictionary) -> void:
 	for d in DIRS:
 		batches[d] = [{}, {}, []]          # tall, rim, halo positions
 	var spots: Array = []          # [priority, pos, yaw, kind]
+	var chested := {}              # gold room slot -> already has its one chest
 	var ids: Array = slots.keys()
 	ids.sort()
 	for id in ids:
@@ -69,7 +70,7 @@ func build(slots: Dictionary, types: Dictionary) -> void:
 		for d in DIRS:
 			if taken.has(s + d):
 				continue
-			_edge(s, d, taken, batches[d], spots, String(types.get(id, "")))
+			_edge(s, d, taken, batches[d], spots, String(types.get(id, "")), chested)
 	for d in DIRS:
 		var tall := Node3D.new()
 		tall.name = "Walls_%d_%d" % [d.x, d.y]
@@ -90,7 +91,7 @@ func build(slots: Dictionary, types: Dictionary) -> void:
 
 ## One exposed edge: a run of wall pieces CORRIDOR outside the room, with
 ## outer corners extended and inner corners trimmed so lines meet.
-func _edge(s: Vector2i, d: Vector2i, taken: Dictionary, batch: Array, spots: Array, type: String) -> void:
+func _edge(s: Vector2i, d: Vector2i, taken: Dictionary, batch: Array, spots: Array, type: String, chested: Dictionary) -> void:
 	var n := _normal(d)
 	var p := Vector2i(-d.y, d.x)                # slot step along the edge
 	var along := _normal(p)                     # the same step in world space
@@ -134,7 +135,10 @@ func _edge(s: Vector2i, d: Vector2i, taken: Dictionary, batch: Array, spots: Arr
 	# Props stand in the corridor, never inside a room.
 	var mid := _center(s) + n * (ROOM / 2.0 + CORRIDOR * 0.5)
 	var face := atan2(-n.x, -n.z)
-	if type == "O":
+	# One chest per gold room, on its first open side. Each later side would
+	# add another chest, and chests sort ahead of barrels and crates.
+	if type == "O" and not chested.has(s):
+		chested[s] = true
 		spots.append([2.0, mid + along * 1.2, face, "chest_gold"])
 	var r := _hash(s.x + 11, s.y + 5, d.x * 3 + d.y)
 	if r < 0.45:
