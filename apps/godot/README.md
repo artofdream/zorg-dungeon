@@ -219,7 +219,8 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    Quit, and Back/Esc only closes popups.
 4. Camera: the view fits your rooms (with margins clear of the HUD) when a
    level opens and after each placement. Zoom with `Zoom +` / `Zoom -`, the
-   mouse wheel, a two-finger pinch, or +/-. Tilt with `Tilt +` / `Tilt -`,
+   mouse wheel, a two-finger pinch, or +/-. The on-screen pad is icons
+   (hover or long-press for the name). Tilt with `Tilt +` / `Tilt -`,
    Ctrl + wheel, or W/S (pitch stays clamped). Left-drag or one finger pans.
    Right-drag or middle-drag, or a two-finger twist, rotates yaw freely. A
    drag or twist past a short threshold is never a room tap. `< 90°` /

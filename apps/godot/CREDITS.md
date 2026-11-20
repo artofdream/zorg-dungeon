@@ -9,6 +9,7 @@ board, water, portal ring, hero rings, labels) is procedural.
 |---|---|---|---|---|
 | KayKit Dungeon Remastered 1.0 (itch.io now calls it "KayKit - Dungeon Pack") | Kay Lousberg (kaylousberg.com) | https://github.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0 (commit `b0ca9bd96a8072ab36a3a5464f00ed1e06a16d07`), https://kaylousberg.itch.io/kaykit-dungeon-remastered | CC0 1.0 Universal | 2026-11-14: `LICENSE.txt` in the repo and the itch.io page ("Asset license: Creative Commons Zero v1.0 Universal") |
 | KayKit Character Pack: Adventurers 1.0 | Kay Lousberg (kaylousberg.com) | https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0 (commit `672074b73ba276876a19e8816ecdc5241817ab47`), https://kaylousberg.itch.io/kaykit-adventurers | CC0 1.0 Universal | 2026-11-14: `LICENSE.txt` in the repo and the itch.io page ("Asset license: Creative Commons Zero v1.0 Universal") |
+| Camera pad icons (original) | Drawn for this project | `apps/godot/assets/ui/camera/` | CC0 1.0 Universal | 2026-11-20: `LICENSE.txt` next to the SVG files |
 
 The packs' own licence files are kept next to the files:
 `assets/kaykit/dungeon/LICENSE.txt` and `assets/kaykit/adventurers/LICENSE.txt`.
@@ -81,3 +82,26 @@ kept, `dedup`; geometry and UVs unchanged; together 0.31 MB):
 | `barrel_large.glb` | 28308 | `9fae6a79056241baf253fe9272dc7a7ddb174e1caf153eb5013c58a596722148` | `fcc1a552072f31efafe8d43cc32bd975d5350f93c9c6be794d392c7811f327cd` |
 | `box_large.glb` | 12756 | `6dacda267f04769f8ebbb7e991885785054923ea3d5eb19e833768a911d5b661` | `5fc891945f0ee306def079e850c7ea9f0a0b8412aeb63e96441e13826d000042` |
 | `chest_gold.glb` | 124032 | `04708d5f88ed59d361c8a6cec1efe8b7028dbc641dfae0a1467f272e14a94b6e` | `6b14d76998297770b43e42e29c163833224afd7f2824258b522d2d90e4868130` |
+
+## Camera pad icons
+
+`assets/ui/camera/` — nine original stroke SVG icons (64×64, 24-unit viewBox,
+2 px round cream stroke on a transparent ground), dedicated to the public
+domain under CC0 1.0. They are not from KayKit, Kenney, Humble, Zenva or
+Packt. The licence file is `assets/ui/camera/LICENSE.txt`. Total size of
+the nine SVGs plus the licence: about 2.9 KB.
+
+| Vendored file | Bytes | SHA-256 | Used for |
+|---|---|---|---|
+| `zoom_in.svg` | 284 | `7609e966e0a79021d102fde0b4e8cdd8da57a69c0d73c14c31272d74ed3d3d55` | camera pad Zoom + |
+| `zoom_out.svg` | 270 | `ad950645f233b9d2800d52501b7b5eceb5e7774a996e8146ed83eb51bbe30f05` | camera pad Zoom - |
+| `tilt_up.svg` | 270 | `c74a872c9768fd7a4a04a77d345d10e9b43e6020ddb0b390fb1c86160e3ec1c6` | camera pad Tilt + |
+| `tilt_down.svg` | 272 | `5b92ab928f4dc3b08300fe79d2beed7567898cbe6dcd0b0bfff896d84d905e86` | camera pad Tilt - |
+| `turn_left.svg` | 264 | `aa20628796eaed799dc58c4cd69317d6f0c38cba6a6a7329f9d202c5f2cd8782` | camera pad Turn left 90° |
+| `turn_right.svg` | 259 | `87c73233b936e7ecc64b5bcb3707fed5936acef3d0e0187aa25958e09b04aab5` | camera pad Turn right 90° |
+| `fit.svg` | 281 | `db1a5d4921d3bf40e9015cf3394cff972b7436f2d77b1e5f329926b7434f7022` | camera pad Fit |
+| `view_all.svg` | 377 | `d70c762e662d09f5119cd2db2a5e7b3185ff8b3c5e4e66b60b4611aeb623a86b` | camera pad View: All |
+| `view_hero.svg` | 286 | `67772fae4b067e66bdb901aa91dd8f12be82a90cf26bdfdf71a0bc1040342f86` | camera pad View: Hero |
+| `LICENSE.txt` | 362 | `33a684e35873de1edafef9e3df417a68145d4d3b257491ebb8fcec670f4ecb48` | CC0 1.0 text |
+
+Together the nine SVGs and the licence are **2925 bytes**.

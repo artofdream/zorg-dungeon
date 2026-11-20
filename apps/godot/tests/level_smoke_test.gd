@@ -487,6 +487,26 @@ func _near_walls_low() -> bool:
 	return tall_n == 2 and tall_ok
 
 
+## Icon camera pad: stable names, icons, tooltips, 52-unit targets.
+func _camera_pad_checks() -> void:
+	var want := {
+		"ZoomIn": "Zoom +",
+		"ZoomOut": "Zoom -",
+		"TiltUp": "Tilt +",
+		"TiltDown": "Tilt -",
+		"TurnLeft": "Turn left 90°",
+		"TurnRight": "Turn right 90°",
+		"Fit": "Fit",
+		"View": "View:"
+	}
+	for id in want:
+		var b: Button = level.cam_grid.get_node_or_null(id)
+		_check(b != null and b.icon != null and b.custom_minimum_size.y >= 52.0 and b.text == ""
+			and String(b.tooltip_text).contains(want[id]) and b.accessibility_name == b.tooltip_text,
+			"camera pad: %s is an icon button (>= 52), tooltip/accessible '%s'" % [id, b.tooltip_text if b else ""])
+	_check(level.view_btn != null and level.view_btn.name == "View", "camera pad: View button is looked up by name, not by caption")
+
+
 func _round13() -> void:
 	# WCAG 1.4.11: enabled chrome borders are at least 3:1 on their fill.
 	# Disabled is exempt (1.4.3).
@@ -823,7 +843,8 @@ func _initialize() -> void:
 	await create_timer(0.5).timeout
 	var overview_zoom: float = level.target_zoom
 	_key(KEY_C)
-	_check(level.follow and level.view_btn.text.contains("Hero"), "follow camera: key C switches to Follow hero")
+	_check(level.follow and String(level.view_btn.get_meta("mode")) == "hero" and String(level.view_btn.tooltip_text).contains("Hero"),
+		"follow camera: key C switches to Follow hero (mode %s)" % level.view_btn.get_meta("mode"))
 	_check(level.target_zoom < overview_zoom * 0.7, "follow camera: zooms in closer than the overview (%.1f -> %.1f)" % [overview_zoom, level.target_zoom])
 	# Bugbot (#98): a pan leaves follow without stacking the close-up, and
 	# zooming in from the close-up never zooms out.
@@ -896,6 +917,7 @@ func _initialize() -> void:
 	await _dressing_checks(engine)
 	_camera_look_checks()
 	await _camera_orbit_checks(engine)
+	_camera_pad_checks()
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
