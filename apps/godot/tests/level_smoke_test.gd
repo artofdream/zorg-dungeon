@@ -39,8 +39,13 @@ func _board_mouse(pos: Vector2, pressed: bool) -> void:
 	if pressed:
 		level._unhandled_input(e)
 	else:
+		# A room-drag release is handled in _input (handle_drag_input marks
+		# it handled), so _left_press never sees it. Mirror that here so the
+		# pan-flag assertions would fail without the _input clear.
+		var room_drag: bool = level.drag_id != ""
 		level._input(e)
-		level._unhandled_input(e)
+		if not room_drag:
+			level._unhandled_input(e)
 
 
 func _board_move(pos: Vector2) -> void:
@@ -534,8 +539,8 @@ func _camera_manual_and_room_press_checks(engine: Node) -> void:
 		"board press: still press on a placed room starts a drag (id %s, pos %s, slot %s)" % [level.drag_id, pos, level._screen_to_slot(pos)])
 	_board_mouse(pos, false)
 	await process_frame
-	_check(not level.placed.has("A:0") and level.drag_id == "",
-		"board press: still release on a placed room unplaces it")
+	_check(not level.placed.has("A:0") and level.drag_id == "" and not level._press_left and not level._press_dragged,
+		"board press: still release on a placed room unplaces it and clears the pan flags")
 	level._place("A:0", Vector2i(0, 0))
 	await process_frame
 	var dest: Vector2 = cam.unproject_position(level.slot_center(1, 0))
@@ -545,8 +550,8 @@ func _camera_manual_and_room_press_checks(engine: Node) -> void:
 		await process_frame
 	_board_mouse(dest, false)
 	await process_frame
-	_check(level.placed.get("A:0") == Vector2i(1, 0) and level.drag_id == "",
-		"board press: press-drag moves the room to %s" % level.placed.get("A:0"))
+	_check(level.placed.get("A:0") == Vector2i(1, 0) and level.drag_id == "" and not level._press_left and not level._press_dragged,
+		"board press: press-drag moves the room to %s and clears the pan flags" % level.placed.get("A:0"))
 	level._on_fit()
 
 
