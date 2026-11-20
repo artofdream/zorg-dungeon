@@ -790,6 +790,11 @@ func _input(event: InputEvent) -> void:
 	if drag_id == "" or touches.size() >= 2:
 		return
 	board_build.handle_drag_input(event)
+	# handle_drag_input marks the release as handled, so _left_press would
+	# not clear these; a later left-drag on HUD chrome must not pan.
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		_press_left = false
+		_press_dragged = false
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Fingers: two-finger pinch zooms, two-finger twist yaws. One finger
