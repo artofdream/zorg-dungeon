@@ -132,6 +132,20 @@ La PR [#130](https://github.com/artofdream/zorg-dungeon/pull/130), fusionnée da
 
 Cette section ne promeut pas de statut dans le [[STATUS_LEDGER]].
 
+## Contrôles du plateau Godot
+
+Le plateau Godot est seulement de la présentation : il ne change pas les résultats ([[NFR-1]], [[0008-godot-port-milestone-1]]). Le pavé caméra est une colonne d'icônes (survole-les sur un ordinateur, ou reste appuyé sur un téléphone, pour lire le nom). L'inclinaison (pitch) reste limitée. La direction des trappes pendant le placement ne change pas ([[NFR-6]], [[FR-7]]). Pendant une course, les murs de couloir dont la normale sortante fait face à la caméra baissent en une bordure basse pour ne pas cacher les héros, les libellés ou les taps ; les côtés bas se mettent à jour quand le yaw traverse un secteur de 90°.
+
+- **Pan :** glisser avec le bouton gauche, ou un doigt. Un mouvement au-delà d'un petit seuil est un pan, pas un tap de salle.
+- **Rotation libre du yaw :** glisser avec le bouton droit ou le bouton du milieu ; sur téléphone ou tablette, une torsion à deux doigts. Cela quitte Follow hero, comme un pan.
+- **Zoom :** `Zoom +` / `Zoom -`, la molette, un pincement à deux doigts, ou `+` / `-`.
+- **Inclinaison :** `Tilt +` / `Tilt -`, Ctrl (ou Maj) + molette, ou W/S.
+- **Quart de tour :** `< 90°` / `90° >`, ou Q/E, à partir du yaw actuel (pas seulement depuis la grille à 45°).
+- **Fit :** l'icône Fit, F, ou un double-tap. Ramène le yaw au secteur 45° + n·90° le plus proche (45, 135, 225, 315) et cadre les salles. L'auto-fit après un placement s'arrête dès que tu as zoomé, pané ou tourné ; Fit le réactive.
+
+Si cette liste et l'application ne sont pas d'accord, **la spécification gagne** pour les règles ; pour les contrôles, c'est l'application et [[0008-godot-port-milestone-1]]. Cette page est un compagnon.
+
+
 ## Honnêteté
 
 Cette page ne promeut pas de statut ledger. Voir [[STATUS_LEDGER]] et [[FINDINGS]]. Phase C (ledger / skills bilingues) est hors périmètre ([[0007-i18n-fr-en]]).

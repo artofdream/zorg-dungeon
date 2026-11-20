@@ -56,8 +56,8 @@ var cam_manual: bool:
 	set(v):
 		var was := cam.manual
 		cam.manual = v
-		# Right-drag and pinch assign this flag. The pad and the wheel go
-		# through zoom_button, which emits the same signal itself.
+		# Free yaw, pan, pinch and twist assign this flag. The pad and the
+		# wheel go through zoom_button, which emits the same signal itself.
 		if v and not was:
 			cam.became_manual.emit()
 var follow: bool:
@@ -91,6 +91,16 @@ var fps_shown := false
 var touches := {}
 var pinch_start := 0.0
 var zoom_start := 0.0
+var pinch_angle := 0.0
+# Left / one-finger press: a drag past TAP_PX pans and is not a room tap.
+const TAP_PX := 12.0
+const YAW_PER_PX := 0.3
+const DOUBLE_TAP_MS := 400
+var _press_left := false
+var _press_dragged := false
+var _press_pos := Vector2.ZERO
+var _tap_ms := 0
+var _tap_pos := Vector2.ZERO
 
 # ui
 var title: Label
@@ -760,7 +770,8 @@ func _input(event: InputEvent) -> void:
 	board_build.handle_drag_input(event)
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Fingers: two-finger pinch zoom + pan. One finger arrives as emulated mouse.
+	# Fingers: two-finger pinch zooms, two-finger twist yaws. One finger
+	# arrives as an emulated mouse (pan / tap).
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			touches[event.index] = event.position
@@ -769,20 +780,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		if touches.size() == 2:
 			var pts := touches.values()
 			pinch_start = (pts[0] as Vector2).distance_to(pts[1])
+			pinch_angle = _pinch_angle(pts)
 			zoom_start = target_zoom
 			board_build.abort_pinch()
+			_press_left = false
+			_press_dragged = false
 		return
 	if event is InputEventScreenDrag:
 		if touches.size() >= 2 and touches.has(event.index):
-			var before: Vector2 = touches[event.index]
 			touches[event.index] = event.position
 			var pts := touches.values()
 			var d := (pts[0] as Vector2).distance_to(pts[1])
 			if pinch_start > 0:
 				_set_zoom(zoom_start * pinch_start / maxf(d, 1.0))
-				cam_manual = true
+			var ang := _pinch_angle(pts)
+			_yaw_by(-rad_to_deg(ang - pinch_angle))
+			pinch_angle = ang
 			cam_manual = true
-			_pan((event.position - before) * 0.5)
 			_update_camera()
 		elif touches.has(event.index):
 			touches[event.index] = event.position
@@ -801,15 +815,18 @@ func _unhandled_input(event: InputEvent) -> void:
 				_tilt_by(-wheel * 5.0)
 			else:
 				_zoom_button(wheel * 2.5)
-		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			board_build.on_board_press(event.position)
+		elif event.button_index == MOUSE_BUTTON_LEFT:
+			_left_press(event)
 	elif event is InputEventMouseMotion:
-		if event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
-			_tilt_by(-event.relative.y * 0.25)          # middle-drag tilts
-		elif event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
-			cam_manual = true
-			_pan(event.relative)
+		if event.button_mask & (MOUSE_BUTTON_MASK_MIDDLE | MOUSE_BUTTON_MASK_RIGHT):
+			_yaw_by(-event.relative.x * YAW_PER_PX)
 			_update_camera()
+		elif _press_left and drag_id == "" and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+			if not _press_dragged and event.position.distance_to(_press_pos) > TAP_PX:
+				_press_dragged = true
+			if _press_dragged:
+				_pan(event.relative)
+				_update_camera()
 		elif selected != "" and _building() and not kb_active:
 			board_build.show_ghost(selected, event.position)     # hover preview (mouse)
 	elif event is InputEventKey and event.pressed and event.keycode != KEY_ESCAPE and popup_open():
@@ -934,6 +951,7 @@ func _zoom_button(d: float) -> void:
 func _on_fit() -> void:
 	_set_follow(false)
 	cam_manual = false
+	cam.snap_yaw_to_sector()
 	_fit_camera(false)
 
 func _snap_camera() -> void:
@@ -965,6 +983,37 @@ func _fit_camera(instant: bool) -> void:
 
 func _pan(delta_px: Vector2) -> void:
 	cam.pan(delta_px)
+
+func _yaw_by(deg: float) -> void:
+	cam.yaw_by(deg)
+
+func _pinch_angle(pts: Array) -> float:
+	var a: Vector2 = pts[0]
+	var b: Vector2 = pts[1]
+	return atan2(b.y - a.y, b.x - a.x)
+
+func _left_press(event: InputEventMouseButton) -> void:
+	if event.pressed:
+		_press_left = true
+		_press_dragged = false
+		_press_pos = event.position
+		return
+	if not _press_left:
+		return
+	var tapped := not _press_dragged and drag_id == ""
+	_press_left = false
+	_press_dragged = false
+	if not tapped:
+		return
+	# A second still tap is Fit; it must not also be a room tap.
+	var now := Time.get_ticks_msec()
+	if now - _tap_ms <= DOUBLE_TAP_MS and event.position.distance_to(_tap_pos) <= TAP_PX * 2.0:
+		_tap_ms = 0
+		_on_fit()
+		return
+	_tap_ms = now
+	_tap_pos = event.position
+	board_build.on_board_press(event.position)
 
 func _update_camera() -> void:
 	cam.update_transform()

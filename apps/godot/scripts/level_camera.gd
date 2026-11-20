@@ -57,16 +57,17 @@ func _init() -> void:
 	pad.grow_vertical = Control.GROW_DIRECTION_BOTH
 	pad.add_theme_constant_override("h_separation", 6)
 	pad.add_theme_constant_override("v_separation", 6)
-	# Plain ASCII labels: the web build's default font has no arrow glyphs.
-	pad.add_child(_pad_button("Zoom +", func() -> void: zoom_step.emit(-4.0)))
-	pad.add_child(_pad_button("Zoom -", func() -> void: zoom_step.emit(4.0)))
-	pad.add_child(_pad_button("Tilt +", func() -> void: tilt_step.emit(8.0)))
-	pad.add_child(_pad_button("Tilt -", func() -> void: tilt_step.emit(-8.0)))
-	pad.add_child(_pad_button("< 90°", func() -> void: turn_step.emit(-90.0)))
-	pad.add_child(_pad_button("90° >", func() -> void: turn_step.emit(90.0)))
-	pad.add_child(_pad_button("Fit", func() -> void: fit_pressed.emit()))
-	view_button = _pad_button("View: All", func() -> void: view_pressed.emit())
-	view_button.tooltip_text = "Overview or follow the hero (key C)"
+	# Icon pad: stable node names, hover tooltip, long-press name on
+	# phones. Actions and signals are unchanged.
+	pad.add_child(_pad_button("ZoomIn", "zoom_in", "Zoom +", func() -> void: zoom_step.emit(-4.0)))
+	pad.add_child(_pad_button("ZoomOut", "zoom_out", "Zoom -", func() -> void: zoom_step.emit(4.0)))
+	pad.add_child(_pad_button("TiltUp", "tilt_up", "Tilt +", func() -> void: tilt_step.emit(8.0)))
+	pad.add_child(_pad_button("TiltDown", "tilt_down", "Tilt -", func() -> void: tilt_step.emit(-8.0)))
+	pad.add_child(_pad_button("TurnLeft", "turn_left", "Turn left 90°", func() -> void: turn_step.emit(-90.0)))
+	pad.add_child(_pad_button("TurnRight", "turn_right", "Turn right 90°", func() -> void: turn_step.emit(90.0)))
+	pad.add_child(_pad_button("Fit", "fit", "Fit (F)", func() -> void: fit_pressed.emit()))
+	view_button = _pad_button("View", "view_all", "View: All (C)", func() -> void: view_pressed.emit())
+	view_button.set_meta("mode", "all")
 	view_button.visible = false
 	pad.add_child(view_button)
 
@@ -137,7 +138,7 @@ func zoom_button(d: float) -> void:
 func set_follow(on: bool) -> void:
 	var was := follow
 	follow = on
-	view_button.text = "View: Hero" if on else "View: All"
+	_set_view_icon(on)
 	if on and not was:
 		# A little lower behind the hero; undone on exit unless the user
 		# tilted meanwhile.
@@ -159,12 +160,49 @@ func set_follow(on: bool) -> void:
 			follow_zoomed = true
 
 
-## Smooth 90° turn (ease out); lands exactly on target_yaw, so the yaw is
-## always 45° + n·90° once settled.
+## Smooth 90° turn (ease out) from the current yaw. Does not snap to the
+## 45° + n·90° grid; Fit / double-tap does that (snap_yaw_to_sector).
 func rotate_by(deg: float) -> void:
-	target_yaw += deg
+	_tween_yaw(target_yaw + deg)
+
+
+## Free yaw, from a right/middle drag or a two-finger twist. Takes over
+## from Follow hero the same way pan() does.
+func yaw_by(deg: float) -> void:
+	if follow:
+		set_follow(false)
+		if not manual:
+			became_manual.emit()
+		manual = true
 	if _yaw_tween:
 		_yaw_tween.kill()
+	target_yaw += deg
+	yaw = target_yaw
+
+
+## Snap yaw to the nearest 45° + n·90° sector (45, 135, 225, 315).
+func snap_yaw_to_sector() -> void:
+	var y := fposmod(target_yaw, 360.0)
+	var best := 45.0
+	var best_d := 999.0
+	for n in 5:
+		var c := 45.0 + float(n) * 90.0
+		var d := absf(fposmod(y - c + 180.0, 360.0) - 180.0)
+		if d < best_d:
+			best_d = d
+			best = fposmod(c, 360.0)
+	_tween_yaw(best)
+
+
+func _tween_yaw(to: float) -> void:
+	if _yaw_tween:
+		_yaw_tween.kill()
+	# Shortest turn, including across 0°.
+	while to - yaw > 180.0:
+		to -= 360.0
+	while yaw - to > 180.0:
+		to += 360.0
+	target_yaw = to
 	_yaw_tween = create_tween()
 	_yaw_tween.tween_property(self, "yaw", target_yaw, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_yaw_tween.tween_callback(func() -> void:
@@ -302,9 +340,26 @@ func _slot_center(x: int, y: int, room: float) -> Vector3:
 	return Vector3(x * room + room / 2.0, 0, -(y * room + room / 2.0))
 
 
-func _pad_button(text: String, cb: Callable) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.custom_minimum_size = Vector2(64, ZorgHud.TARGET)
-	b.pressed.connect(cb)
+const ICON_DIR := "res://assets/ui/camera/"
+
+func _icon(id: String) -> Texture2D:
+	return load(ICON_DIR + id + ".svg") as Texture2D
+
+
+func _set_view_icon(follow_on: bool) -> void:
+	if view_button == null:
+		return
+	var hero := follow_on
+	view_button.icon = _icon("view_hero" if hero else "view_all")
+	var label := "View: Hero (C)" if hero else "View: All (C)"
+	if view_button is ZorgCamPadButton:
+		(view_button as ZorgCamPadButton).set_accessible(label)
+	else:
+		view_button.tooltip_text = label
+	view_button.set_meta("mode", "hero" if hero else "all")
+
+
+func _pad_button(id: String, icon_id: String, accessible: String, cb: Callable) -> Button:
+	var b := ZorgCamPadButton.new()
+	b.setup(id, _icon(icon_id), accessible, cb)
 	return b

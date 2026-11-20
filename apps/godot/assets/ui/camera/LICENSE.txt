@@ -1,0 +1,9 @@
+Camera pad icons for Zorg Dungeon Maker
+
+These SVG icons (zoom_in, zoom_out, tilt_up, tilt_down, turn_left,
+turn_right, fit, view_all, view_hero) were drawn for this project and are
+dedicated to the public domain under CC0 1.0 Universal:
+
+  https://creativecommons.org/publicdomain/zero/1.0/
+
+You may use, copy, modify and redistribute them without attribution.
