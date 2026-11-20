@@ -49,9 +49,12 @@ func _init() -> void:
 	play_hint.add_theme_font_size_override("font_size", 14)
 	play_hint.add_theme_color_override("font_color", Color(1.0, 0.85, 0.35))
 	play_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	spell_wrap.add_child(play_hint)
+	# Hints are their own rows above the buttons (the level screen parents
+	# them). Sharing the button row pushed Got it and the spells off a phone.
+	play_hint.autowrap_mode = TextServer.AUTOWRAP_WORD
+	play_hint.custom_minimum_size.x = 80
+	play_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spell_hint = _make_spell_hint()
-	spell_wrap.add_child(spell_hint)
 	spell_bar = HBoxContainer.new()
 	spell_bar.name = "Spells"
 	spell_bar.add_theme_constant_override("separation", 6)
@@ -155,7 +158,7 @@ func _make_spell_hint() -> PanelContainer:
 	var plate := PanelContainer.new()
 	plate.name = "SpellHint"
 	plate.visible = false
-	plate.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	plate.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	plate.add_theme_stylebox_override("panel", ZorgHud.plate())
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -165,12 +168,18 @@ func _make_spell_hint() -> PanelContainer:
 	label.add_theme_font_size_override("font_size", 16)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = "Cast a spell between steps to hit the heroes"
+	# Autowrap without a custom width collapses to 1px and Godot warns.
+	# 120 leaves Got it on the same row inside a phone-width bar.
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	label.custom_minimum_size.x = 120
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(label)
 	var got_it := Button.new()
 	got_it.name = "GotIt"
 	got_it.text = "Got it"
 	got_it.custom_minimum_size = Vector2(64, ZorgHud.TARGET)
+	got_it.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	got_it.pressed.connect(_dismiss_spell_hint)
 	row.add_child(got_it)
 	return plate

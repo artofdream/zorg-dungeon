@@ -374,15 +374,25 @@ func _build_ui() -> void:
 	# Tray was built in the board scene's _init, before this add.
 	tray = board_build.tray
 	bottom_bar.add_child(tray)
+	# Hints stack above the buttons. The first-run sentence does not fit
+	# beside Play, Step, and Build on a phone-width bar.
+	var run_stack := VBoxContainer.new()
+	run_stack.name = "RunStack"
+	run_stack.add_theme_constant_override("separation", 4)
+	run_stack.size_flags_horizontal = Control.SIZE_SHRINK_END
+	run_stack.size_flags_vertical = Control.SIZE_SHRINK_END
+	bottom_bar.add_child(run_stack)
+	run_stack.add_child(playback.play_hint)
+	run_stack.add_child(playback.spell_hint)
 	# Spell bar (FR-32/FR-33): one icon button per spell, usable by tap or
 	# mouse, enabled only between completed actions while the run is going.
 	controls = HBoxContainer.new()
 	controls.add_theme_constant_override("separation", 8)
 	controls.size_flags_horizontal = Control.SIZE_SHRINK_END
 	controls.size_flags_vertical = Control.SIZE_SHRINK_END
-	bottom_bar.add_child(controls)
-	# Spell wrap (hint + bar), Play, and Step were built in _init. The
-	# spell wrap stays first in this row, then Undo, Play, Step, Build (Tab).
+	run_stack.add_child(controls)
+	# Spell bar, Play, and Step were built in _init. The spell bar stays
+	# first in this row, then Undo, Play, Step, Build (Tab).
 	controls.add_child(playback.spell_wrap)
 	undo_btn = board_build.undo_button
 	for b in [undo_btn, play_btn, step_btn, _btn("Build", _on_reset)]:
@@ -526,6 +536,7 @@ func _apply_margins() -> void:
 	cam_grid.offset_top = -cam_grid.get_combined_minimum_size().y / 2.0
 	cam_grid.offset_bottom = cam_grid.get_combined_minimum_size().y / 2.0
 	cam_grid.offset_right = 0
+	_sync_preview_lift()
 
 func _on_resized() -> void:
 	var s := ZorgHud.ui_scale(get_window())
@@ -542,9 +553,13 @@ func _refresh_spells() -> void:
 	playback.set_spells(engine.spells(), engine.can_cast(), not _building(), reason, playback.is_playing())
 	if playback.window_just_opened and not ZorgHelp.spell_hint_seen(settings_path):
 		playback.show_spell_hint(true)
+	_sync_preview_lift()
 
 ## Cast spell `id` now (between actions). Public so the smoke test can use it.
 func _on_spell_preview(id: int) -> void:
+	# The hint row's height settles after the first layout pass. Measure
+	# again here so the waiting plate clears the bar the player sees.
+	_sync_preview_lift()
 	var p: Dictionary = engine.attack_preview(id)
 	if p["ok"]:
 		heroes.show_attack_preview(p)
@@ -556,6 +571,13 @@ func _on_spell_preview_end(_id: int) -> void:
 
 func _on_spell_hint_dismissed() -> void:
 	ZorgHelp.set_spell_hint_seen(settings_path, true)
+	_sync_preview_lift()
+
+## FR-34 waiting plate: 88 cleared one icon row. A taller hint stack needs more.
+func _sync_preview_lift() -> void:
+	if heroes == null or bottom_bar == null:
+		return
+	heroes.set_preview_lift(maxf(88.0, bottom_bar.get_combined_minimum_size().y + 8.0))
 
 func cast_spell(id: int) -> bool:
 	if not _ensure_recording():

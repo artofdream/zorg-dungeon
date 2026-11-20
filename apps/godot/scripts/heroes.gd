@@ -20,6 +20,8 @@ var _dead := {}          # hero id -> true once the engine reports its death
 var _preview := {}       # hero id -> pending Attack damage (presentation only)
 var _preview_nums: Array = []  # sticky preview labels
 var _waiting_preview: Control
+## Pixels from the overlay bottom to the top of the run bar, plus a gap.
+var preview_lift := 88.0
 
 ## Where the follow camera looks: the first living hero on the board (lowest
 ## id), so it moves on to the next hero when one dies. null if none.
@@ -367,13 +369,26 @@ func show_attack_preview(preview: Dictionary) -> void:
 		plate.add_child(lab)
 		if overlay:
 			overlay.add_child(plate)
-			# Bottom-left, above the spell bar — not on the title/goal/status column.
+			# Bottom-left, above the run bar — not on the title/goal/status column.
 			plate.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 			plate.offset_left = 8
 			plate.offset_right = 8 + plate.get_combined_minimum_size().x
-			plate.offset_bottom = -88
-			plate.offset_top = -88 - plate.get_combined_minimum_size().y
 		_waiting_preview = plate
+		_place_waiting_preview()
+
+
+func set_preview_lift(px: float) -> void:
+	preview_lift = px
+	_place_waiting_preview()
+
+
+func _place_waiting_preview() -> void:
+	var plate := _waiting_preview
+	if plate == null or not is_instance_valid(plate):
+		return
+	var h := plate.get_combined_minimum_size().y
+	plate.offset_bottom = -preview_lift
+	plate.offset_top = -preview_lift - h
 
 
 func clear_attack_preview() -> void:

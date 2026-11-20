@@ -112,6 +112,10 @@ func apply(id: int, spell: Dictionary, allowed: bool, block_reason: String) -> v
 	else:
 		_badge.visible = false
 	_apply_ready_style(not disabled)
+	# pulse_once leaves a warm modulate on purpose. A spent icon must not
+	# keep it while other spells are still ready.
+	if disabled:
+		reset_pulse()
 	if _hovered and not disabled:
 		preview_started.emit(spell_id)
 	elif _hovered and disabled:
