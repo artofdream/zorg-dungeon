@@ -392,8 +392,9 @@ func _dressing_checks(engine: Node) -> void:
 			if absf(pos.x - c.x) < ZorgLook.ROOM / 2.0 and absf(pos.z - c.z) < ZorgLook.ROOM / 2.0:
 				inside += 1
 	var chests := props.filter(func(c): return String(c.name) == "Prop_chest_gold").size()
-	_check(props.size() > 0 and shown.size() <= ZorgDungeonDressing.LOW_PROPS and inside == 0 and chests >= 1,
-		"dressing: %d props (%d shown, Low cap %d), %d gold chest(s), %d inside a room" % [props.size(), shown.size(), ZorgDungeonDressing.LOW_PROPS, chests, inside])
+	var gold_rooms: int = level.placed.keys().filter(func(id): return String(level._supplied(id)["def"].get("type", "")) == "O").size()
+	_check(props.size() > 0 and shown.size() <= ZorgDungeonDressing.LOW_PROPS and inside == 0 and chests == gold_rooms and gold_rooms >= 1,
+		"dressing: %d props (%d shown, Low cap %d), %d gold chest(s) for %d gold room(s), %d inside a room" % [props.size(), shown.size(), ZorgDungeonDressing.LOW_PROPS, chests, gold_rooms, inside])
 	var back: Vector3 = level.get_viewport().get_camera_3d().global_transform.basis.z
 	var tall_ok := true
 	var tall_n := 0
@@ -407,6 +408,24 @@ func _dressing_checks(engine: Node) -> void:
 	level._on_reset()
 	await process_frame
 	_check(dr.get_children().all(func(c): return c.is_queued_for_deletion()), "dressing: Build clears the walls and props")
+
+## Dungeon look camera: lower default angle; Follow hero tilts lower still
+## and gives the angle back on exit unless the user tilted meanwhile.
+func _camera_look_checks() -> void:
+	var c: ZorgLevelCamera = level.cam
+	c.target_pitch = ZorgLevelCamera.DEFAULT_PITCH
+	c.set_follow(true)
+	var tilted := c.target_pitch
+	c.set_follow(false)
+	var back := c.target_pitch
+	c.set_follow(true)
+	c.tilt_by(8.0)
+	var user := c.target_pitch
+	c.set_follow(false)
+	_check(is_equal_approx(tilted, ZorgLevelCamera.DEFAULT_PITCH - ZorgLevelCamera.FOLLOW_TILT) and is_equal_approx(back, ZorgLevelCamera.DEFAULT_PITCH)
+		and is_equal_approx(c.target_pitch, user),
+		"camera look: default %.0f°, follow tilts to %.0f° and back to %.0f°; a user tilt in follow is kept (%.0f°)" % [ZorgLevelCamera.DEFAULT_PITCH, tilted, back, c.target_pitch])
+	c.target_pitch = ZorgLevelCamera.DEFAULT_PITCH
 
 func _round13() -> void:
 	# WCAG 1.4.11: enabled chrome borders are at least 3:1 on their fill.
@@ -815,6 +834,7 @@ func _initialize() -> void:
 	# Dungeon look: rendered readability (needs a display).
 	await _readability_render(engine)
 	await _dressing_checks(engine)
+	_camera_look_checks()
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
