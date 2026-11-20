@@ -127,6 +127,14 @@ static func mat(key: String) -> StandardMaterial3D:
 			m.emission_enabled = true
 			m.emission = Color(0.42, 0.4, 0.4)
 			m.emission_energy_multiplier = 0.16
+		"outer_wall":
+			# Dungeon look: the tall outer walls, darker than room walls so
+			# they frame the rooms instead of competing with them.
+			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
+			m.albedo_color = Color(0.6, 0.56, 0.54)
+			m.emission_enabled = true
+			m.emission = Color(0.3, 0.32, 0.4)
+			m.emission_energy_multiplier = 0.1
 		"wall_top":
 			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
 			m.albedo_color = Color(0.62, 0.58, 0.54)
