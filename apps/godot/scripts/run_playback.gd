@@ -143,21 +143,26 @@ func mount_spell_hint(host: Control) -> void:
 	host.add_child(spell_hint)
 
 
-func layout_spell_hint(view_size: Vector2, bottom: Rect2) -> void:
+func layout_spell_hint(view_size: Vector2, bottom: Rect2, col_w: float = 0.0) -> void:
 	if not spell_hint.visible:
 		return
 	var max_w := minf(view_size.x - 16.0, 420.0)
+	if col_w > 0.0:
+		max_w = minf(max_w, col_w)
 	spell_hint.custom_minimum_size = Vector2(max_w, 0)
 	var label: Label = spell_hint.find_child("Text", true, false)
 	if label:
 		label.custom_minimum_size.x = max_w - 16.0
 	spell_hint.reset_size()
+	# In the HUD text column the VBox places the plate; do not overlap the board.
+	var host := spell_hint.get_parent()
+	if host is VBoxContainer:
+		return
 	var sz := spell_hint.get_combined_minimum_size()
 	var x := clampf(bottom.position.x, 0.0, maxf(0.0, view_size.x - sz.x))
 	var y := bottom.position.y - sz.y - 8.0
-	# bottom is in global/canvas space; the host is the full-rect HUD.
+	# bottom is in global/canvas space; a free-floating host is the HUD canvas.
 	var origin := Vector2.ZERO
-	var host := spell_hint.get_parent()
 	if host is Control:
 		origin = (host as Control).get_global_rect().position
 	spell_hint.position = Vector2(x, y) - origin

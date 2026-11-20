@@ -35,6 +35,19 @@ static func safe_insets(win: Window) -> Array:
 	return [safe.position.x / k, safe.position.y / k,
 		(full.end.x - safe.end.x) / k, (full.end.y - safe.end.y) / k]
 
+## Finger slop for tap vs. pan, in viewport pixels. About 2.5 mm, but never
+## tighter than 12 px so the Xvfb press-drag checks stay as they are on a
+## 96-dpi display.
+const TAP_MIN_PX := 12.0
+const TAP_MM := 2.5
+
+static func tap_slop_px(dpi: float = -1.0) -> float:
+	if dpi < 0.0:
+		dpi = float(DisplayServer.screen_get_dpi())
+	if dpi <= 0.0:
+		return TAP_MIN_PX
+	return maxf(TAP_MIN_PX, (TAP_MM / 25.4) * dpi)
+
 static func _box(bg: Color, border: Color, radius := 10, pad := Vector2(12, 6)) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg

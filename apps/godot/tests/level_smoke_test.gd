@@ -18,6 +18,9 @@ extends SceneTree
 ##  - round 12: room labels never cover the HUD text on the end screens.
 ##  - low-severity UX: button/panel/plate border contrast, swatch outlines,
 ##    and the board fitting the width of a ~360 dp portrait window.
+##  - phone HUD: Levels and ? stay on a 2340×1080 landscape canvas, the
+##    first-run spell hint stays in the text column off the hero HP label,
+##    and tap-vs-pan slop is at least 12 px and about 2.5 mm.
 ## Optional: `-- --shot=path.png` saves a screenshot (needs a display).
 
 var level: Node
@@ -989,6 +992,8 @@ func _initialize() -> void:
 	await _camera_orbit_checks(engine)
 	_camera_pad_checks()
 	await _camera_manual_and_room_press_checks(engine)
+	_tap_slop_checks()
+	await _tap_slop_input()
 	await _spell_visibility(engine)
 
 	# Rotate and let the camera settle.
@@ -1050,8 +1055,8 @@ func _spell_visibility(engine: Node) -> void:
 	_check(not btn.disabled, "spell vis: Attack is enabled after the first Step (FR-33)")
 	_check(btn.did_pulse, "spell vis: enabled button pulses once when the window opens")
 	_check(level.playback.spell_hint.visible, "spell vis: first-run hint shows when spells become available")
-	_check(level.playback.spell_hint.get_parent() == level.ui_root,
-		"spell vis: first-run hint sits on the HUD, not in the Play/Step row")
+	_check(level.playback.spell_hint.get_parent() == level.hud_top,
+		"spell vis: first-run hint sits in the HUD text column, not in the Play/Step row")
 	var hint_r: Rect2 = level.playback.spell_hint.get_global_rect()
 	var vis_r := level.get_viewport().get_visible_rect()
 	if vis_r.size.x >= 300.0:
@@ -1070,11 +1075,13 @@ func _spell_visibility(engine: Node) -> void:
 		var ok_phone := got != null and phone.grow(1.0).encloses(level.playback.spell_hint.get_global_rect()) and phone.grow(1.0).encloses(got.get_global_rect())
 		_check(ok_phone, "spell vis: first-run hint and Got it fit on a 360-wide canvas (hint %s, got %s, vis %s)" % [
 			level.playback.spell_hint.get_global_rect(), got.get_global_rect() if got else Rect2(), phone])
+		_assert_top_right_on_canvas(phone, "360-wide canvas")
 		DisplayServer.window_set_size(old_size)
 		win.size = old_size
 		level._on_resized()
 		for i in 10:
 			await process_frame
+		await _phone_landscape_hud()
 	btn._on_down()
 	_check(not btn._suppress_press, "spell vis: a disabled long-press does not swallow the next tap")
 	btn._on_up()
@@ -1111,3 +1118,92 @@ func _spell_visibility(engine: Node) -> void:
 	_check(not level.playback.spell_hint.visible and ZorgHelp.spell_hint_seen(level.settings_path),
 		"spell vis: Got it hides the first-run spell hint and saves it")
 	level._on_reset()
+
+
+## Levels and ? must stay on a 2340×1080 landscape canvas, and the first-run
+## spell hint must not cover a hero HP label.
+func _phone_landscape_hud() -> void:
+	var vis := level.get_viewport().get_visible_rect()
+	if vis.size.x < 300.0:
+		print("UX: skip landscape HUD fit (viewport is %s, needs a display)" % vis)
+		return
+	_assert_top_right_on_canvas(vis, "default canvas")
+	var win := level.get_window()
+	var old := win.size
+	DisplayServer.window_set_size(Vector2i(2340, 1080))
+	win.size = Vector2i(2340, 1080)
+	# Match the ROG Phone's content scale so the original off-canvas offsets would return.
+	var old_scale := win.content_scale_factor
+	win.content_scale_factor = 1.65
+	level.ui_scale = 1.65
+	level._apply_margins()
+	if not level.cam_manual:
+		level._fit_camera(true)
+	for i in 20:
+		await process_frame
+	var phone := level.get_viewport().get_visible_rect()
+	if phone.size.x < 300.0:
+		print("UX: skip 2340x1080 HUD fit (viewport is %s)" % phone)
+	else:
+		_assert_top_right_on_canvas(phone, "2340x1080 landscape")
+		var hint_r: Rect2 = level.playback.spell_hint.get_global_rect()
+		_check(level.playback.spell_hint.visible and phone.grow(1.0).encloses(hint_r),
+			"phone HUD: spell hint stays on the 2340x1080 canvas (%s in %s)" % [hint_r, phone])
+		_check(level.playback.spell_hint.get_parent() == level.hud_top,
+			"phone HUD: spell hint stays in the HUD text column")
+		var overlap := 0
+		for r in level.heroes.label_rects():
+			if hint_r.intersects(r):
+				overlap += 1
+				print("phone HUD: hint %s overlaps HP %s" % [hint_r, r])
+		_check(overlap == 0, "phone HUD: spell hint does not cover a hero HP label (%d overlaps, hint %s, labels %s)" % [overlap, hint_r, level.heroes.label_rects()])
+	win.content_scale_factor = old_scale
+	level.ui_scale = old_scale
+	DisplayServer.window_set_size(old)
+	win.size = old
+	level._on_resized()
+	for i in 10:
+		await process_frame
+
+
+func _assert_top_right_on_canvas(vis: Rect2, label: String) -> void:
+	var levels_r: Rect2 = level.levels_btn.get_global_rect()
+	var help_r: Rect2 = level.help_btn.get_global_rect()
+	var slack := vis.grow(1.0)
+	_check(level.levels_btn.visible and slack.encloses(levels_r) and levels_r.size.x >= 100.0 and levels_r.size.y >= 52.0,
+		"phone HUD: Levels is visible on the %s (%s in %s, text %s)" % [label, levels_r, vis, level.levels_btn.text])
+	_check(level.help_btn.visible and slack.encloses(help_r) and help_r.size.x >= 52.0,
+		"phone HUD: ? is visible on the %s (%s in %s)" % [label, help_r, vis])
+	# They must not sit on top of each other, and Levels stays at the right.
+	_check(not levels_r.intersects(help_r), "phone HUD: Levels and ? do not overlap on the %s" % label)
+
+
+func _tap_slop_checks() -> void:
+	_check(is_equal_approx(ZorgHud.tap_slop_px(96), 12.0),
+		"tap slop: 96 dpi stays at the 12 px floor (%s)" % ZorgHud.tap_slop_px(96))
+	_check(is_equal_approx(ZorgHud.tap_slop_px(0), 12.0),
+		"tap slop: a missing dpi stays at 12 px")
+	var want := (2.5 / 25.4) * 380.0
+	_check(is_equal_approx(ZorgHud.tap_slop_px(380), want),
+		"tap slop: 380 dpi is 2.5 mm (%s, want %s)" % [ZorgHud.tap_slop_px(380), want])
+	_check(ZorgHud.tap_slop_px() >= 12.0, "tap slop: live display is at least 12 px (%s)" % ZorgHud.tap_slop_px())
+
+
+## A jitter under the slop is still a tap; a move past it becomes a pan.
+func _tap_slop_input() -> void:
+	level._open_level(0)
+	for i in 8:
+		await process_frame
+	var slop := ZorgHud.tap_slop_px()
+	var pos: Vector2 = level.get_viewport().get_visible_rect().get_center()
+	# An empty board: this press must not start a room drag.
+	_board_mouse(pos, true)
+	_check(level._press_left and not level._press_dragged and level.drag_id == "",
+		"tap slop: still press on an empty board is a pending tap")
+	_board_move(pos + Vector2(slop - 1.0, 0.0))
+	_check(not level._press_dragged, "tap slop: a %.1f px jitter under the slop is still a tap" % (slop - 1.0))
+	_board_move(pos + Vector2(slop + 1.0, 0.0))
+	_check(level._press_dragged, "tap slop: a move past %.1f px becomes a pan" % slop)
+	_board_mouse(pos + Vector2(slop + 1.0, 0.0), false)
+	_check(not level._press_left and not level._press_dragged, "tap slop: release clears the pan flags")
+

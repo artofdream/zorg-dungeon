@@ -92,8 +92,7 @@ var touches := {}
 var pinch_start := 0.0
 var zoom_start := 0.0
 var pinch_angle := 0.0
-# Left / one-finger press: a drag past TAP_PX pans and is not a room tap.
-const TAP_PX := 12.0
+# Left / one-finger press: a drag past ZorgHud.tap_slop_px() pans and is not a room tap.
 const YAW_PER_PX := 0.3
 const DOUBLE_TAP_MS := 400
 var _press_left := false
@@ -340,7 +339,9 @@ func _build_ui() -> void:
 	level_picker.level_picked.connect(_open_level)
 	level_picker.quality_toggled.connect(_toggle_quality)
 	levels_btn = level_picker.level_button
-	levels_btn.reparent(ui_root)
+	# keep_global_transform must be false: the picker is not in the tree yet,
+	# and preserving a 0x0 global rect parks the button off-canvas (phone landscape).
+	levels_btn.reparent(ui_root, false)
 	help_btn = _btn("?", open_help)
 	help_btn.custom_minimum_size = Vector2(ZorgHud.TARGET, ZorgHud.TARGET)
 	help_btn.tooltip_text = "What each room does"
@@ -384,7 +385,9 @@ func _build_ui() -> void:
 	# Spell wrap (hint + bar), Play, and Step were built in _init. The
 	# spell wrap stays first in this row, then Undo, Play, Step, Build (Tab).
 	controls.add_child(playback.spell_wrap)
-	playback.mount_spell_hint(ui_root)
+	# First-run spell hint lives in the HUD text column so it cannot cover
+	# hero HP labels on the board. The Play/Step row stays clear of it.
+	playback.mount_spell_hint(hud_top)
 	undo_btn = board_build.undo_button
 	for b in [undo_btn, play_btn, step_btn, _btn("Build", _on_reset)]:
 		b.custom_minimum_size.x = 76
@@ -513,31 +516,65 @@ func _apply_margins() -> void:
 	ui_root.offset_bottom = -(ins[3] + m)
 	var vp := get_viewport().get_visible_rect().size
 	# Portrait (narrow mobile browsers): tray on its own row above the controls,
-	# and the text column stops short of the Level button.
+	# and the text column stops short of the Level / ? cluster.
 	bottom_bar.vertical = vp.x < vp.y
-	var w := minf(clampf(vp.x * 0.55, 320.0, 640.0), vp.x - 2.0 * 8.0 - levels_btn.custom_minimum_size.x - ZorgHud.TARGET - 20.0)
+	var corner := _layout_top_right()
+	var w := minf(clampf(vp.x * 0.55, 320.0, 640.0), vp.x - 2.0 * 8.0 - corner.x - 20.0)
 	title.custom_minimum_size.x = w
 	goal.custom_minimum_size.x = w
 	status.custom_minimum_size.x = w
 	log_label.custom_minimum_size.x = w
-	fps_readout.set_top_offset(ZorgHud.TARGET + 6)
-	help_btn.offset_right = -(levels_btn.get_combined_minimum_size().x + 8.0)
-	help_btn.offset_left = help_btn.offset_right - ZorgHud.TARGET
 	cam_grid.offset_left = -cam_grid.get_combined_minimum_size().x
 	cam_grid.offset_top = -cam_grid.get_combined_minimum_size().y / 2.0
 	cam_grid.offset_bottom = cam_grid.get_combined_minimum_size().y / 2.0
 	cam_grid.offset_right = 0
 	_layout_spell_chrome()
 
+## Pin Levels and ? to the top-right of the HUD. Wrap ? under Levels when
+## the row would overflow a narrow, wide-aspect, or high-DPI canvas.
+## Returns the occupied size so the text column can stop short of it.
+func _layout_top_right() -> Vector2:
+	if levels_btn == null or help_btn == null:
+		return Vector2(ZorgHud.TARGET, ZorgHud.TARGET)
+	var gap := 8.0
+	var ls := levels_btn.get_combined_minimum_size()
+	var hs := help_btn.get_combined_minimum_size()
+	for b in [levels_btn, help_btn]:
+		b.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		b.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		b.grow_vertical = Control.GROW_DIRECTION_END
+	var wrap := ui_root != null and ls.x + gap + hs.x > ui_root.size.x
+	levels_btn.offset_right = 0.0
+	levels_btn.offset_left = -ls.x
+	levels_btn.offset_top = 0.0
+	levels_btn.offset_bottom = ls.y
+	if wrap:
+		help_btn.offset_right = 0.0
+		help_btn.offset_left = -hs.x
+		help_btn.offset_top = ls.y + gap
+		help_btn.offset_bottom = help_btn.offset_top + hs.y
+	else:
+		help_btn.offset_right = -(ls.x + gap)
+		help_btn.offset_left = help_btn.offset_right - hs.x
+		help_btn.offset_top = 0.0
+		help_btn.offset_bottom = hs.y
+	var occupied := Vector2(ls.x if wrap else ls.x + gap + hs.x, (ls.y + gap + hs.y) if wrap else maxf(ls.y, hs.y))
+	if fps_readout:
+		fps_readout.set_top_offset(occupied.y + 6.0)
+	return occupied
+
 func _layout_spell_chrome() -> void:
 	if bottom_bar == null or playback == null:
 		return
 	var bar := bottom_bar.get_global_rect()
 	var view := ui_root.get_global_rect() if ui_root else bar
-	playback.layout_spell_hint(view.size, bar)
+	var col_w := title.custom_minimum_size.x if title else 0.0
+	playback.layout_spell_hint(view.size, bar, col_w)
 	if heroes:
 		var top := bar.position.y
-		if playback.spell_hint and playback.spell_hint.visible:
+		# The first-run hint now lives in the text column; only reserve
+		# bottom chrome when a hint is still parked above the bar.
+		if playback.spell_hint and playback.spell_hint.visible and playback.spell_hint.get_parent() != hud_top:
 			top = minf(top, playback.spell_hint.get_global_rect().position.y)
 		heroes.set_chrome_bottom(top)
 
@@ -557,6 +594,8 @@ func _refresh_spells() -> void:
 	if playback.window_just_opened and not ZorgHelp.spell_hint_seen(settings_path):
 		playback.show_spell_hint(true)
 		_layout_spell_chrome()
+		if not cam_manual:
+			_request_fit(2)
 
 ## Cast spell `id` now (between actions). Public so the smoke test can use it.
 func _on_spell_preview(id: int) -> void:
@@ -571,6 +610,9 @@ func _on_spell_preview_end(_id: int) -> void:
 
 func _on_spell_hint_dismissed() -> void:
 	ZorgHelp.set_spell_hint_seen(settings_path, true)
+	_layout_spell_chrome()
+	if not cam_manual:
+		_request_fit(2)
 
 func cast_spell(id: int) -> bool:
 	if not _ensure_recording():
@@ -864,7 +906,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_yaw_by(-event.relative.x * YAW_PER_PX)
 			_update_camera()
 		elif _press_left and drag_id == "" and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
-			if not _press_dragged and event.position.distance_to(_press_pos) > TAP_PX:
+			if not _press_dragged and event.position.distance_to(_press_pos) > ZorgHud.tap_slop_px():
 				_press_dragged = true
 			if _press_dragged:
 				_pan(event.relative)
@@ -1058,7 +1100,7 @@ func _left_press(event: InputEventMouseButton) -> void:
 		return
 	# A second still tap is Fit; it must not also be a room tap.
 	var now := Time.get_ticks_msec()
-	if now - _tap_ms <= DOUBLE_TAP_MS and event.position.distance_to(_tap_pos) <= TAP_PX * 2.0:
+	if now - _tap_ms <= DOUBLE_TAP_MS and event.position.distance_to(_tap_pos) <= ZorgHud.tap_slop_px() * 2.0:
 		_tap_ms = 0
 		_on_fit()
 		return
@@ -1070,6 +1112,8 @@ func _update_camera() -> void:
 	cam.update_transform()
 
 func _process(delta: float) -> void:
+	if heroes and hud_top:
+		heroes.set_chrome_top(hud_top.get_global_rect().end.y)
 	cam.ease(delta)
 	status.visible = not end_banner.apply_visibility()   # banner replaces "Extermination: ..." 
 	playback.apply_turn_visible(not _building())
