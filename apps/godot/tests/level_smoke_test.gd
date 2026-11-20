@@ -534,8 +534,8 @@ func _camera_manual_and_room_press_checks(engine: Node) -> void:
 		"board press: still press on a placed room starts a drag (id %s, pos %s, slot %s)" % [level.drag_id, pos, level._screen_to_slot(pos)])
 	_board_mouse(pos, false)
 	await process_frame
-	_check(not level.placed.has("A:0") and level.drag_id == "",
-		"board press: still release on a placed room unplaces it")
+	_check(not level.placed.has("A:0") and level.drag_id == "" and not level._press_left and not level._press_dragged,
+		"board press: still release on a placed room unplaces it and clears the pan flags")
 	level._place("A:0", Vector2i(0, 0))
 	await process_frame
 	var dest: Vector2 = cam.unproject_position(level.slot_center(1, 0))
@@ -545,8 +545,8 @@ func _camera_manual_and_room_press_checks(engine: Node) -> void:
 		await process_frame
 	_board_mouse(dest, false)
 	await process_frame
-	_check(level.placed.get("A:0") == Vector2i(1, 0) and level.drag_id == "",
-		"board press: press-drag moves the room to %s" % level.placed.get("A:0"))
+	_check(level.placed.get("A:0") == Vector2i(1, 0) and level.drag_id == "" and not level._press_left and not level._press_dragged,
+		"board press: press-drag moves the room to %s and clears the pan flags" % level.placed.get("A:0"))
 	level._on_fit()
 
 
