@@ -152,6 +152,6 @@ The Godot board is presentation only. Lighting, flagstones, fog, outer walls, co
 
 On `main` today: cool dim fill, warm torch pools, dark flagstones, and thin cold fog. [[FINDINGS]] CF-013 is the earlier “too dark” bug; the later look pass darkened the fill again but kept emissive floors so rooms still read. During a run, tall walls stand on the sides away from the camera; the sides facing you stay a low rim so labels and taps stay usable. Props stay in the corridors, never inside a room.
 
-A lower default camera (42°, and a further tilt in Follow hero) is in pull request #130 and is **not on `main` until that PR is merged**. Until then the default pitch is 53.13°.
+A lower default camera (42°, and a further tilt in Follow hero) landed in [#130](https://github.com/artofdream/zorg-dungeon/pull/130), merged to `main` on 20 November 2026 (15:08 Europe/Berlin). The default pitch is now 42°.
 
 More checklists: [[PLAYER_JOURNEYS|persona journeys]].

@@ -125,10 +125,10 @@ flowchart TB
   board --> light["Fill froid, torches chaudes, brouillard léger"]
   board --> walls["Murs hauts à l'opposé de la caméra; bordure basse devant"]
   board --> props["Accessoires de couloir; un coffre près de chaque salle d'or FR-16"]
-  board --> cam["Caméra 53.13 degrés sur main; 42 degrés dans la PR 130 en attente"]
+  board --> cam["Caméra par défaut 42 degrés après la PR 130"]
 ```
 
-**En attente :** la PR [#130](https://github.com/artofdream/zorg-dungeon/pull/130) baisse la caméra par défaut à 42° et l'incline encore de 8° en Follow hero (rendu à la sortie, sauf si tu as incliné toi-même). Tant que cette PR n'est pas fusionnée, l'angle par défaut sur `main` est 53,13°. Fit, zoom, inclinaison, rotation et View restent contrôlés par le joueur. Aucun test téléphone n'a été fait pour ce travail d'ambiance.
+La PR [#130](https://github.com/artofdream/zorg-dungeon/pull/130), fusionnée dans `main` le 20 novembre 2026 (15:08 Europe/Berlin), baisse la caméra par défaut à 42° et l'incline encore de 8° en Follow hero (rendu à la sortie, sauf si tu as incliné toi-même). Fit, zoom, inclinaison, rotation et View restent contrôlés par le joueur. Aucun test téléphone n'a été fait pour ce travail d'ambiance.
 
 Cette section ne promeut pas de statut dans le [[STATUS_LEDGER]].
 

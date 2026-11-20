@@ -289,9 +289,9 @@ flowchart TB
   board --> light["Cool fill, warm torches, thin fog"]
   board --> walls["Tall walls away from the camera; low rim in front"]
   board --> props["Corridor props; one chest beside each gold room FR-16"]
-  board --> cam["Camera 53.13 degrees on main; 42 degrees in PR 130 pending"]
+  board --> cam["Camera default 42 degrees after PR 130"]
 ```
 
-**Pending:** [#130](https://github.com/artofdream/zorg-dungeon/pull/130) lowers the default camera to 42° and tilts 8° lower in Follow hero (restored on exit unless you tilted). Until that PR is merged, the default pitch on `main` is 53.13°. Fit, zoom, tilt, rotate and View stay user-controlled either way. Phone checks were not run for this look work.
+[#130](https://github.com/artofdream/zorg-dungeon/pull/130), merged to `main` on 20 November 2026 (15:08 Europe/Berlin), lowers the default camera to 42° and tilts 8° lower in Follow hero (restored on exit unless you tilted). Fit, zoom, tilt, rotate and View stay user-controlled. Phone checks were not run for this look work.
 
 Do not read this section as a [[STATUS_LEDGER]] promotion.

@@ -153,13 +153,11 @@ engine ([[NFR-1]]). Godot still only presents outcomes
   Walls and props appear only during a run, never inside a room, so they
   do not hide heroes, labels or taps, and they do not confuse
   wall-hatch direction while building ([[NFR-6]], [[FR-7]]).
-- [#130](https://github.com/artofdream/zorg-dungeon/pull/130) (open at the
-  time this was written): default camera pitch `42°` (was `53.13°`).
-  Follow hero tilts `8°` lower and gives it back on exit unless the user
-  tilted. The smoke test on that branch also requires exactly one chest
-  per gold room — a corner `O` room used to queue more than one. Until
-  #130 is merged, `main` still has the 53.13° default and the extra-chest
-  bug.
+- [#130](https://github.com/artofdream/zorg-dungeon/pull/130) (merged to
+  `main` on 20 November 2026, 15:08 Europe/Berlin): default camera pitch
+  `42°` (was `53.13°`). Follow hero tilts `8°` lower and gives it back on
+  exit unless the user tilted. The smoke test also requires exactly one
+  chest per gold room — a corner `O` room used to queue more than one.
 
 Phone testing was not authorized for this look work. Do not promote a
 [[STATUS_LEDGER]] row from these visual changes.

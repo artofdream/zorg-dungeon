@@ -152,6 +152,6 @@ Le plateau Godot est seulement de la présentation. La lumière, les dalles, le 
 
 Sur `main` aujourd'hui : un fill froid et bas, des flaques de torche chaudes, des dalles sombres, et un brouillard froid léger. [[FINDINGS]] CF-013 est l'ancien bug « trop sombre » ; la passe d'ambiance a assombri le fill tout en gardant des sols émissifs pour que les salles se lisent encore. Pendant une course, les murs hauts sont du côté opposé à la caméra ; les côtés face à toi restent une bordure basse pour les libellés et les taps. Les accessoires restent dans les couloirs, jamais dans une salle.
 
-Une caméra plus basse (42°, et une inclinaison de plus en Follow hero) est dans la pull request #130 et **n'est pas sur `main` tant que cette PR n'est pas fusionnée**. En attendant, l'angle par défaut est 53,13°.
+Une caméra plus basse (42°, et une inclinaison de plus en Follow hero) a atterri dans la PR [#130](https://github.com/artofdream/zorg-dungeon/pull/130), fusionnée dans `main` le 20 novembre 2026 (15:08 Europe/Berlin). L'angle par défaut est maintenant 42°.
 
 Plus de listes : [[PLAYER_JOURNEYS|parcours personas]].
