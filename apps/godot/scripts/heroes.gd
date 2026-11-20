@@ -229,10 +229,15 @@ func _step_to(tw: Tween, f: Node3D, to: Vector3, secs: float = STEP_MOVE_SECONDS
 	tw.parallel().tween_property(body, "position:y", 0.0, secs / 2.0).set_ease(Tween.EASE_IN).set_delay(secs / 2.0)
 
 ## Seconds per cell for a hero that moves `cells` cells this turn.
+## The floor yields when it would run past move_budget, so a long slide
+## still finishes inside one Play step.
 func move_seconds(cells: int) -> float:
 	if cells <= 0:
 		return STEP_MOVE_SECONDS
-	return clampf(move_budget / float(cells), MIN_MOVE_SECONDS, STEP_MOVE_SECONDS)
+	var per := move_budget / float(cells)
+	if per < MIN_MOVE_SECONDS:
+		return per
+	return minf(per, STEP_MOVE_SECONDS)
 
 ## Apply one turn's events. Returns a short line for the log. Moves in one
 ## turn (an ice slide) chain into one tween; a teleport or the waiting room

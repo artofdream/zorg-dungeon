@@ -449,9 +449,10 @@ func on_board_press(pos: Vector2) -> void:
 			ghost.visible = false
 			place_requested.emit(id, slot)
 		else:
-			# A tap on a refused spot: same cue as a refused drop. The room
-			# stays selected in its tray slot, so the next tap can retry.
-			reject(selected, slot, _why_not(slot), false)
+			# Same cue as a refused drop, including the tray flash. The room
+			# stays selected, so the next tap can retry. The flag only flashes
+			# that slot; it does not change the selection.
+			reject(selected, slot, _why_not(slot), true)
 		return
 	if slot != null:
 		var here: String = _occupant.call(slot)

@@ -1271,10 +1271,12 @@ func _board_ux(engine: Node) -> void:
 		"drop on another room: refused with a toast (%s)" % level.toast.last_text)
 	await create_timer(ZorgBoardBuild.SHAKE_SECONDS + 0.1).timeout
 	_check(not level.ghost.visible, "refused drop: the ghost hides after the shake")
-	# Tap-to-place on a refused spot gets the same cue.
+	# Tap-to-place on a refused spot gets the same cue, including the tray flash.
 	level.selected = "Z:0"
 	level.board_build.on_board_press(occupied)
-	_check(not level.placed.has("Z:0") and rejected.size() == 3 and level.toast.visible, "tap on a refused spot: same cue, nothing placed")
+	_check(not level.placed.has("Z:0") and level.selected == "Z:0" and rejected.size() == 3 and level.toast.visible
+		and level.board_build.slot_button("Z:0").self_modulate == Color(1.0, 0.45, 0.4),
+		"tap on a refused spot: same cue, tray slot flashes, nothing placed")
 	level.selected = ""
 	# Moving a placed room off the board snaps it back to its slot.
 	level._place("Z:0", Vector2i(1, 0))
@@ -1369,14 +1371,18 @@ func _fluidity_checks() -> void:
 	var gliding: bool = level.cam.is_gliding()
 	level._pan(Vector2(5, 0))
 	_check(not level.cam.is_gliding(), "fluidity: a pan stops the fit glide (was gliding %s)" % gliding)
-	# Ice slides: a 9-cell turn fits inside one Play step.
+	# Ice slides: a turn fits inside one Play step, including a run long
+	# enough that the per-cell floor used to overrun that step.
 	var hs: Node = level.heroes
-	hs.move_budget = ZorgRunPlayback.STEP_SECONDS * 0.8
+	var budget := ZorgRunPlayback.STEP_SECONDS * 0.8
+	hs.move_budget = budget
 	var nine: float = hs.move_seconds(9) * 9.0
 	var one: float = hs.move_seconds(1)
+	var long: float = hs.move_seconds(13) * 13.0
 	hs.move_budget = INF
-	_check(nine <= ZorgRunPlayback.STEP_SECONDS and is_equal_approx(one, hs.STEP_MOVE_SECONDS) and is_equal_approx(hs.move_seconds(9), hs.STEP_MOVE_SECONDS),
-		"fluidity: a 9-cell slide takes %.2f s in Play (step %.2f s); by hand each cell stays %.2f s" % [nine, ZorgRunPlayback.STEP_SECONDS, hs.STEP_MOVE_SECONDS])
+	_check(nine <= ZorgRunPlayback.STEP_SECONDS and long <= budget and is_equal_approx(long, budget)
+		and is_equal_approx(one, hs.STEP_MOVE_SECONDS) and is_equal_approx(hs.move_seconds(9), hs.STEP_MOVE_SECONDS),
+		"fluidity: a 9-cell slide takes %.2f s and a 13-cell slide %.2f s in Play (budget %.2f s, step %.2f s); by hand each cell stays %.2f s" % [nine, long, budget, ZorgRunPlayback.STEP_SECONDS, hs.STEP_MOVE_SECONDS])
 	var c: ZorgLevelCamera = level.cam
 	# A free yaw drag during a 90° turn continues from the current angle
 	# (it used to jump to the turn's destination first).
