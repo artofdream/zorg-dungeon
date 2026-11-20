@@ -28,6 +28,30 @@ func _check(ok: bool, what: String) -> void:
 		failures += 1
 		printerr("FAIL ", what)
 
+## Drive the board path even in headless (no GUI pick needed).
+func _board_mouse(pos: Vector2, pressed: bool) -> void:
+	var e := InputEventMouseButton.new()
+	e.button_index = MOUSE_BUTTON_LEFT
+	e.pressed = pressed
+	e.position = pos
+	e.global_position = pos
+	e.button_mask = MOUSE_BUTTON_MASK_LEFT if pressed else 0
+	if pressed:
+		level._unhandled_input(e)
+	else:
+		level._input(e)
+		level._unhandled_input(e)
+
+
+func _board_move(pos: Vector2) -> void:
+	var e := InputEventMouseMotion.new()
+	e.position = pos
+	e.global_position = pos
+	e.button_mask = MOUSE_BUTTON_MASK_LEFT
+	level._input(e)
+	level._unhandled_input(e)
+
+
 func _mouse_button(pos: Vector2, pressed: bool) -> void:
 	var e := InputEventMouseButton.new()
 	e.button_index = MOUSE_BUTTON_LEFT
@@ -487,6 +511,45 @@ func _near_walls_low() -> bool:
 	return tall_n == 2 and tall_ok
 
 
+## Pan/orbit always take over auto-fit; a still click on a placed room
+## unplaces, and a press-drag moves it (the drag starts on press).
+func _camera_manual_and_room_press_checks(engine: Node) -> void:
+	var i0 := 0
+	level._open_level(i0)
+	level._place("A:0", Vector2i(0, 0))
+	level.cam_manual = false
+	level._set_follow(false)
+	level._pan(Vector2(24, 0))
+	_check(level.cam_manual, "pan sets cam_manual even when not following")
+	level.cam_manual = false
+	level._yaw_by(12.0)
+	_check(level.cam_manual, "orbit sets cam_manual even when not following")
+	level._on_fit()
+	await process_frame
+	var cam: Camera3D = level.get_node("CameraRig/Camera3D")
+	var pos: Vector2 = cam.unproject_position(level.slot_center(0, 0))
+	_board_mouse(pos, true)
+	# Press on a placed room must start the drag before release.
+	_check(level.drag_id == "A:0" and not level.board_build.drag_active,
+		"board press: still press on a placed room starts a drag (id %s, pos %s, slot %s)" % [level.drag_id, pos, level._screen_to_slot(pos)])
+	_board_mouse(pos, false)
+	await process_frame
+	_check(not level.placed.has("A:0") and level.drag_id == "",
+		"board press: still release on a placed room unplaces it")
+	level._place("A:0", Vector2i(0, 0))
+	await process_frame
+	var dest: Vector2 = cam.unproject_position(level.slot_center(1, 0))
+	_board_mouse(pos, true)
+	for k in 6:
+		_board_move(pos.lerp(dest, (k + 1) / 6.0))
+		await process_frame
+	_board_mouse(dest, false)
+	await process_frame
+	_check(level.placed.get("A:0") == Vector2i(1, 0) and level.drag_id == "",
+		"board press: press-drag moves the room to %s" % level.placed.get("A:0"))
+	level._on_fit()
+
+
 ## Icon camera pad: stable names, icons, tooltips, 52-unit targets.
 func _camera_pad_checks() -> void:
 	var want := {
@@ -918,6 +981,7 @@ func _initialize() -> void:
 	_camera_look_checks()
 	await _camera_orbit_checks(engine)
 	_camera_pad_checks()
+	await _camera_manual_and_room_press_checks(engine)
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)

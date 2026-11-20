@@ -171,9 +171,9 @@ func rotate_by(deg: float) -> void:
 func yaw_by(deg: float) -> void:
 	if follow:
 		set_follow(false)
-		if not manual:
-			became_manual.emit()
-		manual = true
+	if not manual:
+		became_manual.emit()
+	manual = true
 	if _yaw_tween:
 		_yaw_tween.kill()
 	target_yaw += deg
@@ -213,9 +213,9 @@ func _tween_yaw(to: float) -> void:
 func pan(delta_px: Vector2) -> void:
 	if follow:
 		set_follow(false)                    # dragging the view takes over from the follow camera
-		if not manual:
-			became_manual.emit()
-		manual = true
+	if not manual:
+		became_manual.emit()
+	manual = true
 	var scale := zoom / 600.0
 	var right := Vector3(cos(deg_to_rad(yaw)), 0, -sin(deg_to_rad(yaw)))
 	var fwd := Vector3(-sin(deg_to_rad(yaw)), 0, -cos(deg_to_rad(yaw)))
