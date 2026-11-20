@@ -16,6 +16,16 @@ const FLOORS := {
 	"T": Color(0.45, 0.38, 0.3),
 }
 
+## Dungeon look: room floors are this stone, tinted FLOOR_TINT of the way
+## toward the room colour, and glow FLOOR_GLOW in the full room colour.
+const STONE := Color(0.5, 0.48, 0.46)
+const FLOOR_TINT := 0.5
+const FLOOR_GLOW := 0.42
+## Floor rune (a glowing octagon) per room type; A and Z have their own rings.
+## Board emission (the shader's `glow`): empty slots read with no torch.
+const BOARD_GLOW := 0.2
+const RUNE_TYPES := ["D", "E", "O", "P", "T"]
+
 const KK := "res://assets/kaykit/"
 ## KayKit tiles are 2 m; one board cell is 1 unit.
 const TILE_SCALE := 0.5
@@ -25,6 +35,7 @@ const HERO_MODEL_SCALE := 0.58
 
 static var _mats := {}
 static var _meshes := {}
+static var _board: ShaderMaterial
 static var _parts := {}
 
 ## Meshes (with their transforms inside the model) of one KayKit piece,
@@ -111,24 +122,14 @@ static func mat(key: String) -> StandardMaterial3D:
 			m.albedo_color = Color(1.0, 0.94, 0.86)
 		"wall":
 			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
-			m.albedo_color = Color(0.85, 0.76, 0.66)
+			m.albedo_color = Color(0.8, 0.74, 0.68)
 			# A little fill so a wall still reads in a room whose torch is off.
 			m.emission_enabled = true
-			m.emission = Color(0.45, 0.4, 0.34)
-			m.emission_energy_multiplier = 0.18
+			m.emission = Color(0.42, 0.4, 0.4)
+			m.emission_energy_multiplier = 0.16
 		"wall_top":
 			m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
 			m.albedo_color = Color(0.62, 0.58, 0.54)
-		"board_a":
-			m.albedo_color = Color(0.5, 0.48, 0.46)
-			m.roughness = 1.0
-			ZorgAtmos.stone(m, 0.35)
-			_board_fill(m)
-		"board_b":
-			m.albedo_color = Color(0.68, 0.64, 0.58)
-			m.roughness = 1.0
-			ZorgAtmos.stone(m, 0.35)
-			_board_fill(m)
 		"flame":
 			m.albedo_color = Color(1.0, 0.7, 0.25)
 			m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -199,8 +200,13 @@ static func mat(key: String) -> StandardMaterial3D:
 			m.cull_mode = BaseMaterial3D.CULL_DISABLED
 		_:
 			if key.begins_with("floor_"):
-				m.albedo_color = FLOORS.get(key.substr(6), Color(0.5, 0.5, 0.5))
-				_readable(m)
+				# Dungeon look: worn stone tinted toward the room colour; the
+				# glow stays the full room colour so types read in the dark.
+				var tint: Color = FLOORS.get(key.substr(6), Color(0.5, 0.5, 0.5))
+				m.albedo_color = STONE.lerp(tint, FLOOR_TINT)
+				m.emission_enabled = true
+				m.emission = tint
+				m.emission_energy_multiplier = FLOOR_GLOW
 				# Stone tile pattern from the atlas, tinted by the room colour.
 				m.albedo_texture = load(KK + "dungeon/dungeon_texture.png")
 			elif key.begins_with("dark_"):
@@ -219,14 +225,34 @@ static func _readable(m: StandardMaterial3D) -> void:
 	m.emission = m.albedo_color
 	m.emission_energy_multiplier = 0.32
 
-## Empty-board checker. Emission is what keeps the grid visible when no
-## omni light reaches it; the two albedos stay far enough apart to read
-## as a grid against the black background.
-static func _board_fill(m: StandardMaterial3D) -> void:
-	m.emission_enabled = true
-	m.emission = m.albedo_color
-	m.emission_energy_multiplier = 0.35
-	m.normal_scale = 0.25
+## Empty board: dark flagstones (shaders/flagstone.gdshader) with a faint
+## slot checker and a glow so empty slots read with no torch. Outside the
+## focus rectangle the stones fade to black (set_board_focus).
+static func board_mat() -> ShaderMaterial:
+	if _board == null:
+		_board = ShaderMaterial.new()
+		_board.shader = load("res://shaders/flagstone.gdshader")
+		_board.set_shader_parameter("noise_tex", ZorgAtmos.stone_noise(false))
+		_board.set_shader_parameter("glow", BOARD_GLOW)
+	return _board
+
+## World-space XZ rectangle that stays fully lit, and the distance over
+## which the board fades to black beyond it.
+static func set_board_focus(r: Rect2, fade: float) -> void:
+	var m := board_mat()
+	m.set_shader_parameter("focus_min", r.position)
+	m.set_shader_parameter("focus_max", r.end)
+	m.set_shader_parameter("fade", fade)
+
+## Glowing octagon rune in a room's colour (one shared material per colour).
+static func rune_mat(c: Color) -> StandardMaterial3D:
+	var key := "rune_%s" % c.to_html(false)
+	if not _mats.has(key):
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = c.lightened(0.15)
+		_mats[key] = m
+	return _mats[key]
 
 static func box_mesh(size: Vector3) -> BoxMesh:
 	var key := "box%s" % size
@@ -264,11 +290,11 @@ static func disc(radius: float, height: float) -> CylinderMesh:
 	c.rings = 1
 	return c
 
-static func ring(inner: float, outer: float) -> TorusMesh:
+static func ring(inner: float, outer: float, sides := 24) -> TorusMesh:
 	var t := TorusMesh.new()
 	t.inner_radius = inner
 	t.outer_radius = outer
-	t.rings = 24
+	t.rings = sides
 	t.ring_segments = 8
 	return t
 
@@ -320,8 +346,20 @@ static func build_room(def: Dictionary, tile: Array) -> Node3D:
 			else:
 				queue_piece(batch, "floor_tile_small", c + Vector3(0, tile_y, 0), tile_s, mat(look), false)
 	flush(root, batch)
+	_add_rune(root, def)
 	_add_prop(root, def, tile)
 	return root
+
+## A thin glowing octagon around the room centre in the room colour, so a
+## room's type still reads where no torch reaches.
+static func _add_rune(root: Node3D, def: Dictionary) -> void:
+	var t := String(def.get("type", ""))
+	if not t in RUNE_TYPES:
+		return
+	var r := add_mesh(root, ring(1.78, 1.86, 8), rune_mat(FLOORS.get(t, Color.WHITE)), Vector3(0, FLOOR_H + 0.012, 0), false)
+	r.name = "Rune"
+	r.scale = Vector3(1, 0.12, 1)
+	r.rotation.y = PI / 8.0
 
 ## A wall cell touching a floor cell, nearest the corner `near` (tile
 ## coordinates), and the direction into the room: [cell centre, inward].
@@ -348,8 +386,9 @@ static func _add_prop(root: Node3D, def: Dictionary, tile: Array) -> void:
 	match String(def.get("type", "")):
 		"A":
 			# Spawn: the heroes' door in a wall, and the green ring they appear on.
-			var r := add_mesh(root, ring(0.55, 0.75), mat("spawn"), Vector3(0, top + 0.03, 0), false)
+			var r := add_mesh(root, ring(0.55, 0.75, 8), mat("spawn"), Vector3(0, top + 0.03, 0), false)
 			r.scale = Vector3(1, 0.3, 1)
+			r.rotation.y = PI / 8.0
 			var face: Array = wall_face(tile, Vector2(4, 4))
 			var inward: Vector3 = face[1]
 			if inward != Vector3.ZERO:

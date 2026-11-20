@@ -302,6 +302,70 @@ func _contrast(a: Color, b: Color) -> float:
 	var hi := maxf(_rel_lum(a), _rel_lum(b))
 	return (hi + 0.05) / (lo + 0.05)
 
+func _patch(img: Image, at: Vector2, r := 4) -> Color:
+	var sum := Color(0, 0, 0)
+	var n := 0
+	for dy in range(-r, r + 1):
+		for dx in range(-r, r + 1):
+			var x := clampi(int(at.x) + dx, 0, img.get_width() - 1)
+			var y := clampi(int(at.y) + dy, 0, img.get_height() - 1)
+			sum += img.get_pixel(x, y)
+			n += 1
+	return Color(sum.r / n, sum.g / n, sum.b / n)
+
+## Dungeon look: the darker scene must still read on the renderer CI draws
+## with (Compatibility under Xvfb, Low). On 1.2 while building: each room's
+## floor stands out from an empty slot next to it, an empty slot stands out
+## from the black beyond the board, and rooms of different types differ in
+## colour. #112's unreadable board measured ~1.07:1.
+func _readability_render(engine: Node) -> void:
+	if DisplayServer.get_name() == "headless":
+		print("SKIP readability render: headless")
+		return
+	var one2: int = engine.levels.map(func(e): return e["id"]).find("deluxe-1.2")
+	level._open_level(one2)
+	level.set_quality("low", false)
+	var g = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[one2]["golden"]))
+	for p in g["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	level._on_fit()
+	for i in 60:
+		await process_frame
+	var img: Image = level.get_viewport().get_texture().get_image()
+	var vis: Rect2 = level.get_viewport().get_visible_rect()
+	var k := Vector2(img.get_width(), img.get_height()) / vis.size
+	var cam: Camera3D = level.get_viewport().get_camera_3d()
+	var to_px := func(w: Vector3) -> Vector2: return (cam.unproject_position(w) - vis.position) * k
+	var worst := INF
+	var by_type := {}
+	var empty := Color(0, 0, 0)
+	var empty_n := 0
+	for id in level.placed:
+		var slot: Vector2i = level.placed[id]
+		var c: Vector3 = level.slot_center(slot.x, slot.y)
+		var room := _patch(img, to_px.call(c + Vector3(1.0, ZorgLook.FLOOR_H, 0)))
+		by_type[String(level._supplied(id)["def"]["type"])] = room
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var q: Vector2i = slot + d
+			if level._in_board(q) and level._room_at_slot(q) == "":
+				var e := _patch(img, to_px.call(level.slot_center(q.x, q.y)))
+				worst = minf(worst, _contrast(room, e))
+				empty += e
+				empty_n += 1
+	empty = empty / maxf(1.0, empty_n)
+	var bg := _patch(img, Vector2(6, img.get_height() - 6), 3)
+	var min_gap := INF
+	var types: Array = by_type.keys()
+	for i in types.size():
+		for j in range(i + 1, types.size()):
+			var a: Color = by_type[types[i]]
+			var b: Color = by_type[types[j]]
+			min_gap = minf(min_gap, Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length())
+	print("readability: room/slot %.2f:1, slot/background %.2f:1, type gap %.3f (%s)" % [worst, _contrast(empty, bg), min_gap, types])
+	_check(worst >= 1.5, "dungeon look: every room floor stands out from an empty slot beside it (%.2f:1 >= 1.5)" % worst)
+	_check(_contrast(empty, bg) >= 1.12, "dungeon look: empty slots stand out from the black beyond the board (%.2f:1 >= 1.12, #112 was 1.07)" % _contrast(empty, bg))
+	_check(types.size() < 2 or min_gap >= 0.08, "dungeon look: room types differ in colour (min RGB gap %.3f >= 0.08)" % min_gap)
+
 func _round13() -> void:
 	# WCAG 1.4.11: enabled chrome borders are at least 3:1 on their fill.
 	# Disabled is exempt (1.4.3).
@@ -560,15 +624,21 @@ func _initialize() -> void:
 	_check(lit.size() == mini(rooms, ZorgAtmos.HIGH_LIGHTS) and shadowed.size() == mini(ZorgAtmos.HIGH_SHADOWS, lit.size())
 		and is_equal_approx(level.get_viewport().scaling_3d_scale, 1.0),
 		"quality High: %d torch lights, %d with shadows, 3D scale %.2f" % [lit.size(), shadowed.size(), level.get_viewport().scaling_3d_scale])
-	# The board has to stay readable with no torch at all: warm ambient,
-	# light fog, and an emissive checker. This locks the values a dark
-	# Compatibility render measured as unreadable (ambient 0.17, fog 0.012).
-	var board_a: StandardMaterial3D = ZorgLook.mat("board_a")
-	var board_b: StandardMaterial3D = ZorgLook.mat("board_b")
-	_check(level.env.ambient_light_energy >= 0.5 and level.env.fog_density <= 0.008
-		and board_a.emission_enabled and board_b.emission_enabled
-		and board_b.albedo_color.get_luminance() > board_a.albedo_color.get_luminance() + 0.08,
-		"board readable without a torch (ambient %.2f, fog %.3f)" % [level.env.ambient_light_energy, level.env.fog_density])
+	# The board has to stay readable with no torch at all. Dungeon look
+	# (agent/grok/dungeon-look-torchlit): the fill is now cool and dim on
+	# purpose (round 9 asked for >= 0.5 warm ambient), and readability comes
+	# from glow instead: the flagstone board, every room floor and the runes
+	# are emissive. #112's unreadable render had ambient 0.17, fog 0.012 and
+	# no emissive floor; these floors stop that coming back. The rendered
+	# contrast itself is measured under Xvfb (_readability_render).
+	var board_glow: float = ZorgLook.board_mat().get_shader_parameter("glow")
+	var floors_ok := true
+	for t in ZorgLook.FLOORS:
+		var fm: StandardMaterial3D = ZorgLook.mat("floor_" + t)
+		floors_ok = floors_ok and fm.emission_enabled and fm.emission_energy_multiplier >= 0.3
+	_check(level.env.ambient_light_energy >= ZorgAtmos.AMBIENT_MIN and level.env.fog_density <= 0.008
+		and board_glow >= 0.1 and floors_ok,
+		"board readable without a torch (ambient %.2f, fog %.3f, board glow %.2f, room floors emissive %s)" % [level.env.ambient_light_energy, level.env.fog_density, board_glow, floors_ok])
 	level.set_quality("low", false)
 
 	# Round 10: every room is built from the vendored CC0 KayKit models: stone
@@ -700,6 +770,8 @@ func _initialize() -> void:
 	await _round12(engine)
 	# Low-severity UX (borders, swatches, 360 dp portrait board fit).
 	await _round13()
+	# Dungeon look: rendered readability (needs a display).
+	await _readability_render(engine)
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)

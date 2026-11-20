@@ -27,9 +27,14 @@ const LOW_LIGHTS := 6
 const HIGH_LIGHTS := 8
 const HIGH_SHADOWS := 3
 const LOW_3D_SCALE := 0.75
-const TORCH_COLOR := Color(1.0, 0.62, 0.3)
-const TORCH_ENERGY := 4.0
-const TORCH_RANGE := 7.5
+const TORCH_COLOR := Color(1.0, 0.56, 0.24)
+const TORCH_ENERGY := 5.5
+const TORCH_RANGE := 6.5
+## Dungeon look (cool dark fill, warm torch pools). Ambient stays above
+## AMBIENT_MIN: rooms, walls and heroes still read where no torch reaches
+## because room floors, runes and walls carry their own glow.
+const AMBIENT_ENERGY := 0.36
+const AMBIENT_MIN := 0.3
 const SETTINGS := "user://settings.cfg"
 ## Hand-written. godot-golden.mjs never writes this file, and the rules
 ## engine never reads it.
@@ -68,34 +73,39 @@ static func save_quality(q: String) -> void:
 static func environment(high: bool) -> Environment:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.025, 0.022, 0.03)
+	env.background_color = Color(0.006, 0.006, 0.01)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	# Warm stone fill, not the old cool blue that painted the board blue-black.
-	env.ambient_light_color = Color(0.84, 0.78, 0.7)
-	env.ambient_light_energy = 0.7
+	# Dungeon look: a cool, dim fill so corners away from a torch sit in
+	# blue shadow and the warm torch pools carry the scene. Round 9's warm
+	# 0.7 fill made the board evenly bright; #112's "too dark" render had
+	# no emissive floors at all, which the room glow now covers.
+	env.ambient_light_color = Color(0.5, 0.58, 0.8)
+	env.ambient_light_energy = AMBIENT_ENERGY
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_exposure = 1.2
+	env.tonemap_exposure = 1.25
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_EXPONENTIAL
-	# Warm haze, still under the smoke cap (density <= 0.008, ambient >= 0.5).
-	env.fog_light_color = Color(0.18, 0.11, 0.08)
-	env.fog_density = 0.0055
+	# Thin cold haze that deepens to black with distance; the board shader
+	# does the fade beyond the dungeon itself.
+	env.fog_light_color = Color(0.03, 0.035, 0.055)
+	env.fog_density = 0.007
 	env.fog_sky_affect = 0.0
 	set_quality(env, high)
 	return env
 
 static func set_quality(env: Environment, high: bool) -> void:
 	env.glow_enabled = high
-	env.glow_intensity = 0.6
-	env.glow_bloom = 0.05
-	env.glow_hdr_threshold = 1.1
+	env.glow_intensity = 0.7
+	env.glow_bloom = 0.06
+	env.glow_hdr_threshold = 1.0
 
 ## Radial vignette (darker corners) drawn under the HUD.
 static func vignette() -> TextureRect:
 	var g := Gradient.new()
 	g.set_color(0, Color(0, 0, 0, 0))
-	g.add_point(0.55, Color(0, 0, 0, 0))
-	g.set_color(g.get_point_count() - 1, Color(0.05, 0.02, 0.0, 0.4))
+	g.add_point(0.42, Color(0, 0, 0, 0))
+	g.add_point(0.75, Color(0.0, 0.0, 0.01, 0.42))
+	g.set_color(g.get_point_count() - 1, Color(0.0, 0.0, 0.01, 0.8))
 	var t := GradientTexture2D.new()
 	t.gradient = g
 	t.fill = GradientTexture2D.FILL_RADIAL
@@ -175,12 +185,14 @@ static func add_torch(root: Node3D, tile: Array) -> OmniLight3D:
 	var flame := ZorgLook.add_mesh(torch, ZorgLook.cone(0.11, 0.3), ZorgLook.mat("flame"),
 		Vector3(0, sconce_y + 0.72 * SCONCE_SCALE + 0.1, 0.31 * SCONCE_SCALE), false)
 	flame.name = "Flame"
+	var halo := add_halo(torch, Vector3(0, sconce_y + 0.72 * SCONCE_SCALE + 0.12, 0.31 * SCONCE_SCALE), 0.9)
 	var light := OmniLight3D.new()
 	light.name = "TorchLight"
+	light.set_meta("halo", halo)
 	light.light_color = TORCH_COLOR
 	light.light_energy = TORCH_ENERGY
 	light.omni_range = TORCH_RANGE
-	light.omni_attenuation = 1.2
+	light.omni_attenuation = 1.6
 	light.shadow_enabled = false
 	light.shadow_bias = 0.08
 	# In front of the sconce, leaning into the room so it washes the floor.
@@ -191,6 +203,37 @@ static func add_torch(root: Node3D, tile: Array) -> OmniLight3D:
 	torch.add_child(light)
 	return light
 
+## Soft additive glow around a flame (one unshaded billboard quad, no
+## light): torches still glow on Low where the omni cap switched the
+## light itself off.
+static var _halo_mat: StandardMaterial3D
+static func add_halo(parent: Node3D, pos: Vector3, size: float) -> MeshInstance3D:
+	if _halo_mat == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1.0, 0.7, 0.35, 0.85))
+		g.add_point(0.35, Color(1.0, 0.45, 0.12, 0.35))
+		g.set_color(g.get_point_count() - 1, Color(1.0, 0.35, 0.05, 0.0))
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill = GradientTexture2D.FILL_RADIAL
+		t.fill_from = Vector2(0.5, 0.5)
+		t.fill_to = Vector2(1.0, 0.5)
+		t.width = 64
+		t.height = 64
+		_halo_mat = StandardMaterial3D.new()
+		_halo_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_halo_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_halo_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		_halo_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		_halo_mat.albedo_texture = t
+		_halo_mat.disable_receive_shadows = true
+		_halo_mat.no_depth_test = false
+	var q := QuadMesh.new()
+	q.size = Vector2(size, size)
+	var mi := ZorgLook.add_mesh(parent, q, _halo_mat, pos, false)
+	mi.name = "Halo"
+	return mi
+
 ## Warm flicker: two slow sines plus a fast one, per light phase.
 ## `base_energy` lets a declared brazier flicker around its own energy.
 static func flicker(light: OmniLight3D, t: float) -> void:
@@ -198,6 +241,8 @@ static func flicker(light: OmniLight3D, t: float) -> void:
 	var base := float(light.get_meta("base_energy", TORCH_ENERGY))
 	var f := 0.86 + 0.08 * sin(t * 7.3 + ph) + 0.05 * sin(t * 13.1 + ph * 2.0) + 0.03 * sin(t * 23.7 + ph * 3.0)
 	light.light_energy = base * f
+	if light.has_meta("halo"):
+		(light.get_meta("halo") as Node3D).scale = Vector3.ONE * (0.85 + 0.6 * (f - 0.86))
 
 static var _declared: Dictionary = {}
 static var _declared_loaded := false
@@ -247,6 +292,7 @@ static func add_declared(root: Node3D, level_id: String, room_id: String, room_t
 			ZorgLook.add_mesh(node, ZorgLook.disc(0.28, 0.14), ZorgLook.mat("hatch"), Vector3(0, ZorgLook.FLOOR_H + 0.07, 0), false)
 			var flame := ZorgLook.add_mesh(node, ZorgLook.cone(0.12, 0.28), ZorgLook.mat("flame"), Vector3(0, ZorgLook.FLOOR_H + 0.3, 0), false)
 			flame.name = "Flame"
+			node.set_meta("halo", add_halo(node, Vector3(0, ZorgLook.FLOOR_H + 0.32, 0), 1.1))
 		var light := OmniLight3D.new()
 		light.name = "Light"
 		light.light_color = _color3(spec.get("color"), TORCH_COLOR)
@@ -258,6 +304,8 @@ static func add_declared(root: Node3D, level_id: String, room_id: String, room_t
 		light.visible = false
 		light.set_meta("phase", randf() * TAU)
 		light.set_meta("base_energy", light.light_energy)
+		if node.has_meta("halo"):
+			light.set_meta("halo", node.get_meta("halo"))
 		node.add_child(light)
 		lights.append(light)
 	return lights
