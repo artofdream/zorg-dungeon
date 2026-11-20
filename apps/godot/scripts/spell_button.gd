@@ -5,6 +5,7 @@ extends Button
 
 signal preview_started(spell_id: int)
 signal preview_ended(spell_id: int)
+signal activated(spell_id: int)
 
 const LONG_PRESS := 0.45
 const ICON_DIR := "res://assets/kenney/board-game-icons/"
@@ -30,6 +31,8 @@ var _overlay: PanelContainer
 var _overlay_label: Label
 var _pulse: Tween
 var _hovered := false
+var _catcher: Control
+var _suppress_press := false
 
 
 func _init() -> void:
@@ -81,6 +84,13 @@ func _init() -> void:
 	focus_exited.connect(func() -> void: _set_hover(false))
 	button_down.connect(_on_down)
 	button_up.connect(_on_up)
+	pressed.connect(_on_native_pressed)
+	_catcher = Control.new()
+	_catcher.name = "Catcher"
+	_catcher.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_catcher.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_catcher.gui_input.connect(_on_catcher_input)
+	add_child(_catcher)
 	set_process(false)
 
 
@@ -98,6 +108,8 @@ func apply(id: int, spell: Dictionary, allowed: bool, block_reason: String) -> v
 	elif disabled and block_reason != "":
 		tip += " — %s" % block_reason
 	tooltip_text = tip
+	_catcher.tooltip_text = tip
+	_catcher.mouse_filter = Control.MOUSE_FILTER_STOP if disabled else Control.MOUSE_FILTER_IGNORE
 	accessibility_name = title
 	_overlay_label.text = tip
 	_icon.texture = _texture_for(kind)
@@ -196,9 +208,40 @@ func _on_down() -> void:
 
 
 func _on_up() -> void:
+	if _overlay.visible or _press_for >= LONG_PRESS:
+		_suppress_press = true
 	_pressing = false
 	set_process(false)
 	_overlay.visible = false
+
+
+func _on_native_pressed() -> void:
+	if _suppress_press:
+		_suppress_press = false
+		return
+	if disabled:
+		return
+	activated.emit(spell_id)
+
+
+func _on_catcher_input(event: InputEvent) -> void:
+	if not disabled:
+		return
+	var down := false
+	var up := false
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		down = event.pressed
+		up = not event.pressed
+	elif event is InputEventScreenTouch:
+		down = event.pressed
+		up = not event.pressed
+	else:
+		return
+	if down:
+		_on_down()
+	elif up:
+		_on_up()
+	accept_event()
 
 
 func _process(delta: float) -> void:

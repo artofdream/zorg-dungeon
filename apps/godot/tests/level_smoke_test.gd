@@ -1035,6 +1035,10 @@ func _spell_visibility(engine: Node) -> void:
 		"spell vis: buttons stay disabled at stepCount 0 (FR-33)")
 	_check(btn.tooltip_text.contains("first hero action"),
 		"spell vis: disabled tooltip explains the closed window (%s)" % btn.tooltip_text)
+	btn._on_down()
+	btn._process(ZorgSpellButton.LONG_PRESS)
+	_check(btn.get_node("Overlay").visible, "spell vis: long-press on a disabled button shows the name and reason")
+	btn._on_up()
 	level._on_step()
 	await process_frame
 	await process_frame
@@ -1048,6 +1052,13 @@ func _spell_visibility(engine: Node) -> void:
 	_check(level.heroes.preview_count() == preview["targets"].size(),
 		"spell vis: preview highlights as many heroes as the engine listed")
 	level.heroes.clear_attack_preview()
+	btn._on_down()
+	btn._process(ZorgSpellButton.LONG_PRESS)
+	_check(btn.get_node("Overlay").visible, "spell vis: long-press on a ready button shows the name")
+	btn._on_up()
+	btn.pressed.emit()
+	_check(not bool(engine.state["spells"][0]["consumed"]),
+		"spell vis: releasing a long-press does not spend the spell")
 	_check(level.cast_spell(0), "spell vis: cast_spell still spends Attack between actions")
 	await process_frame
 	_check(btn.disabled, "spell vis: Attack is disabled after it is spent (FR-32)")

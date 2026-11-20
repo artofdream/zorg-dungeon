@@ -367,7 +367,12 @@ func show_attack_preview(preview: Dictionary) -> void:
 		plate.add_child(lab)
 		if overlay:
 			overlay.add_child(plate)
-			plate.position = Vector2(8, 8)
+			# Bottom-left, above the spell bar — not on the title/goal/status column.
+			plate.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+			plate.offset_left = 8
+			plate.offset_right = 8 + plate.get_combined_minimum_size().x
+			plate.offset_bottom = -88
+			plate.offset_top = -88 - plate.get_combined_minimum_size().y
 		_waiting_preview = plate
 
 

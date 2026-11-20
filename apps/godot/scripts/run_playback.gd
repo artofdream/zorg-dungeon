@@ -99,7 +99,7 @@ func set_spells(spells: Array, allowed: bool, show: bool, block_reason: String =
 			b = _buttons[idx]
 		else:
 			b = ZorgSpellButton.new()
-			b.pressed.connect(func() -> void: cast_requested.emit(b.spell_id))
+			b.activated.connect(func(sid: int) -> void: cast_requested.emit(sid))
 			b.preview_started.connect(func(sid: int) -> void: preview_started.emit(sid))
 			b.preview_ended.connect(func(sid: int) -> void: preview_ended.emit(sid))
 			spell_bar.add_child(b)
