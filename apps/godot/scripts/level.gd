@@ -16,6 +16,10 @@ extends Node3D
 ## this screen still chooses history.back() on the web, or quitting the app.
 ## The FPS counter is scenes/fps_readout.tscn. F3 toggles it (signal
 ## toggled). This screen still writes the line and still drops High to Low.
+## Board UX (web play-through): a faint slot grid while building and green
+## slots where a dragged room may go (board shader, no extra draw calls),
+## a toast plus a shaking red ghost when a drop is refused, stable tray
+## slots, and Undo that stays usable after Play (it goes back to build).
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
@@ -143,6 +147,15 @@ var embedded := false            # web build inside an iframe (itch.io): no Quit
 var hint: ZorgHint               # first-run hint (dismissed once, saved)
 var settings_path := ZorgAtmos.SETTINGS
 var fps_log := 0.0
+var toast: ZorgToast
+# Build overlay: one texel per board slot, pushed to the board shader.
+const CELL_GRID := Color(0.80, 0.86, 1.0, 0.30)     # free slot, nothing to drag
+const CELL_NEAR := Color(0.35, 1.0, 0.50, 0.45)     # free slot next to a placed room
+const CELL_OK := Color(0.30, 1.0, 0.45, 0.95)       # dragged room fits and touches a room
+const CELL_LOOSE := Color(1.0, 0.70, 0.20, 0.30)    # fits, but touches no room yet
+var _cell_img: Image
+var _cell_tex: ImageTexture
+var _cells_key := ""
 const REFUSALS := {"before_first_action": "wait for the first hero action", "run_over": "the run is over",
 	"no_active_hero": "no hero is active", "consumed": "that spell is used up", "no_spell": "no such spell"}
 
@@ -168,6 +181,7 @@ func _attach_board() -> void:
 	board_build.move_requested.connect(_place)
 	board_build.unplace_requested.connect(_unplace)
 	board_build.undo_requested.connect(undo)
+	board_build.drop_rejected.connect(_on_drop_rejected)
 	board_build.configure(placed, place_order, {
 		"building": _building,
 		"screen_to_slot": _screen_to_slot,
@@ -253,6 +267,7 @@ func _ready() -> void:
 
 func _open_level(i: int) -> void:
 	level_index = i
+	_swatches.clear()
 	_on_reset()
 	for id in room_nodes:
 		_free_room(id)
@@ -395,6 +410,8 @@ func _build_ui() -> void:
 		controls.add_child(b)
 	_build_hint()
 	_build_dialogs()
+	toast = ZorgToast.new()
+	ui_root.add_child(toast)
 	_apply_margins()
 
 func _build_hint() -> void:
@@ -484,14 +501,30 @@ func _notification(what: int) -> void:
 		back_pressed()
 
 ## Undo button (and Backspace / Ctrl+Z): take back the last placed room.
+## During or after a run it first goes back to build (the same path as the
+## Build button: the engine state is dropped, the rooms stay), then takes
+## back the last room. The engine still decides every run. [[NFR-1]]
 func undo() -> void:
-	if _building() and not place_order.is_empty():
-		_unplace(place_order.back())
+	if place_order.is_empty():
+		return
+	if not _building():
+		_on_reset()
+	_unplace(place_order.back())
 
 func _refresh_undo() -> void:
 	if undo_btn:
-		undo_btn.visible = _building()
+		undo_btn.visible = true
 		undo_btn.disabled = place_order.is_empty()
+		undo_btn.tooltip_text = "Take back the last room (Backspace / Ctrl+Z)" if _building() \
+			else "Back to build and take back the last room (Backspace / Ctrl+Z)"
+
+## A drop or tap the board refused: say why for a moment, above the tray.
+func _on_drop_rejected(_id: String, why: String, _from_tray: bool) -> void:
+	var text := "Can't place here: %s" % why
+	status.text = text + "."
+	var bar := bottom_bar.get_global_rect()
+	var origin := ui_root.get_global_rect().position
+	toast.show_text(text, ui_root.size.x / 2.0, bar.position.y - origin.y - 12.0)
 
 func _layer() -> Control:
 	var c := Control.new()
@@ -618,6 +651,7 @@ func cast_spell(id: int) -> bool:
 	if not _ensure_recording():
 		return false
 	playback.set_playing(false)
+	_sync_move_budget()
 	heroes.clear_attack_preview()
 	var r: Dictionary = engine.cast(id)
 	if not r["ok"]:
@@ -665,18 +699,26 @@ func _supplied(id: String) -> Dictionary:
 
 ## Tray buttons react on press (not release) so one finger can drag a room
 ## straight out of the tray; a press + release without moving is a tap.
+## One slot per supplied room in supply order; placed rooms grey out in
+## place (stable slots), so the next room is where the finger expects it.
 func _refresh_tray() -> void:
 	var rows: Array = []
 	for s in engine.supplied():
-		if placed.has(s["id"]):
-			continue
 		rows.append({
 			"id": s["id"],
 			"text": _label_for(s["def"]),
-			"icon": ZorgHud.swatch(s["def"]),
+			"icon": _swatch(String(s["id"]), s["def"]),
 			"selected": selected == s["id"],
+			"placed": placed.has(s["id"]),
 		})
 	board_build.set_tray(rows, ui_root.theme)
+
+## Tray swatches are built once per room per level, not on every refresh.
+var _swatches := {}
+func _swatch(id: String, def: Dictionary) -> Texture2D:
+	if not _swatches.has(id):
+		_swatches[id] = ZorgHud.swatch(def)
+	return _swatches[id]
 
 func _building() -> bool:
 	return recording.is_empty()
@@ -714,6 +756,55 @@ func _build_board() -> void:
 	for x in range(SLOTS_X.x, SLOTS_X.y + 1):
 		for y in range(SLOTS_Y.x, SLOTS_Y.y + 1):
 			ZorgLook.add_mesh(board, ZorgLook.box_mesh(Vector3(ROOM - 0.1, 0.1, ROOM - 0.1)), ZorgLook.board_mat(), slot_center(x, y) + Vector3(0, -0.1, 0), false)
+	_cell_img = Image.create(SLOTS_X.y - SLOTS_X.x + 1, SLOTS_Y.y - SLOTS_Y.x + 1, false, Image.FORMAT_RGBA8)
+	_cell_tex = ImageTexture.create_from_image(_cell_img)
+	_cells_key = ""
+	_refresh_cells()
+
+## The room the build overlay is about: the one being dragged, or the one
+## tapped / picked with the keyboard. "" when none.
+func cell_focus() -> String:
+	if not _building():
+		return ""
+	if drag_id != "" and board_build.drag_active:
+		return drag_id
+	return selected
+
+## Build overlay state for one slot (also used by the smoke test):
+## "" (no tint: a room is there, or a run is going), "grid", "near",
+## "ok" or "loose".
+func cell_state(slot: Vector2i) -> String:
+	if not _building() or not _in_board(slot):
+		return ""
+	var focus := cell_focus()
+	var here := _room_at_slot(slot)
+	if focus == "":
+		if here != "":
+			return ""
+		return "grid" if spot_loose("", slot) or placed.is_empty() else "near"
+	if here != "" and here != focus:
+		return ""
+	return "loose" if spot_loose(focus, slot) else "ok"
+
+## Push the overlay to the board shader when the build state changes (a
+## room placed or moved, a drag starting or ending, Play or Build). Cheap
+## to check every frame; the texture is rewritten only on a change.
+func _refresh_cells() -> void:
+	if _cell_img == null:
+		return
+	var focus := cell_focus()
+	var key := "%s|%s|%d" % [_building(), focus, placed.hash()]
+	if key == _cells_key:
+		return
+	_cells_key = key
+	var colors := {"grid": CELL_GRID, "near": CELL_NEAR, "ok": CELL_OK, "loose": CELL_LOOSE}
+	for x in range(SLOTS_X.x, SLOTS_X.y + 1):
+		for y in range(SLOTS_Y.x, SLOTS_Y.y + 1):
+			var st := cell_state(Vector2i(x, y))
+			_cell_img.set_pixel(x - SLOTS_X.x, y - SLOTS_Y.x, colors.get(st, Color(0, 0, 0, 0)))
+	_cell_tex.update(_cell_img)
+	ZorgLook.set_board_cells(_cell_tex, Vector2i(SLOTS_X.x, SLOTS_Y.x), Vector2i(SLOTS_X.y - SLOTS_X.x + 1, SLOTS_Y.y - SLOTS_Y.x + 1),
+		1.0 if _building() else 0.0, 0.32 if focus != "" else 0.10)
 
 ## Dungeon look: while building, the whole board stays lit (every slot is a
 ## legal drop); during a run the stones beyond the placed rooms fade to
@@ -923,8 +1014,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_ESCAPE:
 			back_pressed()                   # same as Android Back
 			get_viewport().set_input_as_handled()
-		elif (event.keycode == KEY_BACKSPACE or (event.keycode == KEY_Z and event.ctrl_pressed)) and _building() and not place_order.is_empty():
-			undo()                           # undo the last placement
+		elif (event.keycode == KEY_BACKSPACE or (event.keycode == KEY_Z and event.ctrl_pressed)) and not place_order.is_empty():
+			undo()                           # undo the last placement (after a run: back to build first)
 		elif event.keycode == KEY_Q:
 			_rotate(-90.0)
 		elif event.keycode == KEY_E:
@@ -1121,6 +1212,7 @@ func _process(delta: float) -> void:
 	cam.follow_step(delta, heroes.follow_point() if follow else null)
 	lighting.tick(delta, Vector3(rig.position.x, 0, rig.position.z), room_nodes)
 	ZorgLook.set_board_focus(board_focus(), 6.0 if _building() else 7.0)
+	_refresh_cells()
 	if dressing:
 		dressing.face(camera.global_transform.basis.z)
 	_layout_labels()
@@ -1285,11 +1377,18 @@ func _dress_dungeon() -> void:
 func _on_play() -> void:
 	if _ensure_recording():
 		playback.set_playing(not playback.is_playing())
+		_sync_move_budget()
 		_refresh_spells()
+
+## Fluidity: while Play runs, a turn's moves fit inside one step (an ice
+## slide no longer gets cut off by the next turn); by hand, full speed.
+func _sync_move_budget() -> void:
+	heroes.move_budget = ZorgRunPlayback.STEP_SECONDS * 0.8 if playback.is_playing() else INF
 
 func _on_step() -> void:
 	if _ensure_recording():
 		playback.set_playing(false)
+		_sync_move_budget()
 		_advance()
 
 ## View button / key C during a run: Overview <-> Follow hero.
@@ -1305,6 +1404,8 @@ func _set_follow(on: bool) -> void:
 	cam.set_follow(on)
 
 func _on_reset() -> void:
+	if toast:
+		toast.hide_now()
 	if follow:
 		_set_follow(false)
 		cam_manual = false                   # back to the fitted overview

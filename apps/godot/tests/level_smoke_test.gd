@@ -240,7 +240,7 @@ func _round11(engine: Node) -> void:
 	_check(level.level_index == 1 and level._building() and not level.next_btn.visible and level.result.text == "",
 		"next: Next level signal opens %s ready to build" % engine.levels[1]["id"])
 
-	# (4) Undo button while building (keyboard reachable), gone during a run.
+	# (4) Undo button while building (keyboard reachable), still there during a run.
 	level._open_level(0)
 	await process_frame
 	_check(level.undo_btn.visible and level.undo_btn.disabled, "undo: shown while building, disabled with nothing placed")
@@ -257,7 +257,8 @@ func _round11(engine: Node) -> void:
 	for p in g0["cases"][0]["placements"]:
 		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
 	level._on_step()
-	_check(not level.undo_btn.visible, "undo: hidden during a run")
+	# Board UX: Undo stays on screen and usable after Play (back to build).
+	_check(level.undo_btn.visible and not level.undo_btn.disabled, "undo: still shown and enabled during a run")
 	level._on_reset()
 	# Targets: the new buttons are at least 52 units (51 dp measured on the phone).
 	var targets: Array = [level.help_btn, level.undo_btn, level.next_btn, level.quit_stay, got_it]
@@ -995,6 +996,8 @@ func _initialize() -> void:
 	_tap_slop_checks()
 	await _tap_slop_input()
 	await _spell_visibility(engine)
+	await _board_ux(engine)
+	_fluidity_checks()
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
@@ -1207,3 +1210,192 @@ func _tap_slop_input() -> void:
 	_board_mouse(pos + Vector2(slop + 1.0, 0.0), false)
 	_check(not level._press_left and not level._press_dragged, "tap slop: release clears the pan flags")
 
+
+
+## Board UX (web play-through findings): stable tray slots, a refused drop
+## goes back to the tray with a toast and a shaking red ghost, Undo works
+## after Play, and the build overlay marks free and droppable slots.
+func _board_ux(engine: Node) -> void:
+	level._open_level(0)
+	for i in 10:
+		await process_frame
+	var rejected: Array = []
+	var on_reject := func(id: String, why: String, _t: bool) -> void: rejected.append([id, why])
+	level.board_build.drop_rejected.connect(on_reject)
+	var cam: Camera3D = level.camera
+
+	# (3) Stable tray: one slot per supplied room, in supply order; placing
+	# greys a slot out in place instead of reflowing the row.
+	var ids: Array = engine.supplied().map(func(s): return String(s["id"]))
+	var before: Array = level.board_build.slot_ids()
+	var count0: int = level.tray.get_child_count()
+	var z_btn: Button = level.board_build.slot_button("Z:0")
+	var z_index: int = z_btn.get_index() if z_btn else -1
+	level._place("A:0", Vector2i(0, 0))
+	await process_frame
+	var a_btn: Button = level.board_build.slot_button("A:0")
+	_check(before == ids and level.board_build.slot_ids() == ids and level.tray.get_child_count() == count0 and count0 == ids.size(),
+		"tray: one slot per room, same order after a placement (%s)" % [level.board_build.slot_ids()])
+	_check(a_btn != null and a_btn.disabled and level.board_build.slot_is_empty("A:0") and a_btn.focus_mode == Control.FOCUS_NONE
+		and a_btn.get_combined_minimum_size().x >= a_btn.get_meta("full_size", Vector2.ZERO).x - 0.5,
+		"tray: a placed room's slot empties in place, same size")
+	_check(level.board_build.slot_button("Z:0") == z_btn and z_btn.get_index() == z_index and not z_btn.disabled,
+		"tray: the next room keeps its slot and button (no reflow)")
+	level.undo()
+	_check(not a_btn.disabled and a_btn.text != "" and a_btn.icon != null and level.board_build.slot_button("A:0") == a_btn,
+		"tray: Undo brings the room back to the same slot")
+
+	# (1) Refused drops: off the board and onto another room.
+	level._place("A:0", Vector2i(0, 0))
+	var occupied: Vector2 = cam.unproject_position(level.slot_center(0, 0))
+	var off_slot := Vector2i(level.SLOTS_X.y + 3, 0)
+	var off: Vector2 = cam.unproject_position(level.slot_center(off_slot.x, off_slot.y))
+	level._begin_drag("Z:0", true, off + Vector2(0, 300))
+	level.drag_to(off + Vector2(0, 150))
+	level.drag_to(off)
+	_check(level.cell_focus() == "Z:0", "overlay: the dragged room is the overlay focus")
+	level.end_drag(off)
+	await process_frame
+	_check(not level.placed.has("Z:0") and not level.board_build.slot_button("Z:0").disabled,
+		"drop off the board: Z goes back to its tray slot")
+	_check(level.toast.visible and level.toast.last_text == "Can't place here: off the board",
+		"drop off the board: toast says why (%s)" % level.toast.last_text)
+	_check(level.board_build.is_rejecting() and level.ghost.visible and level.ghost_mat.albedo_color == level.GHOST_BAD,
+		"drop off the board: the red ghost shakes on the spot")
+	_check(rejected.size() == 1 and rejected[0] == ["Z:0", "off the board"], "drop off the board: drop_rejected fired once %s" % [rejected])
+	level._begin_drag("Z:0", true, occupied + Vector2(0, 300))
+	level.drag_to(occupied + Vector2(0, 150))
+	level.drag_to(occupied)
+	level.end_drag(occupied)
+	_check(not level.placed.has("Z:0") and level.toast.last_text == "Can't place here: another room is there",
+		"drop on another room: refused with a toast (%s)" % level.toast.last_text)
+	await create_timer(ZorgBoardBuild.SHAKE_SECONDS + 0.1).timeout
+	_check(not level.ghost.visible, "refused drop: the ghost hides after the shake")
+	# Tap-to-place on a refused spot gets the same cue.
+	level.selected = "Z:0"
+	level.board_build.on_board_press(occupied)
+	_check(not level.placed.has("Z:0") and rejected.size() == 3 and level.toast.visible, "tap on a refused spot: same cue, nothing placed")
+	level.selected = ""
+	# Moving a placed room off the board snaps it back to its slot.
+	level._place("Z:0", Vector2i(1, 0))
+	var z_at: Vector2 = cam.unproject_position(level.slot_center(1, 0))
+	level._begin_drag("Z:0", false, z_at)
+	level.drag_to(z_at + Vector2(0, 120))
+	level.drag_to(off)
+	level.end_drag(off)
+	_check(level.placed.get("Z:0") == Vector2i(1, 0) and level.room_nodes["Z:0"].position.is_equal_approx(level.slot_center(1, 0)),
+		"move off the board: Z snaps back to (1, 0)")
+	await process_frame
+
+	# (4) Build overlay: grid on free slots, near-green beside rooms, focus
+	# colours while dragging, off during a run. Board shader, no new meshes.
+	_check(level.cell_state(Vector2i(0, 0)) == "" and level.cell_state(Vector2i(2, 0)) == "near"
+		and level.cell_state(Vector2i(4, 2)) == "grid" and level.cell_state(off_slot) == "",
+		"overlay: room '', beside '%s', far '%s'" % [level.cell_state(Vector2i(2, 0)), level.cell_state(Vector2i(4, 2))])
+	var mat: ShaderMaterial = ZorgLook.board_mat()
+	_check(float(mat.get_shader_parameter("cell_mix")) == 1.0 and mat.get_shader_parameter("cell_tex") != null,
+		"overlay: on while building")
+	level._unplace("Z:0")
+	level._begin_drag("Z:0", true, occupied + Vector2(0, 300))
+	level.drag_to(occupied + Vector2(0, 150))
+	await process_frame
+	_check(level.cell_state(Vector2i(1, 0)) == "ok" and level.cell_state(Vector2i(4, 2)) == "loose" and level.cell_state(Vector2i(0, 0)) == "",
+		"overlay: dragging Z marks touching slots ok and far ones loose")
+	_check(float(mat.get_shader_parameter("cell_fill")) > 0.2, "overlay: slots fill in while dragging")
+	level.board_build.abort_pinch()
+	await process_frame
+	var board_meshes: int = level.board.get_children().filter(func(c): return c is MeshInstance3D).size()
+	_check(board_meshes == (level.SLOTS_X.y - level.SLOTS_X.x + 1) * (level.SLOTS_Y.y - level.SLOTS_Y.x + 1),
+		"overlay: no extra board meshes (%d)" % board_meshes)
+
+	# (2) Undo after Play: back to build, last room taken back.
+	level._open_level(0)
+	var g0 = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[0]["golden"]))
+	for p in g0["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	var last_id: String = level.place_order.back()
+	var n_placed: int = level.placed.size()
+	level._on_play()
+	level._on_step()
+	await process_frame
+	_check(not level._building() and level.undo_btn.visible and not level.undo_btn.disabled, "undo: available after Play")
+	await process_frame
+	_check(float(mat.get_shader_parameter("cell_mix")) == 0.0, "overlay: off during a run")
+	level.undo_btn.pressed.emit()
+	_check(level._building() and level.engine.state.is_empty() and not level.placed.has(last_id) and level.placed.size() == n_placed - 1
+		and not level.playback.is_playing() and level.tray.visible,
+		"undo after Play: back to build, %s taken back, the other rooms stay" % last_id)
+	level._place(last_id, Vector2i(int(g0["cases"][0]["placements"].back()["x"]), int(g0["cases"][0]["placements"].back()["y"])))
+	var guard := 0
+	while not level.run_over() and guard < 1000:
+		level._on_step()
+		guard += 1
+	_check(level.run_over() and level.undo_btn.visible and not level.undo_btn.disabled, "undo: available after the run ends")
+	_key(KEY_BACKSPACE)
+	_check(level._building() and not level.placed.has(last_id), "undo: Backspace after a run goes back to build and takes back %s" % last_id)
+	level.board_build.drop_rejected.disconnect(on_reject)
+	level._open_level(0)
+
+
+## Movement fluidity: frame-rate independent playback cadence, no fit glide
+## fighting a pan, ice slides fit inside one Play step, delta-based easing.
+func _fluidity_checks() -> void:
+	var pb: ZorgRunPlayback = level.playback
+	var was_playing := pb.is_playing()
+	var steps := [0]
+	var count := func() -> void: steps[0] += 1
+	pb.advance_requested.disconnect(level._on_auto_advance)
+	pb.advance_requested.connect(count)
+	pb.set_playing(true)
+	for i in 90:                       # 3 s at 30 FPS
+		pb.tick(1.0 / 30.0)
+	var at30: int = steps[0]
+	steps[0] = 0
+	pb.set_playing(true)
+	for i in 360:                      # 3 s at 120 FPS
+		pb.tick(1.0 / 120.0)
+	var at120: int = steps[0]
+	pb.set_playing(was_playing)
+	pb.advance_requested.disconnect(count)
+	pb.advance_requested.connect(level._on_auto_advance)
+	var want := int(3.0 / ZorgRunPlayback.STEP_SECONDS)
+	# Resetting the timer each step rounded it up to whole frames: 15 steps
+	# at 30 FPS (0.20 s each). Keeping the overshoot gives ~16.7 at any rate.
+	_check(mini(at30, at120) >= want and absi(at30 - at120) <= 1,
+		"fluidity: Play cadence is frame-rate independent (%d steps at 30 FPS, %d at 120, want ~%d)" % [at30, at120, want])
+	# A fit glide stops as soon as the finger pans.
+	level.cam_manual = false
+	level.cam.fit(false, level.placed, true, level._fit_area(), level.ROOM, level.SLOTS_X, level.SLOTS_Y, level.FIT_HEIGHT, level.get_viewport().get_visible_rect().size)
+	var gliding: bool = level.cam.is_gliding()
+	level._pan(Vector2(5, 0))
+	_check(not level.cam.is_gliding(), "fluidity: a pan stops the fit glide (was gliding %s)" % gliding)
+	# Ice slides: a 9-cell turn fits inside one Play step.
+	var hs: Node = level.heroes
+	hs.move_budget = ZorgRunPlayback.STEP_SECONDS * 0.8
+	var nine: float = hs.move_seconds(9) * 9.0
+	var one: float = hs.move_seconds(1)
+	hs.move_budget = INF
+	_check(nine <= ZorgRunPlayback.STEP_SECONDS and is_equal_approx(one, hs.STEP_MOVE_SECONDS) and is_equal_approx(hs.move_seconds(9), hs.STEP_MOVE_SECONDS),
+		"fluidity: a 9-cell slide takes %.2f s in Play (step %.2f s); by hand each cell stays %.2f s" % [nine, ZorgRunPlayback.STEP_SECONDS, hs.STEP_MOVE_SECONDS])
+	var c: ZorgLevelCamera = level.cam
+	# A free yaw drag during a 90° turn continues from the current angle
+	# (it used to jump to the turn's destination first).
+	var y0: float = c.yaw
+	c.rotate_by(90.0)
+	c.yaw_by(5.0)
+	_check(absf(c.yaw - (y0 + 5.0)) < 0.5, "fluidity: a yaw drag mid-turn does not jump (%.1f -> %.1f)" % [y0, c.yaw])
+	c.yaw = y0
+	c.target_yaw = y0
+	c.update_transform()
+	# Zoom easing is delta-based: two 1/60 s frames == one 1/30 s frame.
+	var z0: float = c.zoom
+	c.zoom = 40.0
+	c.target_zoom = 20.0
+	c.ease(1.0 / 60.0)
+	c.ease(1.0 / 60.0)
+	var z60: float = c.zoom
+	c.zoom = 40.0
+	c.ease(1.0 / 30.0)
+	_check(absf(z60 - c.zoom) < 0.001, "fluidity: zoom easing matches at 60 and 30 FPS (%.4f vs %.4f)" % [z60, c.zoom])
+	c.zoom = z0
+	c.target_zoom = z0

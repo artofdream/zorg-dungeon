@@ -4,6 +4,9 @@
 // building, the placed rooms during a run) fades to black over `fade`
 // world units: the "fog to black" of the target look, without darkening
 // the rooms themselves. Works on the Mobile and Compatibility renderers.
+// Build overlay: a tiny per-slot texture (one texel per board slot, set by
+// the level screen) tints slot outlines and fills: a faint grid while
+// building, green where a dragged room may go. Same draw calls as before.
 shader_type spatial;
 render_mode diffuse_lambert, specular_disabled;
 
@@ -16,6 +19,11 @@ uniform float checker = 0.16;   // slot-to-slot brightness step
 uniform float glow = 0.14;      // emission so the board reads with no torch
 uniform float slot = 5.0;
 uniform sampler2D noise_tex : hint_default_white, filter_linear_mipmap, repeat_enable;
+uniform sampler2D cell_tex : hint_default_transparent, filter_nearest, repeat_disable;
+uniform vec2 cells_origin = vec2(-1.0, -2.0);  // first slot (x, y) in cell_tex
+uniform vec2 cells_size = vec2(8.0, 6.0);      // slots across, slots deep
+uniform float cell_mix = 0.0;                  // 0 = overlay off (during a run)
+uniform float cell_fill = 0.12;                // fill strength inside a slot
 
 varying vec3 wpos;
 
@@ -50,7 +58,21 @@ void fragment() {
 	vec2 d = max(max(focus_min - p, p - focus_max), vec2(0.0));
 	float k = 1.0 - smoothstep(0.0, fade, length(d));
 	k *= k;
+	vec3 em = c * glow;
+	if (cell_mix > 0.0) {
+		// Slot (x, y) the way the level screen counts them: z runs to -y.
+		vec2 sl = vec2(p.x, -p.y) / slot;
+		vec2 uv = (floor(sl) - cells_origin + 0.5) / cells_size;
+		if (uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0) {
+			vec4 cs = texture(cell_tex, uv);
+			vec2 fe = min(fract(sl), 1.0 - fract(sl)) * slot;
+			float edge = 1.0 - smoothstep(0.07, 0.24, min(fe.x, fe.y));
+			float w = cs.a * clamp(edge + cell_fill, 0.0, 1.0) * cell_mix;
+			c = mix(c, cs.rgb * 0.5, w * 0.45);
+			em += cs.rgb * w * 0.55;
+		}
+	}
 	ALBEDO = c * k;
 	ROUGHNESS = 0.95;
-	EMISSION = c * glow * k;
+	EMISSION = em * k;
 }
