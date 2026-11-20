@@ -157,6 +157,10 @@ the camera drop to a low broken rim, so walls never hide the floor,
 heroes, labels or taps. The corridor holds a gold-filled chest beside each
 gold (O) room and a few barrels and crates (6 on Low, 12 on High); sconce
 and chest glows are halos, not lights, so the omni budget is unchanged.
+The default camera looks in from 42° above the board (was 53°) and
+Follow hero tilts 8° lower still (given back when you leave it, unless you
+tilted meanwhile); Fit, Zoom, Tilt, rotate, View and the portrait fit are
+unchanged.
 Under Xvfb the smoke test measures the rendered 1.2 board: room floor vs
 an empty slot, empty slot vs the black beyond, and room colours apart.
 **Phone UI** (round 7, visual only): the HUD scales with screen DPI so one
