@@ -138,6 +138,19 @@ CC0 low-poly KayKit models, and the Warrior and Elf are KayKit's Knight and
 hooded Rogue playing an idle loop. Floors keep their room and element
 colours. Files and licences are listed in [CREDITS.md](CREDITS.md)
 (`assets/kaykit/`, trimmed to about 0.9 MB).
+**Dungeon look** (visual only; replaces round 9's warm fill and beige
+checker): a dim cool fill (ambient 0.36, `ZorgAtmos.AMBIENT_MIN` 0.3) and a
+cold moonlight sun leave corners in blue shadow; wall torches are stronger
+and shorter-range, so they throw warm pools, and every flame has an
+additive halo that glows even where the omni cap has turned its light off.
+The empty board is dark flagstone (`shaders/flagstone.gdshader`) with a
+faint slot checker; while building the whole board stays lit, and during a
+run the stones beyond the placed rooms fade to black. Room floors are stone
+tinted toward the room colour and glow in that colour; D, E, O, P and T
+rooms get a thin glowing octagon rune and the spawn ring is an octagon.
+The light caps (6 Low, 8 High), shadows and the FPS fallback are unchanged.
+Under Xvfb the smoke test measures the rendered 1.2 board: room floor vs
+an empty slot, empty slot vs the black beyond, and room colours apart.
 **Phone UI** (round 7, visual only): the HUD scales with screen DPI so one
 UI unit is about 1 dp on phones and 1 CSS px in mobile browsers (desktop and
 desktop web stay at the 1280×720 layout; in portrait the tray gets its own

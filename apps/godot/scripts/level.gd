@@ -623,8 +623,24 @@ static func slot_center(x: int, y: int) -> Vector3:
 func _build_board() -> void:
 	for x in range(SLOTS_X.x, SLOTS_X.y + 1):
 		for y in range(SLOTS_Y.x, SLOTS_Y.y + 1):
-			var m := ZorgLook.mat("board_a" if (x + y) % 2 == 0 else "board_b")
-			ZorgLook.add_mesh(board, ZorgLook.box_mesh(Vector3(ROOM - 0.1, 0.1, ROOM - 0.1)), m, slot_center(x, y) + Vector3(0, -0.1, 0), false)
+			ZorgLook.add_mesh(board, ZorgLook.box_mesh(Vector3(ROOM - 0.1, 0.1, ROOM - 0.1)), ZorgLook.board_mat(), slot_center(x, y) + Vector3(0, -0.1, 0), false)
+
+## Dungeon look: while building, the whole board stays lit (every slot is a
+## legal drop); during a run the stones beyond the placed rooms fade to
+## black. Visual only.
+func board_focus() -> Rect2:
+	var lo := Vector2(SLOTS_X.x * ROOM, -(SLOTS_Y.y + 1) * ROOM)
+	var hi := Vector2((SLOTS_X.y + 1) * ROOM, -SLOTS_Y.x * ROOM)
+	if _building() or placed.is_empty():
+		return Rect2(lo, hi - lo)
+	var r := Rect2()
+	var first := true
+	for id in placed:
+		var c := slot_center(placed[id].x, placed[id].y)
+		var cell := Rect2(Vector2(c.x, c.z) - Vector2.ONE * ROOM / 2.0, Vector2.ONE * ROOM)
+		r = cell if first else r.merge(cell)
+		first = false
+	return r.grow(1.0)
 
 func _room_node(s: Dictionary) -> Node3D:
 	var root := ZorgLook.build_room(s["def"], ZorgEngine.base_tile(s["def"]))
@@ -956,6 +972,7 @@ func _process(delta: float) -> void:
 	cam.consume_fit(drag_id == "")
 	cam.follow_step(delta, heroes.follow_point() if follow else null)
 	lighting.tick(delta, Vector3(rig.position.x, 0, rig.position.z), room_nodes)
+	ZorgLook.set_board_focus(board_focus(), 6.0 if _building() else 7.0)
 	_layout_labels()
 	for id in room_nodes:
 		var gate: Node3D = room_nodes[id].get_node_or_null("PortalGate")

@@ -29,8 +29,10 @@ func setup(sun_light: DirectionalLight3D, quality_url: String, shadows_flag: Str
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
-	sun.light_color = Color(1.0, 0.94, 0.84)
-	sun.light_energy = 0.95
+	# Dungeon look: a dim cold key from above (moonlight through a grate);
+	# the torches are the warm light.
+	sun.light_color = Color(0.62, 0.72, 1.0)
+	sun.light_energy = 0.42
 	sun.shadow_blur = 1.5
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 80.0
