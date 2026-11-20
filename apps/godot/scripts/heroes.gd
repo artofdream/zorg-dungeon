@@ -21,6 +21,7 @@ var _preview := {}       # hero id -> pending Attack damage (presentation only)
 var _preview_nums: Array = []  # sticky preview labels
 var _waiting_preview: Control
 var _chrome_bottom := -1.0  # overlay-space y of the top of the bottom chrome
+var _chrome_top := -1.0     # canvas y; HP labels stay below the HUD text column
 
 ## Where the follow camera looks: the first living hero on the board (lowest
 ## id), so it moves on to the next hero when one dies. null if none.
@@ -135,9 +136,16 @@ func _process(delta: float) -> void:
 		var size := plate.get_combined_minimum_size()
 		plate.size = size
 		var r := Rect2(cam.unproject_position(w) - Vector2(size.x / 2.0, size.y), size)
-		for t in taken:
-			if t.intersects(r):
-				r.position.y = t.position.y - size.y - 2.0
+		for taken_r in taken:
+			if taken_r.intersects(r):
+				r.position.y = taken_r.position.y - size.y - 2.0
+		# Stay below the HUD text column (title, hints) so a first-run
+		# spell hint cannot cover the HP label.
+		if _chrome_top >= 0.0 and r.position.y < _chrome_top:
+			r.position.y = _chrome_top
+			for taken_r in taken:
+				if taken_r.intersects(r):
+					r.position.y = maxf(r.position.y, taken_r.end.y + 2.0)
 		taken.append(r)
 		plate.position = r.position - base
 		# The figure itself (feet to head): room labels keep off it too.
@@ -400,6 +408,9 @@ func preview_count() -> int:
 ## first-run hint, and run controls). The waiting plate sits just above it.
 func set_chrome_bottom(top_y: float) -> void:
 	_chrome_bottom = top_y
+
+func set_chrome_top(bottom_y: float) -> void:
+	_chrome_top = bottom_y
 	_layout_waiting_preview()
 
 
