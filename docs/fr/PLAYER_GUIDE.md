@@ -104,6 +104,34 @@ Les types joués aujourd'hui : Guerrier, Elfe, Canonnier, Mécanicien, Princesse
 
 Sorts à usage unique entre actions terminées ([[FR-32]], [[FR-33]]) : Attaque, Téléport, Déplacer, Échanger, Sommeil, Réveil, Banalité, Sélection ([[FR-34]]–[[FR-42]]).
 
+## À quoi ressemble le donjon Godot
+
+Ceci est de la présentation, pas une règle nouvelle. Le moteur TypeScript décide encore de chaque résultat ([[NFR-1]], [[NFR-10]], [[0008-godot-port-milestone-1]]). Si une phrase ici n'est pas d'accord avec [[GAME_SPEC]], **la spécification gagne**. Le Maker `apps/web` est une surface 2D séparée ; cette section décrit le plateau Godot (`apps/godot`).
+
+Après les PR [#128](https://github.com/artofdream/zorg-dungeon/pull/128) et [#129](https://github.com/artofdream/zorg-dungeon/pull/129) sur `main` :
+
+- Un fill froid et bas, un brouillard froid léger, et une torche chaude (applique KayKit) dans chaque salle. Les sols, les runes et les murs ont leur propre lueur pour que cases et héros restent lisibles hors de la torche. Voir [[LEARNINGS-godot]] et [[FINDINGS]] CF-013 pour l'ancien bug « trop sombre ».
+- Des dalles sombres. La qualité Low (défaut sur le web et le téléphone) limite les torches et coupe les ombres ; High (défaut bureau) autorise plus de lumières et un glow.
+- Pendant une course seulement, des murs hauts se tiennent du côté opposé à la caméra. Les deux côtés face à la caméra restent une bordure basse, pour ne pas cacher les héros, les libellés et les taps.
+- Les accessoires de couloir (tonneaux, caisses) restent hors des salles, sous un plafond Low. Un coffre rempli d'or est un décor à côté de chaque salle d'or ; les règles d'or restent [[FR-16]].
+
+La flèche de trappe pendant le placement ne change pas et doit rester claire ([[NFR-6]], [[FR-7]]). Le décor disparaît quand tu reviens construire.
+
+```mermaid
+flowchart TB
+  engine["packages/engine décide des résultats NFR-1"]
+  board["Le plateau Godot dessine le donjon"]
+  engine --> board
+  board --> light["Fill froid, torches chaudes, brouillard léger"]
+  board --> walls["Murs hauts à l'opposé de la caméra; bordure basse devant"]
+  board --> props["Accessoires de couloir; un coffre près de chaque salle d'or FR-16"]
+  board --> cam["Caméra par défaut 42 degrés après la PR 130"]
+```
+
+La PR [#130](https://github.com/artofdream/zorg-dungeon/pull/130), fusionnée dans `main` le 20 novembre 2026 (15:08 Europe/Berlin), baisse la caméra par défaut à 42° et l'incline encore de 8° en Follow hero (rendu à la sortie, sauf si tu as incliné toi-même). Fit, zoom, inclinaison, rotation et View restent contrôlés par le joueur. Aucun test téléphone n'a été fait pour ce travail d'ambiance.
+
+Cette section ne promeut pas de statut dans le [[STATUS_LEDGER]].
+
 ## Honnêteté
 
 Cette page ne promeut pas de statut ledger. Voir [[STATUS_LEDGER]] et [[FINDINGS]]. Phase C (ledger / skills bilingues) est hors périmètre ([[0007-i18n-fr-en]]).

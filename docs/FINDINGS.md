@@ -250,8 +250,10 @@ Recurrence 1 — the knowledge build now rejects reserved `end` node ids,
 unquoted comma edge labels, and one-line chained undirected links in every
 shipped `<pre class="mermaid">`. Not a second-miss gate. Do not promote
 [[STATUS_LEDGER]] rows. Do not invent `C`, Gunner duration, or [[FR-4]]
-gating. [#51](https://github.com/artofdream/zorg-dungeon/issues/51) stays
-open until the learn page is live and probed.
+gating. [#51](https://github.com/artofdream/zorg-dungeon/issues/51) is closed
+(12 September 2026, 22:27 Europe/Berlin). A live Pages probe of the
+learn page is a separate honesty step; this entry does not claim that
+probe, and it no longer says the issue is open.
 
 
 ## CF-012: ci journey probes broke when ubuntu-latest moved to 26.04

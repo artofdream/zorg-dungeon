@@ -1,4 +1,4 @@
-# Learnings from the Godot port (rounds 1–8)
+# Learnings from the Godot port (rounds 1–11 and the dungeon look)
 
 Plain-English notes from PRs #84–#95, kept so the next agent doesn't rediscover them. The decision record is [[0008-godot-port-milestone-1]]. The repeatable recipes are rows in [[SKILL_MATRIX]] (`engine-parity-goldens`, `adb-phone-test`) and the SKILL.md files under `.cursor/skills/` (`godot-headless-verify`, `debug-apk-reinstall`, `godot-cosmetic-lights`, `zorg-pr`). [[GAME_SPEC]] wins on any rule question.
 
@@ -84,11 +84,18 @@ The crush was the round-9 setup: ambient energy `0.17` with a cool blue
 colour, sun energy `0.32`, filmic tonemap, fog density `0.012` toward
 near-black, and board albedo around `0.25` multiplied by a dark stone
 texture. Raising ambient alone to `0.55` barely moved the tile. The board
-needs its own fill (lighter checker plus a little emission), a warmer
-ambient and sun, and lighter fog. Measure a screenshot before changing it
-again. The smoke test locks ambient `>= 0.5` and fog `<= 0.008`. A later
-pass warms the fog colour and adds a few unshaded dust motes. It does
-not lower the ambient or raise the fog past that lock.
+needed its own fill (lighter checker plus a little emission), a warmer
+ambient and sun, and lighter fog. That was the CF-013 / #112 fix. A later
+pass warmed the fog colour and added a few unshaded dust motes, still
+under that first lock.
+
+The dungeon-look pass (#128, on `main`) darkened the fill again on
+purpose: ambient energy is now `0.36` (floor `AMBIENT_MIN` `0.3`), with a
+cool colour, and fog density `0.007` toward a cold near-black. Readability
+where a torch does not reach comes from emissive room floors, runes and
+walls, not from a bright ambient. The smoke test now locks ambient
+`>= AMBIENT_MIN` (`0.3`) and fog `<= 0.008`. Measure a screenshot before
+changing it again.
 
 Phone budget: Low still skips shadows and still draws the 3D view at 0.75
 scale. It now allows 6 unshadowed omni lights (one torch per room in the
@@ -128,3 +135,29 @@ rules engine. Play, Step, the spell buttons, and the turn line live in
 their own node. The level screen still calls `engine.step()` and
 `engine.cast()` and passes the sentence in.
 
+
+## 13. The dungeon look is light, walls, then camera
+
+Three small visual-only pull requests. None of them change the rules
+engine ([[NFR-1]]). Godot still only presents outcomes
+([[0008-godot-port-milestone-1]]).
+
+- [#128](https://github.com/artofdream/zorg-dungeon/pull/128) (on `main`):
+  cool dim fill, warm torch pools, dark flagstones, thin cold fog.
+  Ambient `0.36`, fog `0.007`. The smoke test keeps ambient at or above
+  `AMBIENT_MIN` (`0.3`) and fog at or below `0.008`.
+- [#129](https://github.com/artofdream/zorg-dungeon/pull/129) (on `main`):
+  tall irregular walls around a run, a low rim on the camera side, wall
+  sconces on the room torches, corridor props under a cap, and a gold
+  chest beside each gold room (dressing only; gold rules stay [[FR-16]]).
+  Walls and props appear only during a run, never inside a room, so they
+  do not hide heroes, labels or taps, and they do not confuse
+  wall-hatch direction while building ([[NFR-6]], [[FR-7]]).
+- [#130](https://github.com/artofdream/zorg-dungeon/pull/130) (merged to
+  `main` on 20 November 2026, 15:08 Europe/Berlin): default camera pitch
+  `42°` (was `53.13°`). Follow hero tilts `8°` lower and gives it back on
+  exit unless the user tilted. The smoke test also requires exactly one
+  chest per gold room — a corner `O` room used to queue more than one.
+
+Phone testing was not authorized for this look work. Do not promote a
+[[STATUS_LEDGER]] row from these visual changes.
