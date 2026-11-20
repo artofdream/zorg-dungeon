@@ -28,7 +28,10 @@ func _check(ok: bool, what: String) -> void:
 		failures += 1
 		printerr("FAIL ", what)
 
-## Drive the board path even in headless (no GUI pick needed).
+## Drive the board path even in headless (no GUI pick needed). A release goes
+## through the viewport: handle_drag_input marks it handled, so Godot never
+## delivers it to _unhandled_input. Calling that directly would still run
+## _left_press and clear the pan flags.
 func _board_mouse(pos: Vector2, pressed: bool) -> void:
 	var e := InputEventMouseButton.new()
 	e.button_index = MOUSE_BUTTON_LEFT
@@ -39,8 +42,8 @@ func _board_mouse(pos: Vector2, pressed: bool) -> void:
 	if pressed:
 		level._unhandled_input(e)
 	else:
-		level._input(e)
-		level._unhandled_input(e)
+		# Already a viewport point from unproject_position; do not transform it.
+		root.push_input(e, true)
 
 
 func _board_move(pos: Vector2) -> void:
