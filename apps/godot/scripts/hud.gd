@@ -74,8 +74,10 @@ static func plate() -> StyleBoxFlat:
 	return _box(Color(0.05, 0.06, 0.08, 0.72), Color(0.70, 0.74, 0.84), 6, Vector2(6, 2))  # 10:1, was 0.15-alpha white (~1.5:1)
 
 ## 24x24 colour swatch for a room (or element) used as the tray button icon
-## and the room-legend rows. A light outer ring and a dark inner ring keep
-## every fill (ice, poison, muted browns) at >= 3:1 on the dark HUD.
+## and the room-legend rows. A, D, O and P use the room colour (FLOORS),
+## which is also the colour those floors glow. A light outer ring and a
+## dark inner ring keep every fill (ice, poison, muted browns) at >= 3:1
+## on the dark HUD.
 const SWATCH := 24
 
 static func swatch(def: Dictionary) -> ImageTexture:
@@ -85,7 +87,7 @@ static func swatch(def: Dictionary) -> ImageTexture:
 		"E": c = ZorgLook.mat(String(def.get("element", "fire"))).albedo_color
 		"T": c = ZorgLook.mat("hatch").albedo_color.lightened(0.2)
 		"Z": c = Color(0.85, 0.2, 0.2)
-		_: c = ZorgLook.mat("floor_" + key).albedo_color
+		_: c = ZorgLook.FLOORS.get(key, Color(0.5, 0.5, 0.5))
 	c.a = 1.0
 	var img := Image.create(SWATCH, SWATCH, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0.95, 0.96, 0.98))                 # light outer ring
