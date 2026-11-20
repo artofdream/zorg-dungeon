@@ -17,16 +17,23 @@ const CAM_SMOOTH := 12.0                    # 1/s, exponential ease for zoom and
 const FOLLOW_ZOOM := 0.6                    # follow view zooms to 60% of the current distance
 const FOLLOW_MIN := 7.0                     # ... and may come closer than the normal zoom limit
 const FOLLOW_SMOOTH := 4.0                  # 1/s, exponential ease of the pivot onto the hero
+## Dungeon look: the default view is lower and more angled (was 53.13°,
+## the round 1-5 angle), so the walls and torch pools read as a room you
+## look into rather than a map. Follow hero tilts FOLLOW_TILT lower still.
+const DEFAULT_PITCH := 42.0
+const FOLLOW_TILT := 8.0
 
 var yaw := 45.0
 var target_yaw := 45.0
 var zoom := 24.0
 var target_zoom := 24.0
-var pitch := 53.13                          # atan(0.8 / 0.6): the round 1-5 angle
-var target_pitch := 53.13
+var pitch := DEFAULT_PITCH
+var target_pitch := DEFAULT_PITCH
 var manual := false                         # user zoomed/panned: stop auto-fit until Fit or a new level
 var follow := false                         # true: the camera tracks the first living hero
 var follow_zoomed := false                  # the current zoom is already a follow close-up
+var _follow_pitch := -1.0                   # pitch follow tilted to (-1: none); restored on exit
+var _pre_follow_pitch := DEFAULT_PITCH
 
 var pad: GridContainer
 var view_button: Button
@@ -128,8 +135,19 @@ func zoom_button(d: float) -> void:
 
 
 func set_follow(on: bool) -> void:
+	var was := follow
 	follow = on
 	view_button.text = "View: Hero" if on else "View: All"
+	if on and not was:
+		# A little lower behind the hero; undone on exit unless the user
+		# tilted meanwhile.
+		_pre_follow_pitch = target_pitch
+		target_pitch = clampf(target_pitch - FOLLOW_TILT, PITCH_LIMITS.x, PITCH_LIMITS.y)
+		_follow_pitch = target_pitch
+	elif not on and was:
+		if is_equal_approx(target_pitch, _follow_pitch):
+			target_pitch = _pre_follow_pitch
+		_follow_pitch = -1.0
 	if on:
 		if _move_tween:
 			_move_tween.kill()
