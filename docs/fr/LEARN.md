@@ -113,6 +113,20 @@ flowchart TD
   hp -->|"Oui, et plus personne"| win["Tu gagnes"]
 ```
 
+## À quoi ressemble le donjon
+
+Le plateau 3D est un donjon de pierre sombre. Chaque salle a une torche chaude. Un brouillard froid reste au loin. Des murs de pierre entourent les salles pendant un combat. Les deux murs face à toi restent bas, pour que tu voies encore les héros et que tu puisses toucher les salles.
+
+C'est seulement le dessin du plateau. Ça ne change pas qui gagne.
+
+```mermaid
+flowchart TB
+  rooms["Salles en dalles sombres"] --> torches["Une torche chaude dans chaque salle"]
+  rooms --> fog["Brouillard froid plus loin"]
+  rooms --> walls["Murs de pierre autour du donjon pendant un combat"]
+  walls --> low["Murs bas de ton côté pour voir les héros"]
+```
+
 ## Prêt ?
 
 1. Ouvre [zorg.artof.link](https://zorg.artof.link/?lang=fr).
@@ -133,5 +147,11 @@ Elle décrit seulement les règles que le moteur joue déjà : salles A / Z / D 
 Elle **n'invente pas** une lettre de salle en plus, un timing de tir Gunner en plus, ni des contrats verrouillés.
 
 Pointeurs formels (pas besoin pour jouer) : placer les salles [[FR-5]] [[FR-6]] [[FR-7]] [[FR-8]] ; apparition / Zorg / dégâts / éléments / portails / or / péages [[FR-11]] [[FR-12]] [[FR-13]] [[FR-14]] [[FR-15]] [[FR-16]] [[FR-17]] ; héros [[FR-19]] [[FR-20]] [[FR-21]] [[FR-22]] [[FR-23]] [[FR-24]] [[FR-25]] [[FR-26]] ; sorts [[FR-32]] [[FR-33]] [[FR-34]] [[FR-35]] [[FR-36]] [[FR-37]] [[FR-39]] [[FR-40]] [[FR-41]] [[FR-42]] ; idée gagner / perdre [[FR-12]] [[FR-43]]. La lecture Maker montre encore le résultat du combat à l'écran.
+
+Le plateau Godot est seulement de la présentation. La lumière, les dalles, le brouillard, les murs, les accessoires et la caméra ne changent pas les résultats ([[NFR-1]], [[0008-godot-port-milestone-1]]). La direction des trappes doit rester claire pendant le placement ([[NFR-6]], [[FR-7]]). Un coffre d'or est un décor à côté d'une salle d'or ; les règles d'or restent [[FR-16]]. Plus de détail : [[PLAYER_GUIDE]] et [[LEARNINGS-godot]].
+
+Sur `main` aujourd'hui : un fill froid et bas, des flaques de torche chaudes, des dalles sombres, et un brouillard froid léger. [[FINDINGS]] CF-013 est l'ancien bug « trop sombre » ; la passe d'ambiance a assombri le fill tout en gardant des sols émissifs pour que les salles se lisent encore. Pendant une course, les murs hauts sont du côté opposé à la caméra ; les côtés face à toi restent une bordure basse pour les libellés et les taps. Les accessoires restent dans les couloirs, jamais dans une salle.
+
+Une caméra plus basse (42°, et une inclinaison de plus en Follow hero) est dans la pull request #130 et **n'est pas sur `main` tant que cette PR n'est pas fusionnée**. En attendant, l'angle par défaut est 53,13°.
 
 Plus de listes : [[PLAYER_JOURNEYS|parcours personas]].

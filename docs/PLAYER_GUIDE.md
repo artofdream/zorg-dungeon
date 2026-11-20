@@ -267,3 +267,31 @@ flowchart TB
   spec --> scripts
   docs --> scripts
 ```
+
+## How the Godot dungeon looks
+
+This is presentation, not a new rule. The TypeScript engine still decides every outcome ([[NFR-1]], [[NFR-10]], [[0008-godot-port-milestone-1]]). If a sentence here disagrees with [[GAME_SPEC]], the spec wins. The Maker on `apps/web` is a separate 2D surface; this section describes the Godot board (`apps/godot`).
+
+After [#128](https://github.com/artofdream/zorg-dungeon/pull/128) and [#129](https://github.com/artofdream/zorg-dungeon/pull/129) on `main`:
+
+- Cool, dim fill light and a thin cold fog, with a warm torch (KayKit wall sconce) in each room. Room floors, runes and walls carry their own glow so tiles and heroes still read where a torch does not reach. See [[LEARNINGS-godot]] and [[FINDINGS]] CF-013 for the earlier “too dark” bug and why raising ambient alone was not the fix.
+- Dark flagstone floors. Quality Low (default on the web and phones) caps torch lights and skips shadows; High (default on desktop) allows more lights and glow.
+- During a run only, tall stone walls stand on the sides away from the camera. The two sides facing the camera stay a low rim, so heroes, room labels and taps are not hidden.
+- Corridor props (barrels, crates) stay outside rooms, under a Low cap. A gold-filled chest sits beside each gold room as dressing only; gold pickup rules stay [[FR-16]].
+
+The wall-hatch arrow you use while placing rooms is unchanged and must stay unambiguous ([[NFR-6]], [[FR-7]]). Dressing is cleared when you go back to building.
+
+```mermaid
+flowchart TB
+  engine["packages/engine decides outcomes NFR-1"]
+  board["Godot board draws the dungeon"]
+  engine --> board
+  board --> light["Cool fill, warm torches, thin fog"]
+  board --> walls["Tall walls away from the camera; low rim in front"]
+  board --> props["Corridor props; one chest beside each gold room FR-16"]
+  board --> cam["Camera 53.13 degrees on main; 42 degrees in PR 130 pending"]
+```
+
+**Pending:** [#130](https://github.com/artofdream/zorg-dungeon/pull/130) lowers the default camera to 42° and tilts 8° lower in Follow hero (restored on exit unless you tilted). Until that PR is merged, the default pitch on `main` is 53.13°. Fit, zoom, tilt, rotate and View stay user-controlled either way. Phone checks were not run for this look work.
+
+Do not read this section as a [[STATUS_LEDGER]] promotion.
