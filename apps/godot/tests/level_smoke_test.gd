@@ -1050,6 +1050,9 @@ func _spell_visibility(engine: Node) -> void:
 	_check(not btn.disabled, "spell vis: Attack is enabled after the first Step (FR-33)")
 	_check(btn.did_pulse, "spell vis: enabled button pulses once when the window opens")
 	_check(level.playback.spell_hint.visible, "spell vis: first-run hint shows when spells become available")
+	btn._on_down()
+	_check(not btn._suppress_press, "spell vis: a disabled long-press does not swallow the next tap")
+	btn._on_up()
 	var preview: Dictionary = engine.attack_preview(0)
 	_check(preview["ok"] and int(preview["damage"]) == 3 and preview["targets"].size() > 0,
 		"spell vis: engine preview lists living heroes and Attack(3) damage (%s)" % preview)

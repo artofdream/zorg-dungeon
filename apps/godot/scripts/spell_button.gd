@@ -192,6 +192,10 @@ func _set_hover(on: bool) -> void:
 
 
 func _on_down() -> void:
+	# A new press starts a new gesture. Clearing here means a long-press on a
+	# disabled button (or a release outside the control) cannot leave
+	# _suppress_press set and drop the next real tap.
+	_suppress_press = false
 	_pressing = true
 	_press_for = 0.0
 	set_process(true)
