@@ -408,10 +408,11 @@ func preview_count() -> int:
 ## first-run hint, and run controls). The waiting plate sits just above it.
 func set_chrome_bottom(top_y: float) -> void:
 	_chrome_bottom = top_y
+	_layout_waiting_preview()
+
 
 func set_chrome_top(bottom_y: float) -> void:
 	_chrome_top = bottom_y
-	_layout_waiting_preview()
 
 
 func waiting_preview_rect() -> Rect2:
