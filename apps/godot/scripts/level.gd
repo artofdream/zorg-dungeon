@@ -763,11 +763,15 @@ func drag_to(pos: Vector2) -> void:
 	board_build.drag_to(pos)
 
 ## Drag motion/release must be seen even when the press began on a tray
-## Button, so it is handled here before the GUI.
+## Button, so it is handled here before the GUI. A left release is marked
+## handled, so _left_press does not run to clear the pan flags.
 func _input(event: InputEvent) -> void:
 	if drag_id == "" or touches.size() >= 2:
 		return
 	board_build.handle_drag_input(event)
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		_press_left = false
+		_press_dragged = false
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Fingers: two-finger pinch zooms, two-finger twist yaws. One finger
