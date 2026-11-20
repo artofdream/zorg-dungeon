@@ -384,6 +384,7 @@ func _build_ui() -> void:
 	# Spell wrap (hint + bar), Play, and Step were built in _init. The
 	# spell wrap stays first in this row, then Undo, Play, Step, Build (Tab).
 	controls.add_child(playback.spell_wrap)
+	playback.mount_spell_hint(ui_root)
 	undo_btn = board_build.undo_button
 	for b in [undo_btn, play_btn, step_btn, _btn("Build", _on_reset)]:
 		b.custom_minimum_size.x = 76
@@ -526,6 +527,19 @@ func _apply_margins() -> void:
 	cam_grid.offset_top = -cam_grid.get_combined_minimum_size().y / 2.0
 	cam_grid.offset_bottom = cam_grid.get_combined_minimum_size().y / 2.0
 	cam_grid.offset_right = 0
+	_layout_spell_chrome()
+
+func _layout_spell_chrome() -> void:
+	if bottom_bar == null or playback == null:
+		return
+	var bar := bottom_bar.get_global_rect()
+	var view := ui_root.get_global_rect() if ui_root else bar
+	playback.layout_spell_hint(view.size, bar)
+	if heroes:
+		var top := bar.position.y
+		if playback.spell_hint and playback.spell_hint.visible:
+			top = minf(top, playback.spell_hint.get_global_rect().position.y)
+		heroes.set_chrome_bottom(top)
 
 func _on_resized() -> void:
 	var s := ZorgHud.ui_scale(get_window())
@@ -542,6 +556,7 @@ func _refresh_spells() -> void:
 	playback.set_spells(engine.spells(), engine.can_cast(), not _building(), reason, playback.is_playing())
 	if playback.window_just_opened and not ZorgHelp.spell_hint_seen(settings_path):
 		playback.show_spell_hint(true)
+		_layout_spell_chrome()
 
 ## Cast spell `id` now (between actions). Public so the smoke test can use it.
 func _on_spell_preview(id: int) -> void:
@@ -1071,6 +1086,8 @@ func _process(delta: float) -> void:
 			gate.rotation.y += delta * 1.2
 	_perf_tick(delta)
 	playback.tick(delta)
+	if (playback.spell_hint and playback.spell_hint.visible) or heroes.preview_count() > 0:
+		_layout_spell_chrome()
 
 ## Room labels sit on a plate at each room's back corner (topmost on
 ## screen). Overlaps are pushed down below the label they hit, so labels

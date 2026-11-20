@@ -51,7 +51,6 @@ func _init() -> void:
 	play_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	spell_wrap.add_child(play_hint)
 	spell_hint = _make_spell_hint()
-	spell_wrap.add_child(spell_hint)
 	spell_bar = HBoxContainer.new()
 	spell_bar.name = "Spells"
 	spell_bar.add_theme_constant_override("separation", 6)
@@ -128,6 +127,40 @@ func set_spells(spells: Array, allowed: bool, show: bool, block_reason: String =
 
 func show_spell_hint(on: bool) -> void:
 	spell_hint.visible = on
+	if on:
+		# Width is set by layout_spell_hint once the HUD has a size.
+		spell_hint.reset_size()
+
+
+## Put the first-run hint on the HUD canvas, not inside the Play/Step row,
+## so a long line cannot push Got it or the run controls off a phone.
+func mount_spell_hint(host: Control) -> void:
+	var prev := spell_hint.get_parent()
+	if prev == host:
+		return
+	if prev:
+		prev.remove_child(spell_hint)
+	host.add_child(spell_hint)
+
+
+func layout_spell_hint(view_size: Vector2, bottom: Rect2) -> void:
+	if not spell_hint.visible:
+		return
+	var max_w := minf(view_size.x - 16.0, 420.0)
+	spell_hint.custom_minimum_size = Vector2(max_w, 0)
+	var label: Label = spell_hint.find_child("Text", true, false)
+	if label:
+		label.custom_minimum_size.x = max_w - 16.0
+	spell_hint.reset_size()
+	var sz := spell_hint.get_combined_minimum_size()
+	var x := clampf(bottom.position.x, 0.0, maxf(0.0, view_size.x - sz.x))
+	var y := bottom.position.y - sz.y - 8.0
+	# bottom is in global/canvas space; the host is the full-rect HUD.
+	var origin := Vector2.ZERO
+	var host := spell_hint.get_parent()
+	if host is Control:
+		origin = (host as Control).get_global_rect().position
+	spell_hint.position = Vector2(x, y) - origin
 
 
 func tick(delta: float) -> void:
@@ -155,24 +188,25 @@ func _make_spell_hint() -> PanelContainer:
 	var plate := PanelContainer.new()
 	plate.name = "SpellHint"
 	plate.visible = false
-	plate.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	plate.mouse_filter = Control.MOUSE_FILTER_STOP
 	plate.add_theme_stylebox_override("panel", ZorgHud.plate())
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	plate.add_child(row)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	plate.add_child(col)
 	var label := Label.new()
 	label.name = "Text"
 	label.add_theme_font_size_override("font_size", 16)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.text = "Cast a spell between steps to hit the heroes"
-	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(label)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	col.add_child(label)
 	var got_it := Button.new()
 	got_it.name = "GotIt"
 	got_it.text = "Got it"
 	got_it.custom_minimum_size = Vector2(64, ZorgHud.TARGET)
+	got_it.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	got_it.pressed.connect(_dismiss_spell_hint)
-	row.add_child(got_it)
+	col.add_child(got_it)
 	return plate
 
 

@@ -112,6 +112,12 @@ func apply(id: int, spell: Dictionary, allowed: bool, block_reason: String) -> v
 	else:
 		_badge.visible = false
 	_apply_ready_style(not disabled)
+	if disabled:
+		# A used icon must not keep the ready-window pulse tint.
+		if _pulse and _pulse.is_valid():
+			_pulse.kill()
+		pulsing = false
+		modulate = Color.WHITE
 	if _hovered and not disabled:
 		preview_started.emit(spell_id)
 	elif _hovered and disabled:
