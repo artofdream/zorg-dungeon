@@ -69,6 +69,7 @@ var placed := {}          # room id -> Vector2i slot
 var room_nodes := {}      # room id -> Node3D
 var place_order: Array = []   # placement history, for undo (Backspace / Ctrl+Z)
 var board_build: ZorgBoardBuild
+var dressing: ZorgDungeonDressing         # walls and props around a run
 var ghost: MeshInstance3D
 var ghost_mat: StandardMaterial3D
 var selected: String:
@@ -640,7 +641,8 @@ func board_focus() -> Rect2:
 		var cell := Rect2(Vector2(c.x, c.z) - Vector2.ONE * ROOM / 2.0, Vector2.ONE * ROOM)
 		r = cell if first else r.merge(cell)
 		first = false
-	return r.grow(1.0)
+	# The corridor and walls around a run (ZorgDungeonDressing) stay lit.
+	return r.grow(ZorgDungeonDressing.CORRIDOR + 0.6)
 
 func _room_node(s: Dictionary) -> Node3D:
 	var root := ZorgLook.build_room(s["def"], ZorgEngine.base_tile(s["def"]))
@@ -863,6 +865,8 @@ func _setup_lighting() -> void:
 
 func _on_quality_changed(q: String) -> void:
 	quality = q
+	if dressing:
+		dressing.set_prop_cap(ZorgDungeonDressing.HIGH_PROPS if q == "high" else ZorgDungeonDressing.LOW_PROPS)
 	if level_picker:
 		level_picker.set_quality_label("Graphics: " + ("High" if q == "high" else "Low"))
 	_refresh_torches()
@@ -973,6 +977,8 @@ func _process(delta: float) -> void:
 	cam.follow_step(delta, heroes.follow_point() if follow else null)
 	lighting.tick(delta, Vector3(rig.position.x, 0, rig.position.z), room_nodes)
 	ZorgLook.set_board_focus(board_focus(), 6.0 if _building() else 7.0)
+	if dressing:
+		dressing.face(camera.global_transform.basis.z)
 	_layout_labels()
 	for id in room_nodes:
 		var gate: Node3D = room_nodes[id].get_node_or_null("PortalGate")
@@ -1061,6 +1067,7 @@ func _ensure_recording() -> bool:
 	heroes.clear()
 	heroes.names = engine.hero_names()
 	board_build.set_building(false)
+	_dress_dungeon()
 	_refresh_tray()
 	level_picker.set_open(false)
 	status.text = "Extermination: Step or Play; cast spells between actions."
@@ -1115,6 +1122,20 @@ func _show_result() -> void:
 				text = "Not won yet: a hero is stuck and can't move."
 	end_banner.show_line(text, show_next)
 
+## Dungeon look: tall walls, corridor and props around the placed rooms,
+## for the run only (Build clears them so empty slots stay clear).
+func _dress_dungeon() -> void:
+	if dressing == null:
+		dressing = ZorgDungeonDressing.new()
+		dressing.name = "Dressing"
+		board.add_child(dressing)
+	var types := {}
+	for id in placed:
+		types[id] = String(_supplied(id)["def"].get("type", ""))
+	dressing.prop_cap = ZorgDungeonDressing.HIGH_PROPS if quality == "high" else ZorgDungeonDressing.LOW_PROPS
+	dressing.build(placed, types)
+	dressing.face(camera.global_transform.basis.z)
+
 func _on_play() -> void:
 	if _ensure_recording():
 		playback.set_playing(not playback.is_playing())
@@ -1149,6 +1170,8 @@ func _on_reset() -> void:
 	end_banner.clear()
 	playback.set_turn_line("")
 	board_build.set_building(true)
+	if dressing:
+		dressing.clear()
 	_request_fit(1)
 	_refresh_tray()
 	_refresh_validation()

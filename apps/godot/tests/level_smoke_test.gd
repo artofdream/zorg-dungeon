@@ -366,6 +366,48 @@ func _readability_render(engine: Node) -> void:
 	_check(_contrast(empty, bg) >= 1.12, "dungeon look: empty slots stand out from the black beyond the board (%.2f:1 >= 1.12, #112 was 1.07)" % _contrast(empty, bg))
 	_check(types.size() < 2 or min_gap >= 0.08, "dungeon look: room types differ in colour (min RGB gap %.3f >= 0.08)" % min_gap)
 
+## Dungeon look, walls and props: only during a run, never inside a room,
+## tall walls only on the sides away from the camera, props under the cap.
+func _dressing_checks(engine: Node) -> void:
+	var i58: int = engine.levels.map(func(e): return e["id"]).find("deluxe-5.8")
+	level._open_level(i58)
+	var g = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[i58]["golden"]))
+	for p in g["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	await process_frame
+	var dr: ZorgDungeonDressing = level.dressing
+	_check(dr == null or dr.get_child_count() == 0 or dr.get_children().all(func(c): return c.is_queued_for_deletion()),
+		"dressing: no walls or props while building")
+	level.set_quality("low", false)
+	level._on_step()
+	await process_frame
+	dr = level.dressing
+	var props: Array = dr.get_children().filter(func(c): return String(c.name).begins_with("Prop_"))
+	var shown: Array = props.filter(func(c): return c.visible)
+	var inside := 0
+	for pr in props:
+		var pos: Vector3 = pr.global_position
+		for id in level.placed:
+			var c: Vector3 = level.slot_center(level.placed[id].x, level.placed[id].y)
+			if absf(pos.x - c.x) < ZorgLook.ROOM / 2.0 and absf(pos.z - c.z) < ZorgLook.ROOM / 2.0:
+				inside += 1
+	var chests := props.filter(func(c): return String(c.name) == "Prop_chest_gold").size()
+	_check(props.size() > 0 and shown.size() <= ZorgDungeonDressing.LOW_PROPS and inside == 0 and chests >= 1,
+		"dressing: %d props (%d shown, Low cap %d), %d gold chest(s), %d inside a room" % [props.size(), shown.size(), ZorgDungeonDressing.LOW_PROPS, chests, inside])
+	var back: Vector3 = level.get_viewport().get_camera_3d().global_transform.basis.z
+	var tall_ok := true
+	var tall_n := 0
+	for c in dr.get_children():
+		if String(c.name).begins_with("Walls_") and c.visible:
+			tall_n += 1
+			var parts := String(c.name).split("_")
+			var n := Vector3(int(parts[1]), 0, -int(parts[2]))
+			tall_ok = tall_ok and n.dot(Vector3(back.x, 0, back.z)) < 0.0
+	_check(tall_n == 2 and tall_ok, "dressing: tall walls on the %d sides away from the camera only" % tall_n)
+	level._on_reset()
+	await process_frame
+	_check(dr.get_children().all(func(c): return c.is_queued_for_deletion()), "dressing: Build clears the walls and props")
+
 func _round13() -> void:
 	# WCAG 1.4.11: enabled chrome borders are at least 3:1 on their fill.
 	# Disabled is exempt (1.4.3).
@@ -772,6 +814,7 @@ func _initialize() -> void:
 	await _round13()
 	# Dungeon look: rendered readability (needs a display).
 	await _readability_render(engine)
+	await _dressing_checks(engine)
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)

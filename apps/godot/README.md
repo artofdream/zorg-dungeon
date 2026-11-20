@@ -149,6 +149,14 @@ run the stones beyond the placed rooms fade to black. Room floors are stone
 tinted toward the room colour and glow in that colour; D, E, O, P and T
 rooms get a thin glowing octagon rune and the spawn ring is an octagon.
 The light caps (6 Low, 8 High), shadows and the FPS fallback are unchanged.
+During a run (not while building, so empty slots stay clear) tall,
+irregular KayKit stone walls with arches, broken stretches and wall
+sconces stand a 1.2-unit corridor outside the dungeon's outer edges
+(`scripts/dungeon_dressing.gd`, one merged mesh per side). Sides facing
+the camera drop to a low broken rim, so walls never hide the floor,
+heroes, labels or taps. The corridor holds a gold-filled chest beside each
+gold (O) room and a few barrels and crates (6 on Low, 12 on High); sconce
+and chest glows are halos, not lights, so the omni budget is unchanged.
 Under Xvfb the smoke test measures the rendered 1.2 board: room floor vs
 an empty slot, empty slot vs the black beyond, and room colours apart.
 **Phone UI** (round 7, visual only): the HUD scales with screen DPI so one
