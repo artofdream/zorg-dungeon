@@ -392,8 +392,9 @@ func _dressing_checks(engine: Node) -> void:
 			if absf(pos.x - c.x) < ZorgLook.ROOM / 2.0 and absf(pos.z - c.z) < ZorgLook.ROOM / 2.0:
 				inside += 1
 	var chests := props.filter(func(c): return String(c.name) == "Prop_chest_gold").size()
-	_check(props.size() > 0 and shown.size() <= ZorgDungeonDressing.LOW_PROPS and inside == 0 and chests >= 1,
-		"dressing: %d props (%d shown, Low cap %d), %d gold chest(s), %d inside a room" % [props.size(), shown.size(), ZorgDungeonDressing.LOW_PROPS, chests, inside])
+	var gold_rooms: int = level.placed.keys().filter(func(id): return String(level._supplied(id)["def"].get("type", "")) == "O").size()
+	_check(props.size() > 0 and shown.size() <= ZorgDungeonDressing.LOW_PROPS and inside == 0 and chests == gold_rooms and gold_rooms >= 1,
+		"dressing: %d props (%d shown, Low cap %d), %d gold chest(s) for %d gold room(s), %d inside a room" % [props.size(), shown.size(), ZorgDungeonDressing.LOW_PROPS, chests, gold_rooms, inside])
 	var back: Vector3 = level.get_viewport().get_camera_3d().global_transform.basis.z
 	var tall_ok := true
 	var tall_n := 0
