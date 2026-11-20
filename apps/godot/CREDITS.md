@@ -10,9 +10,11 @@ board, water, portal ring, hero rings, labels) is procedural.
 | KayKit Dungeon Remastered 1.0 (itch.io now calls it "KayKit - Dungeon Pack") | Kay Lousberg (kaylousberg.com) | https://github.com/KayKit-Game-Assets/KayKit-Dungeon-Remastered-1.0 (commit `b0ca9bd96a8072ab36a3a5464f00ed1e06a16d07`), https://kaylousberg.itch.io/kaykit-dungeon-remastered | CC0 1.0 Universal | 2026-11-14: `LICENSE.txt` in the repo and the itch.io page ("Asset license: Creative Commons Zero v1.0 Universal") |
 | KayKit Character Pack: Adventurers 1.0 | Kay Lousberg (kaylousberg.com) | https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0 (commit `672074b73ba276876a19e8816ecdc5241817ab47`), https://kaylousberg.itch.io/kaykit-adventurers | CC0 1.0 Universal | 2026-11-14: `LICENSE.txt` in the repo and the itch.io page ("Asset license: Creative Commons Zero v1.0 Universal") |
 | Camera pad icons (original) | Drawn for this project | `apps/godot/assets/ui/camera/` | CC0 1.0 Universal | 2026-11-20: `LICENSE.txt` next to the SVG files |
+| Kenney Board Game Icons 1.1 | Kenney (kenney.nl) | https://kenney.nl/assets/board-game-icons (same zip also published by Kenney on OpenGameArt), zip SHA-256 `05f4358381d8b16b303b2f056393b76ce3f6a58228599e88caa2eab11d4c2946` (1,039,954 bytes) | CC0 1.0 Universal | 2026-11-20: pack `License.txt` ("License: (Creative Commons Zero, CC0)") and the kenney.nl / itch.io pages ("Asset license: Creative Commons Zero v1.0 Universal") |
 
 The packs' own licence files are kept next to the files:
-`assets/kaykit/dungeon/LICENSE.txt` and `assets/kaykit/adventurers/LICENSE.txt`.
+`assets/kaykit/dungeon/LICENSE.txt`, `assets/kaykit/adventurers/LICENSE.txt`,
+`assets/ui/camera/LICENSE.txt` and `assets/kenney/board-game-icons/LICENSE.txt`.
 Attribution is not required by CC0; we give it anyway. The KayKit pages ask
 not to resell unmodified copies or claim the assets as your own: we do
 neither.
@@ -105,3 +107,43 @@ the nine SVGs plus the licence: about 2.9 KB.
 | `LICENSE.txt` | 362 | `33a684e35873de1edafef9e3df417a68145d4d3b257491ebb8fcec670f4ecb48` | CC0 1.0 text |
 
 Together the nine SVGs and the licence are **2925 bytes**.
+
+The pack's own licence file is kept next to the files:
+`assets/kenney/board-game-icons/LICENSE.txt`. Attribution is not required by
+CC0; we give it anyway.
+
+## Spell icons (`assets/kenney/board-game-icons/`)
+
+128 px white-on-transparent PNGs from `PNG/Double (128px)/`, plus one
+composed Attack icon (CC0 allows changes). The Godot HUD draws the Attack
+damage badge at runtime; it is not baked into the texture.
+
+| Vendored file | Source file | Used for |
+|---|---|---|
+| `sword.png` | `PNG/Double (128px)/sword.png` | source for the Attack composition |
+| `exploding.png` | `PNG/Double (128px)/exploding.png` | source for the Attack burst |
+| `attack.png` | composed: `sword.png` rotated 90° clockwise, shrunk to 120 px, plus `exploding.png` shrunk to 52 px at the tip | Attack (sword striking down with a small burst) |
+| `arrow_rotate.png` | `PNG/Double (128px)/arrow_rotate.png` | Teleport |
+| `card_place.png` | `PNG/Double (128px)/card_place.png` | Move |
+| `hexagon_switch.png` | `PNG/Double (128px)/hexagon_switch.png` | Swap |
+| `card_target.png` | `PNG/Double (128px)/card_target.png` | Selection |
+| `hourglass.png` | `PNG/Double (128px)/hourglass.png` | Sleep |
+| `lock_open.png` | `PNG/Double (128px)/lock_open.png` | Wake |
+| `shield.png` | `PNG/Double (128px)/shield.png` | Banality |
+| `LICENSE.txt` | `License.txt` | pack licence |
+
+Source and vendored SHA-256 (128 px PNGs are copied unchanged, so both hashes match):
+
+| File | Bytes | SHA-256 |
+|---|---|---|
+| `sword.png` | 746 | `69bc34f388eccdad66dfe4d2f879ffc443fba82d9d0757854678e2b3cca92674` |
+| `exploding.png` | 896 | `11a9cc07a8b965cee3f3cd964796315d5fbfae0d939b23de09e4c8ef2f0f2860` |
+| `attack.png` (composed) | 3485 | `f4e566233330cffe9a095e872cd8cde9996623c6a50b545815f8088a380832e2` |
+| `arrow_rotate.png` | 1137 | `53a826208bb4fc7c316c682ddc0d35477a241eef5a255205db2969ee94fed3be` |
+| `card_place.png` | 1022 | `0c7fab75eb96f47867cabaf2f01cfba3c354c4c8d97a7e0b8a06d98e5b7ca927` |
+| `card_target.png` | 379 | `1504c06c6ccfaa16afb6a4de4fd271034fab26549fc26449b15c6d4b262def75` |
+| `hexagon_switch.png` | 1288 | `7b5c163271d4a1d081e9c389695c67406a1aafa787c3a1ec5a08649dfb54e44c` |
+| `hourglass.png` | 1046 | `69693c139c4e3c12c17881f2a1b3b2d49ea71da443a1b6a40af01aef32822ff5` |
+| `lock_open.png` | 1006 | `f520f78e43e103f5de9e289f054ebec8044a953f5362ed25bad64084885a45a3` |
+| `shield.png` | 913 | `61d3a2734e356fb79f4b75ce8d67a1125232f1002d5d707b791b9b6ddafd5fad` |
+| `LICENSE.txt` | 574 | `ee984bc143c380c108199620d18bfdf55001a566951bbda485c2a5d94254350a` |

@@ -13,6 +13,8 @@ extends SceneTree
 ##  - the FPS readout: hidden until F3, then a non-zero top-right label;
 ##  - the end banner: win and loss lines have a non-zero size in the HUD column;
 ##  - the room legend covers the HUD, and the first-run hint sits under the goal.
+##  - spell bar: icon buttons stay disabled at stepCount 0, enable and pulse
+##    after the first Step, and cast_spell still spends a spell (FR-32/FR-33).
 ##  - round 12: room labels never cover the HUD text on the end screens.
 ##  - low-severity UX: button/panel/plate border contrast, swatch outlines,
 ##    and the board fitting the width of a ~360 dp portrait window.
@@ -982,6 +984,7 @@ func _initialize() -> void:
 	await _camera_orbit_checks(engine)
 	_camera_pad_checks()
 	await _camera_manual_and_room_press_checks(engine)
+	await _spell_visibility(engine)
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
@@ -1006,3 +1009,52 @@ func _initialize() -> void:
 		root.get_viewport().get_texture().get_image().save_png(shot)
 	print("level smoke: %s" % ("PASS" if failures == 0 else "%d failure(s)" % failures))
 	quit(1 if failures > 0 else 0)
+
+## Icon spell bar: disabled before the first action, enabled and pulsed after
+## the first Step, preview data comes from the engine, and cast_spell works.
+func _spell_visibility(engine: Node) -> void:
+	var i14: int = engine.levels.map(func(e): return e["id"]).find("deluxe-1.4")
+	_check(i14 >= 0, "spell vis: deluxe-1.4 is in the index")
+	if i14 < 0:
+		return
+	ZorgHelp.set_spell_hint_seen(level.settings_path, false)
+	level._open_level(i14)
+	await process_frame
+	var golden = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[i14]["golden"]))
+	for p in golden["cases"][0]["placements"]:
+		level._place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	_check(level.spell_bar.get_child_count() > 0, "spell vis: Attack button exists after placing rooms")
+	var btn: ZorgSpellButton = level.spell_bar.get_child(0)
+	_check(btn.disabled and btn.custom_minimum_size.x >= 48.0 and btn.custom_minimum_size.y >= 48.0,
+		"spell vis: button is disabled and at least 48 units before the run (%s)" % btn.custom_minimum_size)
+	_check(btn.tooltip_text.begins_with("Attack"), "spell vis: tooltip names Attack (%s)" % btn.tooltip_text)
+	_check(level._ensure_recording(), "spell vis: run starts")
+	await process_frame
+	_check(int(engine.state["stepCount"]) == 0, "spell vis: stepCount is 0 before the first action")
+	_check(level.spell_bar.get_children().all(func(b): return b.disabled),
+		"spell vis: buttons stay disabled at stepCount 0 (FR-33)")
+	_check(btn.tooltip_text.contains("first hero action"),
+		"spell vis: disabled tooltip explains the closed window (%s)" % btn.tooltip_text)
+	level._on_step()
+	await process_frame
+	await process_frame
+	_check(not btn.disabled, "spell vis: Attack is enabled after the first Step (FR-33)")
+	_check(btn.did_pulse, "spell vis: enabled button pulses once when the window opens")
+	_check(level.playback.spell_hint.visible, "spell vis: first-run hint shows when spells become available")
+	var preview: Dictionary = engine.attack_preview(0)
+	_check(preview["ok"] and int(preview["damage"]) == 3 and preview["targets"].size() > 0,
+		"spell vis: engine preview lists living heroes and Attack(3) damage (%s)" % preview)
+	level.heroes.show_attack_preview(preview)
+	_check(level.heroes.preview_count() == preview["targets"].size(),
+		"spell vis: preview highlights as many heroes as the engine listed")
+	level.heroes.clear_attack_preview()
+	_check(level.cast_spell(0), "spell vis: cast_spell still spends Attack between actions")
+	await process_frame
+	_check(btn.disabled, "spell vis: Attack is disabled after it is spent (FR-32)")
+	var got_it: Button = level.playback.spell_hint.find_child("GotIt", true, false)
+	if got_it:
+		got_it.pressed.emit()
+	await process_frame
+	_check(not level.playback.spell_hint.visible and ZorgHelp.spell_hint_seen(level.settings_path),
+		"spell vis: Got it hides the first-run spell hint and saves it")
+	level._on_reset()

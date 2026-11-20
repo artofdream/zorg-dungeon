@@ -6,6 +6,7 @@ extends RefCounted
 ## test checks each line against GAME_SPEC.md so no number is invented.
 
 const HINT_KEY := ["ui", "hint_seen"]
+const SPELL_HINT_KEY := ["ui", "spell_hint_seen"]
 
 ## [title, swatch def, GAME_SPEC wording]
 const ROOMS := [
@@ -47,6 +48,16 @@ static func set_hint_seen(path: String, seen: bool) -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(path)
 	cfg.set_value(HINT_KEY[0], HINT_KEY[1], seen)
+	cfg.save(path)
+
+static func spell_hint_seen(path: String) -> bool:
+	var cfg := ConfigFile.new()
+	return cfg.load(path) == OK and bool(cfg.get_value(SPELL_HINT_KEY[0], SPELL_HINT_KEY[1], false))
+
+static func set_spell_hint_seen(path: String, seen: bool) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(path)
+	cfg.set_value(SPELL_HINT_KEY[0], SPELL_HINT_KEY[1], seen)
 	cfg.save(path)
 
 static func _row(parent: Control, name: String, def: Dictionary, text: String, width: float) -> void:

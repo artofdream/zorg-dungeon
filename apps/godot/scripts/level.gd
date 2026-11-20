@@ -222,6 +222,9 @@ func _attach_playback() -> void:
 	playback.step_requested.connect(_on_step)
 	playback.cast_requested.connect(cast_spell)
 	playback.advance_requested.connect(_on_auto_advance)
+	playback.preview_started.connect(_on_spell_preview)
+	playback.preview_ended.connect(_on_spell_preview_end)
+	playback.spell_hint_dismissed.connect(_on_spell_hint_dismissed)
 
 func _on_auto_advance() -> void:
 	if not _advance():
@@ -371,16 +374,16 @@ func _build_ui() -> void:
 	# Tray was built in the board scene's _init, before this add.
 	tray = board_build.tray
 	bottom_bar.add_child(tray)
-	# Spell bar (FR-32/FR-33): one button per spell, usable by tap or mouse,
-	# enabled only between completed actions while the run is going.
+	# Spell bar (FR-32/FR-33): one icon button per spell, usable by tap or
+	# mouse, enabled only between completed actions while the run is going.
 	controls = HBoxContainer.new()
 	controls.add_theme_constant_override("separation", 8)
 	controls.size_flags_horizontal = Control.SIZE_SHRINK_END
 	controls.size_flags_vertical = Control.SIZE_SHRINK_END
 	bottom_bar.add_child(controls)
-	# Spell bar, Play, and Step were built in _init. Spell bar stays first
-	# in this row, then Undo, Play, Step, Build (Tab).
-	controls.add_child(spell_bar)
+	# Spell wrap (hint + bar), Play, and Step were built in _init. The
+	# spell wrap stays first in this row, then Undo, Play, Step, Build (Tab).
+	controls.add_child(playback.spell_wrap)
 	undo_btn = board_build.undo_button
 	for b in [undo_btn, play_btn, step_btn, _btn("Build", _on_reset)]:
 		b.custom_minimum_size.x = 76
@@ -533,13 +536,32 @@ func _on_resized() -> void:
 		_request_fit(2)
 
 func _refresh_spells() -> void:
-	playback.set_spells(engine.spells(), engine.can_cast(), not _building())
+	var reason := ""
+	if not engine.state.is_empty():
+		reason = REFUSALS.get(engine.cast_block_reason(), engine.cast_block_reason())
+	playback.set_spells(engine.spells(), engine.can_cast(), not _building(), reason, playback.is_playing())
+	if playback.window_just_opened and not ZorgHelp.spell_hint_seen(settings_path):
+		playback.show_spell_hint(true)
 
 ## Cast spell `id` now (between actions). Public so the smoke test can use it.
+func _on_spell_preview(id: int) -> void:
+	var p: Dictionary = engine.attack_preview(id)
+	if p["ok"]:
+		heroes.show_attack_preview(p)
+	else:
+		heroes.clear_attack_preview()
+
+func _on_spell_preview_end(_id: int) -> void:
+	heroes.clear_attack_preview()
+
+func _on_spell_hint_dismissed() -> void:
+	ZorgHelp.set_spell_hint_seen(settings_path, true)
+
 func cast_spell(id: int) -> bool:
 	if not _ensure_recording():
 		return false
 	playback.set_playing(false)
+	heroes.clear_attack_preview()
 	var r: Dictionary = engine.cast(id)
 	if not r["ok"]:
 		status.text = "Can't cast now: %s." % REFUSALS.get(r["error"], r["error"])
@@ -1197,6 +1219,7 @@ func _dress_dungeon() -> void:
 func _on_play() -> void:
 	if _ensure_recording():
 		playback.set_playing(not playback.is_playing())
+		_refresh_spells()
 
 func _on_step() -> void:
 	if _ensure_recording():

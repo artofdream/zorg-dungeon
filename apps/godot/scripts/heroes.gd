@@ -17,6 +17,9 @@ var _plates := {}        # hero id -> PanelContainer holding _hp_labels[id]
 var _floats: Array = []  # [Label, world position, age] hit numbers
 var _rects: Array[Rect2] = []   # this frame's HP label rects (room labels avoid them)
 var _dead := {}          # hero id -> true once the engine reports its death
+var _preview := {}       # hero id -> pending Attack damage (presentation only)
+var _preview_nums: Array = []  # sticky preview labels
+var _waiting_preview: Control
 
 ## Where the follow camera looks: the first living hero on the board (lowest
 ## id), so it moves on to the next hero when one dies. null if none.
@@ -57,10 +60,14 @@ func clear() -> void:
 	_hp.clear()
 	_gold.clear()
 	_tweens.clear()
+	clear_attack_preview()
 
 func _label_text(id: int) -> String:
 	var g := int(_gold.get(id, 0))
-	return "%s HP %d" % [_name(id), int(_hp.get(id, 0))] + ("  $%d" % g if g > 0 else "")
+	var text := "%s HP %d" % [_name(id), int(_hp.get(id, 0))] + ("  $%d" % g if g > 0 else "")
+	if _preview.has(id):
+		text += "  (-%d)" % int(_preview[id])
+	return text
 
 func _refresh_label(id: int) -> void:
 	if _hp_labels.has(id):
@@ -88,6 +95,7 @@ func _figure(id: int, hp: int) -> Node3D:
 	ring.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ring.albedo_color = Color(1.0, 0.95, 0.5, 0.75)
 	ZorgLook.add_mesh(root, ZorgLook.ring(0.2, 0.27), ring, Vector3(0, ZorgLook.FLOOR_H + 0.02, 0), false)
+	root.set_meta("ring_mat", ring)
 	_hp[id] = hp
 	var plate := PanelContainer.new()
 	plate.add_theme_stylebox_override("panel", ZorgHud.plate())
@@ -148,6 +156,14 @@ func _process(delta: float) -> void:
 		var q := cam.unproject_position(fl[1]) - Vector2(num.size.x / 2.0, num.size.y + 40.0 * ease(t / 0.8, 0.4))
 		num.position = q - base
 		num.modulate.a = clampf(1.0 - (t - 0.2) / 0.6, 0.0, 1.0)
+	for item in _preview_nums:
+		var pnum: Label = item[0]
+		var pf: Node3D = item[1]
+		if not is_instance_valid(pnum) or not is_instance_valid(pf):
+			continue
+		pnum.size = pnum.get_combined_minimum_size()
+		var q2 := cam.unproject_position(pf.global_position + Vector3(0.45, 1.2 * SCALE, 0)) - Vector2(pnum.size.x / 2.0, pnum.size.y)
+		pnum.position = q2 - base
 
 ## Juice (visual only): a short red/green flash and a floating number.
 func _flash(id: int, amount: int) -> void:
@@ -307,3 +323,71 @@ func set_start_hp(id: int, hp: int, gold: int = 0) -> void:
 	_hp[id] = hp
 	_gold[id] = gold
 	_refresh_label(id)
+
+## FR-34 Attack preview from engine data: highlight living heroes and show
+## the damage they would take. Does not change HP or outcomes.
+func show_attack_preview(preview: Dictionary) -> void:
+	clear_attack_preview()
+	if not preview.get("ok", false):
+		return
+	var damage := int(preview["damage"])
+	var waiting: Array = []
+	for t in preview["targets"]:
+		var id := int(t["id"])
+		_preview[id] = damage
+		_refresh_label(id)
+		var f: Node3D = _figures.get(id)
+		if f and is_instance_valid(f) and f.visible:
+			if f.has_meta("ring_mat"):
+				(f.get_meta("ring_mat") as StandardMaterial3D).albedo_color = Color(1.0, 0.25, 0.08, 0.95)
+			var num := Label.new()
+			num.text = "-%d" % damage
+			num.add_theme_font_size_override("font_size", 26)
+			num.add_theme_color_override("font_color", Color(1.0, 0.45, 0.2))
+			num.add_theme_constant_override("outline_size", 6)
+			num.add_theme_color_override("font_outline_color", Color.BLACK)
+			num.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			if overlay:
+				overlay.add_child(num)
+			else:
+				add_child(num)
+			num.size = num.get_combined_minimum_size()
+			_preview_nums.append([num, f])
+		else:
+			waiting.append("%s (-%d)" % [_name(id), damage])
+	if not waiting.is_empty():
+		var plate := PanelContainer.new()
+		plate.add_theme_stylebox_override("panel", ZorgHud.plate())
+		plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var lab := Label.new()
+		lab.text = "Waiting: " + ", ".join(waiting)
+		lab.add_theme_font_size_override("font_size", 16)
+		lab.add_theme_color_override("font_color", Color(1.0, 0.55, 0.3))
+		lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		plate.add_child(lab)
+		if overlay:
+			overlay.add_child(plate)
+			plate.position = Vector2(8, 8)
+		_waiting_preview = plate
+
+
+func clear_attack_preview() -> void:
+	var ids: Array = _preview.keys()
+	_preview.clear()
+	for id in ids:
+		_refresh_label(id)
+		var f: Node3D = _figures.get(id)
+		if f and is_instance_valid(f) and f.has_meta("ring_mat"):
+			(f.get_meta("ring_mat") as StandardMaterial3D).albedo_color = Color(1.0, 0.95, 0.5, 0.75)
+	for item in _preview_nums:
+		var num: Label = item[0]
+		if is_instance_valid(num):
+			num.queue_free()
+	_preview_nums.clear()
+	if _waiting_preview and is_instance_valid(_waiting_preview):
+		_waiting_preview.queue_free()
+	_waiting_preview = null
+
+
+func preview_count() -> int:
+	return _preview.size()

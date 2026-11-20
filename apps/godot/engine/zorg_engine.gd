@@ -1016,6 +1016,36 @@ static func step_run(state: Dictionary) -> Array:
 static func can_cast_now(state: Dictionary) -> bool:
 	return state["outcome"] == "in_progress" and state["stepCount"] > 0 and select_active_hero(state["heroes"]) != null
 
+## Same gates as can_cast_now / a refused cast, as a reason code. Empty if open.
+static func cast_block_reason(state: Dictionary) -> String:
+	if state.is_empty():
+		return "not_running"
+	if state["outcome"] != "in_progress":
+		return "run_over"
+	if int(state["stepCount"]) <= 0:
+		return "before_first_action"
+	if select_active_hero(state["heroes"]) == null:
+		return "no_active_hero"
+	return ""
+
+## FR-34 preview: living heroes and Attack damage. Does not change state.
+static func attack_preview(state: Dictionary, spell_id: int) -> Dictionary:
+	var empty := {"ok": false, "damage": 0, "targets": [], "error": "no_spell"}
+	if state.is_empty() or spell_id < 0 or spell_id >= state["spells"].size():
+		return empty
+	var spell: Dictionary = state["spells"][spell_id]
+	if String(spell["def"]["type"]) != "Attack":
+		return {"ok": false, "damage": 0, "targets": [], "error": "not_attack"}
+	if spell["consumed"]:
+		return {"ok": false, "damage": 0, "targets": [], "error": "consumed"}
+	var damage := int(spell["def"]["damage"])
+	var targets: Array = []
+	for h in state["heroes"]:
+		if h["dead"]:
+			continue
+		targets.append({"id": h["id"], "hp": h["hp"], "spawned": h["spawned"]})
+	return {"ok": true, "damage": damage, "targets": targets, "error": ""}
+
 ## castSpell for Attack(x) and Teleport(n). Returns {ok, events, error}; the
 ## error codes are the ones godot-golden.mjs derives from the TS messages.
 ## A refused cast changes nothing and consumes nothing.

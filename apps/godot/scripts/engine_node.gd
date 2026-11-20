@@ -76,6 +76,16 @@ func step() -> Array:
 func can_cast() -> bool:
 	return not state.is_empty() and ZorgEngine.can_cast_now(state)
 
+## Why a cast is refused right now (same codes as a refused cast). Empty if open.
+func cast_block_reason() -> String:
+	return "" if state.is_empty() else ZorgEngine.cast_block_reason(state)
+
+## FR-34 Attack preview from the live run, with no state change.
+func attack_preview(spell_id: int) -> Dictionary:
+	if state.is_empty():
+		return {"ok": false, "damage": 0, "targets": [], "error": "not_running"}
+	return ZorgEngine.attack_preview(state, spell_id)
+
 ## {ok, events, error}
 func cast(spell_id: int) -> Dictionary:
 	if state.is_empty():

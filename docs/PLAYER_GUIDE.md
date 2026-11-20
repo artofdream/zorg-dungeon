@@ -201,6 +201,8 @@ All eight spell cards are encoded ([[FR-32]]–[[FR-42]]). Each is single-use. Y
 
 A successful cast **spends** that card forever ([[FR-32]]). A rejected cast (illegal target, mid-action, broken seams after Move/Swap) spends nothing.
 
+On the Godot board this is presentation only ([[NFR-1]]). Spell buttons use CC0 Kenney icons (see `apps/godot/CREDITS.md`), with a damage badge on Attack. They stay disabled until a hero has finished at least one action, and the tooltip names the reason ([[FR-33]]). When the window opens, unused spells glow and pulse once; the first time, a hint says you can cast between steps to hit the heroes. During Play, "Pause to cast a spell" stays visible while unused spells remain. Hovering or pressing Attack highlights the living heroes the engine lists and shows the damage before you confirm ([[FR-34]]).
+
 ```mermaid
 flowchart TD
   idle[No action in flight] --> first{"Has a hero finished at least one action?"}
@@ -291,6 +293,7 @@ After [#128](https://github.com/artofdream/zorg-dungeon/pull/128) and [#129](htt
 - Dark flagstone floors. Quality Low (default on the web and phones) caps torch lights and skips shadows; High (default on desktop) allows more lights and glow.
 - During a run only, tall stone walls stand on the sides away from the camera. The two sides facing the camera stay a low rim, so heroes, room labels and taps are not hidden.
 - Corridor props (barrels, crates) stay outside rooms, under a Low cap. A gold-filled chest sits beside each gold room as dressing only; gold pickup rules stay [[FR-16]].
+- During a run, the spell bar uses icon buttons (Attack is a downward sword with a burst and a damage badge). Casting rules stay [[FR-32]]–[[FR-34]]; only the presentation changed ([[NFR-1]]).
 
 The wall-hatch arrow you use while placing rooms is unchanged and must stay unambiguous ([[NFR-6]], [[FR-7]]). Dressing is cleared when you go back to building.
 
