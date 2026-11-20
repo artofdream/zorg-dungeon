@@ -20,6 +20,7 @@ var _dead := {}          # hero id -> true once the engine reports its death
 var _preview := {}       # hero id -> pending Attack damage (presentation only)
 var _preview_nums: Array = []  # sticky preview labels
 var _waiting_preview: Control
+var _chrome_bottom := -1.0  # overlay-space y of the top of the bottom chrome
 
 ## Where the follow camera looks: the first living hero on the board (lowest
 ## id), so it moves on to the next hero when one dies. null if none.
@@ -367,13 +368,10 @@ func show_attack_preview(preview: Dictionary) -> void:
 		plate.add_child(lab)
 		if overlay:
 			overlay.add_child(plate)
-			# Bottom-left, above the spell bar — not on the title/goal/status column.
+			# Bottom-left, above the bottom chrome — not on the title/goal/status column.
 			plate.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-			plate.offset_left = 8
-			plate.offset_right = 8 + plate.get_combined_minimum_size().x
-			plate.offset_bottom = -88
-			plate.offset_top = -88 - plate.get_combined_minimum_size().y
 		_waiting_preview = plate
+		_layout_waiting_preview()
 
 
 func clear_attack_preview() -> void:
@@ -396,3 +394,29 @@ func clear_attack_preview() -> void:
 
 func preview_count() -> int:
 	return _preview.size()
+
+
+## `top_y` is the top of the bottom HUD chrome in canvas space (spell bar,
+## first-run hint, and run controls). The waiting plate sits just above it.
+func set_chrome_bottom(top_y: float) -> void:
+	_chrome_bottom = top_y
+	_layout_waiting_preview()
+
+
+func waiting_preview_rect() -> Rect2:
+	if _waiting_preview and is_instance_valid(_waiting_preview):
+		return _waiting_preview.get_global_rect()
+	return Rect2()
+
+
+func _layout_waiting_preview() -> void:
+	if _waiting_preview == null or not is_instance_valid(_waiting_preview) or overlay == null:
+		return
+	var sz := _waiting_preview.get_combined_minimum_size()
+	var ov := overlay.get_global_rect()
+	var margin := 8.0
+	var gap := 88.0 if _chrome_bottom < 0.0 else maxf(margin, ov.end.y - _chrome_bottom + margin)
+	_waiting_preview.offset_left = 8
+	_waiting_preview.offset_right = 8 + sz.x
+	_waiting_preview.offset_bottom = -gap
+	_waiting_preview.offset_top = -gap - sz.y

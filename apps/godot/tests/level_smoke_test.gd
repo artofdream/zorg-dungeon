@@ -1050,6 +1050,31 @@ func _spell_visibility(engine: Node) -> void:
 	_check(not btn.disabled, "spell vis: Attack is enabled after the first Step (FR-33)")
 	_check(btn.did_pulse, "spell vis: enabled button pulses once when the window opens")
 	_check(level.playback.spell_hint.visible, "spell vis: first-run hint shows when spells become available")
+	_check(level.playback.spell_hint.get_parent() == level.ui_root,
+		"spell vis: first-run hint sits on the HUD, not in the Play/Step row")
+	var hint_r: Rect2 = level.playback.spell_hint.get_global_rect()
+	var vis_r := level.get_viewport().get_visible_rect()
+	if vis_r.size.x >= 300.0:
+		_check(vis_r.grow(1.0).encloses(hint_r),
+			"spell vis: first-run hint stays on the canvas (%s in %s)" % [hint_r, vis_r])
+		# Phone-width: the wrapping plate and Got it must remain reachable.
+		var win := level.get_window()
+		var old_size := win.size
+		DisplayServer.window_set_size(Vector2i(360, 800))
+		win.size = Vector2i(360, 800)
+		level._on_resized()
+		for i in 10:
+			await process_frame
+		var got: Button = level.playback.spell_hint.find_child("GotIt", true, false)
+		var phone := level.get_viewport().get_visible_rect()
+		var ok_phone := got != null and phone.grow(1.0).encloses(level.playback.spell_hint.get_global_rect()) and phone.grow(1.0).encloses(got.get_global_rect())
+		_check(ok_phone, "spell vis: first-run hint and Got it fit on a 360-wide canvas (hint %s, got %s, vis %s)" % [
+			level.playback.spell_hint.get_global_rect(), got.get_global_rect() if got else Rect2(), phone])
+		DisplayServer.window_set_size(old_size)
+		win.size = old_size
+		level._on_resized()
+		for i in 10:
+			await process_frame
 	btn._on_down()
 	_check(not btn._suppress_press, "spell vis: a disabled long-press does not swallow the next tap")
 	btn._on_up()
@@ -1059,6 +1084,14 @@ func _spell_visibility(engine: Node) -> void:
 	level.heroes.show_attack_preview(preview)
 	_check(level.heroes.preview_count() == preview["targets"].size(),
 		"spell vis: preview highlights as many heroes as the engine listed")
+	# Unspawned targets use a waiting plate; it must sit above the bottom chrome.
+	level.heroes.show_attack_preview({
+		"ok": true, "damage": 3, "error": "",
+		"targets": [{"id": 99, "hp": 4, "spawned": false}],
+	})
+	var wait_r: Rect2 = level.heroes.waiting_preview_rect()
+	_check(wait_r.size != Vector2.ZERO and wait_r.end.y <= level.bottom_bar.get_global_rect().position.y + 1.0,
+		"spell vis: waiting preview sits above the bottom bar (%s vs bar %s)" % [wait_r, level.bottom_bar.get_global_rect()])
 	level.heroes.clear_attack_preview()
 	btn._on_down()
 	btn._process(ZorgSpellButton.LONG_PRESS)
@@ -1070,6 +1103,7 @@ func _spell_visibility(engine: Node) -> void:
 	_check(level.cast_spell(0), "spell vis: cast_spell still spends Attack between actions")
 	await process_frame
 	_check(btn.disabled, "spell vis: Attack is disabled after it is spent (FR-32)")
+	_check(btn.modulate == Color.WHITE, "spell vis: a spent spell does not keep the ready glow (%s)" % btn.modulate)
 	var got_it: Button = level.playback.spell_hint.find_child("GotIt", true, false)
 	if got_it:
 		got_it.pressed.emit()
