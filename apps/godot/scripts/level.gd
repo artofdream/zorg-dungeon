@@ -997,6 +997,15 @@ func _left_press(event: InputEventMouseButton) -> void:
 		_press_left = true
 		_press_dragged = false
 		_press_pos = event.position
+		# Click-to-unplace and press-drag-to-move start on press, so
+		# release can end_drag. A selected tray room still places only on
+		# a still release, so a pan is not a room tap.
+		if _building() and selected == "" and drag_id == "":
+			var slot = _screen_to_slot(event.position)
+			if slot != null and _room_at_slot(slot) != "":
+				board_build.on_board_press(event.position)
+				if drag_id != "":
+					_press_dragged = true
 		return
 	if not _press_left:
 		return
