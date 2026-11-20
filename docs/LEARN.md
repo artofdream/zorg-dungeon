@@ -113,6 +113,20 @@ flowchart TD
   hp -->|"Yes, and no one is left"| win["You win"]
 ```
 
+## How the dungeon looks
+
+The 3D board is a dark stone dungeon. Each room has a warm torch. Cool fog sits in the distance. Stone walls stand around the rooms when a fight is running. The two walls facing you stay low, so you can still see the heroes and tap the rooms.
+
+This is only how the board is drawn. It does not change who wins.
+
+```mermaid
+flowchart TB
+  rooms["Dark flagstone rooms"] --> torches["A warm torch in each room"]
+  rooms --> fog["Cool fog farther away"]
+  rooms --> walls["Stone walls around the dungeon during a fight"]
+  walls --> low["Low walls on your side so heroes stay visible"]
+```
+
 ## Ready?
 
 1. Open [zorg.artof.link](https://zorg.artof.link).
@@ -133,5 +147,11 @@ It only describes rules the engine already plays: rooms A / Z / D / E / P / O / 
 It does **not** invent an extra room letter, extra Gunner shot-timing, or locked contracts.
 
 Formal pointers (not needed to play): place rooms [[FR-5]] [[FR-6]] [[FR-7]] [[FR-8]]; spawn / Zorg / damage / elements / portals / gold / tolls [[FR-11]] [[FR-12]] [[FR-13]] [[FR-14]] [[FR-15]] [[FR-16]] [[FR-17]]; heroes [[FR-19]] [[FR-20]] [[FR-21]] [[FR-22]] [[FR-23]] [[FR-24]] [[FR-25]] [[FR-26]]; spells [[FR-32]] [[FR-33]] [[FR-34]] [[FR-35]] [[FR-36]] [[FR-37]] [[FR-39]] [[FR-40]] [[FR-41]] [[FR-42]]; win / lose idea [[FR-12]] [[FR-43]]. Maker playback still shows the fight result you see on screen.
+
+The Godot board is presentation only. Lighting, flagstones, fog, outer walls, corridor props, and the camera do not change outcomes ([[NFR-1]], [[0008-godot-port-milestone-1]]). Wall-hatch direction must still be clear while you place rooms ([[NFR-6]], [[FR-7]]). A gold chest is dressing beside a gold room; gold rules stay [[FR-16]]. More detail: [[PLAYER_GUIDE]] and [[LEARNINGS-godot]].
+
+On `main` today: cool dim fill, warm torch pools, dark flagstones, and thin cold fog. [[FINDINGS]] CF-013 is the earlier “too dark” bug; the later look pass darkened the fill again but kept emissive floors so rooms still read. During a run, tall walls stand on the sides away from the camera; the sides facing you stay a low rim so labels and taps stay usable. Props stay in the corridors, never inside a room.
+
+A lower default camera (42°, and a further tilt in Follow hero) landed in [#130](https://github.com/artofdream/zorg-dungeon/pull/130), merged to `main` on 20 November 2026 (15:08 Europe/Berlin). The default pitch is now 42°.
 
 More checklists: [[PLAYER_JOURNEYS|persona journeys]].
