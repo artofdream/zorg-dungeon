@@ -39,8 +39,13 @@ func _board_mouse(pos: Vector2, pressed: bool) -> void:
 	if pressed:
 		level._unhandled_input(e)
 	else:
+		# A room-drag release is handled in _input (handle_drag_input marks
+		# it handled), so _left_press never sees it. Mirror that here so the
+		# pan-flag assertions would fail without the _input clear.
+		var room_drag: bool = level.drag_id != ""
 		level._input(e)
-		level._unhandled_input(e)
+		if not room_drag:
+			level._unhandled_input(e)
 
 
 func _board_move(pos: Vector2) -> void:
