@@ -104,6 +104,8 @@ Les types joués aujourd'hui : Guerrier, Elfe, Canonnier, Mécanicien, Princesse
 
 Sorts à usage unique entre actions terminées ([[FR-32]], [[FR-33]]) : Attaque, Téléport, Déplacer, Échanger, Sommeil, Réveil, Banalité, Sélection ([[FR-34]]–[[FR-42]]).
 
+Sur le plateau Godot, ceci n'est que de la présentation ([[NFR-1]]). Les boutons de sorts sont des icônes CC0 Kenney (voir `apps/godot/CREDITS.md`), avec un badge de dégâts sur Attaque. Ils restent inactifs jusqu'à ce qu'un héros ait terminé au moins une action, et l'infobulle dit pourquoi ([[FR-33]]). Quand la fenêtre s'ouvre, les sorts encore disponibles s'illuminent et pulsent une fois ; la première fois, une indication dit qu'on peut lancer un sort entre les pas pour toucher les héros. Pendant Lecture, « Pause pour lancer un sort » reste visible tant qu'il reste des sorts. Survoler ou presser Attaque met en évidence les héros vivants que le moteur liste et montre les dégâts avant de confirmer ([[FR-34]]).
+
 ## À quoi ressemble le donjon Godot
 
 Ceci est de la présentation, pas une règle nouvelle. Le moteur TypeScript décide encore de chaque résultat ([[NFR-1]], [[NFR-10]], [[0008-godot-port-milestone-1]]). Si une phrase ici n'est pas d'accord avec [[GAME_SPEC]], **la spécification gagne**. Le Maker `apps/web` est une surface 2D séparée ; cette section décrit le plateau Godot (`apps/godot`).
@@ -114,6 +116,7 @@ Après les PR [#128](https://github.com/artofdream/zorg-dungeon/pull/128) et [#1
 - Des dalles sombres. La qualité Low (défaut sur le web et le téléphone) limite les torches et coupe les ombres ; High (défaut bureau) autorise plus de lumières et un glow.
 - Pendant une course seulement, des murs hauts se tiennent du côté opposé à la caméra. Les deux côtés face à la caméra restent une bordure basse, pour ne pas cacher les héros, les libellés et les taps.
 - Les accessoires de couloir (tonneaux, caisses) restent hors des salles, sous un plafond Low. Un coffre rempli d'or est un décor à côté de chaque salle d'or ; les règles d'or restent [[FR-16]].
+- Pendant une course, la barre de sorts utilise des boutons-icônes (Attaque est une épée vers le bas avec une impulsion et un badge de dégâts). Les règles de lancer restent [[FR-32]]–[[FR-34]] ; seule la présentation change ([[NFR-1]]).
 
 La flèche de trappe pendant le placement ne change pas et doit rester claire ([[NFR-6]], [[FR-7]]). Le décor disparaît quand tu reviens construire.
 

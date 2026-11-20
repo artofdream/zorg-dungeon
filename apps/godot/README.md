@@ -98,13 +98,23 @@ room they came from. A hero who can't pay can't step on, and one pushed onto
 an unpaid hatch dies. Warriors and Elves plan with their gold, as in the TS
 engine. Gold shows as "$n" on heroes and rooms.
 
-**Spells** (FR-32 to FR-35) are one-use buttons next to Play during a run.
+**Spells** (FR-32 to FR-35) are one-use icon buttons next to Play during a
+run (presentation only, NFR-1). Each button is at least 48 dp, has an
+accessible name, a tooltip on hover, and a text label on long-press.
 **Attack(x)** deals x damage to every living hero, including heroes still
-waiting to spawn. **Teleport(n)** sends the active hero to the first cell of
+waiting to spawn (FR-34). Its icon is a sword striking down with a small
+burst, and a badge shows x. Hovering or pressing Attack highlights the
+heroes the engine says would be hit and shows the damage before you
+confirm. **Teleport(n)** sends the active hero to the first cell of
 its n-th most recent room (1 = the room it is in) with no room effect, or back
 to the waiting room if it hasn't visited that many rooms. You can cast only
 between two hero actions, after the first one and before the run ends
-(FR-33). The buttons are greyed out at other times. You place the rooms, then
+(FR-33). The buttons are greyed out at other times, and the tooltip says
+why (including before the first action). When the cast window opens, unused
+spells glow and pulse once. During Play, a short "Pause to cast a spell"
+hint stays visible while unused spells remain, and the buttons still light
+up between actions. The first time a window opens, a one-time hint says
+"Cast a spell between steps to hit the heroes". You place the rooms, then
 Step or Play the run one action at a time.
 
 **Look** (round 6, visual only): rooms are 3D tiles with low stone walls and
