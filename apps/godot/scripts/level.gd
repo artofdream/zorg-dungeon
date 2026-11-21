@@ -35,6 +35,7 @@ const GHOST_LOOSE := Color(1.0, 0.6, 0.1, 0.5)   # allowed, but touches no place
 const GHOST_BAD := Color(1.0, 0.1, 0.1, 0.6)
 const DRAG_START_PX := 12.0
 const FIT_HEIGHT := 1.2                     # walls/props counted when framing
+const REPLAY_LABEL_HEADROOM := 30.0         # FR-47 replay: room/hero label plates above the board (UI units)
 
 @onready var engine: Node = $Engine
 @onready var board: Node3D = $Board
@@ -149,6 +150,8 @@ var next_btn: Button
 var help_dlg: ZorgHelpDialog
 var solution: ZorgSolutionPlayer            # FR-47 Show a solution (stored engine solution)
 var solution_guide: ZorgSolutionGuide      # its caption plate, in the HUD text column
+var replay_fit_area := Rect2()               # FR-47: free area the replay board was last framed in (empty when not replaying)
+var _replay_frame_key := ""                  # FR-47: guide size + framing state, to refit when the caption changes
 var help_box: VBoxContainer
 var quit_dlg: ZorgQuitDialog     # scenes/quit_dialog.tscn: "Quit Zorg?" Stay / Quit
 var quit_stay: Button
@@ -1481,7 +1484,37 @@ func _fit_area() -> Rect2:
 	return Rect2(left, top, right - left, bottom - top)
 
 func _fit_camera(instant: bool) -> void:
+	if solution and solution.framing():
+		# FR-47 replay: frame the solution's own layout tightly (not the
+		# whole build grid), in the larger of the hole under the caption
+		# and the column right of it.
+		var areas := _replay_fit_areas()
+		replay_fit_area = areas[cam.fit_best(instant, solution.frame_slots(), false, areas,
+			ROOM, SLOTS_X, SLOTS_Y, FIT_HEIGHT, get_viewport().get_visible_rect().size, true)]
+		return
+	replay_fit_area = Rect2()
 	cam.fit(instant, placed, _building(), _fit_area(), ROOM, SLOTS_X, SLOTS_Y, FIT_HEIGHT, get_viewport().get_visible_rect().size)
+
+## FR-47: free areas for the replay board, below the room-label headroom.
+## [0] the usual hole under the HUD text column (caption included); [1]
+## the column right of the text, under Levels / ?, left of the camera pad,
+## above the bottom bar. On a landscape phone the caption leaves [0] a
+## sliver, so the board goes to [1]; in portrait [1] is narrow and [0] wins.
+func _replay_fit_areas() -> Array:
+	var head := REPLAY_LABEL_HEADROOM
+	var under := _fit_area()
+	under.position.y += head
+	under.size.y = maxf(8.0, under.size.y - head)
+	var left := hud_top.get_global_rect().end.x + 12.0
+	var right := cam_grid.get_global_rect().position.x - 8.0
+	var top := ui_root.offset_top + 4.0
+	for b in [levels_btn, help_btn]:
+		if b and b.visible and b.get_global_rect().position.x < right:
+			top = maxf(top, b.get_global_rect().end.y + 6.0)
+	top += head
+	var bottom := bottom_bar.get_global_rect().position.y - 8.0
+	var side := Rect2(left, top, maxf(8.0, right - left), maxf(8.0, bottom - top))
+	return [under, side]
 
 func _pan(delta_px: Vector2) -> void:
 	cam.pan(delta_px)
@@ -1543,6 +1576,14 @@ func _process(delta: float) -> void:
 	# clears the tray and spell bar on a landscape phone.
 	var guide_on := solution_guide != null and solution_guide.visible
 	status.visible = not end_banner.apply_visibility() and not guide_on   # banner replaces "Extermination: ..."
+	# FR-47: the replay board is framed around the caption, so a caption
+	# that grows, shrinks, opens or closes (or the replay ending) refits.
+	var frame_key := ""
+	if solution and solution.framing():
+		frame_key = str(hud_top.get_global_rect(), bottom_bar.get_global_rect())
+	if frame_key != _replay_frame_key:
+		_replay_frame_key = frame_key
+		_request_fit(1)
 	playback.apply_turn_visible(not _building())
 	if guide_on:
 		log_label.visible = false
@@ -1607,6 +1648,12 @@ func _layout_labels() -> void:
 					break
 			if not hit:
 				break
+		# FR-47 replay: a label pushed down past the caption must not land on
+		# the tray / run bar; it stays just above the bar instead.
+		if replay_fit_area.has_area():
+			var bar_top := bottom_bar.get_global_rect().position.y - 2.0
+			if r.end.y > bar_top:
+				r.position.y = bar_top - r.size.y
 		taken.append(r)
 		(it[0] as Control).position = r.position - label_layer.get_global_rect().position
 

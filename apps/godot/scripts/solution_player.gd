@@ -54,6 +54,20 @@ func active() -> bool:
 func owns_run() -> bool:
 	return phase == "place" or phase == "run"
 
+## True while a stored solution is on screen (placing, running or on its
+## result caption): the level camera frames the solution's own layout.
+func framing() -> bool:
+	return phase != "" and not steps.is_empty()
+
+## Board slot of every room the stored solution places (the whole layout,
+## so the camera does not re-zoom as each room drops in).
+func frame_slots() -> Dictionary:
+	var out := {}
+	for st in steps:
+		if String(st.get("kind", "")) == "place":
+			out[String(st["roomId"])] = Vector2i(int(st["x"]), int(st["y"]))
+	return out
+
 func has_solution(level_id: String) -> bool:
 	return String(levels.get(level_id, {}).get("status", "")) == "solved"
 

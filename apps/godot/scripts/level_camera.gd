@@ -268,7 +268,40 @@ func snap_to(placed: Dictionary, room: float) -> void:
 ## during a run the placed rooms are framed tightly. Binary search on the
 ## zoom, then shift the pivot so the box sits in the middle of the hole.
 func fit(instant: bool, placed: Dictionary, building: bool, area: Rect2, room: float, slots_x: Vector2i, slots_y: Vector2i, fit_height: float, view_size: Vector2) -> void:
+	fit_best(instant, placed, building, [area], room, slots_x, slots_y, fit_height, view_size)
+
+
+## Fit into whichever free area frames the dungeon largest (smallest zoom
+## distance); the first area wins a tie. Returns the index of the area used.
+## FR-47 replay: the caption makes the hole under the text column too short
+## on a landscape phone, so the column to its right is offered too.
+func fit_best(instant: bool, placed: Dictionary, building: bool, areas: Array, room: float, slots_x: Vector2i, slots_y: Vector2i, fit_height: float, view_size: Vector2, exact := false) -> int:
 	follow_zoomed = false                    # back to an overview distance
+	var pick := 0
+	var goal: Array = []
+	for i in areas.size():
+		var r := _solve_fit(placed, building, areas[i], room, slots_x, slots_y, fit_height, view_size, exact)
+		if goal.is_empty() or float(r[1]) < float(goal[1]) - 0.001:
+			goal = r
+			pick = i
+	var target_pos: Vector3 = goal[0]
+	var best: float = goal[1]
+	if _move_tween:
+		_move_tween.kill()
+	target_zoom = best
+	if instant:
+		position = target_pos
+		zoom = best
+		update_transform()
+	else:
+		_move_tween = create_tween()
+		_move_tween.tween_property(self, "position", target_pos, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	return pick
+
+
+## [pivot, zoom] that fits the dungeon in `area` at the target yaw/tilt.
+## Leaves the camera where it was.
+func _solve_fit(placed: Dictionary, building: bool, area: Rect2, room: float, slots_x: Vector2i, slots_y: Vector2i, fit_height: float, view_size: Vector2, exact := false) -> Array:
 	var lo := Vector2i(slots_x.x, slots_y.x)
 	var hi := Vector2i(slots_x.y, slots_y.y)
 	var tight := not placed.is_empty() and not building
@@ -299,7 +332,7 @@ func fit(instant: bool, placed: Dictionary, building: bool, area: Rect2, room: f
 	yaw = target_yaw
 	pitch = target_pitch
 	var best := ZOOM_LIMITS.y
-	for _round in 2:
+	for _round in (4 if exact else 2):     # zoom, then re-centre; `exact` repeats until the shift settles
 		var a := ZOOM_LIMITS.x
 		var b := ZOOM_LIMITS.y
 		for _i in 14:
@@ -317,22 +350,31 @@ func fit(instant: bool, placed: Dictionary, building: bool, area: Rect2, room: f
 			box = box.expand(camera_3d.unproject_position(p))
 		var screen_mid := view_size / 2.0
 		position = _ground_at(screen_mid - (area.get_center() - box.get_center()))
+	update_transform()
+	if exact:
+		# Re-centring moves the perspective box a little; back off until the
+		# whole box is inside `area` (not just its size), then re-centre.
+		for _k in 12:
+			var bb := Rect2(camera_3d.unproject_position(pts[0]), Vector2.ZERO)
+			for p in pts:
+				bb = bb.expand(camera_3d.unproject_position(p))
+			if area.grow(0.5).encloses(bb):
+				break
+			best = minf(best * 1.015, ZOOM_LIMITS.y)
+			zoom = best
+			update_transform()
+			bb = Rect2(camera_3d.unproject_position(pts[0]), Vector2.ZERO)
+			for p in pts:
+				bb = bb.expand(camera_3d.unproject_position(p))
+			position = _ground_at(view_size / 2.0 - (area.get_center() - bb.get_center()))
+			update_transform()
 	var target_pos := position
 	position = saved[0]
 	yaw = saved[1]
 	pitch = saved[2]
 	zoom = saved[3]
 	update_transform()
-	if _move_tween:
-		_move_tween.kill()
-	target_zoom = best
-	if instant:
-		position = target_pos
-		zoom = best
-		update_transform()
-	else:
-		_move_tween = create_tween()
-		_move_tween.tween_property(self, "position", target_pos, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	return [target_pos, best]
 
 
 func _fits(pts: Array[Vector3], size: Vector2) -> bool:
