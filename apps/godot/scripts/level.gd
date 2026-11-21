@@ -847,7 +847,8 @@ func _refresh_spells() -> void:
 	if not engine.state.is_empty():
 		reason = REFUSALS.get(engine.cast_block_reason(), engine.cast_block_reason())
 	playback.set_spells(engine.spells(), engine.can_cast(), not _building(), reason, playback.is_playing())
-	if playback.window_just_opened and not ZorgHelp.spell_hint_seen(settings_path):
+	if playback.window_just_opened and not ZorgHelp.spell_hint_seen(settings_path) \
+			and not (solution and solution.active()):
 		playback.show_spell_hint(true)
 		_layout_spell_chrome()
 		if not cam_manual:
@@ -1537,8 +1538,16 @@ func _process(delta: float) -> void:
 		_busy_frame = Engine.get_process_frames()
 	playback.tick(delta)
 	cam.ease(delta)
-	status.visible = not end_banner.apply_visibility()   # banner replaces "Extermination: ..." 
+	# FR-47: while the solution caption is up it replaces the status line,
+	# the turn line and the first-run spell hint, so the HUD column still
+	# clears the tray and spell bar on a landscape phone.
+	var guide_on := solution_guide != null and solution_guide.visible
+	status.visible = not end_banner.apply_visibility() and not guide_on   # banner replaces "Extermination: ..."
 	playback.apply_turn_visible(not _building())
+	if guide_on:
+		log_label.visible = false
+		if playback.spell_hint and playback.spell_hint.visible:
+			playback.show_spell_hint(false)
 	# Hitch fix (CF-015): no Fit or follow start on a spawn or set-up frame;
 	# a pending fit just waits a frame.
 	var frame := Engine.get_process_frames()

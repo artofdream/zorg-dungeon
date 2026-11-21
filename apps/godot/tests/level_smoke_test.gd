@@ -1097,8 +1097,8 @@ func _solution_checks(engine: Node) -> void:
 		await _solution_shot(engine, shot)
 
 ## Index of the first level whose stored solution casts a spell, or -1.
-func _first_with_casts(engine: Node, sp: ZorgSolutionPlayer, skip := -1) -> int:
-	for i in engine.levels.size():
+func _first_with_casts(engine: Node, sp: ZorgSolutionPlayer, skip := -1, from := 0) -> int:
+	for i in range(from, engine.levels.size()):
 		var e: Dictionary = sp.levels.get(String(engine.levels[i]["id"]), {})
 		if i != skip and String(e.get("status", "")) == "solved" and not (e.get("casts", []) as Array).is_empty():
 			return i
@@ -1229,6 +1229,35 @@ func _solution_phone_landscape(engine: Node, i: int) -> void:
 		await process_frame
 	_guide_clear_of_chrome("2340x1080 " + id)
 	level.solution.stop()
+	# A spell level (phone check, PR #143): the caption at a cast and at the
+	# end must also clear the spell bar, with the turn line / status / spell
+	# hint making way for it.
+	var ci := _first_with_casts(engine, level.solution)
+	while ci >= 0:
+		var cid := String(engine.levels[ci]["id"])
+		var sp: ZorgSolutionPlayer = level.solution
+		level._open_level(ci)
+		await process_frame
+		sp.start(cid)
+		var guard := 0
+		while sp.owns_run() and guard < 20000 and not (sp.phase == "run" and String(sp.steps[sp.step_i]["kind"]) == "cast" \
+				and level.solution_guide.header.text.begins_with(sp._head(sp.step_i))):
+			sp._tick()
+			guard += 1
+		level.playback.show_spell_hint(true)  # as on a first run: the caption must still win
+		for f in 10:
+			await process_frame
+		_check(not level.playback.spell_hint.visible and not level.status.visible and not level.log_label.visible,
+			"2340x1080 %s: the caption replaces the spell hint, status and turn line" % cid)
+		_guide_clear_of_chrome("2340x1080 %s at a cast" % cid)
+		while sp.owns_run() and guard < 40000:
+			sp._tick()
+			guard += 1
+		for f in 10:
+			await process_frame
+		_guide_clear_of_chrome("2340x1080 %s at the end" % cid)
+		sp.stop()
+		ci = _first_with_casts(engine, sp, -1, ci + 1)
 	win.content_scale_factor = old_scale
 	level.ui_scale = old_scale
 	DisplayServer.window_set_size(old)
