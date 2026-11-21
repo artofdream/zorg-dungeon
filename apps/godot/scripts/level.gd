@@ -1490,7 +1490,7 @@ func _fit_camera(instant: bool) -> void:
 		# and the column right of it.
 		var areas := _replay_fit_areas()
 		replay_fit_area = areas[cam.fit_best(instant, solution.frame_slots(), false, areas,
-			ROOM, SLOTS_X, SLOTS_Y, FIT_HEIGHT, get_viewport().get_visible_rect().size)]
+			ROOM, SLOTS_X, SLOTS_Y, FIT_HEIGHT, get_viewport().get_visible_rect().size, true)]
 		return
 	replay_fit_area = Rect2()
 	cam.fit(instant, placed, _building(), _fit_area(), ROOM, SLOTS_X, SLOTS_Y, FIT_HEIGHT, get_viewport().get_visible_rect().size)
