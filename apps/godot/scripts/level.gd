@@ -342,8 +342,11 @@ func _warm_level() -> void:
 		prewarm.put(node)
 		if not await _warm_next(gen):
 			return
-		for light in node.get_meta("lights", []):
-			(light as OmniLight3D).visible = true      # torch-lit variants
+		# A drop during that frame took the room and applied the torch cap.
+		# Lighting every omni here would undo it until the next refresh.
+		if _room_pool.get(id) == node:
+			for light in node.get_meta("lights", []):
+				(light as OmniLight3D).visible = true      # torch-lit variants
 		if not await _warm_next(gen):
 			return
 	heroes.names = engine.hero_names()
@@ -363,6 +366,8 @@ func _warm_level() -> void:
 	if not await _warm_next(gen):
 		return
 	# The run's walls and props (built in chunks, like Play does).
+	# Follow build from this node. Awaiting d.build() never resumes if
+	# finish() frees the dressing (level switch, or a reset's refill).
 	var d := ZorgDungeonDressing.new()
 	d.prop_cap = ZorgDungeonDressing.HIGH_PROPS
 	prewarm.put(d, true)
@@ -371,14 +376,21 @@ func _warm_level() -> void:
 	for id in types:
 		slots[id] = Vector2i(i % 3, i / 3)
 		i += 1
-	await d.build(slots, types, true)
+	d.build(slots, types, true)
+	while is_instance_valid(d) and d.building:
+		if not await _warm_next(gen):
+			if is_instance_valid(d):
+				d.clear()
+			return
+	if not is_instance_valid(d) or gen != _warm_gen:
+		return
 	if not await _warm_next(gen) or not await _warm_next(gen):
 		return
 	prewarm.finish()
 	for id in _room_pool:
 		_reset_pooled_room(_room_pool[id])
 
-## Wait a frame; false if the level changed meanwhile (stop warming).
+## Wait a frame; false if this warm-up was cancelled (stop warming).
 func _warm_next(gen: int) -> bool:
 	await get_tree().process_frame
 	return gen == _warm_gen
@@ -418,6 +430,9 @@ func _warm_glyphs() -> Array:
 
 ## Hero models pooled after a run is reset, drawn once on the stage too.
 func _refill_hero_pool() -> void:
+	# Same-level reset does not open a level, so _warm_level would keep
+	# drawing. Stop it before this draw's begin()/finish() frees its pieces.
+	_warm_gen += 1
 	var gen := _warm_gen
 	await get_tree().process_frame
 	if gen != _warm_gen or engine.loaded.is_empty() or not _building():

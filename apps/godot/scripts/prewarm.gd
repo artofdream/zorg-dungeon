@@ -88,6 +88,7 @@ func begin(cam: Camera3D, look_at: Vector3, board_corner: Vector3, shadows := fa
 	focus = look_at
 	_slots = 0
 	_active = true
+	_free_temp()                         # finish() frees only this draw's pieces
 	stage.visible = true
 	_lights[0].visible = true
 	_lights[1].visible = shadows
@@ -145,6 +146,16 @@ func put_keeper(node: Node3D) -> void:
 	put(node)
 	node.set_meta("keeper", true)
 
+## Free warm-only pieces. Stop a dressing build before its node is freed.
+func _free_temp() -> void:
+	for n in _temp:
+		if not is_instance_valid(n):
+			continue
+		if n is ZorgDungeonDressing:
+			(n as ZorgDungeonDressing).clear()
+		n.queue_free()
+	_temp.clear()
+
 ## Take a pooled piece off the stage (keeps it alive, outside the tree).
 func take(node: Node) -> void:
 	if node and is_instance_valid(node) and node.get_parent() == stage:
@@ -160,10 +171,7 @@ func finish() -> void:
 	blocker.visible = false
 	for l in _lights:
 		l.visible = false
-	for n in _temp:
-		if is_instance_valid(n):
-			n.queue_free()
-	_temp.clear()
+	_free_temp()
 	for c in stage.get_children():
 		if not c.is_queued_for_deletion() and not (c in _lights) and not c.has_meta("keeper"):
 			stage.remove_child(c)
