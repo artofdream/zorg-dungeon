@@ -332,3 +332,27 @@ rooms and heroes, shows a placeholder slab for a drop with no room ready,
 builds the walls over a few frames before the first step, and keeps the
 camera still on those frames. No engine rule changed. Recurrence 1. The
 smoke test checks the pool, the placeholder and the Play hold.
+
+
+## CF-016: Godot level grid drew under the room tray on a phone
+- Status: Resolved
+- Recurrence: 1
+- Linked: PR (this branch, agent/grok/levelselect-overlay-bugbot)
+- Sensor added: apps/godot/tests/level_smoke_test.gd
+
+On the ROG Phone 2 (2340×1080 landscape, level 5.8) the open "Choose a
+level" grid sat under the room tray: the O(1) and T(1, fire) tiles covered
+its bottom row, so Graphics and Close could not be read or tapped. The grid
+was an earlier sibling of the tray in the HUD, so the tray drew on top, and
+taps outside the grid still reached the tray and the board. The grid now
+lives on its own layer above the HUD, behind a dimmed backdrop that takes
+every tap (a tap on it closes the grid), fits inside the safe area with
+fewer columns on a narrow screen, and scrolls its levels when the screen is
+short, so Graphics and Close stay on screen. The same change fixes three
+warm-up races from CF-015 (review findings): a run reset now waits for the
+level's warm-up instead of freeing its pieces, a pooled room that was
+dropped during the warm-up keeps its torch budget, and a level switch can no
+longer leave the warm-up waiting on a freed node. No engine rule changed.
+Recurrence 1. The smoke test checks the layer, the backdrop, that every
+grid button is on screen at 2340×1080 and 360 wide, and real taps on a tray
+tile, Close and a level button.

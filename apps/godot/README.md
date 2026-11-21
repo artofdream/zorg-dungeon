@@ -196,6 +196,15 @@ five frames, and the first step waits for them; after that, one step every
 set-up frame. The cost moves to the first ~15 frames after a level opens.
 The status is **Simulated**: it runs in CI and headless tests. Debug APKs
 were also tried by hand on one Android phone; that is not CI evidence.
+A run reset waits for the level's warm-up to finish before it refills the
+hero pool, and a level switch stops the warm-up cleanly.
+
+**Level grid** (CF-016, visual only): the "Choose a level" grid is a modal on
+its own layer above the HUD, so the room tray never covers it. A dimmed
+backdrop takes every tap while it is open; a tap on the backdrop closes it.
+It fits inside the safe area, uses fewer columns on narrow screens, and
+scrolls the levels when the screen is short, so Graphics and Close stay
+visible.
 
 **Why these levels:** apart from 1.4, 2.1 and 4.3, they are the only real
 levels made just of A/Z/D/E rooms with Warriors and Elves and a rule the
