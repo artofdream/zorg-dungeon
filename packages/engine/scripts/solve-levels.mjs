@@ -15,13 +15,15 @@ import { availableParallelism } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker, isMainThread, parentPort, workerData } from "node:worker_threads";
-import { DEFAULT_SOLUTION_SEARCH, explainSolution, parseLevel, searchSolution, verifySolution } from "../dist/index.js";
+import { DEFAULT_SOLUTION_SEARCH, TARGET_FREE_CAST_CAPS, explainSolution, parseLevel, searchSolution, verifySolution } from "../dist/index.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, "..", "..", "..");
 const OUT_DIR = "packages/engine/fixtures/solutions";
 /** NFR-4: per-worker cap on legal layouts scored. */
 const MAX_LAYOUTS = 1_000_000;
+/** NFR-4: per-worker wall-clock budget (env SOLVE_DEADLINE_MIN, default 30 min). */
+const DEADLINE_MS = Number(process.env.SOLVE_DEADLINE_MIN ?? 30) * 60_000;
 
 function shippedLevels() {
   const index = JSON.parse(readFileSync(join(repo, "apps/godot/levels/index.json"), "utf8"));
@@ -71,8 +73,10 @@ async function searchLevel(entry) {
     verdict,
     // Total legal layouts scored across workers (not stable across machines when found early, so not stored).
     maxLayoutsPerWorker: MAX_LAYOUTS,
+    ...(found.length ? {} : { deadlineMinutesPerWorker: DEADLINE_MS / 60_000 }),
     orientations: DEFAULT_SOLUTION_SEARCH.orientations,
     solvabilityCaps: DEFAULT_SOLUTION_SEARCH.solvabilityCaps,
+    targetFreeCastCaps: TARGET_FREE_CAST_CAPS,
     ...(found.length
       ? {}
       : {
@@ -87,7 +91,14 @@ async function searchLevel(entry) {
 if (!isMainThread) {
   const { id, index, count } = workerData;
   const entry = shippedLevels().find((e) => e.id === id);
-  const r = searchSolution(entry.level, { maxLayouts: MAX_LAYOUTS, shard: { index, count } });
+  const ckpt = `/tmp/solve-${id}-${index}.json`;
+  const r = searchSolution(entry.level, {
+    maxLayouts: MAX_LAYOUTS,
+    shard: { index, count },
+    deadlineMs: DEADLINE_MS,
+    onProgress: (p) => writeFileSync(ckpt, JSON.stringify({ ...p, at: new Date().toISOString() })),
+  });
+  writeFileSync(ckpt, JSON.stringify({ done: true, verdict: r.verdict, scored: r.layoutsScored, capped: r.castSearchCapped ?? 0 }));
   parentPort.postMessage(r);
 } else {
   const args = process.argv.slice(2);

@@ -368,7 +368,11 @@ every legal layout of 5.8 Vault Break — all 216 six-room shapes, every room
 order, all four orientations: 622,080 layouts — and none is a level win.
 5.8 has no spells, so no cast search is involved: this is exhaustive for
 the rules as the engine implements them (FR-16 gold, FR-17 tolls, FR-21
-Elf). Either the source level depends on a rule reading the engine does
+Elf). Cross-check: the same verifier gives the recorded verdict for all
+52 valid golden layouts (the three 5.8 goldens are two losses and a
+stalemate; none of them wins), and every golden shape is one the search
+enumerates, so the result is not an artefact of a stricter verifier or a
+missing shape. Either the source level depends on a rule reading the engine does
 not have, or the transcription is off. The game ships 5.8 anyway; its
 golden leads with a loss case, and Show a solution says "No stored
 solution yet" instead of a made-up answer. The stored file

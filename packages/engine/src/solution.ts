@@ -49,6 +49,10 @@ export interface SolutionSearchOptions {
   orientations?: Orientation[];
   /** Split the shape list across workers: only shapes with index % count === index. */
   shard?: { index: number; count: number };
+  /** Wall-clock budget (NFR-4); past it the verdict is `budget`. */
+  deadlineMs?: number;
+  /** Called every 500 scored layouts and at the end (checkpoints). */
+  onProgress?: (p: { scored: number; capped: number; orientation: number; shape: number; shapes: number }) => void;
 }
 
 export interface SolutionSearchResult {
@@ -158,15 +162,15 @@ function* assignments(groups: number[], n: number): Generator<number[]> {
   yield* place(0);
 }
 
-export const TARGET_FREE_CAST_CAPS = { maxRuns: 20_000, maxSteps: 256 } as const;
+export const TARGET_FREE_CAST_CAPS = { maxRuns: 20_000, maxSteps: 200 } as const;
 
 /**
  * FR-46 for target-free spells (Attack, Teleport), NFR-4 bounded: the run
  * is deterministic, so every cast plan is "which unused spell after which
  * completed action". Depth-first over those choices (identical unused
- * spells tried once), no node cap and no branch cap, so `exhausted` really
- * means no plan wins within `maxSteps` actions. Returns the first plan
- * whose run ends in a win, or capped when `maxRuns` branches were opened.
+ * spells tried once), no node cap and no branch cap. Returns the first plan
+ * whose run ends in a win; `capped` when `maxRuns` branches were opened or
+ * a run was cut at `maxSteps` actions (then a win may exist).
  */
 export function searchTargetFreeCasts(
   level: LevelDef,
@@ -178,7 +182,10 @@ export function searchTargetFreeCasts(
   const dfs = (state: SimulationState, seq: SolutionCast[]): SolutionCast[] | undefined => {
     for (;;) {
       if (state.outcome !== "in_progress") return state.outcome === "win" ? seq : undefined;
-      if (state.stepCount >= caps.maxSteps) return undefined;
+      if (state.stepCount >= caps.maxSteps) {
+        capped = true;
+        return undefined;
+      }
       if (canCastNow(state)) {
         const tried = new Set<string>();
         for (const spell of state.spells) {
@@ -253,7 +260,13 @@ export function verifySolution(level: LevelDef, solution: StoredSolution): Solut
   if (!report.ok) {
     return { ok: false, reason: `illegal layout: ${report.issues.map((i) => i.code).join(", ")}` };
   }
-  const score = scoreLevel(level, layout, { castScripts: { normal: solution.casts } });
+  let score;
+  try {
+    score = scoreLevel(level, layout, { castScripts: { normal: solution.casts } });
+  } catch (err) {
+    if (err instanceof SpellCastError) return { ok: false, reason: `cast refused: ${err.message}` };
+    throw err;
+  }
   if (score.outcome !== "win") return { ok: false, reason: `outcome ${score.outcome}: ${score.reason}` };
   return { ok: true };
 }
@@ -295,6 +308,8 @@ export function searchSolution(level: LevelDef, options?: SolutionSearchOptions)
   const shapes = fixedPolyominoes(n);
   const shard = options?.shard;
   const noCasts = { ...level, spells: [] };
+  const started = Date.now();
+  const deadline = options?.deadlineMs;
   for (const [oi, orientation] of orientations.entries()) {
     for (const [si, shape] of shapes.entries()) {
       if (shard && si % shard.count !== shard.index) continue;
@@ -307,6 +322,12 @@ export function searchSolution(level: LevelDef, options?: SolutionSearchOptions)
         const layout = layoutFromSolution(level, candidate);
         if (!validateLayout(level, layout).ok) continue;
         scored += 1;
+        if (scored % 500 === 0) {
+          options?.onProgress?.({ scored, capped, orientation: oi, shape: si, shapes: shapes.length });
+          if (deadline !== undefined && Date.now() - started > deadline) {
+            return { found: false, verdict: "budget", layoutsScored: scored, castSearchCapped: capped, reason: "deadline" };
+          }
+        }
         if (scored > maxLayouts) {
           return { found: false, verdict: "budget", layoutsScored: scored - 1, castSearchCapped: capped };
         }

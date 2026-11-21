@@ -118,6 +118,43 @@ describe("FR-47 stored solutions", () => {
   }
 });
 
+describe("FR-47 verifier agrees with the Godot golden recordings", () => {
+  // Every valid golden layout (hand-picked wins and losses) must get the
+  // same win / not-win verdict from verifySolution, and its shape must be
+  // one the search enumerates — so an "unsolved" level is not an artefact
+  // of a stricter verifier or a missing shape.
+  for (const { id } of shipped) {
+    it(id, () => {
+      const { level } = load(`${id}.json`);
+      const golden = JSON.parse(readFileSync(join(repoRoot, "apps/godot/tests/golden", `${id}.json`), "utf8")) as {
+        cases: Array<{
+          name: string;
+          orientation: 0 | 90 | 180 | 270;
+          placements: Array<{ id: string; x: number; y: number }>;
+          validation: { ok: boolean };
+          castLog?: Array<{ afterSteps: number; spellId: number; result: string }>;
+          score?: { outcome: string };
+        }>;
+      };
+      for (const c of golden.cases) {
+        if (!c.validation.ok || c.name === "stored-solution") continue;
+        const casts = (c.castLog ?? []).filter((r) => r.result === "ok").map((r) => ({ afterSteps: r.afterSteps, cast: { spellId: r.spellId } }));
+        const v = verifySolution(level, { levelId: level.id, orientation: c.orientation, placements: c.placements, casts });
+        expect(v.ok, `${id}/${c.name}`).toBe(c.score?.outcome === "win");
+        const mx = Math.min(...c.placements.map((p) => p.x));
+        const my = Math.min(...c.placements.map((p) => p.y));
+        const key = c.placements
+          .map((p) => ({ x: p.x - mx, y: p.y - my }))
+          .sort((a, b) => a.y - b.y || a.x - b.x)
+          .map((p) => `${p.x},${p.y}`)
+          .join(";");
+        const shapes = new Set(fixedPolyominoes(c.placements.length).map((sh) => sh.map((p) => `${p.x},${p.y}`).join(";")));
+        expect(shapes.has(key), `${id}/${c.name} shape enumerated`).toBe(true);
+      }
+    });
+  }
+});
+
 describe("NFR-4 bounded layout search", () => {
   it("enumerates fixed polyominoes (OEIS A001168)", () => {
     expect([1, 2, 3, 4, 5, 6].map((n) => fixedPolyominoes(n).length)).toEqual([1, 2, 6, 19, 63, 216]);
