@@ -548,7 +548,7 @@ func _camera_manual_and_room_press_checks(engine: Node) -> void:
 	level._yaw_by(12.0)
 	_check(level.cam_manual, "orbit sets cam_manual even when not following")
 	level._on_fit()
-	await process_frame
+	await _settle_board_camera()
 	var cam: Camera3D = level.get_node("CameraRig/Camera3D")
 	var pos: Vector2 = cam.unproject_position(level.slot_center(0, 0))
 	_board_mouse(pos, true)
@@ -560,9 +560,14 @@ func _camera_manual_and_room_press_checks(engine: Node) -> void:
 	_check(not level.placed.has("A:0") and level.drag_id == "" and not level._press_left and not level._press_dragged,
 		"board press: still release on a placed room unplaces it and clears the pan flags")
 	level._place("A:0", Vector2i(0, 0))
-	await process_frame
+	# Unplace + re-place re-fit the camera; aim from where it settles, not
+	# from the screen point taken before (CF: stale aim under slow frames).
+	await _settle_board_camera()
+	pos = cam.unproject_position(level.slot_center(0, 0))
 	var dest: Vector2 = cam.unproject_position(level.slot_center(1, 0))
 	_board_mouse(pos, true)
+	_check(level.drag_id == "A:0",
+		"board press: press on the re-placed room starts a drag (id %s, pos %s, slot %s)" % [level.drag_id, pos, level._screen_to_slot(pos)])
 	for k in 6:
 		_board_move(pos.lerp(dest, (k + 1) / 6.0))
 		await process_frame
@@ -571,6 +576,22 @@ func _camera_manual_and_room_press_checks(engine: Node) -> void:
 	_check(level.placed.get("A:0") == Vector2i(1, 0) and level.drag_id == "" and not level._press_left and not level._press_dragged,
 		"board press: press-drag moves the room to %s and clears the pan flags" % level.placed.get("A:0"))
 	level._on_fit()
+
+
+## Deterministic board camera for screen-space input checks. A fit glides
+## the pivot with a 0.35 s wall-clock tween, and a board change queues a
+## refit two frames later, so a screen point read one frame after a fit
+## depends on frame time (slow software GL under a loaded Xvfb moved the
+## camera ~40 px and the press missed the room). Let queued refits fire,
+## then snap the camera to the fit target.
+func _settle_board_camera() -> void:
+	for i in 4:
+		await process_frame
+	level.cam.stop_glide()
+	level._fit_camera(true)
+	await process_frame
+	_check(not level.cam.is_gliding() and level.cam._fit_pending == 0,
+		"board press: camera is settled before screen-space input (gliding %s, pending fit %d)" % [level.cam.is_gliding(), level.cam._fit_pending])
 
 
 ## Icon camera pad: stable names, icons, tooltips, 52-unit targets.

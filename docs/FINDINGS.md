@@ -378,3 +378,25 @@ golden leads with a loss case, and Show a solution says "No stored
 solution yet" instead of a made-up answer. The stored file
 (fixtures/solutions/deluxe-5.8.json) records the verdict, and the test
 fails if a solution ever appears without replaying to a win.
+
+## CF-018: Smoke check "press-drag moves the room" failed under a slow local Xvfb
+- Status: Resolved
+- Recurrence: 1
+- Linked: PR (this branch, agent/grok/smoke-press-drag)
+- Sensor added: apps/godot/tests/level_smoke_test.gd
+
+`level_smoke_test.gd` "board press: press-drag moves the room" passed in CI
+but failed on the agent box under Xvfb (1280×720, 96 dpi, software GL,
+CPU busy). Root cause: the test read screen points from a moving camera.
+A Fit, an unplace and a re-place each queue a refit two frames later, and
+the refit glides the pivot with a 0.35 s wall-clock tween. The test took
+the press point one frame after Fit and reused it after the unplace and
+re-place, so how far the camera had moved depended on frame time. On slow
+frames the room drifted ~40 px off the old point. The second press then
+landed off the room, started a pan instead of a drag, and A:0 stayed at
+(0, 0). Tap slop was not the cause (12 px, the 96 dpi minimum), nor was
+input order. The test now waits out queued refits, stops the glide, snaps
+the camera to the fit target and checks it is settled before every
+screen-space press. It re-aims after the re-place and checks that the
+second press starts a drag. The game itself is unchanged, and the
+assertions are as strict as before.
