@@ -21,6 +21,10 @@ extends SceneTree
 ##  - phone HUD: Levels and ? stay on a 2340×1080 landscape canvas, the
 ##    first-run spell hint stays in the text column off the hero HP label,
 ##    and tap-vs-pan slop is at least 12 px and about 2.5 mm.
+##  - hitch fix (CF-015): the warm-up pools every room and hero off-screen,
+##    a tray drop with no ready room shows a placeholder and finishes it a
+##    few frames later, and the Play button builds the walls over frames
+##    with the first step after them.
 ## Optional: `-- --shot=path.png` saves a screenshot (needs a display).
 
 var level: Node
@@ -998,6 +1002,7 @@ func _initialize() -> void:
 	await _spell_visibility(engine)
 	await _board_ux(engine)
 	_fluidity_checks()
+	await _hitch_checks(engine)
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
@@ -1399,3 +1404,59 @@ func _fluidity_checks() -> void:
 	_check(absf(z60 - c.zoom) < 0.001, "fluidity: zoom easing matches at 60 and 30 FPS (%.4f vs %.4f)" % [z60, c.zoom])
 	c.zoom = z0
 	c.target_zoom = z0
+
+
+## Hitch fix (CF-015): first-use work is moved off the drop, Play-press and
+## spawn frames. Presentation only; the engine sees the same calls.
+func _hitch_checks(engine: Node) -> void:
+	var ids: Array = engine.levels.map(func(e): return e["id"])
+	var idx: int = ids.find("deluxe-5.8")
+	var g = JSON.parse_string(FileAccess.get_file_as_string(engine.levels[idx]["golden"]))
+	var placements: Array = g["cases"][0]["placements"]
+	# A drop before the warm-up has built anything: a placeholder now, the
+	# real room (merged walls, torch) a few frames later.
+	level._open_level(idx)
+	var p0: Dictionary = placements[0]
+	level._on_drop_place(p0["id"], Vector2i(int(p0["x"]), int(p0["y"])))
+	var ph: Node3D = level.room_nodes[p0["id"]]
+	var was_placeholder: bool = ph.has_meta("placeholder") and level.torch_lights().is_empty()
+	for i in 4:
+		await process_frame
+	var rn: Node3D = level.room_nodes[p0["id"]]
+	_check(was_placeholder and not rn.has_meta("placeholder") and rn.has_meta("torch")
+		and not rn.find_children("Merged*", "MeshInstance3D", false, false).is_empty() and level.placed.has(p0["id"]),
+		"hitch: a tray drop with no ready room shows a placeholder, then the full room within 4 frames")
+	# The warm-up pools the other rooms and every hero, then stops drawing.
+	var guard := 0
+	while level.prewarm.active() and guard < 200:
+		await process_frame
+		guard += 1
+	var supplied: int = engine.supplied().size()
+	var heroes_n: int = engine.hero_names().size()
+	_check(not level.prewarm.active() and not level.prewarm.stage.visible
+		and level._room_pool.size() == supplied - 1 and level.heroes.pooled_count() == heroes_n,
+		"hitch: warm-up pooled %d/%d rooms and %d/%d heroes, stage hidden after" % [level._room_pool.size(), supplied - 1, level.heroes.pooled_count(), heroes_n])
+	for p in placements.slice(1):
+		level._on_drop_place(p["id"], Vector2i(int(p["x"]), int(p["y"])))
+	var all_ready: bool = level.room_nodes.values().all(func(n): return not n.has_meta("placeholder"))
+	# The Play button: walls over a few frames, no step on the press frame,
+	# the first hero from the pool once the walls are in.
+	level.playback.play_toggled.emit()
+	var building_on_press: bool = level.dressing.building
+	var no_step_on_press: bool = level.turn_index == 0
+	guard = 0
+	while level.dressing.building and guard < 30:
+		await process_frame
+		guard += 1
+	var walls_frames := guard
+	var spawned_early: bool = level.turn_index > 0
+	guard = 0
+	while level.turn_index == 0 and guard < 30:
+		await process_frame
+		guard += 1
+	_check(all_ready and building_on_press and no_step_on_press and not spawned_early and walls_frames >= 2
+		and level.turn_index >= 1 and level.heroes.pooled_count() < heroes_n and level.dressing.count_props() > 0,
+		"hitch: Play builds the walls over %d frames, then steps (pooled heroes left %d/%d)" % [walls_frames, level.heroes.pooled_count(), heroes_n])
+	level.playback.set_playing(false)
+	level._on_reset()
+

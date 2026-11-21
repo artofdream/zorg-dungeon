@@ -20,6 +20,12 @@ extends Node3D
 ## slots where a dragged room may go (board shader, no extra draw calls),
 ## a toast plus a shaking red ghost when a drop is refused, stable tray
 ## slots, and Undo that stays usable after Play (it goes back to build).
+## Hitch fix (CF-015): each level's rooms and heroes are built and drawn
+## once off-screen while the board is idle (prewarm.gd), so a room drop or
+## the first spawn only attaches a ready node; a UI drop with no ready room
+## shows a floor placeholder and builds the model over the next frames;
+## Play builds the dressing over a few frames and the first step waits for
+## it; the camera does not fit or follow on a spawn or set-up frame.
 
 const ROOM := 5.0                     # cells per room side; 1 cell = 1 unit
 const SLOTS_X := Vector2i(-1, 6)      # room-grid slots shown on the board
@@ -148,6 +154,11 @@ var hint: ZorgHint               # first-run hint (dismissed once, saved)
 var settings_path := ZorgAtmos.SETTINGS
 var fps_log := 0.0
 var toast: ZorgToast
+var prewarm: ZorgPrewarm
+var _room_pool := {}      # room id -> built room (outside the tree / on the warm stage)
+var _pending_rooms := {}  # room id -> true while a drop placeholder stands in
+var _warm_gen := 0
+var _busy_frame := -1     # last frame spent on run set-up (no camera fit/follow then)
 # Build overlay: one texel per board slot, pushed to the board shader.
 const CELL_GRID := Color(0.80, 0.86, 1.0, 0.30)     # free slot, nothing to drag
 const CELL_NEAR := Color(0.35, 1.0, 0.50, 0.45)     # free slot next to a placed room
@@ -177,7 +188,7 @@ func _attach_board() -> void:
 	add_child(board_build)
 	ghost = board_build.ghost
 	ghost_mat = board_build.ghost_mat
-	board_build.place_requested.connect(_place)
+	board_build.place_requested.connect(_on_drop_place)
 	board_build.move_requested.connect(_place)
 	board_build.unplace_requested.connect(_unplace)
 	board_build.undo_requested.connect(undo)
@@ -231,8 +242,8 @@ func _attach_playback() -> void:
 	spell_bar = playback.spell_bar
 	play_btn = playback.play_button
 	step_btn = playback.step_button
-	playback.play_toggled.connect(_on_play)
-	playback.step_requested.connect(_on_step)
+	playback.play_toggled.connect(_on_play.bind(true))
+	playback.step_requested.connect(_on_step.bind(true))
 	playback.cast_requested.connect(cast_spell)
 	playback.advance_requested.connect(_on_auto_advance)
 	playback.preview_started.connect(_on_spell_preview)
@@ -256,6 +267,8 @@ func _ready() -> void:
 	heroes.overlay = hero_layer
 	get_viewport().size_changed.connect(_on_resized)
 	_build_board()
+	prewarm = ZorgPrewarm.new()
+	add_child(prewarm)
 	var err: String = engine.load_index()
 	if err != "":
 		status.text = err
@@ -272,6 +285,7 @@ func _open_level(i: int) -> void:
 	for id in room_nodes:
 		_free_room(id)
 	room_nodes.clear()
+	_free_pools()
 	placed.clear()
 	place_order.clear()
 	kb_active = false
@@ -295,6 +309,149 @@ func _open_level(i: int) -> void:
 	cam_manual = false
 	_fit_camera(true)
 	_request_fit(2)
+	_warm_level()
+
+# ------------------------------------------------------------------ warm-up
+
+## Hitch fix (CF-015): build every supplied room and every hero model of
+## this level, and draw them once on the off-screen stage with a dressing,
+## fading heroes and hit-number glyphs, one piece per frame. The rooms and
+## heroes stay pooled for the drop and the spawn. Presentation only.
+func _warm_level() -> void:
+	_warm_gen += 1
+	var gen := _warm_gen
+	if not await _warm_next(gen):            # keep the open frame itself short
+		return
+	if engine.loaded.is_empty():
+		return
+	# One piece (or one change) per frame, so each frame compiles only a few
+	# shaders: the stage lights and the board's lit variant, then each room
+	# unlit and lit, the heroes, the fading figures, then the run's walls.
+	prewarm.begin(camera, Vector3(rig.position.x, 0, rig.position.z), slot_center(SLOTS_X.y, SLOTS_Y.x), quality == "high")
+	if not await _warm_next(gen):
+		return
+	var types := {}
+	for s in engine.supplied():
+		var id := String(s["id"])
+		types[id] = String(s["def"].get("type", ""))
+		if room_nodes.has(id) or _room_pool.has(id):
+			continue
+		var node := _room_model(s)
+		_room_pool[id] = node
+		(node.get_meta("pile") as Node3D).visible = true
+		prewarm.put(node)
+		if not await _warm_next(gen):
+			return
+		for light in node.get_meta("lights", []):
+			(light as OmniLight3D).visible = true      # torch-lit variants
+		if not await _warm_next(gen):
+			return
+	heroes.names = engine.hero_names()
+	for id in heroes.names:
+		var m: Node3D = heroes.pool_model(int(id))
+		if m:
+			prewarm.put(m)
+			if not await _warm_next(gen):
+				return
+	for keeper in heroes.fade_keepers():     # a death fades the figure out
+		prewarm.put_keeper(keeper)
+		if not await _warm_next(gen):
+			return
+	prewarm.put(_warm_ghost(), true)
+	for c in _warm_glyphs():
+		prewarm.put_control(c)
+	if not await _warm_next(gen):
+		return
+	# The run's walls and props (built in chunks, like Play does).
+	var d := ZorgDungeonDressing.new()
+	d.prop_cap = ZorgDungeonDressing.HIGH_PROPS
+	prewarm.put(d, true)
+	var slots := {}
+	var i := 0
+	for id in types:
+		slots[id] = Vector2i(i % 3, i / 3)
+		i += 1
+	await d.build(slots, types, true)
+	if not await _warm_next(gen) or not await _warm_next(gen):
+		return
+	prewarm.finish()
+	for id in _room_pool:
+		_reset_pooled_room(_room_pool[id])
+
+## Wait a frame; false if the level changed meanwhile (stop warming).
+func _warm_next(gen: int) -> bool:
+	await get_tree().process_frame
+	return gen == _warm_gen
+
+func _reset_pooled_room(node: Node3D) -> void:
+	for light in node.get_meta("lights", []):
+		(light as OmniLight3D).visible = false
+	(node.get_meta("pile") as Node3D).visible = false
+
+func _warm_ghost() -> Node3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = ZorgLook.box_mesh(Vector3(1, 0.2, 1))
+	mi.material_override = ghost_mat
+	var n := Node3D.new()
+	n.add_child(mi)
+	return n
+
+## Hit numbers (heroes.gd: 26 px, black outline) and HP plates: draw their
+## glyphs once so the first hit or death doesn't rasterise them.
+func _warm_glyphs() -> Array:
+	var out: Array = []
+	var num := Label.new()
+	num.text = "-+0123456789"
+	num.add_theme_font_size_override("font_size", 26)
+	num.add_theme_constant_override("outline_size", 6)
+	num.add_theme_color_override("font_outline_color", Color.BLACK)
+	out.append(num)
+	var hp := Label.new()
+	hp.text = "Warrior Elf HP $0123456789 (-) Waiting: appears"
+	hp.add_theme_font_size_override("font_size", 16)
+	var plate := PanelContainer.new()
+	plate.add_theme_stylebox_override("panel", ZorgHud.plate())
+	plate.add_child(hp)
+	plate.position = Vector2(0, 32)
+	out.append(plate)
+	return out
+
+## Hero models pooled after a run is reset, drawn once on the stage too.
+func _refill_hero_pool() -> void:
+	var gen := _warm_gen
+	await get_tree().process_frame
+	if gen != _warm_gen or engine.loaded.is_empty() or not _building():
+		return
+	heroes.names = engine.hero_names()
+	prewarm.begin(camera, Vector3(rig.position.x, 0, rig.position.z), slot_center(SLOTS_X.y, SLOTS_Y.x), quality == "high")
+	for id in heroes.names:
+		if gen != _warm_gen or not _building():
+			break
+		var m: Node3D = heroes.pool_model(int(id))
+		if m:
+			prewarm.put(m)
+			await get_tree().process_frame
+	if gen == _warm_gen:
+		await get_tree().process_frame
+	if gen == _warm_gen:                     # else _free_pools already stopped it
+		prewarm.finish()
+
+func _exit_tree() -> void:
+	_free_pools()                            # pooled nodes live outside the tree
+
+func _free_pools() -> void:
+	_warm_gen += 1
+	if prewarm and prewarm.active():
+		prewarm.finish()
+	for id in _room_pool:
+		var n: Node3D = _room_pool[id]
+		if is_instance_valid(n):
+			if n.is_inside_tree():
+				n.queue_free()
+			else:
+				n.free()
+	_room_pool.clear()
+	heroes.free_pool()
 
 func _build_picker() -> void:
 	var rows: Array = []
@@ -824,8 +981,14 @@ func board_focus() -> Rect2:
 	# The corridor and walls around a run (ZorgDungeonDressing) stay lit.
 	return r.grow(ZorgDungeonDressing.CORRIDOR + 0.6)
 
-func _room_node(s: Dictionary) -> Node3D:
+## The 3D room (model, torch, declared lights, coin stack). Poolable: no
+## label plate and not in the tree.
+func _room_model(s: Dictionary) -> Node3D:
 	var root := ZorgLook.build_room(s["def"], ZorgEngine.base_tile(s["def"]))
+	_add_room_lights(root, s)
+	return root
+
+func _add_room_lights(root: Node3D, s: Dictionary) -> void:
 	var torch := ZorgAtmos.add_torch(root, ZorgEngine.base_tile(s["def"]))
 	var level_id := String(engine.loaded.get("level", {}).get("id", ""))
 	var extras: Array = ZorgAtmos.add_declared(root, level_id, String(s["id"]), String(s["def"].get("type", "")))
@@ -835,6 +998,42 @@ func _room_node(s: Dictionary) -> Node3D:
 	pile.visible = false
 	root.add_child(pile)
 	root.set_meta("pile", pile)
+
+## A room on the board: the pooled model if the warm-up built it, else a
+## fresh one, with its label plate.
+func _room_node(s: Dictionary) -> Node3D:
+	var id := String(s["id"])
+	var root: Node3D = _room_pool.get(id)
+	_room_pool.erase(id)
+	if root and is_instance_valid(root):
+		prewarm.take(root)
+		_reset_pooled_room(root)
+		root.transform = Transform3D.IDENTITY
+	else:
+		root = _room_model(s)
+	return _attach_room(root, s)
+
+## Floor-coloured slab standing in for a room dropped before its model is
+## ready; _finish_room swaps the model in over the next frames.
+func _placeholder_room(s: Dictionary) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Placeholder"
+	root.set_meta("placeholder", "slab")
+	var t := String(s["def"].get("type", "E"))
+	var mi := ZorgLook.add_mesh(root, ZorgLook.box_mesh(Vector3(ROOM - 0.2, ZorgLook.FLOOR_H, ROOM - 0.2)),
+		ZorgLook.mat("floor_" + (t if ZorgLook.FLOORS.has(t) else "E")), Vector3(0, ZorgLook.FLOOR_H / 2.0, 0), false)
+	mi.name = "Slab"
+	_stub_pile(root)                         # no coins until the lights step
+	return _attach_room(root, s)
+
+func _stub_pile(root: Node3D) -> void:
+	var pile := Node3D.new()
+	pile.name = "StubPile"
+	pile.visible = false
+	root.add_child(pile)
+	root.set_meta("pile", pile)
+
+func _attach_room(root: Node3D, s: Dictionary) -> Node3D:
 	# Screen-space label on a small plate at the room's back corner; placed
 	# each frame by _layout_labels so labels never overlap.
 	var plate := PanelContainer.new()
@@ -849,23 +1048,81 @@ func _room_node(s: Dictionary) -> Node3D:
 	rooms_root.add_child(root)
 	return root
 
+## Off the board: its plate goes; the model goes back to the pool so a
+## re-drop (Undo, drag back) is instant. Placeholders are freed.
 func _free_room(id: String) -> void:
 	var n: Node3D = room_nodes[id]
 	(n.get_meta("plate") as Control).queue_free()
-	n.queue_free()
+	if n.has_meta("placeholder") or _room_pool.has(id):
+		_pending_rooms.erase(id)
+		n.queue_free()
+		return
+	rooms_root.remove_child(n)
+	_reset_pooled_room(n)
+	_room_pool[id] = n
 
-func _place(id: String, slot: Vector2i) -> void:
+## A drop from the tray (tap, drag or keyboard). Never builds a model on
+## the drop frame: the pooled room, or a placeholder finished over the
+## next frames. Direct _place calls (tests, Undo) stay synchronous.
+func _on_drop_place(id: String, slot: Vector2i) -> void:
+	_place(id, slot, true)
+
+func _place(id: String, slot: Vector2i, progressive := false) -> void:
 	placed[id] = slot
 	place_order.erase(id)
 	place_order.append(id)
 	if not room_nodes.has(id):
-		room_nodes[id] = _room_node(_supplied(id))
+		if progressive and not _room_pool.has(id):
+			room_nodes[id] = _placeholder_room(_supplied(id))
+			_pending_rooms[id] = true
+			_finish_room(id)
+		else:
+			room_nodes[id] = _room_node(_supplied(id))
 	room_nodes[id].position = slot_center(slot.x, slot.y)
 	_refresh_tray()
 	_refresh_validation()
 	_refresh_piles()
 	_refresh_torches()
 	_request_fit(1)
+
+## Swap a placeholder for the real room: model one frame, lights and coins
+## the next (meta "placeholder" is "slab", then "model"). With `now`, all
+## that is left happens at once (Play needs the real rooms).
+func _finish_room(id: String, now := false) -> void:
+	var n: Node3D = room_nodes.get(id)
+	if n == null or not n.has_meta("placeholder"):
+		return
+	var s := _supplied(id)
+	if String(n.get_meta("placeholder")) == "slab":
+		if not now:
+			await get_tree().process_frame
+			if room_nodes.get(id) != n or not is_instance_valid(n):
+				return
+		var root := ZorgLook.build_room(s["def"], ZorgEngine.base_tile(s["def"]))
+		root.position = n.position
+		root.set_meta("label", n.get_meta("label"))
+		root.set_meta("plate", n.get_meta("plate"))
+		_stub_pile(root)
+		root.set_meta("placeholder", "model")
+		rooms_root.add_child(root)
+		room_nodes[id] = root
+		n.queue_free()
+		n = root
+	if not now:
+		await get_tree().process_frame
+		if room_nodes.get(id) != n or not is_instance_valid(n) or not n.has_meta("placeholder"):
+			return
+	(n.get_meta("pile") as Node).queue_free()
+	_add_room_lights(n, s)                   # the real coin stack, torch, lights
+	n.remove_meta("placeholder")
+	_pending_rooms.erase(id)
+	_refresh_piles()
+	_refresh_torches()
+
+func _finish_pending_rooms() -> void:
+	for id in _pending_rooms.keys():
+		_finish_room(id, true)
+	_pending_rooms.clear()
 
 func _unplace(id: String) -> void:
 	placed.erase(id)
@@ -1205,11 +1462,20 @@ func _update_camera() -> void:
 func _process(delta: float) -> void:
 	if heroes and hud_top:
 		heroes.set_chrome_top(hud_top.get_global_rect().end.y)
+	# Steps first, so a spawn this frame is known before the camera moves.
+	if dressing and dressing.building:
+		playback.hold_frames(1)              # the first step waits for the walls
+		_busy_frame = Engine.get_process_frames()
+	playback.tick(delta)
 	cam.ease(delta)
 	status.visible = not end_banner.apply_visibility()   # banner replaces "Extermination: ..." 
 	playback.apply_turn_visible(not _building())
-	cam.consume_fit(drag_id == "")
-	cam.follow_step(delta, heroes.follow_point() if follow else null)
+	# Hitch fix (CF-015): no Fit or follow start on a spawn or set-up frame;
+	# a pending fit just waits a frame.
+	var frame := Engine.get_process_frames()
+	var calm: bool = heroes.spawn_frame != frame and _busy_frame != frame
+	cam.consume_fit(drag_id == "" and calm)
+	cam.follow_step(delta, heroes.follow_point() if follow and calm else null)
 	lighting.tick(delta, Vector3(rig.position.x, 0, rig.position.z), room_nodes)
 	ZorgLook.set_board_focus(board_focus(), 6.0 if _building() else 7.0)
 	_refresh_cells()
@@ -1221,7 +1487,6 @@ func _process(delta: float) -> void:
 		if gate:
 			gate.rotation.y += delta * 1.2
 	_perf_tick(delta)
-	playback.tick(delta)
 	if (playback.spell_hint and playback.spell_hint.visible) or heroes.preview_count() > 0:
 		_layout_spell_chrome()
 
@@ -1293,9 +1558,10 @@ func camera_settled() -> bool:
 
 # ------------------------------------------------------------------ play
 
-func _ensure_recording() -> bool:
+func _ensure_recording(chunked := false) -> bool:
 	if not recording.is_empty():
 		return true
+	_finish_pending_rooms()
 	var err: String = engine.start(_layout())
 	if err != "":
 		status.text = err
@@ -1305,7 +1571,8 @@ func _ensure_recording() -> bool:
 	heroes.clear()
 	heroes.names = engine.hero_names()
 	board_build.set_building(false)
-	_dress_dungeon()
+	_dress_dungeon(chunked)
+	_busy_frame = Engine.get_process_frames()
 	_refresh_tray()
 	level_picker.set_open(false)
 	status.text = "Extermination: Step or Play; cast spells between actions."
@@ -1362,7 +1629,7 @@ func _show_result() -> void:
 
 ## Dungeon look: tall walls, corridor and props around the placed rooms,
 ## for the run only (Build clears them so empty slots stay clear).
-func _dress_dungeon() -> void:
+func _dress_dungeon(chunked := false) -> void:
 	if dressing == null:
 		dressing = ZorgDungeonDressing.new()
 		dressing.name = "Dressing"
@@ -1371,12 +1638,18 @@ func _dress_dungeon() -> void:
 	for id in placed:
 		types[id] = String(_supplied(id)["def"].get("type", ""))
 	dressing.prop_cap = ZorgDungeonDressing.HIGH_PROPS if quality == "high" else ZorgDungeonDressing.LOW_PROPS
-	dressing.build(placed, types)
+	dressing.face(camera.global_transform.basis.z)
+	dressing.build(placed, types, chunked)
 	dressing.face(camera.global_transform.basis.z)
 
-func _on_play() -> void:
-	if _ensure_recording():
+## `from_ui`: the Play button. A new run's set-up is spread over frames and
+## the first step waits for it (then one step per STEP_SECONDS as before).
+func _on_play(from_ui := false) -> void:
+	var fresh := recording.is_empty()
+	if _ensure_recording(from_ui):
 		playback.set_playing(not playback.is_playing())
+		if fresh and from_ui:
+			playback.hold_frames(1)
 		_sync_move_budget()
 		_refresh_spells()
 
@@ -1385,8 +1658,8 @@ func _on_play() -> void:
 func _sync_move_budget() -> void:
 	heroes.move_budget = ZorgRunPlayback.STEP_SECONDS * 0.8 if playback.is_playing() else INF
 
-func _on_step() -> void:
-	if _ensure_recording():
+func _on_step(from_ui := false) -> void:
+	if _ensure_recording(from_ui):
 		playback.set_playing(false)
 		_sync_move_budget()
 		_advance()
@@ -1411,10 +1684,13 @@ func _on_reset() -> void:
 		cam_manual = false                   # back to the fitted overview
 	if view_btn:
 		view_btn.visible = false
+	var had_run := not recording.is_empty()
 	recording = {}
 	engine.state = {}
 	playback.set_playing(false)
 	heroes.clear()
+	if had_run:
+		_refill_hero_pool()
 	end_banner.clear()
 	playback.set_turn_line("")
 	board_build.set_building(true)

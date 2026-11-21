@@ -445,7 +445,7 @@ static func gold_pile() -> Node3D:
 ## Hero figure: a KayKit Knight (Warrior) or hooded Rogue (Elf) playing its
 ## idle loop. Each hero gets its own copies of the materials so one hero can
 ## flash or fade alone.
-static func hero_figure(is_elf: bool) -> Dictionary:
+static func hero_figure(is_elf: bool, idle := true) -> Dictionary:
 	var root := Node3D.new()
 	var body := Node3D.new()
 	body.name = "Body"
@@ -469,9 +469,15 @@ static func hero_figure(is_elf: bool) -> Dictionary:
 				copies[src] = m
 				mats.append(m)
 			mi.set_surface_override_material(i, copies[src])
-	var anim: AnimationPlayer = model.find_child("AnimationPlayer", true, false)
+	if idle:
+		start_idle(root)
+	return {"root": root, "body": body, "mats": mats}
+
+## Start a figure's idle loop at a random point (a pooled figure is built
+## with idle = false and started when it spawns).
+static func start_idle(root: Node3D) -> void:
+	var anim: AnimationPlayer = root.find_child("AnimationPlayer", true, false)
 	if anim and anim.has_animation("Idle"):
 		anim.get_animation("Idle").loop_mode = Animation.LOOP_LINEAR
 		anim.play("Idle")
 		anim.seek(randf() * anim.current_animation_length, true)
-	return {"root": root, "body": body, "mats": mats}

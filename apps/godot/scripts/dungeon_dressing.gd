@@ -41,7 +41,16 @@ static func _hash(a: int, b: int, c: int) -> float:
 	var h := (a * 73856093) ^ (b * 19349663) ^ (c * 83492791)
 	return float(absi(h) % 1000) / 1000.0
 
+## Hitch fix (CF-015): Play builds the dressing over a few frames (one wall
+## side per frame, props last) so the press frame stays short. `building`
+## is true until the last piece is in; clear() stops a build in progress.
+var building := false
+var _gen := 0
+var _yaw := NAN
+
 func clear() -> void:
+	_gen += 1
+	building = false
 	for c in get_children():
 		c.queue_free()
 	_sides.clear()
@@ -53,8 +62,12 @@ func count_props() -> int:
 
 ## Build walls and props around `slots` (room id -> Vector2i). `types`
 ## maps room id -> room type letter.
-func build(slots: Dictionary, types: Dictionary) -> void:
+## With `chunked`, the rest is spread over the next frames (await it, or
+## watch `building`).
+func build(slots: Dictionary, types: Dictionary, chunked := false) -> void:
 	clear()
+	var gen := _gen
+	building = true
 	var taken := {}
 	for id in slots:
 		taken[slots[id]] = id
@@ -71,6 +84,10 @@ func build(slots: Dictionary, types: Dictionary) -> void:
 				continue
 			_edge(s, d, taken, batches[d], spots, String(types.get(id, "")), String(id))
 	for d in DIRS:
+		if chunked:
+			await get_tree().process_frame
+			if gen != _gen:
+				return
 		var tall := Node3D.new()
 		tall.name = "Walls_%d_%d" % [d.x, d.y]
 		add_child(tall)
@@ -82,11 +99,24 @@ func build(slots: Dictionary, types: Dictionary) -> void:
 		add_child(rim)
 		ZorgLook.flush(rim, batches[d][1])
 		_sides[d] = [tall, rim]
+		_reface()
+	if chunked:
+		await get_tree().process_frame
+		if gen != _gen:
+			return
 	spots.sort_custom(func(a, b): return a[0] > b[0])
 	for sp in spots:
 		_add_prop(sp[1], sp[2], sp[3])
 	set_prop_cap(prop_cap)
 	_sector = -1
+	_reface()
+	building = false
+
+## A side added mid-build takes the current camera sector at once.
+func _reface() -> void:
+	if not is_nan(_yaw):
+		_sector = -1
+		face_yaw(_yaw)
 
 ## One exposed edge: a run of wall pieces CORRIDOR outside the room, with
 ## outer corners extended and inner corners trimmed so lines meet.
@@ -178,6 +208,7 @@ func face(cam_back: Vector3) -> void:
 
 
 func face_yaw(yaw_deg: float) -> void:
+	_yaw = yaw_deg
 	var sector := int(floor(fposmod(yaw_deg, 360.0) / 90.0))
 	if sector == _sector:
 		return

@@ -23,6 +23,10 @@ var spell_hint: PanelContainer
 
 var _playing := false
 var _timer := 0.0
+## Hitch fix (CF-015): frames to wait before the first step of a new run,
+## while the level finishes setting the run up in chunks. The cadence after
+## that is unchanged (one step every STEP_SECONDS).
+var _hold := 0
 var _window_open := false
 var window_just_opened := false
 var _buttons: Array = []
@@ -168,8 +172,16 @@ func layout_spell_hint(view_size: Vector2, bottom: Rect2, col_w: float = 0.0) ->
 	spell_hint.position = Vector2(x, y) - origin
 
 
+func hold_frames(n: int) -> void:
+	_hold = maxi(_hold, n)
+
+
 func tick(delta: float) -> void:
 	if not _playing:
+		_hold = 0
+		return
+	if _hold > 0:
+		_hold -= 1
 		return
 	# Fluidity: keep the overshoot so the cadence is STEP_SECONDS on average
 	# at any frame rate (resetting to STEP_SECONDS rounded every step up to

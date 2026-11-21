@@ -72,7 +72,8 @@ func refresh(room_nodes: Dictionary, pivot: Vector3) -> void:
 	ids.sort_custom(func(a, b): return room_nodes[a].position.distance_to(pivot) < room_nodes[b].position.distance_to(pivot))
 	var queue: Array = []
 	for id in ids:
-		queue.append(room_nodes[id].get_meta("torch"))
+		if room_nodes[id].has_meta("torch"):        # a drop placeholder has none yet
+			queue.append(room_nodes[id].get_meta("torch"))
 	for id in ids:
 		for light in room_nodes[id].get_meta("lights", []):
 			if light != room_nodes[id].get_meta("torch"):
@@ -85,7 +86,8 @@ func refresh(room_nodes: Dictionary, pivot: Vector3) -> void:
 func torch_lights(room_nodes: Dictionary) -> Array:
 	var out: Array = []
 	for id in room_nodes:
-		out.append(room_nodes[id].get_meta("torch"))
+		if room_nodes[id].has_meta("torch"):
+			out.append(room_nodes[id].get_meta("torch"))
 	return out
 
 ## Torch budget, flicker, and the slow-device quality drop.

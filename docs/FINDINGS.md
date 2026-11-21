@@ -308,3 +308,27 @@ after 0.18 s, so the figure cut the corner. Pan and yaw now stop the
 glide, yaw continues from the current angle, the timer keeps its
 overshoot, and a turn's moves fit inside one Play step. No engine rule
 changed. Recurrence 1. The smoke test now checks each of these.
+
+
+## CF-015: Godot froze for one frame on first drop, Play, spawn and death
+- Status: Resolved
+- Recurrence: 1
+- Linked: PR (this branch, agent/grok/hitch-prewarm)
+- Sensor added: apps/godot/tests/level_smoke_test.gd
+
+On the ROG Phone 2 the debug APK held 59–60 FPS but froze for single
+frames: up to 219 ms on a room drop, 125 ms when Play was pressed on 5.8
+(49 ms on 1.4), and 50–85 ms on the first spawn and the first death. The
+causes were first-use costs in the presentation layer, all landing on one
+frame. These were shader and pipeline compiles, building a room model, the
+run walls and the first hero, and the first step itself on the Play press
+frame. The box (llvmpipe, no shader cache) showed the same events, larger:
+about 1.3 s on the first drop and 0.7 s on Play. Another death fix was
+tried first: drawing a separate fading figure and then freeing it. That
+brought the compile back on the box. Only a figure kept alive on the
+hidden stage worked. The fix keeps the rules as they are. It draws the
+level's pieces once on a hidden stage while the board is idle, pools the
+rooms and heroes, shows a placeholder slab for a drop with no room ready,
+builds the walls over a few frames before the first step, and keeps the
+camera still on those frames. No engine rule changed. Recurrence 1. The
+smoke test checks the pool, the placeholder and the Play hold.
