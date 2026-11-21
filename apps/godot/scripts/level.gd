@@ -256,6 +256,9 @@ func _attach_playback() -> void:
 	playback.spell_hint_dismissed.connect(_on_spell_hint_dismissed)
 
 func _on_auto_advance() -> void:
+	if solution and solution.owns_run():
+		playback.set_playing(false)          # the replay drives the run, not Play
+		return
 	if not _advance():
 		playback.set_playing(false)
 
@@ -868,6 +871,9 @@ func _on_spell_hint_dismissed() -> void:
 		_request_fit(2)
 
 func cast_spell(id: int) -> bool:
+	if solution and solution.owns_run() and not solution.driving:
+		status.text = "Stop the solution first to cast your own spells."
+		return false
 	if not _ensure_recording():
 		return false
 	playback.set_playing(false)
@@ -1708,6 +1714,9 @@ func _dress_dungeon(chunked := false) -> void:
 ## `from_ui`: the Play button. A new run's set-up is spread over frames and
 ## the first step waits for it (then one step per STEP_SECONDS as before).
 func _on_play(from_ui := false) -> void:
+	if _solution_takes_input():
+		solution.toggle_pause()              # Play / Pause the replay instead
+		return
 	var fresh := recording.is_empty()
 	if _ensure_recording(from_ui):
 		playback.set_playing(not playback.is_playing())
@@ -1722,10 +1731,27 @@ func _sync_move_budget() -> void:
 	heroes.move_budget = ZorgRunPlayback.STEP_SECONDS * 0.8 if playback.is_playing() else INF
 
 func _on_step(from_ui := false) -> void:
+	if _solution_takes_input():
+		if solution.playing:
+			solution.toggle_pause()
+		solution.next()                      # one replay step, casts stay in sync
+		return
 	if _ensure_recording(from_ui):
 		playback.set_playing(false)
 		_sync_move_budget()
 		_advance()
+
+## FR-47: while Show a solution owns the run, Play / Step / Space go to its
+## own controls. A finished replay (or the "no stored solution" note) is
+## closed first, so the normal run controls work again.
+func _solution_takes_input() -> bool:
+	if solution == null or solution.driving:
+		return false
+	if solution.owns_run():
+		return true
+	if solution.active():
+		solution.stop()
+	return false
 
 ## View button / key C during a run: Overview <-> Follow hero.
 func _on_cam_mode() -> void:

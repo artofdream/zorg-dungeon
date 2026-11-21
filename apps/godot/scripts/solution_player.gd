@@ -27,6 +27,8 @@ var phase := ""               # "" | "place" | "run" | "done"
 var playing := true
 var timer := 0.0
 var driving := false          # true while this node calls into the level
+var last_outcome := ""        # engine outcome of the last replay ("win", "loss", ...)
+var mismatch := false         # true when the last replay did not end in the stored win
 
 func _init() -> void:
 	name = "SolutionPlayer"
@@ -46,6 +48,12 @@ func attach(lvl: Node, plate: ZorgSolutionGuide) -> void:
 func active() -> bool:
 	return phase != ""
 
+## True while the replay is placing rooms or running the heroes: it owns the
+## run, so the normal Play / Step / Space / spell bar must not drive the
+## engine (they would walk stepCount past a stored cast and desync it).
+func owns_run() -> bool:
+	return phase == "place" or phase == "run"
+
 func has_solution(level_id: String) -> bool:
 	return String(levels.get(level_id, {}).get("status", "")) == "solved"
 
@@ -59,6 +67,8 @@ func start(level_id: String) -> bool:
 		phase = "done"
 		return false
 	steps = sol["steps"]
+	last_outcome = ""
+	mismatch = false
 	driving = true
 	level._on_reset()
 	for id in level.placed.keys():
@@ -185,10 +195,27 @@ func _run_tick() -> void:
 func _check_end() -> void:
 	if not level.engine.over():
 		return
+	last_outcome = String(level.engine.score()["outcome"])
+	var won := last_outcome == "win"
 	while step_i < steps.size() and String(steps[step_i]["kind"]) != "result":
 		step_i += 1
-	if step_i < steps.size():
-		_show(step_i)
+	if won:
+		if step_i < steps.size():
+			_show(step_i)
+	else:
+		# Honest caption: the stored "result" text explains a win, so it
+		# must not be shown when this replay ended otherwise.
+		mismatch = true
+		push_warning("FR-47: solution replay for %s ended in '%s', not the stored win" % [String(sol.get("levelId", "?")), last_outcome])
+		print("zorg: solution replay did not win (%s)" % last_outcome)
+		guide.show_step("Solution replay did not win",
+			"This replay ended in a %s, not the stored win: the run drifted from the engine's stored solution. Press Stop and try Show a solution again." % _outcome_words(last_outcome), [])
 	phase = "done"
 	guide.show_controls(false, false)
-	finished.emit(String(level.engine.score()["outcome"]) == "win")
+	finished.emit(won)
+
+static func _outcome_words(outcome: String) -> String:
+	match outcome:
+		"loss": return "loss (a hero reached Zorg)"
+		"stalemate": return "stalemate (a hero is stuck)"
+	return "'%s' result" % outcome
