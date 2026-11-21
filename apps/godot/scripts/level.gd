@@ -1564,7 +1564,12 @@ func _update_camera() -> void:
 
 func _process(delta: float) -> void:
 	if heroes and hud_top:
-		heroes.set_chrome_top(hud_top.get_global_rect().end.y)
+		# The floor is the text column, not the whole screen: a replay board
+		# in the column beside the caption keeps HP plates on the heroes.
+		var bar_top := -1.0
+		if replay_fit_area.has_area() and bottom_bar:
+			bar_top = bottom_bar.get_global_rect().position.y - 2.0
+		heroes.set_chrome_top(hud_top.get_global_rect(), bar_top)
 	# Steps first, so a spawn this frame is known before the camera moves.
 	if dressing and dressing.building:
 		playback.hold_frames(1)              # the first step waits for the walls

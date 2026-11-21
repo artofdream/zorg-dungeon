@@ -21,7 +21,9 @@ var _preview := {}       # hero id -> pending Attack damage (presentation only)
 var _preview_nums: Array = []  # sticky preview labels
 var _waiting_preview: Control
 var _chrome_bottom := -1.0  # overlay-space y of the top of the bottom chrome
-var _chrome_top := -1.0     # canvas y; HP labels stay below the HUD text column
+var _chrome_top := -1.0     # canvas y of the HUD text column's bottom
+var _chrome_span := Rect2() # that column; the floor applies only where a plate overlaps it
+var _label_bar := -1.0      # canvas y HP plates stay above during a replay; negative skips it
 ## Fluidity: seconds one turn's moves may take (Play sets it to its step
 ## cadence; INF while stepping by hand). A long ice slide is compressed to
 ## fit, so the next turn never kills it halfway and cuts the corner.
@@ -222,12 +224,17 @@ func _process(delta: float) -> void:
 			if taken_r.intersects(r):
 				r.position.y = taken_r.position.y - size.y - 2.0
 		# Stay below the HUD text column (title, hints) so a first-run
-		# spell hint cannot cover the HP label.
-		if _chrome_top >= 0.0 and r.position.y < _chrome_top:
+		# spell hint cannot cover the HP label. Only a plate that overlaps
+		# that column: a replay board beside the caption keeps its plates
+		# above the heroes instead of on the caption floor.
+		if _chrome_top >= 0.0 and r.position.y < _chrome_top and _overlaps_chrome(r):
 			r.position.y = _chrome_top
 			for taken_r in taken:
 				if taken_r.intersects(r):
 					r.position.y = maxf(r.position.y, taken_r.end.y + 2.0)
+		# FR-47 replay: a plate pushed down must not land on the tray / run bar.
+		if _label_bar >= 0.0 and r.end.y > _label_bar:
+			r.position.y = _label_bar - r.size.y
 		taken.append(r)
 		plate.position = r.position - base
 		# The figure itself (feet to head): room labels keep off it too.
@@ -502,10 +509,21 @@ func preview_count() -> int:
 func set_chrome_bottom(top_y: float) -> void:
 	_chrome_bottom = top_y
 
-func set_chrome_top(bottom_y: float) -> void:
-	_chrome_top = bottom_y
+## `column` is the HUD text column in canvas space. `bar_top` is the run
+## bar during a replay (negative otherwise); a plate that would cross it
+## stays just above it.
+func set_chrome_top(column: Rect2, bar_top: float = -1.0) -> void:
+	_chrome_span = column
+	_chrome_top = column.end.y
+	_label_bar = bar_top
 	_layout_waiting_preview()
 
+## True when this plate overlaps the HUD text column in x, or no column
+## was recorded (the old full-width floor).
+func _overlaps_chrome(r: Rect2) -> bool:
+	if _chrome_span.size.x <= 0.0:
+		return true
+	return r.position.x < _chrome_span.end.x and r.end.x > _chrome_span.position.x
 
 func waiting_preview_rect() -> Rect2:
 	if _waiting_preview and is_instance_valid(_waiting_preview):

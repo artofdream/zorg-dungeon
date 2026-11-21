@@ -1305,7 +1305,8 @@ func _solution_phone_landscape(engine: Node, i: int) -> void:
 
 ## FR-47: during a replay the camera frames the solution's layout in the
 ## free area between the caption, Levels / ?, the camera pad and the bottom
-## bar, and room labels stay clear of the bar. Checked at the first cast
+## bar. Room labels and hero HP plates stay clear of the bar, and an HP
+## plate beside the caption stays above its hero. Checked at the first cast
 ## caption and at the end of every stored solution that casts, plus the
 ## largest stored no-cast layout.
 func _replay_framing_checks(engine: Node, what: String) -> void:
@@ -1383,6 +1384,35 @@ func _check_replay_frame(what: String) -> void:
 		if plate.visible and plate.get_global_rect().intersects(bar):
 			bad += "%s %s " % [id, plate.get_global_rect()]
 	_check(bad == "", "%s: room labels clear the bottom bar %s (%s)" % [what, bar, bad])
+	var col: Rect2 = level.hud_top.get_global_rect()
+	var bad_hp := ""
+	var beside := 0
+	var heroes_n = level.heroes
+	for hid in heroes_n._plates:
+		var hp_plate: Control = heroes_n._plates[hid]
+		if hp_plate == null or not hp_plate.visible or hp_plate.modulate.a <= 0.05:
+			continue
+		var pr: Rect2 = hp_plate.get_global_rect()
+		if pr.intersects(bar):
+			bad_hp += "bar %s %s " % [hid, pr]
+		# A plate clear of the text column belongs above its hero. The old
+		# full-width caption floor parked it on the caption bottom instead.
+		if pr.end.x <= col.position.x or pr.position.x >= col.end.x:
+			beside += 1
+			var fig: Node3D = heroes_n._figures.get(hid)
+			if fig and is_instance_valid(fig) and fig.visible:
+				var head := cam3.unproject_position(fig.global_position + Vector3(0, heroes_n.LABEL_Y * heroes_n.SCALE, 0))
+				if pr.position.y > head.y + 8.0:
+					bad_hp += "shoved %s head %s plate %s " % [hid, head, pr]
+	if area.position.x + 4.0 >= col.end.x and beside == 0:
+		var living := 0
+		for id2 in heroes_n._figures:
+			var fig2: Node3D = heroes_n._figures[id2]
+			if fig2 and is_instance_valid(fig2) and fig2.visible:
+				living += 1
+		if living > 0:
+			bad_hp += "no HP plate beside the caption (%d heroes) " % living
+	_check(bad_hp == "", "%s: hero HP labels stay above their heroes and clear the bottom bar %s (%s)" % [what, bar, bad_hp])
 
 ## Screenshot of a solution mid-run with its caption (manual check / PR shots).
 func _solution_shot(engine: Node, path: String) -> void:
