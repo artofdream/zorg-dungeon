@@ -1257,6 +1257,20 @@ func _picker_modal_checks(label: String, clicks: bool) -> void:
 			await process_frame
 			_check(level.selected == "" and level.drag_id == "" and not lp.is_open(),
 				"picker modal: a tap on a tray tile behind the grid only closes the grid (selected '%s')" % level.selected)
+			# A phone tap: a touch plus the emulated mouse press and release
+			# (emulate_mouse_from_touch), all of which must stop at the backdrop.
+			lp.set_open(true)
+			await process_frame
+			for down in [true, false]:
+				var t := InputEventScreenTouch.new()
+				t.index = 0
+				t.pressed = down
+				t.position = c
+				Input.parse_input_event(t)
+				await process_frame
+			await process_frame
+			_check(level.selected == "" and level.drag_id == "" and not lp.is_open(),
+				"picker modal: a phone touch on a tray tile behind the grid only closes the grid (selected '%s')" % level.selected)
 		lp.set_open(true)
 		await process_frame
 		var cc := close_btn.get_global_rect().get_center()

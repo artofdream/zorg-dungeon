@@ -143,10 +143,13 @@ func _toggle() -> void:
 
 func _on_backdrop_input(event: InputEvent) -> void:
 	# A tap or click on the dimmed area (outside the panel) closes the grid.
-	var tap: bool = (event is InputEventMouseButton and event.pressed) or (event is InputEventScreenTouch and event.pressed)
-	if tap:
+	# Close on release, deferred: on a phone one tap arrives as a touch and
+	# an emulated mouse press/release, and closing on the first of them let
+	# the rest fall through to the tray tile under the backdrop.
+	if event is InputEventMouseButton or event is InputEventScreenTouch:
 		accept_event()
-		close_panel()
+		if not event.pressed:
+			close_panel.call_deferred()
 
 ## Fit the panel inside this node's rect (the HUD root, already inside the
 ## safe area): fewer columns on narrow screens, and a scrolling grid when
