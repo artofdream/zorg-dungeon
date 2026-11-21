@@ -1086,6 +1086,8 @@ func _solution_checks(engine: Node) -> void:
 	_check(level.placed.size() == before + 1, "Next drops the next room while paused")
 	level.back_pressed()
 	_check(not sp.active() and not level.solution_guide.visible, "Back / Esc stops the solution")
+	await _solution_input_checks(engine)
+	await _solution_non_win_check(engine)
 	await _solution_phone_landscape(engine, first)
 	var shot := ""
 	for a in OS.get_cmdline_user_args():
@@ -1093,6 +1095,105 @@ func _solution_checks(engine: Node) -> void:
 			shot = a.substr(16)
 	if shot != "":
 		await _solution_shot(engine, shot)
+
+## Index of the first level whose stored solution casts a spell, or -1.
+func _first_with_casts(engine: Node, sp: ZorgSolutionPlayer, skip := -1) -> int:
+	for i in engine.levels.size():
+		var e: Dictionary = sp.levels.get(String(engine.levels[i]["id"]), {})
+		if i != skip and String(e.get("status", "")) == "solved" and not (e.get("casts", []) as Array).is_empty():
+			return i
+	return -1
+
+## Bugbot #142: during a replay, Play / Step / Space and the spell bar must
+## not drive the engine through the normal runner (that walked stepCount past
+## a stored cast). They go to the replay's own controls; Stop gives them back.
+func _solution_input_checks(engine: Node) -> void:
+	var sp: ZorgSolutionPlayer = level.solution
+	var i := _first_with_casts(engine, sp)
+	_check(i >= 0, "a stored solution with a spell cast exists for the replay input checks")
+	if i < 0:
+		return
+	var id := String(engine.levels[i]["id"])
+	level._open_level(i)
+	await process_frame
+	sp.start(id)
+	var guard := 0
+	while sp.phase == "place" and guard < 200:
+		sp._tick()
+		guard += 1
+	_check(sp.phase == "run", "%s: replay reached the run phase" % id)
+	sp.toggle_pause()                         # paused: only explicit input could move it
+	var sc0 := int(level.engine.state.get("stepCount", 0))
+	level._on_play(true)
+	_check(not level.playback.is_playing(), "%s: Play during a replay does not start the normal runner" % id)
+	_check(sp.playing, "%s: Play during a replay resumes the replay instead" % id)
+	level._on_play(true)
+	_check(not sp.playing and not level.playback.is_playing(), "%s: Play again pauses the replay" % id)
+	level._on_auto_advance()
+	_check(int(level.engine.state.get("stepCount", 0)) == sc0, "%s: a stray auto-advance does not step the engine" % id)
+	# Step and Space: one replay tick each (never more than one engine action).
+	level._on_step(true)
+	var sc1 := int(level.engine.state.get("stepCount", 0))
+	_check(sc1 - sc0 <= 1 and sp.owns_run() and not sp.playing, "%s: Step during a replay is one replay step (%d -> %d)" % [id, sc0, sc1])
+	var space := InputEventKey.new()
+	space.keycode = KEY_SPACE
+	space.pressed = true
+	level._unhandled_input(space)
+	var sc2 := int(level.engine.state.get("stepCount", 0))
+	_check(sc2 - sc1 <= 1 and sp.owns_run(), "%s: Space during a replay is one replay step (%d -> %d)" % [id, sc1, sc2])
+	var cast_id := int((sp.sol["casts"] as Array)[0].get("spellId", 0))
+	_check(not level.cast_spell(cast_id), "%s: the spell bar can't cast over a running replay" % id)
+	# Interleaved Play / Step / Space must not cost the stored win.
+	guard = 0
+	while sp.owns_run() and guard < 20000:
+		if guard % 7 == 0:
+			level._on_step(true)
+		elif guard % 11 == 0:
+			level._unhandled_input(space)
+		else:
+			sp._tick()
+		guard += 1
+	_check(sp.last_outcome == "win" and not sp.mismatch, "%s: replay with Play/Step/Space mixed in still wins (%s)" % [id, sp.last_outcome])
+	_check(level.solution_guide.header.text.begins_with("Solution step"), "%s: a won replay ends on the stored result caption" % id)
+	# A finished replay hands Play back to the normal runner.
+	sp.stop()
+	level._on_reset()
+	level._on_play(true)
+	_check(not sp.active() and level.playback.is_playing(), "%s: after Stop, Play drives the normal run again" % id)
+	level._on_reset()
+
+## Bugbot #142: if the replay does not win (here: the stored casts are
+## dropped), the caption says so instead of showing the stored win text.
+func _solution_non_win_check(engine: Node) -> void:
+	var sp: ZorgSolutionPlayer = level.solution
+	var outcome := "win"
+	var id := ""
+	for i in engine.levels.size():
+		var e: Dictionary = sp.levels.get(String(engine.levels[i]["id"]), {})
+		if String(e.get("status", "")) != "solved" or (e.get("casts", []) as Array).is_empty():
+			continue
+		id = String(engine.levels[i]["id"])
+		level._open_level(i)
+		await process_frame
+		sp.start(id)
+		sp.steps = sp.steps.filter(func(st: Dictionary) -> bool: return String(st["kind"]) != "cast")
+		var guard := 0
+		while sp.owns_run() and guard < 20000:
+			sp._tick()
+			guard += 1
+		outcome = sp.last_outcome
+		if outcome != "win":
+			break
+	_check(outcome != "win", "a stored solution loses without its casts (%s: %s)" % [id, outcome])
+	if outcome == "win":
+		return
+	_check(sp.mismatch, "%s: a non-win replay is flagged" % id)
+	_check(level.solution_guide.header.text == "Solution replay did not win", "%s: non-win replay header is honest (%s)" % [id, level.solution_guide.header.text])
+	_check(level.solution_guide.text.text.begins_with("This replay ended in a") and not level.solution_guide.text.text.contains("All heroes are dead"),
+		"%s: non-win caption does not show the stored win text (%s)" % [id, level.solution_guide.text.text])
+	_check(not level.result.text.begins_with("You win"), "%s: the banner agrees (%s)" % [id, level.result.text])
+	sp.stop()
+	level._on_reset()
 
 ## The caption plate must not cover the tray / run controls or the corner buttons.
 func _guide_clear_of_chrome(what: String) -> void:
