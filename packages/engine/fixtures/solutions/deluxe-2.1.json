@@ -1,0 +1,288 @@
+{
+  "generatedBy": "packages/engine/scripts/solve-levels.mjs",
+  "levelId": "deluxe-2.1",
+  "source": "packages/engine/fixtures/contracts/2.1-fire-immunity.txt",
+  "sourceSha256": "26ee183ade91e449db77904c5a669fa4a7dfef159b31e0157b0e6314191baf6d",
+  "status": "solved",
+  "search": {
+    "verdict": "found",
+    "maxLayoutsPerWorker": 1000000,
+    "orientations": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "solvabilityCaps": {
+      "maxNodes": 256,
+      "maxSteps": 256,
+      "maxBranch": 8
+    }
+  },
+  "solution": {
+    "levelId": "deluxe-2.1",
+    "orientation": 0,
+    "placements": [
+      {
+        "id": "A:0",
+        "x": 0,
+        "y": 0
+      },
+      {
+        "id": "Z:0",
+        "x": 1,
+        "y": 0
+      },
+      {
+        "id": "E:0",
+        "x": 2,
+        "y": 0
+      }
+    ],
+    "casts": [
+      {
+        "afterSteps": 1,
+        "cast": {
+          "spellId": 0
+        }
+      }
+    ]
+  },
+  "explanation": [
+    {
+      "index": 0,
+      "kind": "orientation",
+      "orientation": 0,
+      "does": [
+        {
+          "code": "orientation_set",
+          "params": {
+            "orientation": 0
+          },
+          "rules": [
+            "FR-7",
+            "FR-31"
+          ],
+          "text": "All rooms face 0°; it sets the heroes' tie-break order."
+        }
+      ],
+      "why": [
+        {
+          "code": "rotated_still_wins",
+          "params": {},
+          "rules": [
+            "FR-7"
+          ],
+          "text": "Any other rotation also wins."
+        }
+      ],
+      "rules": [
+        "FR-7",
+        "FR-31"
+      ],
+      "text": "All rooms face 0°; it sets the heroes' tie-break order. Any other rotation also wins."
+    },
+    {
+      "index": 1,
+      "kind": "place",
+      "roomId": "A:0",
+      "room": "A",
+      "x": 0,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "spawn_room",
+          "params": {},
+          "rules": [
+            "FR-11"
+          ],
+          "text": "Heroes spawn here."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_still_wins",
+          "params": {
+            "tried": 7
+          },
+          "rules": [
+            "FR-5"
+          ],
+          "text": "Not critical: all 7 other spots tried still win."
+        }
+      ],
+      "rules": [
+        "FR-5",
+        "FR-11"
+      ],
+      "text": "Heroes spawn here. Not critical: all 7 other spots tried still win."
+    },
+    {
+      "index": 2,
+      "kind": "place",
+      "roomId": "E:0",
+      "room": "E(fire)",
+      "x": 2,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "off_path",
+          "params": {},
+          "rules": [
+            "FR-5"
+          ],
+          "text": "No hero enters it; it only has to be placed."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_still_wins",
+          "params": {
+            "tried": 7
+          },
+          "rules": [
+            "FR-5"
+          ],
+          "text": "Not critical: all 7 other spots tried still win."
+        }
+      ],
+      "rules": [
+        "FR-5"
+      ],
+      "text": "No hero enters it; it only has to be placed. Not critical: all 7 other spots tried still win."
+    },
+    {
+      "index": 3,
+      "kind": "place",
+      "roomId": "Z:0",
+      "room": "Z",
+      "x": 1,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "goal_room",
+          "params": {},
+          "rules": [
+            "FR-12",
+            "FR-21"
+          ],
+          "text": "Zorg's room: the heroes head here; no one may get in."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_still_wins",
+          "params": {
+            "tried": 2
+          },
+          "rules": [
+            "FR-5"
+          ],
+          "text": "Not critical: all 2 other spots tried still win."
+        }
+      ],
+      "rules": [
+        "FR-5",
+        "FR-12",
+        "FR-21"
+      ],
+      "text": "Zorg's room: the heroes head here; no one may get in. Not critical: all 2 other spots tried still win."
+    },
+    {
+      "index": 4,
+      "kind": "cast",
+      "afterSteps": 1,
+      "spellId": 0,
+      "spell": "Attack(1)",
+      "does": [
+        {
+          "code": "spell_cast",
+          "params": {
+            "spell": "Attack(1)",
+            "step": 1,
+            "effect": "the Elf takes 1 damage, the Warrior takes 1 damage",
+            "killed": "the Elf, the Warrior"
+          },
+          "rules": [
+            "FR-28",
+            "FR-32",
+            "FR-33",
+            "FR-34"
+          ],
+          "text": "Attack(1) after step 1: the Elf takes 1 damage, the Warrior takes 1 damage; kills the Elf, the Warrior."
+        }
+      ],
+      "why": [
+        {
+          "code": "removed_loses",
+          "params": {
+            "outcome": "the Elf reaches Zorg at step 4"
+          },
+          "rules": [
+            "FR-12",
+            "FR-34",
+            "FR-43"
+          ],
+          "text": "Without it: the Elf reaches Zorg at step 4."
+        },
+        {
+          "code": "earlier_result",
+          "params": {
+            "outcome": "the Elf reaches Zorg at step 4"
+          },
+          "rules": [
+            "FR-12",
+            "FR-34",
+            "FR-43"
+          ],
+          "text": "One step earlier: the Elf reaches Zorg at step 4."
+        },
+        {
+          "code": "later_result",
+          "params": {
+            "outcome": "still a win"
+          },
+          "rules": [
+            "FR-34"
+          ],
+          "text": "One step later: still a win."
+        }
+      ],
+      "rules": [
+        "FR-12",
+        "FR-28",
+        "FR-32",
+        "FR-33",
+        "FR-34",
+        "FR-43"
+      ],
+      "text": "Attack(1) after step 1: the Elf takes 1 damage, the Warrior takes 1 damage; kills the Elf, the Warrior. Without it: the Elf reaches Zorg at step 4."
+    },
+    {
+      "index": 5,
+      "kind": "result",
+      "does": [
+        {
+          "code": "run_won",
+          "params": {
+            "step": 1
+          },
+          "rules": [
+            "FR-28",
+            "FR-43"
+          ],
+          "text": "All heroes are dead by step 1 and no one reached Zorg."
+        }
+      ],
+      "why": [],
+      "rules": [
+        "FR-28",
+        "FR-43"
+      ],
+      "text": "All heroes are dead by step 1 and no one reached Zorg."
+    }
+  ]
+}

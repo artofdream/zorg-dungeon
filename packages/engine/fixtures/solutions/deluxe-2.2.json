@@ -1,0 +1,377 @@
+{
+  "generatedBy": "packages/engine/scripts/solve-levels.mjs",
+  "levelId": "deluxe-2.2",
+  "source": "packages/engine/fixtures/contracts/2.2-elemental-sanctuary.txt",
+  "sourceSha256": "2b785245d797571badc3d6a005197f0625b729f7da47984ff4ec8cc4f22a1ad6",
+  "status": "solved",
+  "search": {
+    "verdict": "found",
+    "maxLayoutsPerWorker": 1000000,
+    "orientations": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "solvabilityCaps": {
+      "maxNodes": 128,
+      "maxSteps": 256,
+      "maxBranch": 8
+    }
+  },
+  "solution": {
+    "levelId": "deluxe-2.2",
+    "orientation": 0,
+    "placements": [
+      {
+        "id": "A:0",
+        "x": 0,
+        "y": 0
+      },
+      {
+        "id": "Z:0",
+        "x": 3,
+        "y": 0
+      },
+      {
+        "id": "E:0",
+        "x": 1,
+        "y": 0
+      },
+      {
+        "id": "E:1",
+        "x": 4,
+        "y": 0
+      },
+      {
+        "id": "E:2",
+        "x": 2,
+        "y": 0
+      }
+    ],
+    "casts": []
+  },
+  "explanation": [
+    {
+      "index": 0,
+      "kind": "orientation",
+      "orientation": 0,
+      "does": [
+        {
+          "code": "orientation_set",
+          "params": {
+            "orientation": 0
+          },
+          "rules": [
+            "FR-7",
+            "FR-31"
+          ],
+          "text": "All rooms face 0°; it sets the heroes' tie-break order."
+        }
+      ],
+      "why": [
+        {
+          "code": "rotated_still_wins",
+          "params": {},
+          "rules": [
+            "FR-7"
+          ],
+          "text": "Any other rotation also wins."
+        }
+      ],
+      "rules": [
+        "FR-7",
+        "FR-31"
+      ],
+      "text": "All rooms face 0°; it sets the heroes' tie-break order. Any other rotation also wins."
+    },
+    {
+      "index": 1,
+      "kind": "place",
+      "roomId": "A:0",
+      "room": "A",
+      "x": 0,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "spawn_room",
+          "params": {},
+          "rules": [
+            "FR-11"
+          ],
+          "text": "Heroes spawn here."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_loses",
+          "params": {
+            "example": "Elf 1 reaches Zorg at step 5",
+            "failing": 10,
+            "tried": 13
+          },
+          "rules": [
+            "FR-11",
+            "FR-12",
+            "FR-43"
+          ],
+          "text": "Elsewhere it fails: Elf 1 reaches Zorg at step 5 (10 of 13 other spots lose)."
+        }
+      ],
+      "rules": [
+        "FR-11",
+        "FR-12",
+        "FR-43"
+      ],
+      "text": "Heroes spawn here. Elsewhere it fails: Elf 1 reaches Zorg at step 5 (10 of 13 other spots lose)."
+    },
+    {
+      "index": 2,
+      "kind": "place",
+      "roomId": "E:0",
+      "room": "E(fire)",
+      "x": 1,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "hero_damaged",
+          "params": {
+            "hero": "Elf 1",
+            "amount": 3,
+            "entries": 1
+          },
+          "rules": [
+            "FR-14"
+          ],
+          "text": "Elf 1 takes 3 damage here."
+        },
+        {
+          "code": "hero_damaged",
+          "params": {
+            "hero": "Elf 2",
+            "amount": 3,
+            "entries": 1
+          },
+          "rules": [
+            "FR-14"
+          ],
+          "text": "Elf 2 takes 3 damage here."
+        },
+        {
+          "code": "hero_killed",
+          "params": {
+            "hero": "Elf 1",
+            "step": 7
+          },
+          "rules": [
+            "FR-28"
+          ],
+          "text": "Elf 1 dies here at step 7."
+        },
+        {
+          "code": "hero_killed",
+          "params": {
+            "hero": "Elf 2",
+            "step": 14
+          },
+          "rules": [
+            "FR-28"
+          ],
+          "text": "Elf 2 dies here at step 14."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_loses",
+          "params": {
+            "example": "Elf 1 reaches Zorg at step 5",
+            "failing": 3,
+            "tried": 4
+          },
+          "rules": [
+            "FR-12",
+            "FR-14",
+            "FR-43"
+          ],
+          "text": "Elsewhere it fails: Elf 1 reaches Zorg at step 5 (3 of 4 other spots lose)."
+        }
+      ],
+      "rules": [
+        "FR-12",
+        "FR-14",
+        "FR-28",
+        "FR-43"
+      ],
+      "text": "Elf 1 takes 3 damage here. Elf 2 takes 3 damage here. Elf 1 dies here at step 7. Elsewhere it fails: Elf 1 reaches Zorg at step 5 (3 of 4 other spots lose)."
+    },
+    {
+      "index": 3,
+      "kind": "place",
+      "roomId": "E:1",
+      "room": "E(water)",
+      "x": 4,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "shapes_path",
+          "params": {},
+          "rules": [
+            "FR-6",
+            "FR-21"
+          ],
+          "text": "No hero enters it, but where it sits changes the heroes' path."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_loses",
+          "params": {
+            "example": "Elf 1 reaches Zorg at step 4",
+            "failing": 4,
+            "tried": 13
+          },
+          "rules": [
+            "FR-12",
+            "FR-14",
+            "FR-43"
+          ],
+          "text": "Elsewhere it fails: Elf 1 reaches Zorg at step 4 (4 of 13 other spots lose)."
+        }
+      ],
+      "rules": [
+        "FR-6",
+        "FR-12",
+        "FR-14",
+        "FR-21",
+        "FR-43"
+      ],
+      "text": "No hero enters it, but where it sits changes the heroes' path. Elsewhere it fails: Elf 1 reaches Zorg at step 4 (4 of 13 other spots lose)."
+    },
+    {
+      "index": 4,
+      "kind": "place",
+      "roomId": "E:2",
+      "room": "E(ice)",
+      "x": 2,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "shapes_path",
+          "params": {},
+          "rules": [
+            "FR-6",
+            "FR-21"
+          ],
+          "text": "No hero enters it, but where it sits changes the heroes' path."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_loses",
+          "params": {
+            "example": "Elf 1 reaches Zorg at step 4",
+            "failing": 3,
+            "tried": 4
+          },
+          "rules": [
+            "FR-12",
+            "FR-14",
+            "FR-43"
+          ],
+          "text": "Elsewhere it fails: Elf 1 reaches Zorg at step 4 (3 of 4 other spots lose)."
+        }
+      ],
+      "rules": [
+        "FR-6",
+        "FR-12",
+        "FR-14",
+        "FR-21",
+        "FR-43"
+      ],
+      "text": "No hero enters it, but where it sits changes the heroes' path. Elsewhere it fails: Elf 1 reaches Zorg at step 4 (3 of 4 other spots lose)."
+    },
+    {
+      "index": 5,
+      "kind": "place",
+      "roomId": "Z:0",
+      "room": "Z",
+      "x": 3,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "goal_room",
+          "params": {},
+          "rules": [
+            "FR-12",
+            "FR-21"
+          ],
+          "text": "Zorg's room: the heroes head here; no one may get in."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_loses",
+          "params": {
+            "example": "Elf 1 reaches Zorg at step 4",
+            "failing": 3,
+            "tried": 4
+          },
+          "rules": [
+            "FR-12",
+            "FR-43"
+          ],
+          "text": "Elsewhere it fails: Elf 1 reaches Zorg at step 4 (3 of 4 other spots lose)."
+        }
+      ],
+      "rules": [
+        "FR-12",
+        "FR-21",
+        "FR-43"
+      ],
+      "text": "Zorg's room: the heroes head here; no one may get in. Elsewhere it fails: Elf 1 reaches Zorg at step 4 (3 of 4 other spots lose)."
+    },
+    {
+      "index": 6,
+      "kind": "result",
+      "does": [
+        {
+          "code": "run_won",
+          "params": {
+            "step": 14
+          },
+          "rules": [
+            "FR-28",
+            "FR-43"
+          ],
+          "text": "All heroes are dead by step 14 and no one reached Zorg."
+        },
+        {
+          "code": "constraint_holds",
+          "params": {
+            "constraintId": "c-1",
+            "kind": "distance",
+            "rule": "dist(A, Z) != 2"
+          },
+          "rules": [
+            "FR-10",
+            "FR-44"
+          ],
+          "text": "Rule \"dist(A, Z) != 2\" holds."
+        }
+      ],
+      "why": [],
+      "rules": [
+        "FR-10",
+        "FR-28",
+        "FR-43",
+        "FR-44"
+      ],
+      "text": "All heroes are dead by step 14 and no one reached Zorg. Rule \"dist(A, Z) != 2\" holds."
+    }
+  ]
+}

@@ -128,6 +128,7 @@ A spell can be cast the instant a hero finishes an action (a move, a spawn) but 
 - **FR-44** — Support arbitrary blocking constraints and separately-tracked, non-blocking bonuses.
 - **FR-45** — Resolve mirror worlds in declared order, each retiring once idle or once its Z is reached.
 - **FR-46** — Provide a solvability check: does any spell-cast sequence let a given world's heroes all die before reaching Z — required to validate solvable/not-solvable constraints.
+- **FR-47** — Offer "Show a solution" for each shipped level: one stored winning layout and spell sequence found by a bounded engine search and re-verified by replay, with an engine-derived reason for every step (what it does in the run, what fails when that step is changed, and the rule IDs involved). A level the search has not solved says so instead of showing a made-up solution.
 
 ## 3. Non-functional requirements
 
@@ -162,6 +163,7 @@ Two things get built on one shared model: a **simulation engine** that owns the 
 - Deterministic hero-turn scheduler + per-type pathfinder (FR-19–FR-31).
 - Spell resolver, including Selection's meta-dispatch (FR-32–FR-42).
 - Win/loss evaluator + mirror-world runner + solvability search (FR-43–FR-46).
+- Stored, explained level solutions (FR-47).
 
 **The Maker (editor) + runner**
 - Grid canvas for placing supplied rooms; live FR-6/FR-7 validation as feedback, not just a final gate.

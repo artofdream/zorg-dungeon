@@ -147,6 +147,8 @@ var help_btn: Button
 var undo_btn: Button
 var next_btn: Button
 var help_dlg: ZorgHelpDialog
+var solution: ZorgSolutionPlayer            # FR-47 Show a solution (stored engine solution)
+var solution_guide: ZorgSolutionGuide      # its caption plate, in the HUD text column
 var help_box: VBoxContainer
 var quit_dlg: ZorgQuitDialog     # scenes/quit_dialog.tscn: "Quit Zorg?" Stay / Quit
 var quit_stay: Button
@@ -282,6 +284,7 @@ func _ready() -> void:
 # ------------------------------------------------------------------ levels
 
 func _open_level(i: int) -> void:
+	solution.stop()
 	level_index = i
 	_swatches.clear()
 	_on_reset()
@@ -597,6 +600,11 @@ func _build_ui() -> void:
 	# First-run spell hint lives in the HUD text column so it cannot cover
 	# hero HP labels on the board. The Play/Step row stays clear of it.
 	playback.mount_spell_hint(hud_top)
+	solution_guide = ZorgSolutionGuide.new()
+	hud_top.add_child(solution_guide)
+	solution = ZorgSolutionPlayer.new()
+	add_child(solution)
+	solution.attach(self, solution_guide)
 	undo_btn = board_build.undo_button
 	for b in [undo_btn, play_btn, step_btn, _btn("Build", _on_reset)]:
 		b.custom_minimum_size.x = 76
@@ -623,6 +631,7 @@ func _build_dialogs() -> void:
 	help_dlg = preload("res://scenes/help_dialog.tscn").instantiate() as ZorgHelpDialog
 	ui_root.add_child(help_dlg)
 	help_box = help_dlg.legend
+	help_dlg.solution_requested.connect(show_solution)
 	quit_dlg = preload("res://scenes/quit_dialog.tscn").instantiate() as ZorgQuitDialog
 	ui_root.add_child(quit_dlg)
 	quit_stay = quit_dlg.stay_button
@@ -637,6 +646,11 @@ func open_help() -> void:
 
 func close_help() -> void:
 	help_dlg.close_dialog()
+
+## FR-47: replay the engine's stored solution for this level (or say there
+## is none yet). The solution player only presents it (NFR-1).
+func show_solution() -> void:
+	solution.start(String(engine.levels[level_index]["id"]))
 
 func _show_quit() -> void:
 	quit_dlg.open()                          # Enter = Stay, the safe choice
@@ -684,6 +698,8 @@ func back_pressed() -> void:
 		level_picker.close_panel()
 	elif selected != "" or kb_active:
 		_kb_cancel()
+	elif solution.active():
+		solution.stop()
 	elif not embedded:
 		_show_quit()
 
@@ -701,6 +717,8 @@ func _notification(what: int) -> void:
 func undo() -> void:
 	if place_order.is_empty():
 		return
+	if not solution.driving:
+		solution.stop()
 	if not _building():
 		_on_reset()
 	_unplace(place_order.back())
@@ -758,6 +776,7 @@ func _apply_margins() -> void:
 	goal.custom_minimum_size.x = w
 	status.custom_minimum_size.x = w
 	log_label.custom_minimum_size.x = w
+	solution_guide.set_width(w)
 	cam_grid.offset_left = -cam_grid.get_combined_minimum_size().x
 	cam_grid.offset_top = -cam_grid.get_combined_minimum_size().y / 2.0
 	cam_grid.offset_bottom = cam_grid.get_combined_minimum_size().y / 2.0
@@ -1721,6 +1740,8 @@ func _set_follow(on: bool) -> void:
 	cam.set_follow(on)
 
 func _on_reset() -> void:
+	if solution and not solution.driving:
+		solution.stop()
 	if toast:
 		toast.hide_now()
 	if follow:

@@ -23,6 +23,11 @@ extends SceneTree
 ##    and tap-vs-pan slop is at least 12 px and about 2.5 mm.
 ##  - level picker: a modal over the HUD (above the room tray), every button
 ##    inside the viewport on landscape, 2340×1080 and 360-wide portrait.
+##  - FR-47 Show a solution: the ? dialog asks before it clears the board;
+##    every stored solution plays to the win banner with a caption per step;
+##    unsolved levels say so; the caption plate stays in the HUD text column,
+##    off the tray, the run controls and the Levels / ? corner (also on a
+##    2340×1080 landscape canvas). `-- --solution-shot=path.png` saves one.
 ##  - hitch fix (CF-015): the warm-up pools every room and hero off-screen,
 ##    a tray drop with no ready room shows a placeholder and finishes it a
 ##    few frames later, and the Play button builds the walls over frames
@@ -1006,6 +1011,7 @@ func _initialize() -> void:
 	await _board_ux(engine)
 	_fluidity_checks()
 	await _hitch_checks(engine)
+	await _solution_checks(engine)
 
 	# Rotate and let the camera settle.
 	level._rotate(90.0)
@@ -1030,6 +1036,136 @@ func _initialize() -> void:
 		root.get_viewport().get_texture().get_image().save_png(shot)
 	print("level smoke: %s" % ("PASS" if failures == 0 else "%d failure(s)" % failures))
 	quit(1 if failures > 0 else 0)
+
+## FR-47: Show a solution plays the engine's stored solution, step captions on.
+func _solution_checks(engine: Node) -> void:
+	var sp: ZorgSolutionPlayer = level.solution
+	var solved := 0
+	for i in engine.levels.size():
+		var id := String(engine.levels[i]["id"])
+		level._open_level(i)
+		await process_frame
+		if sp.has_solution(id):
+			solved += 1
+			var outcome := sp.run_to_end(id)
+			for f in 3:
+				await process_frame
+			_check(outcome == "win", "%s: stored solution plays to a win (%s)" % [id, outcome])
+			_check(level.result.text.begins_with("You win"), "%s: solution ends on the win banner (%s)" % [id, level.result.text])
+			_check(level.solution_guide.visible and level.solution_guide.header.text.begins_with("Solution step"),
+				"%s: the caption shows the last solution step (%s)" % [id, level.solution_guide.header.text])
+			_check(level.solution_guide.get_parent() == level.hud_top, "%s: the caption sits in the HUD text column" % id)
+			_guide_clear_of_chrome(id)
+		else:
+			_check(not sp.start(id), "%s: no stored solution, Show a solution does not build" % id)
+			_check(level.solution_guide.text.text.begins_with("No stored solution yet"), "%s: says there is no stored solution yet" % id)
+		sp.stop()
+	_check(solved > 0, "at least one level has a stored solution (%d)" % solved)
+	# The ? dialog path: first tap asks, second tap starts.
+	var first := -1
+	for i in engine.levels.size():
+		if sp.has_solution(String(engine.levels[i]["id"])):
+			first = i
+			break
+	level._open_level(first)
+	await process_frame
+	level.open_help()
+	await process_frame
+	level.help_dlg.solution_button.pressed.emit()
+	_check(level.help_dlg.visible and level.help_dlg.solution_note.visible and not sp.active(),
+		"Show a solution asks first (the board is not cleared on the first tap)")
+	level.help_dlg.solution_button.pressed.emit()
+	await process_frame
+	_check(not level.help_dlg.visible and sp.active() and level.solution_guide.visible,
+		"the second tap closes ? and starts the solution with a caption")
+	_check(level.placed.is_empty(), "the board was cleared; the first caption is the orientation step (%d placed)" % level.placed.size())
+	sp.toggle_pause()
+	_check(level.solution_guide.pause_button.text == "Play", "Pause stops the solution and offers Play")
+	var before: int = level.placed.size()
+	sp.next()
+	_check(level.placed.size() == before + 1, "Next drops the next room while paused")
+	level.back_pressed()
+	_check(not sp.active() and not level.solution_guide.visible, "Back / Esc stops the solution")
+	await _solution_phone_landscape(engine, first)
+	var shot := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--solution-shot="):
+			shot = a.substr(16)
+	if shot != "":
+		await _solution_shot(engine, shot)
+
+## The caption plate must not cover the tray / run controls or the corner buttons.
+func _guide_clear_of_chrome(what: String) -> void:
+	var vis := level.get_viewport().get_visible_rect()
+	if vis.size.x < 300.0:
+		print("UX: skip caption overlap check for %s (viewport is %s)" % [what, vis])
+		return
+	var g: Rect2 = level.solution_guide.get_global_rect()
+	_check(not g.intersects(level.bottom_bar.get_global_rect()), "%s: caption %s clears the bottom bar %s" % [what, g, level.bottom_bar.get_global_rect()])
+	_check(not g.intersects(level.levels_btn.get_global_rect()) and not g.intersects(level.help_btn.get_global_rect()),
+		"%s: caption clears Levels and ?" % what)
+	_check(vis.grow(1.0).encloses(g), "%s: caption %s stays on the canvas %s" % [what, g, vis])
+
+func _solution_phone_landscape(engine: Node, i: int) -> void:
+	var vis := level.get_viewport().get_visible_rect()
+	if vis.size.x < 300.0:
+		print("UX: skip 2340x1080 solution caption fit (viewport is %s, needs a display)" % vis)
+		return
+	var win := level.get_window()
+	var old := win.size
+	var old_scale := win.content_scale_factor
+	DisplayServer.window_set_size(Vector2i(2340, 1080))
+	win.size = Vector2i(2340, 1080)
+	win.content_scale_factor = 1.65
+	level.ui_scale = 1.65
+	level._apply_margins()
+	for f in 10:
+		await process_frame
+	var id := String(engine.levels[i]["id"])
+	level._open_level(i)
+	level.solution.run_to_end(id)
+	for f in 10:
+		await process_frame
+	_guide_clear_of_chrome("2340x1080 " + id)
+	level.solution.stop()
+	win.content_scale_factor = old_scale
+	level.ui_scale = old_scale
+	DisplayServer.window_set_size(old)
+	win.size = old
+	level._on_resized()
+	for f in 10:
+		await process_frame
+
+## Screenshot of a solution mid-run with its caption (manual check / PR shots).
+func _solution_shot(engine: Node, path: String) -> void:
+	var want := "deluxe-4.3"
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--solution-level="):
+			want = a.substr(17)
+	for i in engine.levels.size():
+		if String(engine.levels[i]["id"]) == want:
+			level._open_level(i)
+	await process_frame
+	var sp: ZorgSolutionPlayer = level.solution
+	sp.start(want)
+	sp.toggle_pause()
+	var stop_at := "cast"
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--solution-stop="):
+			stop_at = a.substr(16)
+	var guard := 0
+	while sp.active() and sp.phase != "done" and guard < 2000:
+		if sp.step_i < sp.steps.size() and String(sp.steps[sp.step_i]["kind"]) == stop_at \
+				and level.solution_guide.header.text.begins_with("Solution step %d" % (sp.step_i + 1)):
+			break
+		sp.next()
+		guard += 1
+		await process_frame
+	for f in 40:
+		await process_frame
+	root.get_viewport().get_texture().get_image().save_png(path)
+	print("solution shot: ", path)
+	sp.stop()
 
 ## Icon spell bar: disabled before the first action, enabled and pulsed after
 ## the first Step, preview data comes from the engine, and cast_spell works.

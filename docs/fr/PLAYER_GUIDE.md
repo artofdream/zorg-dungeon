@@ -149,6 +149,12 @@ Le plateau Godot est seulement de la présentation : il ne change pas les résul
 Si cette liste et l'application ne sont pas d'accord, **la spécification gagne** pour les règles ; pour les contrôles, c'est l'application et [[0008-godot-port-milestone-1]]. Cette page est un compagnon.
 
 
+### Montrer une solution
+
+Bloqué sur un niveau du jeu Godot ? Ouvre **?** et appuie sur **Show a solution** (un deuxième appui confirme, car ton plateau est vidé). Le jeu construit alors la solution enregistrée par le moteur, une salle à la fois, puis la joue en lançant chaque sort à l'étape prévue ([[FR-47]]). Une petite légende au-dessus du plateau explique chaque étape : ce qu'elle fait pendant la partie, pourquoi elle est nécessaire (le moteur change cette étape, rejoue, et dit ce qui rate, par exemple « le Guerrier atteint Zorg à l'étape 4 »), et les règles en jeu (FR-13, FR-34…). Pour l'instant ces légendes sont en anglais ; elles sont stockées sous forme de codes pour être traduites plus tard.
+
+Les solutions viennent d'une recherche bornée du moteur ([[NFR-4]]), sont rejouées jusqu'à la victoire avant d'être enregistrées, et la copie Godot du moteur les rejoue encore dans son test de parité. Un niveau que la recherche n'a pas résolu affiche « No stored solution yet » au lieu d'une solution inventée. Le jeu ne fait que montrer ; il ne décide rien ([[NFR-1]]).
+
 ## Honnêteté
 
 Cette page ne promeut pas de statut ledger. Voir [[STATUS_LEDGER]] et [[FINDINGS]]. Phase C (ledger / skills bilingues) est hors périmètre ([[0007-i18n-fr-en]]).

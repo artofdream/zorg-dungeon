@@ -76,6 +76,7 @@ writing a table row, is not proof.
 | FR-44 | Simulated | packages/engine/src/constraints.test.ts |
 | FR-45 | Simulated | packages/engine/src/mirrors.test.ts |
 | FR-46 | Simulated | packages/engine/src/solvability.test.ts |
+| FR-47 | Simulated | packages/engine/src/solution.test.ts |
 | NFR-1 | Simulated | packages/engine/src/determinism.test.ts |
 | NFR-2 | Simulated | packages/engine/src/base-classic-corpus.test.ts |
 | NFR-3 | Unknown | |
