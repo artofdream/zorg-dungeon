@@ -195,8 +195,11 @@ func _run_tick() -> void:
 func _check_end() -> void:
 	if not level.engine.over():
 		return
+	# score() says win / loss / unresolved (rules included); the run's own
+	# outcome tells a stalemate or a broken rule apart for the caption.
 	last_outcome = String(level.engine.score()["outcome"])
 	var won := last_outcome == "win"
+	var run_outcome := String(level.engine.state.get("outcome", ""))
 	while step_i < steps.size() and String(steps[step_i]["kind"]) != "result":
 		step_i += 1
 	if won:
@@ -209,13 +212,16 @@ func _check_end() -> void:
 		push_warning("FR-47: solution replay for %s ended in '%s', not the stored win" % [String(sol.get("levelId", "?")), last_outcome])
 		print("zorg: solution replay did not win (%s)" % last_outcome)
 		guide.show_step("Solution replay did not win",
-			"This replay ended in a %s, not the stored win: the run drifted from the engine's stored solution. Press Stop and try Show a solution again." % _outcome_words(last_outcome), [])
+			"This replay ended in a %s, not the stored win: the run drifted from the engine's stored solution. Press Stop and try Show a solution again." % _outcome_words(last_outcome, run_outcome), [])
 	phase = "done"
 	guide.show_controls(false, false)
 	finished.emit(won)
 
-static func _outcome_words(outcome: String) -> String:
-	match outcome:
-		"loss": return "loss (a hero reached Zorg)"
-		"stalemate": return "stalemate (a hero is stuck)"
-	return "'%s' result" % outcome
+static func _outcome_words(score_outcome: String, run_outcome: String) -> String:
+	if score_outcome == "loss" or run_outcome == "loss":
+		return "loss (a hero reached Zorg)"
+	if run_outcome == "stalemate":
+		return "stalemate (a hero is stuck)"
+	if run_outcome == "win":
+		return "run where every hero died but a level rule broke"
+	return "'%s' result" % (run_outcome if run_outcome != "" else score_outcome)

@@ -1192,6 +1192,12 @@ func _solution_non_win_check(engine: Node) -> void:
 	_check(level.solution_guide.text.text.begins_with("This replay ended in a") and not level.solution_guide.text.text.contains("All heroes are dead"),
 		"%s: non-win caption does not show the stored win text (%s)" % [id, level.solution_guide.text.text])
 	_check(not level.result.text.begins_with("You win"), "%s: the banner agrees (%s)" % [id, level.result.text])
+	# Bugbot #143: score() reports a stalemate as "unresolved"; the caption
+	# must still use the stuck-hero wording.
+	_check(ZorgSolutionPlayer._outcome_words("unresolved", "stalemate").begins_with("stalemate"),
+		"a stalled replay is worded as a stalemate, not 'unresolved'")
+	_check(ZorgSolutionPlayer._outcome_words("unresolved", "win").contains("rule"),
+		"a replay that kills every hero but breaks a rule says a rule broke")
 	sp.stop()
 	level._on_reset()
 
