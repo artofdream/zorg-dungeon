@@ -13,11 +13,15 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { scoreLevel } from "./constraints.js";
 import { parseLevel } from "./loader.js";
-import { simulate } from "./simulation.js";
+import { createRun, simulate, stepRun } from "./simulation.js";
 import {
+  TARGET_FREE_CAST_CAPS,
+  cycleStateKey,
   fixedPolyominoes,
+  historyHorizon,
   layoutFromSolution,
   searchSolution,
+  searchTargetFreeCasts,
   verifySolution,
   type StoredSolution,
 } from "./solution.js";
@@ -186,5 +190,65 @@ describe("NFR-4 bounded layout search", () => {
     const { level } = azAdjacent([{ type: "Warrior", hp: 5 }]);
     const r = searchSolution({ ...level, mirrorWorlds: [makeLevel([{ type: "A" }, { type: "Z" }], [{ type: "Warrior", hp: 5 }], "m")] });
     expect(r.verdict).toBe("unsupported");
+  });
+});
+
+describe("NFR-4 state-cycle pruning (target-free cast search)", () => {
+  const { level } = load("deluxe-5.5.json");
+  // A 5.5 layout whose Warrior bounces between two cells forever, damage-free.
+  const looping: StoredSolution = {
+    levelId: "deluxe-5.5",
+    orientation: 0,
+    placements: [
+      { id: "A:0", x: 0, y: 0 },
+      { id: "Z:0", x: 3, y: 0 },
+      { id: "E:0", x: 1, y: 0 },
+      { id: "P:0", x: 4, y: 0 },
+      { id: "O:0", x: 5, y: 0 },
+      { id: "T:0", x: 2, y: 0 },
+    ],
+    casts: [],
+  };
+
+  it("reads the history horizon from Teleport(n) and every active P entry", () => {
+    // 5.5: Teleport(4); P(2, x↦7x-6) looks back f(1) = 1 and f(2) = 8 visits.
+    expect(historyHorizon(level)).toBe(8);
+  });
+
+  it("keys a run by what can still change it, not by its step count", () => {
+    const layout = layoutFromSolution(level, looping);
+    const run = createRun({ ...level, spells: [] }, layout);
+    const keys: string[] = [];
+    for (let i = 0; i < 16; i += 1) {
+      stepRun(run);
+      keys.push(cycleStateKey(run, historyHorizon(level), new Map([["P:0", 2]])));
+    }
+    // Once the visit history is 8 long (step 11), the bounce repeats with period 2.
+    expect(keys[14]).toBe(keys[12]);
+    expect(keys[15]).toBe(keys[13]);
+    expect(keys[13]).not.toBe(keys[12]);
+  });
+
+  it("ends a damage-free loop as fully searched; without pruning the stall cap marks it capped", () => {
+    const layout = layoutFromSolution(level, looping);
+    const pruned = searchTargetFreeCasts(level, layout);
+    const unpruned = searchTargetFreeCasts(level, layout, { ...TARGET_FREE_CAST_CAPS, cyclePruning: false });
+    expect(pruned.sequence).toBeUndefined();
+    expect(unpruned.sequence).toBeUndefined();
+    expect(pruned.capped).toBe(false);
+    expect(unpruned.capped).toBe(true);
+  });
+
+  it("finds the same cast plan as the unpruned search on every stored solution that casts", () => {
+    for (const file of files) {
+      const { stored, level: lv } = load(file);
+      if (!stored.solution || stored.solution.casts.length === 0) continue;
+      if (!(lv.spells ?? []).every((sp) => ["Attack", "Teleport"].includes((sp as { type: string }).type))) continue;
+      const layout = layoutFromSolution(lv, stored.solution);
+      const a = searchTargetFreeCasts(lv, layout);
+      const b = searchTargetFreeCasts(lv, layout, { ...TARGET_FREE_CAST_CAPS, cyclePruning: false });
+      expect(a.sequence, file).toEqual(b.sequence);
+      expect(a.sequence, file).toBeDefined();
+    }
   });
 });

@@ -16,6 +16,7 @@ import { scoreLevel } from "./constraints.js";
 import { checkSolvability, type SolvabilityCaps } from "./solvability.js";
 import { canCastNow, castSpell, createRun, simulate, stepRun, type SimulationState } from "./simulation.js";
 import { SpellCastError } from "./spells.js";
+import { evalPortalIndex } from "./portals.js";
 import type { CastRequest } from "./spells.js";
 
 export interface SolutionPlacement {
@@ -182,7 +183,71 @@ function* assignments(groups: number[], n: number): Generator<number[]> {
  * actions is cut (counted as capped, so the verdict stays `budget`, never
  * `exhausted`) — such a run is almost always a damage-free loop.
  */
-export const TARGET_FREE_CAST_CAPS = { maxRuns: 20_000, maxSteps: 300, stallSteps: 40 } as const;
+export const TARGET_FREE_CAST_CAPS = { maxRuns: 20_000, maxSteps: 300, stallSteps: 40, cyclePruning: true } as const;
+
+/**
+ * Deepest visit-history index the level can ever look up (Teleport(n), and
+ * f(i) of every P room for i ≤ its entries), or undefined when one is not a
+ * plain number (then histories are never shortened).
+ */
+export function historyHorizon(level: LevelDef): number | undefined {
+  let k = 0;
+  for (const s of level.spells ?? []) {
+    const sp = s as { type?: string; steps?: unknown };
+    if (sp.type === "Teleport") {
+      if (typeof sp.steps !== "number") return undefined;
+      k = Math.max(k, sp.steps);
+    } else if (sp.type === "Selection") {
+      return undefined;
+    }
+  }
+  for (const slot of level.rooms) {
+    const room = slot.room as { type?: string; entries?: unknown; formula?: unknown };
+    if (room.type !== "P") continue;
+    if (typeof room.entries !== "number" || typeof room.formula !== "string") return undefined;
+    for (let i = 1; i <= room.entries; i += 1) {
+      const f = evalPortalIndex(room.formula, i);
+      if (!Number.isFinite(f)) return undefined;
+      k = Math.max(k, f);
+    }
+  }
+  return k;
+}
+
+/**
+ * NFR-4 pruning: a key that equals `searchStateKey` on everything that can
+ * still change how the run goes. Two parts grow without changing the
+ * future and are cut down: a hero's room-visit history is only read at
+ * index ≤ `horizon` (FR-15 P, FR-35 Teleport), so only its last `horizon`
+ * entries count once it is that long (shorter histories are kept whole,
+ * because an overshoot sends the hero to the waiting room); and a P room's
+ * entry count stops mattering after its last active entry (FR-15).
+ */
+export function cycleStateKey(state: SimulationState, horizon: number | undefined, portalEntries: Map<string, number>): string {
+  if (horizon === undefined) return searchStateKey(state);
+  const { events, level, stepCount, heroes, ...rest } = state;
+  void events;
+  void level;
+  const cut = heroes.map((h) => ({
+    ...h,
+    visits: h.visits.length > horizon ? h.visits.slice(h.visits.length - horizon) : h.visits,
+    portalEntries: [...h.portalEntries.entries()].map(([id, n]) => [id, Math.min(n, (portalEntries.get(id) ?? n) + 1)]).sort(),
+  }));
+  // stepCount itself is dropped; only "has a hero acted yet" gates a cast (FR-33).
+  return JSON.stringify({ ...rest, heroes: cut, started: stepCount > 0 }, (_k, v) =>
+    v instanceof Map ? [...v.entries()].sort() : v instanceof Set ? [...v].sort() : v,
+  );
+}
+
+function portalEntryCaps(level: LevelDef, layout: DungeonLayout): Map<string, number> {
+  const caps = new Map<string, number>();
+  for (const room of layout.rooms) {
+    const def = room.def as { type?: string; entries?: unknown };
+    if (def.type === "P" && typeof def.entries === "number") caps.set(room.id, def.entries);
+  }
+  void level;
+  return caps;
+}
 
 function progressKey(state: SimulationState): string {
   let s = "";
@@ -202,10 +267,20 @@ function progressKey(state: SimulationState): string {
 export function searchTargetFreeCasts(
   level: LevelDef,
   layout: DungeonLayout,
-  caps: { maxRuns: number; maxSteps: number; stallSteps?: number } = TARGET_FREE_CAST_CAPS,
+  caps: { maxRuns: number; maxSteps: number; stallSteps?: number; cyclePruning?: boolean } = TARGET_FREE_CAST_CAPS,
 ): { sequence?: SolutionCast[]; capped: boolean } {
   let runs = 0;
   let capped = false;
+  // State-cycle pruning (NFR-4): every state the cast search has stood on,
+  // keyed by cycleStateKey. The run is deterministic, so a state seen
+  // before (earlier in this run: a loop; or in another branch: already
+  // searched with every cast tried) cannot lead to a win not already
+  // found. A damage-free loop then ends as fully searched instead of being
+  // cut by the stall cap (which stays as a backstop and still counts as
+  // capped).
+  const horizon = historyHorizon(level);
+  const entryCaps = portalEntryCaps(level, layout);
+  const stood = new Set<string>();
   // Post-cast states already explored. The run is deterministic and its
   // future depends only on this state (not on stepCount or the event log),
   // so casting the same spell at two moments that lead to the same state —
@@ -216,6 +291,11 @@ export function searchTargetFreeCasts(
     let progressAt = state.stepCount;
     for (;;) {
       if (state.outcome !== "in_progress") return state.outcome === "win" ? seq : undefined;
+      if (caps.cyclePruning !== false) {
+        const here = cycleStateKey(state, horizon, entryCaps);
+        if (stood.has(here)) return undefined;
+        stood.add(here);
+      }
       if (state.stepCount >= caps.maxSteps) {
         capped = true;
         return undefined;
