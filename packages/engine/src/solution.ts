@@ -14,7 +14,9 @@ import type { LevelDef, Orientation } from "./level.js";
 import { enumerateSuppliedRooms, validateLayout, type DungeonLayout } from "./placement.js";
 import { scoreLevel } from "./constraints.js";
 import { checkSolvability, type SolvabilityCaps } from "./solvability.js";
-import { simulate } from "./simulation.js";
+import { canCastNow, castSpell, createRun, simulate, stepRun, type SimulationState } from "./simulation.js";
+import { SpellCastError } from "./spells.js";
+import { cloneRun } from "./solvability.js";
 import type { CastRequest } from "./spells.js";
 
 export interface SolutionPlacement {
@@ -156,6 +158,66 @@ function* assignments(groups: number[], n: number): Generator<number[]> {
   yield* place(0);
 }
 
+export const TARGET_FREE_CAST_CAPS = { maxRuns: 20_000, maxSteps: 256 } as const;
+
+/**
+ * FR-46 for target-free spells (Attack, Teleport), NFR-4 bounded: the run
+ * is deterministic, so every cast plan is "which unused spell after which
+ * completed action". Depth-first over those choices (identical unused
+ * spells tried once), no node cap and no branch cap, so `exhausted` really
+ * means no plan wins within `maxSteps` actions. Returns the first plan
+ * whose run ends in a win, or capped when `maxRuns` branches were opened.
+ */
+export function searchTargetFreeCasts(
+  level: LevelDef,
+  layout: DungeonLayout,
+  caps: { maxRuns: number; maxSteps: number } = TARGET_FREE_CAST_CAPS,
+): { sequence?: SolutionCast[]; capped: boolean } {
+  let runs = 0;
+  let capped = false;
+  const dfs = (state: SimulationState, seq: SolutionCast[]): SolutionCast[] | undefined => {
+    for (;;) {
+      if (state.outcome !== "in_progress") return state.outcome === "win" ? seq : undefined;
+      if (state.stepCount >= caps.maxSteps) return undefined;
+      if (canCastNow(state)) {
+        const tried = new Set<string>();
+        for (const spell of state.spells) {
+          if (spell.consumed) continue;
+          const key = JSON.stringify(spell.def);
+          if (tried.has(key)) continue;
+          tried.add(key);
+          if (runs >= caps.maxRuns) {
+            capped = true;
+            return undefined;
+          }
+          runs += 1;
+          const next = cloneRun(state);
+          try {
+            castSpell(next, { spellId: spell.id });
+          } catch (err) {
+            if (err instanceof SpellCastError) continue;
+            throw err;
+          }
+          const found = dfs(next, [...seq, { afterSteps: next.stepCount, cast: { spellId: spell.id } }]);
+          if (found) return found;
+        }
+      }
+      const before = state.stepCount;
+      const { events } = stepRun(state);
+      if (events.length === 0 && state.stepCount === before) return undefined;
+    }
+  };
+  const sequence = dfs(createRun(level, layout), []);
+  return { sequence, capped };
+}
+
+function targetFreeOnly(level: LevelDef): boolean {
+  return (level.spells ?? []).every((s) => {
+    const t = (s as { type?: string }).type;
+    return t === "Attack" || t === "Teleport";
+  });
+}
+
 /** Build the layout a stored solution describes. */
 export function layoutFromSolution(level: LevelDef, solution: StoredSolution): DungeonLayout {
   const supplied = enumerateSuppliedRooms(level);
@@ -200,7 +262,8 @@ export function verifySolution(level: LevelDef, solution: StoredSolution): Solut
  * FR-47 / NFR-4: bounded search for one winning layout + cast sequence.
  * Shapes are tried compact-first, then room assignments, then
  * orientations. Each legal layout is scored without casts; levels with
- * spells also get a capped FR-46 cast search. The first verified win is
+ * spells also get a cast search: the uncapped-branch target-free search
+ * when every spell is Attack/Teleport, else the capped FR-46 search. The first verified win is
  * returned.
  */
 export function searchSolution(level: LevelDef, options?: SolutionSearchOptions): SolutionSearchResult {
@@ -225,6 +288,7 @@ export function searchSolution(level: LevelDef, options?: SolutionSearchOptions)
   const defKeys = supplied.map((s) => JSON.stringify(s.def));
   const groups = defKeys.map((k) => defKeys.indexOf(k));
   const hasSpells = (level.spells?.length ?? 0) > 0;
+  const targetFree = hasSpells && targetFreeOnly(level);
   let scored = 0;
   let capped = 0;
 
@@ -252,10 +316,18 @@ export function searchSolution(level: LevelDef, options?: SolutionSearchOptions)
           return { found: true, verdict: "found", layoutsScored: scored, solution: candidate, rank };
         }
         if (!hasSpells) continue;
-        const result = checkSolvability(level, layout, caps);
-        if (result.verdict === "budget") capped += 1;
-        if (!result.solvable || !result.sequence) continue;
-        const withCasts: StoredSolution = { ...candidate, casts: result.sequence.map((row) => ({ ...row })) };
+        let sequence: SolutionCast[] | undefined;
+        if (targetFree) {
+          const r = searchTargetFreeCasts(level, layout);
+          if (r.capped) capped += 1;
+          sequence = r.sequence;
+        } else {
+          const result = checkSolvability(level, layout, caps);
+          if (result.verdict === "budget") capped += 1;
+          sequence = result.solvable ? result.sequence?.map((row) => ({ ...row })) : undefined;
+        }
+        if (!sequence) continue;
+        const withCasts: StoredSolution = { ...candidate, casts: sequence };
         if (verifySolution(level, withCasts).ok) {
           return { found: true, verdict: "found", layoutsScored: scored, solution: withCasts, rank };
         }
