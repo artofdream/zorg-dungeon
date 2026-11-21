@@ -183,6 +183,17 @@ the display safe area. Tray rooms are buttons with a colour swatch. Room
 labels are screen-space plates at each room's back corner that never
 overlap each other or the HUD text (round 12; on the end screen the result
 banner replaces the "Extermination" line), and hero HP labels sit above the (larger) heroes on a layer on top.
+**Smooth first use** (CF-015, visual only): when a level opens, its rooms,
+its hero figures, a fading figure of each kind, a set of run walls and
+props, and the hit-number glyphs are drawn once on a stage behind the board
+(`scripts/prewarm.gd`), one piece per frame, so the GPU compiles their
+shaders while the board is still idle. The rooms and heroes stay pooled: a
+drop or the first spawn only attaches a ready node. A tray drop that comes
+before its room is ready shows a floor-coloured slab and builds the room
+over the next two frames. The Play button builds the run walls over about
+five frames, and the first step waits for them; after that, one step every
+0.18 s as before. The camera does not fit or start following on a spawn or
+set-up frame. The cost moves to the first ~15 frames after a level opens.
 The status is **Simulated**: it runs in CI and headless tests. Debug APKs
 were also tried by hand on one Android phone; that is not CI evidence.
 
@@ -275,6 +286,10 @@ headless. Once under Xvfb with `--rendering-driver opengl3` and
 `--shot`, so a real GUI drag runs. If you change `packages/engine`, run
 the golden script without `--check` and commit the files it writes, then
 run the parity script.
+`tests/hitch_probe.gd` is a manual probe that is not run in CI. It prints the worst frame
+after a level opens, after each drop, after Play and after the first death.
+Run it under Xvfb with an empty shader cache, for example
+`XDG_DATA_HOME=$(mktemp -d) XDG_CACHE_HOME=$(mktemp -d) MESA_SHADER_CACHE_DISABLE=true xvfb-run -a godot --path apps/godot --script res://tests/hitch_probe.gd -- --level=deluxe-5.8`.
 
 The `godot` workflow (`.github/workflows/godot.yml`) runs that sequence
 on a pull request that touches `apps/godot/**`, `packages/engine/**`, or

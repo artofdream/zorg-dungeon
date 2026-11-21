@@ -91,11 +91,14 @@ func _stop_tween(id: int) -> void:
 	if f and f.has_meta("body"):
 		(f.get_meta("body") as Node3D).position.y = 0.0
 
-func _figure(id: int, hp: int) -> Node3D:
-	var fig := ZorgLook.hero_figure(String(names.get(id, "")).begins_with("Elf"))
+## The 3D part of a hero: the KayKit figure (idle not started) and its
+## ring. Built ahead of the run (pool_model) so a spawn only attaches it.
+static func build_model(is_elf: bool) -> Node3D:
+	var fig := ZorgLook.hero_figure(is_elf, false)
 	var root: Node3D = fig["root"]
 	root.set_meta("body", fig["body"])
 	root.set_meta("mats", fig["mats"])
+	root.set_meta("elf", is_elf)
 	root.scale = Vector3.ONE * SCALE
 	# Bright ring under the feet so the hero stands out from the floor.
 	var ring := StandardMaterial3D.new()
@@ -104,6 +107,79 @@ func _figure(id: int, hp: int) -> Node3D:
 	ring.albedo_color = Color(1.0, 0.95, 0.5, 0.75)
 	ZorgLook.add_mesh(root, ZorgLook.ring(0.2, 0.27), ring, Vector3(0, ZorgLook.FLOOR_H + 0.02, 0), false)
 	root.set_meta("ring_mat", ring)
+	return root
+
+## Warm-up: one model per figure with its materials already alpha-blended
+## (the way _fade_out leaves them on death). The level draws them on the
+## warm-up stage and leaves them there, hidden, for the session: on the box
+## (GL Compatibility) freeing them, or only moving them out of the stage,
+## brought a ~260 ms compile back on the first death. Returns the models to
+## draw now (empty once they exist).
+var _fade_keepers := {}
+func fade_keepers() -> Array:
+	var out: Array = []
+	for elf in [false, true]:
+		if _fade_keepers.has(elf) and is_instance_valid(_fade_keepers[elf]):
+			continue
+		var fade := build_model(elf)
+		for mat in fade.get_meta("mats"):
+			(mat as StandardMaterial3D).transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			(mat as StandardMaterial3D).albedo_color.a = 0.5
+		_fade_keepers[elf] = fade
+		out.append(fade)
+	return out
+
+## Hitch fix (CF-015): hero models built before Play, one per hero id, so
+## the first spawn does not load and instance the KayKit scene on that frame.
+var _pool := {}          # hero id -> Node3D (not in the tree, or on the warm-up stage)
+
+func _is_elf(id: int) -> bool:
+	return String(names.get(id, "")).begins_with("Elf")
+
+## Build one pooled model for hero `id` (names must be set). Returns it, or
+## null if one is already pooled.
+func pool_model(id: int) -> Node3D:
+	if _pool.has(id) and is_instance_valid(_pool[id]):
+		return null
+	var m := build_model(_is_elf(id))
+	_pool[id] = m
+	return m
+
+func pooled_count() -> int:
+	return _pool.size()
+
+func free_pool() -> void:
+	for id in _pool:
+		var m: Node3D = _pool[id]
+		if is_instance_valid(m):
+			if m.is_inside_tree():
+				m.queue_free()
+			else:
+				m.free()
+	_pool.clear()
+
+func _take_model(id: int) -> Node3D:
+	var m: Node3D = _pool.get(id)
+	_pool.erase(id)
+	if m == null or not is_instance_valid(m) or bool(m.get_meta("elf", false)) != _is_elf(id):
+		if m and is_instance_valid(m):
+			if m.is_inside_tree():
+				m.queue_free()
+			else:
+				m.free()
+		return build_model(_is_elf(id))
+	if m.get_parent():
+		m.get_parent().remove_child(m)
+	m.transform = Transform3D(Basis.from_scale(Vector3.ONE * SCALE), Vector3.ZERO)
+	return m
+
+## Frame of the last spawn (the level keeps the camera still on it).
+var spawn_frame := -1
+
+func _figure(id: int, hp: int) -> Node3D:
+	var root := _take_model(id)
+	ZorgLook.start_idle(root)
+	spawn_frame = Engine.get_process_frames()
 	_hp[id] = hp
 	var plate := PanelContainer.new()
 	plate.add_theme_stylebox_override("panel", ZorgHud.plate())
