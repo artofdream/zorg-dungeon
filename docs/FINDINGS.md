@@ -400,3 +400,29 @@ the camera to the fit target and checks it is settled before every
 screen-space press. It re-aims after the re-place and checks that the
 second press starts a drag. The game itself is unchanged, and the
 assertions are as strict as before.
+
+## CF-019: Shipped level 5.5 has no winning layout under the engine's rules
+- Status: Open
+- Recurrence: 1
+- Linked: PR (this branch, agent/grok/solve-5-5-verdict); CF-017 (5.8, same kind)
+- Sensor added: packages/engine/src/solution.test.ts
+
+With the NFR-4 state-cycle pruning from #148, the FR-47 search
+(`solve-levels.mjs --search deluxe-5.5`) fully searched every legal layout
+of 5.5 Counting the Riches. That is all 216 six-room shapes, every room
+order and all four orientations: 622,080 layouts. For each layout it tried
+every Teleport(4) cast moment. None is a level win, and no layout's cast
+search hit a cap (0 capped: no 300-step cut, no stall cut, no 20,000-run
+cut), so the verdict is `exhausted`, not `budget`.
+
+The earlier `budget` came from damage-free loops, where the Warrior bounces
+between two cells forever. The stall cap cut those runs and counted them as
+capped. A run that repeats a state (visit history cut to the 8 visits that
+Teleport(4) and P(2, x↦7x-6) can read) cannot lead anywhere new, so it now
+counts as fully searched.
+
+Like CF-017, this means either the source level depends on a rule reading
+the engine doesn't have (FR-15 portal history, FR-16/17 gold and toll,
+FR-35 Teleport), or the transcription is off. No rule or level data
+changed. The game still ships 5.5, and Show a solution keeps saying "No
+stored solution yet".
