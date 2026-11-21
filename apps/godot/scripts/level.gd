@@ -116,6 +116,8 @@ var title: Label
 var goal: Label
 var picker: GridContainer
 var level_picker: ZorgLevelPicker
+var picker_layer: CanvasLayer             # above the HUD: the level grid is modal
+var picker_root: Control                  # safe-area rect on that layer
 var tray: HFlowContainer
 var status: Label
 var end_banner: ZorgEndBanner
@@ -158,6 +160,7 @@ var prewarm: ZorgPrewarm
 var _room_pool := {}      # room id -> built room (outside the tree / on the warm stage)
 var _pending_rooms := {}  # room id -> true while a drop placeholder stands in
 var _warm_gen := 0
+var _warming_gen := -1                    # _warm_gen of the warm-up still drawing
 var _busy_frame := -1     # last frame spent on run set-up (no camera fit/follow then)
 # Build overlay: one texel per board slot, pushed to the board shader.
 const CELL_GRID := Color(0.80, 0.86, 1.0, 0.30)     # free slot, nothing to drag
@@ -320,6 +323,16 @@ func _open_level(i: int) -> void:
 func _warm_level() -> void:
 	_warm_gen += 1
 	var gen := _warm_gen
+	_warming_gen = gen
+	await _warm_level_steps(gen)
+	if _warming_gen == gen:
+		_warming_gen = -1
+
+## True while this level's warm-up still owns the stage (a run reset waits).
+func _warming() -> bool:
+	return _warming_gen != -1 and _warming_gen == _warm_gen
+
+func _warm_level_steps(gen: int) -> void:
 	if not await _warm_next(gen):            # keep the open frame itself short
 		return
 	if engine.loaded.is_empty():
@@ -342,8 +355,11 @@ func _warm_level() -> void:
 		prewarm.put(node)
 		if not await _warm_next(gen):
 			return
-		for light in node.get_meta("lights", []):
-			(light as OmniLight3D).visible = true      # torch-lit variants
+		# A drop may have taken the room off the stage meanwhile; _place
+		# already applied the torch budget to it, so leave its lights alone.
+		if _room_pool.get(id) == node and not room_nodes.has(id):
+			for light in node.get_meta("lights", []):
+				(light as OmniLight3D).visible = true  # torch-lit variants
 		if not await _warm_next(gen):
 			return
 	heroes.names = engine.hero_names()
@@ -371,7 +387,12 @@ func _warm_level() -> void:
 	for id in types:
 		slots[id] = Vector2i(i % 3, i / 3)
 		i += 1
-	await d.build(slots, types, true)
+	# Not awaited directly: a level switch frees `d` (prewarm.finish) and its
+	# build coroutine then never returns. Poll it, stopping on a level change.
+	d.build(slots, types, true)
+	while is_instance_valid(d) and d.building:
+		if not await _warm_next(gen):
+			return
 	if not await _warm_next(gen) or not await _warm_next(gen):
 		return
 	prewarm.finish()
@@ -420,6 +441,10 @@ func _warm_glyphs() -> Array:
 func _refill_hero_pool() -> void:
 	var gen := _warm_gen
 	await get_tree().process_frame
+	# The level's own warm-up shares the stage: wait for it to finish, or
+	# begin()/finish() here would free its in-flight pieces (Bugbot, PR #139).
+	while gen == _warm_gen and _warming():
+		await get_tree().process_frame
 	if gen != _warm_gen or engine.loaded.is_empty() or not _building():
 		return
 	heroes.names = engine.hero_names()
@@ -525,14 +550,26 @@ func _build_ui() -> void:
 	fps_readout.set_visible_fps(_url_flag("fps", "0") == "1")
 	ui_root.add_child(fps_readout)
 
-	ui_root.add_child(level_picker)
+	# The open grid must cover the tray and run controls (phone landscape
+	# drew it under the tray tiles), so it lives on its own layer over the HUD.
+	picker_layer = CanvasLayer.new()
+	picker_layer.name = "PickerLayer"
+	picker_layer.layer = ui.layer + 1
+	add_child(picker_layer)
+	picker_root = Control.new()
+	picker_root.name = "PickerRoot"
+	picker_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	picker_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	picker_root.theme = ui_root.theme
+	picker_layer.add_child(picker_root)
+	picker_root.add_child(level_picker)
 	levels_panel = level_picker.panel
 	picker = level_picker.grid
 	quality_btn = level_picker.quality_button
 	level_picker.set_quality_label("Graphics: " + quality.capitalize())
 
 	# Camera pad. Anchors were set in the camera scene's _init, before this add.
-	# Sibling order stays: picker, then this pad, then the bottom bar (Tab).
+	# Sibling order stays: this pad, then the bottom bar (Tab).
 	cam_grid = cam.pad
 	ui_root.add_child(cam_grid)
 	view_btn = cam.view_button
@@ -643,7 +680,7 @@ func back_pressed() -> void:
 		quit_dlg.close()
 	elif help_dlg.visible:
 		close_help()
-	elif level_picker.panel.visible:
+	elif level_picker.is_open():
 		level_picker.close_panel()
 	elif selected != "" or kb_active:
 		_kb_cancel()
@@ -651,7 +688,7 @@ func back_pressed() -> void:
 		_show_quit()
 
 func popup_open() -> bool:
-	return quit_dlg.visible or help_dlg.visible or levels_panel.visible
+	return quit_dlg.visible or help_dlg.visible or level_picker.is_open()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and quit_dlg != null:
@@ -704,6 +741,13 @@ func _apply_margins() -> void:
 	ui_root.offset_top = ins[1] + m
 	ui_root.offset_right = -(ins[2] + m)
 	ui_root.offset_bottom = -(ins[3] + m)
+	if picker_root:
+		picker_root.offset_left = ui_root.offset_left
+		picker_root.offset_top = ui_root.offset_top
+		picker_root.offset_right = ui_root.offset_right
+		picker_root.offset_bottom = ui_root.offset_bottom
+		if level_picker.is_open():
+			level_picker.set_open(true)      # re-fit after a resize or rotation
 	var vp := get_viewport().get_visible_rect().size
 	# Portrait (narrow mobile browsers): tray on its own row above the controls,
 	# and the text column stops short of the Level / ? cluster.

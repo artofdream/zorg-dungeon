@@ -21,6 +21,8 @@ extends SceneTree
 ##  - phone HUD: Levels and ? stay on a 2340×1080 landscape canvas, the
 ##    first-run spell hint stays in the text column off the hero HP label,
 ##    and tap-vs-pan slop is at least 12 px and about 2.5 mm.
+##  - level picker: a modal over the HUD (above the room tray), every button
+##    inside the viewport on landscape, 2340×1080 and 360-wide portrait.
 ##  - hitch fix (CF-015): the warm-up pools every room and hero off-screen,
 ##    a tray drop with no ready room shows a placeholder and finishes it a
 ##    few frames later, and the Play button builds the walls over frames
@@ -116,7 +118,7 @@ func _round11(engine: Node) -> void:
 	_check(not level.get_tree().quit_on_go_back, "back: Android Back doesn't quit the app by itself")
 	level._open_level(0)
 	await process_frame
-	level.levels_panel.visible = true
+	level.level_picker.set_open(true)
 	await process_frame
 	_check(level.levels_panel.size.x > 1.0 and level.levels_panel.size.y > 1.0
 		and level.picker.get_child_count() > 1,
@@ -130,6 +132,7 @@ func _round11(engine: Node) -> void:
 	var focus_owner: Control = level.get_viewport().gui_get_focus_owner()
 	_check(focus_owner == level.help_btn, "picker: Tab from Level moves to ? (got %s)" % (focus_owner.name if focus_owner else "none"))
 	level.get_viewport().gui_release_focus()
+	await _picker_modal_checks("default canvas", true)
 	level._open_level(0)
 	level.open_help()
 	level.notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
@@ -1084,6 +1087,7 @@ func _spell_visibility(engine: Node) -> void:
 		_check(ok_phone, "spell vis: first-run hint and Got it fit on a 360-wide canvas (hint %s, got %s, vis %s)" % [
 			level.playback.spell_hint.get_global_rect(), got.get_global_rect() if got else Rect2(), phone])
 		_assert_top_right_on_canvas(phone, "360-wide canvas")
+		await _picker_modal_checks("360x800 portrait", false)
 		DisplayServer.window_set_size(old_size)
 		win.size = old_size
 		level._on_resized()
@@ -1165,6 +1169,7 @@ func _phone_landscape_hud() -> void:
 				overlap += 1
 				print("phone HUD: hint %s overlaps HP %s" % [hint_r, r])
 		_check(overlap == 0, "phone HUD: spell hint does not cover a hero HP label (%d overlaps, hint %s, labels %s)" % [overlap, hint_r, level.heroes.label_rects()])
+		await _picker_modal_checks("2340x1080 landscape", false)
 	win.content_scale_factor = old_scale
 	level.ui_scale = old_scale
 	DisplayServer.window_set_size(old)
@@ -1172,6 +1177,105 @@ func _phone_landscape_hud() -> void:
 	level._on_resized()
 	for i in 10:
 		await process_frame
+
+
+## Level picker (phone bug: the grid drew under the room tray, hiding
+## Graphics and Close). The open grid must sit
+## on a layer above the HUD, every button must be inside the viewport, and the
+## dimmed backdrop must cover the HUD and stop taps. With `clicks` (on level
+## 5.8, six tray tiles; real taps need a display), real input checks it too: a tap on a tray tile only closes the grid, and the
+## Close and level buttons take taps where tray tiles used to cover them.
+func _picker_modal_checks(label: String, clicks: bool) -> void:
+	var vis := level.get_viewport().get_visible_rect()
+	if vis.size.x < 300.0:
+		print("UX: skip picker modal checks on the %s (viewport is %s)" % [label, vis])
+		return
+	if clicks:
+		# Level 5.8 has the fullest tray (six tiles, two rows on a phone).
+		# The size-only passes keep the current level: they run inside the
+		# spell checks, which still hold its run.
+		var eng: Node = level.get_node("Engine")
+		var idx := 0
+		for i in eng.levels.size():
+			if String(eng.levels[i]["id"]) == "deluxe-5.8":
+				idx = i
+		level._open_level(idx)
+		for i in 10:
+			await process_frame
+	var lp: ZorgLevelPicker = level.level_picker
+	lp.set_open(true)
+	for i in 3:
+		await process_frame
+	vis = level.get_viewport().get_visible_rect()
+	_check(lp.is_open() and lp.get_parent() == level.picker_root and level.picker_layer.layer > level.ui.layer,
+		"picker modal (%s): the open grid sits on a layer above the HUD (%d > %d)" % [label, level.picker_layer.layer, level.ui.layer])
+	var buttons: Array = [lp.quality_button]
+	for b in lp.panel.find_children("*", "Button", true, false):
+		if not b in buttons and not b.is_queued_for_deletion():
+			buttons.append(b)
+	var outside: Array = []
+	var under_tray := 0
+	var tiles: Array = []
+	for t in level.tray.get_children():
+		if t is Control and t.is_visible_in_tree():
+			tiles.append(t)
+	for b in buttons:
+		var r: Rect2 = (b as Control).get_global_rect()
+		# Grid buttons may scroll; only the visible part of the scroll counts.
+		if b.get_parent() == lp.grid and not lp.scroll.get_global_rect().grow(1.0).encloses(r):
+			continue
+		if not vis.grow(1.0).encloses(r):
+			outside.append("%s %s" % [b.text, r])
+		for t in tiles:
+			if r.intersects((t as Control).get_global_rect()):
+				under_tray += 1
+	_check(outside.is_empty() and buttons.size() >= 3,
+		"picker modal (%s): %d picker buttons all inside the viewport %s (outside: %s)" % [label, buttons.size(), vis, outside])
+	var close_btn: Button = buttons[buttons.size() - 1]
+	for b in buttons:
+		if b.text == "Close":
+			close_btn = b
+	_check(vis.grow(1.0).encloses(close_btn.get_global_rect()) and vis.grow(1.0).encloses(lp.quality_button.get_global_rect()),
+		"picker modal (%s): Graphics and Close stay on screen (%s, %s)" % [label, lp.quality_button.get_global_rect(), close_btn.get_global_rect()])
+	_check(lp.overlay.mouse_filter == Control.MOUSE_FILTER_STOP and lp.overlay.get_global_rect().grow(1.0).encloses(level.ui_root.get_global_rect()),
+		"picker modal (%s): the dimmed backdrop covers the HUD and stops taps (%s vs %s; %d button/tile overlaps now drawn over the tray)" % [
+			label, lp.overlay.get_global_rect(), level.ui_root.get_global_rect(), under_tray])
+	if clicks and DisplayServer.get_name() == "headless":
+		print("SKIP picker modal real taps (headless; CI runs them under Xvfb)")
+	elif clicks:
+		var panel_r: Rect2 = lp.panel.get_global_rect()
+		var tile: Control = null
+		for t in tiles:
+			if not panel_r.has_point((t as Control).get_global_rect().get_center()):
+				tile = t
+				break
+		if tile:
+			var c := tile.get_global_rect().get_center()
+			_mouse_button(c, true)
+			await process_frame
+			_mouse_button(c, false)
+			await process_frame
+			_check(level.selected == "" and level.drag_id == "" and not lp.is_open(),
+				"picker modal: a tap on a tray tile behind the grid only closes the grid (selected '%s')" % level.selected)
+		lp.set_open(true)
+		await process_frame
+		var cc := close_btn.get_global_rect().get_center()
+		_mouse_button(cc, true)
+		await process_frame
+		_mouse_button(cc, false)
+		await process_frame
+		_check(not lp.is_open(), "picker modal: a real tap on Close closes the grid")
+		lp.set_open(true)
+		await process_frame
+		var first: Button = lp.grid.get_child(0)
+		var fc := first.get_global_rect().get_center()
+		_mouse_button(fc, true)
+		await process_frame
+		_mouse_button(fc, false)
+		await process_frame
+		_check(level.level_index == 0 and not lp.is_open(), "picker modal: a real tap on a level button opens it (level %d)" % level.level_index)
+	lp.set_open(false)
+	await process_frame
 
 
 func _assert_top_right_on_canvas(vis: Rect2, label: String) -> void:
