@@ -1264,6 +1264,16 @@ func _solution_phone_landscape(engine: Node, i: int) -> void:
 		_guide_clear_of_chrome("2340x1080 %s at the end" % cid)
 		sp.stop()
 		ci = _first_with_casts(engine, sp, -1, ci + 1)
+	# FR-47 replay framing: landscape phone, portrait phone, web canvas.
+	for vp in [[Vector2i(2340, 1080), 1.65, "2340x1080"], [Vector2i(1080, 2340), 1.65, "1080x2340 portrait"], [Vector2i(1280, 720), 1.0, "1280x720 web"]]:
+		DisplayServer.window_set_size(vp[0])
+		win.size = vp[0]
+		win.content_scale_factor = vp[1]
+		level.ui_scale = vp[1]
+		level._apply_margins()
+		for f in 10:
+			await process_frame
+		await _replay_framing_checks(engine, String(vp[2]))
 	win.content_scale_factor = old_scale
 	level.ui_scale = old_scale
 	DisplayServer.window_set_size(old)
@@ -1271,6 +1281,87 @@ func _solution_phone_landscape(engine: Node, i: int) -> void:
 	level._on_resized()
 	for f in 10:
 		await process_frame
+
+## FR-47: during a replay the camera frames the solution's layout in the
+## free area between the caption, Levels / ?, the camera pad and the bottom
+## bar, and room labels stay clear of the bar. Checked at the first cast
+## caption and at the end of every stored solution that casts, plus the
+## largest stored no-cast layout.
+func _replay_framing_checks(engine: Node, what: String) -> void:
+	var sp: ZorgSolutionPlayer = level.solution
+	var ids: Array[int] = []
+	var ci := _first_with_casts(engine, sp)
+	if ci >= 0:
+		ids.append(ci)
+	var big := -1
+	var big_n := 0
+	for i in engine.levels.size():
+		var lid := String(engine.levels[i]["id"])
+		if sp.has_solution(lid) and i != ci:
+			var n := 0
+			for st in sp.levels[lid]["steps"]:
+				n += 1 if String(st["kind"]) == "place" else 0
+			if n > big_n:
+				big = i
+				big_n = n
+	if big >= 0:
+		ids.append(big)
+	for i in ids:
+		var id := String(engine.levels[i]["id"])
+		level._open_level(i)
+		await process_frame
+		sp.start(id)
+		var guard := 0
+		while sp.owns_run() and guard < 20000 and not (sp.phase == "run" and String(sp.steps[sp.step_i]["kind"]) == "cast" \
+				and level.solution_guide.header.text.begins_with(sp._head(sp.step_i))):
+			sp._tick()
+			guard += 1
+		await _check_replay_frame("%s %s %s" % [what, id, "at a cast" if sp.owns_run() else "at the end"])
+		while sp.owns_run() and guard < 40000:
+			sp._tick()
+			guard += 1
+		await _check_replay_frame("%s %s at the end" % [what, id])
+		sp.stop()
+	level._on_reset()
+
+func _check_replay_frame(what: String) -> void:
+	for f in 6:
+		await process_frame
+	level.cam.stop_glide()
+	level._fit_camera(true)
+	for f in 2:
+		await process_frame
+	var area: Rect2 = level.replay_fit_area
+	var vis := level.get_viewport().get_visible_rect()
+	_check(area.has_area(), "%s: replay board has a framing area" % what)
+	var cam3: Camera3D = level.get_node("CameraRig/Camera3D")
+	var slots: Dictionary = level.solution.frame_slots()
+	var box := Rect2()
+	var first := true
+	for id in slots:
+		var c: Vector3 = level.slot_center(slots[id].x, slots[id].y)
+		for dx in [-1.0, 1.0]:
+			for dz in [-1.0, 1.0]:
+				for h in [0.0, level.FIT_HEIGHT]:
+					var q := cam3.unproject_position(c + Vector3(dx * level.ROOM / 2.0, h, dz * level.ROOM / 2.0))
+					box = Rect2(q, Vector2.ZERO) if first else box.expand(q)
+					first = false
+	_check(area.grow(2.0).encloses(box), "%s: board %s is inside the free area %s" % [what, box, area])
+	var guide: Rect2 = level.solution_guide.get_global_rect()
+	var bar: Rect2 = level.bottom_bar.get_global_rect()
+	var pad: Rect2 = level.cam_grid.get_global_rect()
+	_check(vis.grow(1.0).encloses(area) and not area.intersects(guide) and not area.intersects(bar) and not area.intersects(pad)
+		and not area.intersects(level.levels_btn.get_global_rect()) and not area.intersects(level.help_btn.get_global_rect()),
+		"%s: free area %s clears the caption %s, bottom bar %s, camera pad %s and Levels / ?" % [what, area, guide, bar, pad])
+	# Fills the area in at least one direction (a real fit, not a postage stamp).
+	_check(box.size.x >= area.size.x * 0.6 or box.size.y >= area.size.y * 0.6,
+		"%s: board %s fills the free area %s" % [what, box.size, area.size])
+	var bad := ""
+	for id in level.room_nodes:
+		var plate: Control = level.room_nodes[id].get_meta("plate")
+		if plate.visible and plate.get_global_rect().intersects(bar):
+			bad += "%s %s " % [id, plate.get_global_rect()]
+	_check(bad == "", "%s: room labels clear the bottom bar %s (%s)" % [what, bar, bad])
 
 ## Screenshot of a solution mid-run with its caption (manual check / PR shots).
 func _solution_shot(engine: Node, path: String) -> void:
