@@ -195,7 +195,12 @@ func _run_tick() -> void:
 func _check_end() -> void:
 	if not level.engine.over():
 		return
-	last_outcome = String(level.engine.score()["outcome"])
+	# score() is only "win", "loss", or "unresolved". A stuck hero is
+	# state outcome "stalemate", which score maps to "unresolved" while a
+	# hero lives. A rule that did not hold is "unresolved" too. The win
+	# check stays on the score; the caption names which one it was.
+	var sc: Dictionary = level.engine.score()
+	last_outcome = String(sc["outcome"])
 	var won := last_outcome == "win"
 	while step_i < steps.size() and String(steps[step_i]["kind"]) != "result":
 		step_i += 1
@@ -206,16 +211,26 @@ func _check_end() -> void:
 		# Honest caption: the stored "result" text explains a win, so it
 		# must not be shown when this replay ended otherwise.
 		mismatch = true
-		push_warning("FR-47: solution replay for %s ended in '%s', not the stored win" % [String(sol.get("levelId", "?")), last_outcome])
-		print("zorg: solution replay did not win (%s)" % last_outcome)
+		var words := _outcome_words(sc, String(level.engine.state.get("outcome", "")))
+		push_warning("FR-47: solution replay for %s ended in '%s', not the stored win" % [String(sol.get("levelId", "?")), words])
+		print("zorg: solution replay did not win (%s)" % words)
 		guide.show_step("Solution replay did not win",
-			"This replay ended in a %s, not the stored win: the run drifted from the engine's stored solution. Press Stop and try Show a solution again." % _outcome_words(last_outcome), [])
+			"This replay ended in a %s, not the stored win: the run drifted from the engine's stored solution. Press Stop and try Show a solution again." % words, [])
 	phase = "done"
 	guide.show_controls(false, false)
 	finished.emit(won)
 
-static func _outcome_words(outcome: String) -> String:
-	match outcome:
-		"loss": return "loss (a hero reached Zorg)"
-		"stalemate": return "stalemate (a hero is stuck)"
-	return "'%s' result" % outcome
+## Player words for a replay that did not win. Same split as _show_result:
+## loss from the score, then a rule that did not hold, then a stuck hero.
+static func _outcome_words(sc: Dictionary, run_outcome: String) -> String:
+	if String(sc.get("outcome", "")) == "loss":
+		return "loss (a hero reached Zorg)"
+	var failed: Array = []
+	for c in sc.get("constraints", []):
+		if c["status"] != "held":
+			failed.append("%s (%s)" % [c["id"], c["status"]])
+	if not failed.is_empty():
+		return "rule not met (%s)" % ", ".join(failed)
+	if run_outcome == "stalemate":
+		return "stalemate (a hero is stuck)"
+	return "'%s' result" % String(sc.get("outcome", ""))
