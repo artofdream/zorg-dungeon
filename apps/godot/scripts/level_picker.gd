@@ -128,8 +128,25 @@ func is_open() -> bool:
 func set_open(on: bool) -> void:
 	if on:
 		_fit()
+	# This node sits on its own CanvasLayer, so Tab never leaves the HUD
+	# tree and Enter still presses the button under the backdrop. Opening
+	# (not a re-fit of an already open grid) moves focus into the grid.
+	var opening := on and not overlay.visible
 	overlay.visible = on
 	panel.visible = on
+	if opening:
+		_focus_grid.call_deferred()
+
+## First level button, once the open frame has shown the grid. A close
+## that wins the race with this deferred call leaves focus where it was.
+func _focus_grid() -> void:
+	if not overlay.visible:
+		return
+	for b in grid.get_children():
+		if b is Button and not b.is_queued_for_deletion():
+			b.grab_focus()
+			return
+	quality_button.grab_focus()
 
 func close_panel() -> void:
 	if not overlay.visible:

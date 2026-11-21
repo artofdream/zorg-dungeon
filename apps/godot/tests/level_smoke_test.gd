@@ -123,6 +123,13 @@ func _round11(engine: Node) -> void:
 	_check(level.levels_panel.size.x > 1.0 and level.levels_panel.size.y > 1.0
 		and level.picker.get_child_count() > 1,
 		"picker: open grid has a non-zero size (%s) and %d levels" % [level.levels_panel.size, level.picker.get_child_count()])
+	var opened_focus: Control = level.get_viewport().gui_get_focus_owner()
+	_check(opened_focus != null and level.level_picker.is_ancestor_of(opened_focus),
+		"picker: opening the grid focuses a level button (got %s)" % (opened_focus.text if opened_focus is Button else "none"))
+	_key(KEY_TAB)
+	var tabbed: Control = level.get_viewport().gui_get_focus_owner()
+	_check(tabbed != null and tabbed != opened_focus and level.level_picker.is_ancestor_of(tabbed),
+		"picker: Tab from the focused level stays in the grid (got %s)" % (tabbed.text if tabbed is Button else "none"))
 	_key(KEY_ESCAPE)
 	_check(not level.levels_panel.visible and not level.quit_dlg.visible, "back: Esc closes the Levels popup first")
 	level.picker.get_child(1).pressed.emit()
