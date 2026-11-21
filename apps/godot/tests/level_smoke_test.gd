@@ -1383,6 +1383,18 @@ func _check_replay_frame(what: String) -> void:
 		if plate.visible and plate.get_global_rect().intersects(bar):
 			bad += "%s %s " % [id, plate.get_global_rect()]
 	_check(bad == "", "%s: room labels clear the bottom bar %s (%s)" % [what, bar, bad])
+	# Bugbot #146: HP labels stay with their heroes (above the feet), not
+	# pushed down to the caption's bottom when the board is beside it.
+	var far := ""
+	for id in level.heroes._plates:
+		var plate: Control = level.heroes._plates[id]
+		var fig: Node3D = level.heroes._figures.get(id)
+		if plate.visible and fig != null and is_instance_valid(fig) and fig.visible:
+			var feet := cam3.unproject_position(fig.global_position)
+			var pr := plate.get_global_rect()
+			if pr.position.y > feet.y or pr.intersects(bar):
+				far += "%d %s feet %s " % [id, pr, feet]
+	_check(far == "", "%s: hero HP labels sit above their heroes and clear the bottom bar (%s)" % [what, far])
 
 ## Screenshot of a solution mid-run with its caption (manual check / PR shots).
 func _solution_shot(engine: Node, path: String) -> void:

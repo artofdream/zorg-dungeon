@@ -1495,6 +1495,16 @@ func _fit_camera(instant: bool) -> void:
 	replay_fit_area = Rect2()
 	cam.fit(instant, placed, _building(), _fit_area(), ROOM, SLOTS_X, SLOTS_Y, FIT_HEIGHT, get_viewport().get_visible_rect().size)
 
+## Highest canvas y an HP label may use. Normally the bottom of the HUD
+## text column; while a replay board sits in the column right of the text
+## (FR-47, landscape), the caption is beside the board, not above it, so
+## labels only stay under Levels / ? (the label headroom above the area).
+func _hero_label_floor() -> float:
+	var floor_y := hud_top.get_global_rect().end.y
+	if replay_fit_area.has_area() and replay_fit_area.position.x >= hud_top.get_global_rect().end.x:
+		floor_y = replay_fit_area.position.y - REPLAY_LABEL_HEADROOM
+	return floor_y
+
 ## FR-47: free areas for the replay board, below the room-label headroom.
 ## [0] the usual hole under the HUD text column (caption included); [1]
 ## the column right of the text, under Levels / ?, left of the camera pad,
@@ -1564,7 +1574,7 @@ func _update_camera() -> void:
 
 func _process(delta: float) -> void:
 	if heroes and hud_top:
-		heroes.set_chrome_top(hud_top.get_global_rect().end.y)
+		heroes.set_chrome_top(_hero_label_floor())
 	# Steps first, so a spawn this frame is known before the camera moves.
 	if dressing and dressing.building:
 		playback.hold_frames(1)              # the first step waits for the walls
