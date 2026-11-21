@@ -17,6 +17,8 @@ export * from "./placement.js";
 export * from "./portals.js";
 export * from "./shell.js";
 export * from "./simulation.js";
+export * from "./solution.js";
+export * from "./solution-explain.js";
 export * from "./solvability.js";
 export * from "./spells.js";
 export * from "./tiles.js";

@@ -230,6 +230,16 @@ The Godot board is presentation only: it does not change outcomes ([[NFR-1]], [[
 
 If this list and the running app disagree, trust the app and [[0008-godot-port-milestone-1]]; this page is a companion.
 
+### Show a solution
+
+Stuck on a level in the Godot game? Open **?** and press **Show a solution** (a second tap confirms, because it clears your board). The game then builds the engine's stored solution one room at a time and plays it, casting each spell at the stored step ([[FR-47]]). A small caption above the board explains each step in plain words:
+
+- **What it does** in the run: for example "The Warrior takes 3 damage here" or "Teleport(2) after step 9: the Warrior goes back to E(poison)".
+- **Why it is needed**, checked by the engine: the step is changed and the run replayed, for example "Elsewhere it fails: the Warrior reaches Zorg at step 4 (3 of 3 other spots lose)" or "Without it: the Warrior reaches Zorg at step 9". When moving a room does not matter, the caption says so.
+- **Which rules** are involved, as tags such as FR-13 or FR-34.
+
+The solutions come from a bounded search in the engine ([[NFR-4]]), are replayed to a win before they are stored, and the Godot copy of the engine replays them again in its parity test. A level the search has not solved shows "No stored solution yet" rather than a guess. The game only shows the solution; it decides nothing itself ([[NFR-1]]).
+
 ## How honesty works
 
 The knowledge site is not allowed to say “this rule works” just because a page exists. [[STATUS_LEDGER]] is the claim table: one row per FR/NFR, and only five status words ([[AGENTS]] §2).

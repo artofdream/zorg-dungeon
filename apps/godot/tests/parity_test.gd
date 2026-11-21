@@ -5,7 +5,8 @@ extends SceneTree
 ## validation codes, every turn's events, the run outcome and the score match
 ## the TypeScript engine's recording exactly. Cases with `casts` also check
 ## each cast's result (ok or the FR-32/FR-33 refusal) and, after every turn,
-## whether a cast would be allowed (FR-33 window).
+## whether a cast would be allowed (FR-33 window). FR-47: each level's
+## stored solution (levels/solutions.json) must replay to a win too.
 ##   godot --headless --path apps/godot --script res://tests/parity_test.gd
 
 const INDEX_PATH := "res://levels/index.json"
@@ -20,7 +21,63 @@ func _init() -> void:
 	print("parity: %d/%d cases match the TS engine" % [total - failures, total])
 	var tick_fail := _check_ticks()
 	var gold_fail := _check_gold_portals()
-	quit(1 if failures > 0 or tick_fail > 0 or gold_fail > 0 else 0)
+	var sol_fail := _check_solutions()
+	quit(1 if failures > 0 or tick_fail > 0 or gold_fail > 0 or sol_fail > 0 else 0)
+
+## FR-47: every stored solution Show a solution plays (levels/solutions.json)
+## is the golden "stored-solution" case of its level, and ZorgEngine replays
+## it to a level win. Unsolved levels must have no such case.
+func _check_solutions() -> int:
+	var data := _read("res://levels/solutions.json")
+	var bad := 0
+	var solved := 0
+	for entry in _read(INDEX_PATH)["levels"]:
+		var id := String(entry["id"])
+		var sol: Dictionary = data["levels"].get(id, {})
+		var golden: Dictionary = _read(entry["golden"])
+		var case_ := {}
+		for c in golden["cases"]:
+			if c["name"] == "stored-solution":
+				case_ = c
+		if String(sol.get("status", "")) != "solved":
+			if not case_.is_empty() or sol.is_empty():
+				bad += 1
+				printerr("FAIL solution ", id, ": unsolved entry missing or a stored-solution case exists")
+			continue
+		solved += 1
+		var problems: Array = []
+		if case_.is_empty():
+			problems.append("no stored-solution golden case")
+		elif not _eq(case_["placements"], sol["placements"]) or not _eq(case_.get("casts", []), sol["casts"]):
+			problems.append("solutions.json differs from the golden case")
+		var loaded := ZorgEngine.load_level(_read(entry["file"]))
+		var by_id := {}
+		for s in loaded["supplied"]:
+			by_id[s["id"]] = s
+		var rooms: Array = []
+		for p in sol["placements"]:
+			rooms.append(ZorgEngine.make_room(by_id[p["id"]], int(p["x"]), int(p["y"]), int(sol["orientation"])))
+		var state := ZorgEngine.create_run(loaded, rooms)
+		ZorgEngine.run_turns(state, sol["casts"])
+		var sc := ZorgEngine.score(loaded, state)
+		if String(sc["outcome"]) != "win":
+			problems.append("ZorgEngine outcome %s, not win" % sc["outcome"])
+		var placed_steps := 0
+		for st in sol["steps"]:
+			if String(st["text"]).is_empty() or (st["rules"] as Array).is_empty():
+				problems.append("step without text or rule IDs")
+				break
+			if st["kind"] == "place":
+				placed_steps += 1
+		if placed_steps != sol["placements"].size():
+			problems.append("%d place steps for %d rooms" % [placed_steps, sol["placements"].size()])
+		if problems.is_empty():
+			print("PASS solution ", id)
+		else:
+			bad += 1
+			printerr("FAIL solution ", id, ": ", "; ".join(problems))
+	print("solutions: %d/%d stored solutions replay to a win in ZorgEngine" % [solved - bad, solved])
+	return bad
 
 ## FR-17 FIFO toll table (gold.ts payToll) and FR-15 portal formulas
 ## (portals.ts evalPortalIndex). No shipped run that ends pays a toll, so the

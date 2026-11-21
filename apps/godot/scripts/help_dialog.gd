@@ -1,12 +1,17 @@
 class_name ZorgHelpDialog
 extends Control
 ## "?" room legend. Wording stays in ZorgHelp. This node only shows it.
+## Also holds the FR-47 "Show a solution" button (two taps: confirm first).
 ## It does not read the rules engine and does not decide an outcome (NFR-1).
 
 signal closed
+## FR-47: the player confirmed "Show a solution" (second tap).
+signal solution_requested
 
 var scroll: ScrollContainer
 var legend: VBoxContainer
+var solution_button: Button
+var solution_note: Label
 
 ## Full-rect anchors before the node enters the tree. set_anchors_preset()
 ## inside _ready leaves the overlay at 0×0.
@@ -52,18 +57,52 @@ func _init() -> void:
 	scroll.add_child(legend)
 	ZorgHelp.fill(legend, 520)
 
+	# FR-47: Show a solution, with a confirm (it clears the board).
+	solution_note = Label.new()
+	solution_note.name = "SolutionNote"
+	solution_note.add_theme_font_size_override("font_size", 14)
+	solution_note.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	solution_note.autowrap_mode = TextServer.AUTOWRAP_WORD
+	solution_note.visible = false
+	solution_note.text = "This clears your board, then builds and plays the engine's stored solution step by step."
+	box.add_child(solution_note)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.alignment = BoxContainer.ALIGNMENT_END
+	box.add_child(row)
+	solution_button = Button.new()
+	solution_button.name = "ShowSolution"
+	solution_button.custom_minimum_size = Vector2(120, ZorgHud.TARGET)
+	solution_button.pressed.connect(_on_solution_pressed)
+	row.add_child(solution_button)
 	var close := Button.new()
 	close.text = "Close"
 	close.custom_minimum_size = Vector2(64, ZorgHud.TARGET)
 	close.custom_minimum_size.x = 120
 	close.size_flags_horizontal = Control.SIZE_SHRINK_END
 	close.pressed.connect(close_dialog)
-	box.add_child(close)
+	row.add_child(close)
+	_reset_solution_confirm()
+
+func _reset_solution_confirm() -> void:
+	solution_button.text = "Show a solution"
+	solution_note.visible = false
+
+func _on_solution_pressed() -> void:
+	if not solution_note.visible:
+		solution_note.visible = true
+		solution_button.text = "Clear board and show"
+		return
+	_reset_solution_confirm()
+	close_dialog()
+	solution_requested.emit()
 
 ## `area` is the HUD root size in UI units, inside the safe area.
 func open(area: Vector2) -> void:
-	scroll.custom_minimum_size = Vector2(minf(680.0, area.x - 60.0), maxf(140.0, area.y - 150.0))
+	scroll.custom_minimum_size = Vector2(minf(680.0, area.x - 60.0), maxf(140.0, area.y - 210.0))
 	ZorgHelp.fill(legend, scroll.custom_minimum_size.x - 160.0)
+	solution_note.custom_minimum_size.x = scroll.custom_minimum_size.x
+	_reset_solution_confirm()
 	visible = true
 
 func close_dialog() -> void:

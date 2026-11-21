@@ -34,6 +34,23 @@ Files the golden script writes (43 placement cases):
 | `tests/golden/<id>.json` | One recording per level. A valid layout stores every turn, `runOutcome`, and `score`. Spell cases also store `casts` (`afterSteps`, `spellId`), `castLog` (`ok` or the refusal), and `castWindow`. A successful cast is its own turn, and `cast` is its first event. |
 | `tests/golden/elements.json` | 24 ticks from `elementalTick`: fire, water, ice, poison × three immunity sets × visited or not. |
 | `tests/golden/gold-portals.json` | 20 toll rows from `payToll`, and 36 portal-formula rows from `evalPortalIndex`. |
+| `levels/solutions.json` | FR-47 **Show a solution** data: per level, the engine's stored solution (rooms, casts) shifted onto the board, plus one caption per step (text, rule IDs, reason codes), or `unsolved` with the search verdict. Read from `packages/engine/fixtures/solutions/`. Each solved level also gets a golden `stored-solution` case. |
+
+**Show a solution (FR-47).** `packages/engine/scripts/solve-levels.mjs
+--search` runs a bounded layout search in the TS engine (every connected
+room shape, compact first, each legal room order and orientation; levels
+with spells also get the capped FR-46 cast search), keeps the first layout
+whose replay is a level win, and derives one reason per step: what the step
+does in the run, and what happens when that one step is changed (the room
+moved to each other legal spot, the cast left out or moved one step), with
+the rule IDs. It writes `packages/engine/fixtures/solutions/<id>.json`; a
+level the search can't solve is stored as `unsolved` with its verdict,
+never a guessed layout. `--check` re-verifies the stored files and fails on
+drift. The golden script copies them into `levels/solutions.json`, and
+`parity_test.gd` replays each one through `ZorgEngine` to a win.
+`scripts/solution_player.gd` plays it (clear the board, drop each room,
+run, cast at the stored step); `scripts/solution_guide.gd` shows the
+captions in the HUD text column. Neither decides anything (NFR-1).
 
 The golden script does not write `levels/visual-lights.json`. That file is
 cosmetic. `scripts/atmos.gd` reads it. The rules engine never does.
@@ -246,6 +263,12 @@ than 1, so no shipped run that ends pays a toll: a TS toll table
    Space presses one. On a tray room, it picks the room up; the arrow keys
    then move the ghost, Enter drops it and Esc cancels. Backspace, Ctrl+Z or
    the on-screen **Undo** button sends the last placed room back to the tray.
+   Stuck? Open **?** and press **Show a solution**, then **Clear board and
+   show** to confirm. The board is cleared and the engine's stored solution
+   is built one room at a time, then played; a caption above the board says
+   what each step does and why it is needed, with its rule IDs. **Pause**,
+   **Next** and **Stop** sit on the caption; Back or Esc stops it. Levels
+   with no stored solution say so instead.
    Undo stays on screen during and after a run: there it goes back to build
    (like **Build**, your rooms stay) and then takes back the last room.
    After a win, **Next level >** under the banner opens the next level.

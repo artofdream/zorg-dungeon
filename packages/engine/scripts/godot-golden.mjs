@@ -35,6 +35,53 @@ const repo = join(here, "..", "..", "..");
 const LEVEL_INDEX_OUT = "apps/godot/levels/index.json";
 const ELEMENTS_OUT = "apps/godot/tests/golden/elements.json";
 const GOLD_OUT = "apps/godot/tests/golden/gold-portals.json";
+const SOLUTIONS_OUT = "apps/godot/levels/solutions.json";
+const SOLUTIONS_DIR = "packages/engine/fixtures/solutions";
+
+// FR-47: the stored solution for a level (scripts/solve-levels.mjs), or null.
+function storedSolution(levelId) {
+  const abs = join(repo, SOLUTIONS_DIR, `${levelId}.json`);
+  if (!existsSync(abs)) throw new Error(`missing ${SOLUTIONS_DIR}/${levelId}.json — run solve-levels.mjs --search ${levelId}`);
+  return JSON.parse(readFileSync(abs, "utf8"));
+}
+
+// Board slots the Godot level shows (apps/godot/scripts/level.gd SLOTS_X /
+// SLOTS_Y). A stored solution is shifted to sit centred on them; a shift
+// changes no outcome, and the golden case below replays the shifted layout.
+const BOARD_X = [-1, 6];
+const BOARD_Y = [-2, 3];
+
+function onBoard(placements, levelId) {
+  const xs = placements.map((p) => p.x);
+  const ys = placements.map((p) => p.y);
+  const w = Math.max(...xs) - Math.min(...xs) + 1;
+  const h = Math.max(...ys) - Math.min(...ys) + 1;
+  const bw = BOARD_X[1] - BOARD_X[0] + 1;
+  const bh = BOARD_Y[1] - BOARD_Y[0] + 1;
+  if (w > bw || h > bh) throw new Error(`${levelId}: stored solution (${w}×${h}) does not fit the Godot board`);
+  const dx = BOARD_X[0] + Math.floor((bw - w) / 2) - Math.min(...xs);
+  const dy = BOARD_Y[0] + Math.floor((bh - h) / 2) - Math.min(...ys);
+  return placements.map((p) => ({ id: p.id, x: p.x + dx, y: p.y + dy }));
+}
+
+// FR-47: Godot only presents a stored solution. Casts must be the
+// target-free kind the port can cast (Attack / Teleport by spell id).
+function solutionCase(stored) {
+  const sol = stored.solution;
+  if (sol.orientation !== 0) throw new Error(`${stored.levelId}: the Godot board only builds orientation 0`);
+  for (const c of sol.casts) {
+    if (Object.keys(c.cast).some((k) => k !== "spellId")) {
+      throw new Error(`${stored.levelId}: stored cast needs a target the Godot port can't cast`);
+    }
+  }
+  return {
+    name: "stored-solution",
+    note: "FR-47: the engine's stored solution (fixtures/solutions); Godot's Show a solution replays exactly this.",
+    orientation: sol.orientation,
+    positions: Object.fromEntries(onBoard(sol.placements, stored.levelId).map((p) => [p.id, [p.x, p.y]])),
+    ...(sol.casts.length ? { casts: sol.casts.map((c) => ({ afterSteps: c.afterSteps, spellId: c.cast.spellId })) } : {}),
+  };
+}
 
 // Fixed placements (room grid coordinates, orientation 0 unless stated).
 // Room ids come from enumerateSuppliedRooms (A:0, Z:0, D:0, D:1, …, E:0).
@@ -417,7 +464,9 @@ function buildLevel(spec) {
     level,
   };
 
-  const cases = spec.cases.map((c) => {
+  const stored = storedSolution(level.id);
+  const specCases = stored.solution ? [...spec.cases, solutionCase(stored)] : spec.cases;
+  const cases = specCases.map((c) => {
     const orientation = c.orientation ?? 0;
     const layout = {
       rooms: supplied
@@ -466,7 +515,28 @@ function buildLevel(spec) {
   });
 
   const golden = { generatedBy: "packages/engine/scripts/godot-golden.mjs", levelId: level.id, levelFile: levelOut, cases };
+  const solved = cases.find((c) => c.name === "stored-solution");
+  if (solved && solved.score.outcome !== "win") throw new Error(`${level.id}: stored solution does not win`);
+  const solution = stored.solution
+    ? {
+        levelId: level.id,
+        status: "solved",
+        orientation: stored.solution.orientation,
+        placements: solved.placements.map((p) => ({ id: p.id, x: p.x, y: p.y })),
+        casts: solved.casts ?? [],
+        steps: stored.explanation.map((st) => ({
+          kind: st.kind,
+          ...(st.roomId ? { roomId: st.roomId, room: st.room, x: solved.placements.find((p) => p.id === st.roomId).x, y: solved.placements.find((p) => p.id === st.roomId).y } : {}),
+          ...(st.kind === "orientation" ? { orientation: st.orientation } : {}),
+          ...(st.kind === "cast" ? { afterSteps: st.afterSteps, spellId: st.spellId, spell: st.spell } : {}),
+          text: st.text,
+          rules: st.rules,
+          codes: [...st.does, ...st.why].map((f) => f.code),
+        })),
+      }
+    : { levelId: level.id, status: "unsolved", verdict: stored.search.verdict };
   return {
+    solution,
     entry: { id: level.id, name: level.name, file: `res://levels/${level.id}.json`, golden: `res://tests/golden/${level.id}.json`, why: spec.why },
     files: {
       [levelOut]: JSON.stringify(levelFile, null, 2) + "\n",
@@ -478,9 +548,11 @@ function buildLevel(spec) {
 function build() {
   const files = {};
   const index = [];
+  const solutions = {};
   for (const spec of LEVELS) {
     const built = buildLevel(spec);
     index.push(built.entry);
+    solutions[built.entry.id] = built.solution;
     Object.assign(files, built.files);
   }
   // Picker order: contract, then level number (1.4 before 2.1 before 4.3).
@@ -525,6 +597,16 @@ function build() {
     }
   }
   files[GOLD_OUT] = JSON.stringify({ generatedBy: "packages/engine/scripts/godot-golden.mjs", tolls, portals }, null, 2) + "\n";
+  files[SOLUTIONS_OUT] =
+    JSON.stringify(
+      {
+        generatedBy: "packages/engine/scripts/godot-golden.mjs",
+        source: SOLUTIONS_DIR,
+        levels: Object.fromEntries(index.map((e) => [e.id, solutions[e.id]])),
+      },
+      null,
+      2,
+    ) + "\n";
   files[LEVEL_INDEX_OUT] = JSON.stringify({ generatedBy: "packages/engine/scripts/godot-golden.mjs", levels: index }, null, 2) + "\n";
   return files;
 }

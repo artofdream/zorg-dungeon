@@ -1,0 +1,315 @@
+{
+  "generatedBy": "packages/engine/scripts/solve-levels.mjs",
+  "levelId": "deluxe-1.4",
+  "source": "packages/engine/fixtures/contracts/1.4-low-blow.txt",
+  "sourceSha256": "f5289141df904e86f6e4f6dd089c42e93841f416f75bb01a0fc630b247fb2c72",
+  "status": "solved",
+  "search": {
+    "verdict": "found",
+    "maxLayoutsPerWorker": 1000000,
+    "orientations": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "solvabilityCaps": {
+      "maxNodes": 256,
+      "maxSteps": 256,
+      "maxBranch": 8
+    }
+  },
+  "solution": {
+    "levelId": "deluxe-1.4",
+    "orientation": 0,
+    "placements": [
+      {
+        "id": "A:0",
+        "x": 0,
+        "y": 0
+      },
+      {
+        "id": "Z:0",
+        "x": 2,
+        "y": 0
+      },
+      {
+        "id": "D:0",
+        "x": 1,
+        "y": 0
+      }
+    ],
+    "casts": [
+      {
+        "afterSteps": 1,
+        "cast": {
+          "spellId": 0
+        }
+      }
+    ]
+  },
+  "explanation": [
+    {
+      "index": 0,
+      "kind": "orientation",
+      "orientation": 0,
+      "does": [
+        {
+          "code": "orientation_set",
+          "params": {
+            "orientation": 0
+          },
+          "rules": [
+            "FR-7",
+            "FR-31"
+          ],
+          "text": "All rooms face 0°; it sets the heroes' tie-break order."
+        }
+      ],
+      "why": [
+        {
+          "code": "rotated_still_wins",
+          "params": {},
+          "rules": [
+            "FR-7"
+          ],
+          "text": "Any other rotation also wins."
+        }
+      ],
+      "rules": [
+        "FR-7",
+        "FR-31"
+      ],
+      "text": "All rooms face 0°; it sets the heroes' tie-break order. Any other rotation also wins."
+    },
+    {
+      "index": 1,
+      "kind": "place",
+      "roomId": "A:0",
+      "room": "A",
+      "x": 0,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "spawn_room",
+          "params": {},
+          "rules": [
+            "FR-11"
+          ],
+          "text": "Heroes spawn here."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_loses",
+          "params": {
+            "example": "the Warrior reaches Zorg at step 4",
+            "failing": 4,
+            "tried": 7
+          },
+          "rules": [
+            "FR-11",
+            "FR-12",
+            "FR-43"
+          ],
+          "text": "Elsewhere it fails: the Warrior reaches Zorg at step 4 (4 of 7 other spots lose)."
+        }
+      ],
+      "rules": [
+        "FR-11",
+        "FR-12",
+        "FR-43"
+      ],
+      "text": "Heroes spawn here. Elsewhere it fails: the Warrior reaches Zorg at step 4 (4 of 7 other spots lose)."
+    },
+    {
+      "index": 2,
+      "kind": "place",
+      "roomId": "D:0",
+      "room": "D(2)",
+      "x": 1,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "hero_damaged",
+          "params": {
+            "hero": "the Warrior",
+            "amount": 2,
+            "entries": 1
+          },
+          "rules": [
+            "FR-13"
+          ],
+          "text": "The Warrior takes 2 damage here."
+        },
+        {
+          "code": "hero_killed",
+          "params": {
+            "hero": "the Warrior",
+            "step": 4
+          },
+          "rules": [
+            "FR-28"
+          ],
+          "text": "The Warrior dies here at step 4."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_loses",
+          "params": {
+            "example": "the Warrior reaches Zorg at step 4",
+            "failing": 2,
+            "tried": 2
+          },
+          "rules": [
+            "FR-12",
+            "FR-13",
+            "FR-43"
+          ],
+          "text": "Elsewhere it fails: the Warrior reaches Zorg at step 4 (2 of 2 other spots lose)."
+        }
+      ],
+      "rules": [
+        "FR-12",
+        "FR-13",
+        "FR-28",
+        "FR-43"
+      ],
+      "text": "The Warrior takes 2 damage here. The Warrior dies here at step 4. Elsewhere it fails: the Warrior reaches Zorg at step 4 (2 of 2 other spots lose)."
+    },
+    {
+      "index": 3,
+      "kind": "place",
+      "roomId": "Z:0",
+      "room": "Z",
+      "x": 2,
+      "y": 0,
+      "orientation": 0,
+      "does": [
+        {
+          "code": "goal_room",
+          "params": {},
+          "rules": [
+            "FR-12",
+            "FR-20"
+          ],
+          "text": "Zorg's room: the heroes head here; no one may get in."
+        }
+      ],
+      "why": [
+        {
+          "code": "moved_loses",
+          "params": {
+            "example": "the Warrior reaches Zorg at step 4",
+            "failing": 4,
+            "tried": 7
+          },
+          "rules": [
+            "FR-12",
+            "FR-43"
+          ],
+          "text": "Elsewhere it fails: the Warrior reaches Zorg at step 4 (4 of 7 other spots lose)."
+        }
+      ],
+      "rules": [
+        "FR-12",
+        "FR-20",
+        "FR-43"
+      ],
+      "text": "Zorg's room: the heroes head here; no one may get in. Elsewhere it fails: the Warrior reaches Zorg at step 4 (4 of 7 other spots lose)."
+    },
+    {
+      "index": 4,
+      "kind": "cast",
+      "afterSteps": 1,
+      "spellId": 0,
+      "spell": "Attack(3)",
+      "does": [
+        {
+          "code": "spell_cast",
+          "params": {
+            "spell": "Attack(3)",
+            "step": 1,
+            "effect": "the Warrior takes 3 damage"
+          },
+          "rules": [
+            "FR-32",
+            "FR-33",
+            "FR-34"
+          ],
+          "text": "Attack(3) after step 1: the Warrior takes 3 damage."
+        }
+      ],
+      "why": [
+        {
+          "code": "removed_loses",
+          "params": {
+            "outcome": "the Warrior reaches Zorg at step 9"
+          },
+          "rules": [
+            "FR-12",
+            "FR-34",
+            "FR-43"
+          ],
+          "text": "Without it: the Warrior reaches Zorg at step 9."
+        },
+        {
+          "code": "earlier_result",
+          "params": {
+            "outcome": "the Warrior reaches Zorg at step 9"
+          },
+          "rules": [
+            "FR-12",
+            "FR-34",
+            "FR-43"
+          ],
+          "text": "One step earlier: the Warrior reaches Zorg at step 9."
+        },
+        {
+          "code": "later_result",
+          "params": {
+            "outcome": "still a win"
+          },
+          "rules": [
+            "FR-34"
+          ],
+          "text": "One step later: still a win."
+        }
+      ],
+      "rules": [
+        "FR-12",
+        "FR-32",
+        "FR-33",
+        "FR-34",
+        "FR-43"
+      ],
+      "text": "Attack(3) after step 1: the Warrior takes 3 damage. Without it: the Warrior reaches Zorg at step 9."
+    },
+    {
+      "index": 5,
+      "kind": "result",
+      "does": [
+        {
+          "code": "run_won",
+          "params": {
+            "step": 4
+          },
+          "rules": [
+            "FR-28",
+            "FR-43"
+          ],
+          "text": "All heroes are dead by step 4 and no one reached Zorg."
+        }
+      ],
+      "why": [],
+      "rules": [
+        "FR-28",
+        "FR-43"
+      ],
+      "text": "All heroes are dead by step 4 and no one reached Zorg."
+    }
+  ]
+}

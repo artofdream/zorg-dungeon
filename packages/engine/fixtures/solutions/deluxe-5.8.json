@@ -1,0 +1,23 @@
+{
+  "generatedBy": "packages/engine/scripts/solve-levels.mjs",
+  "levelId": "deluxe-5.8",
+  "source": "packages/engine/fixtures/contracts/5.8-vault-break.txt",
+  "sourceSha256": "e9d968fa59e065c274a41507a9afe7f2b6e187ff944ad8c8ab863a500346e513",
+  "status": "unsolved",
+  "search": {
+    "verdict": "exhausted",
+    "maxLayoutsPerWorker": 1000000,
+    "orientations": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "solvabilityCaps": {
+      "maxNodes": 128,
+      "maxSteps": 256,
+      "maxBranch": 8
+    },
+    "layoutsScored": 622080
+  }
+}

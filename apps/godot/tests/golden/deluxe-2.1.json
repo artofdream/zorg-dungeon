@@ -538,6 +538,108 @@
         "outcome": "loss",
         "constraints": []
       }
+    },
+    {
+      "name": "stored-solution",
+      "note": "FR-47: the engine's stored solution (fixtures/solutions); Godot's Show a solution replays exactly this.",
+      "orientation": 0,
+      "placements": [
+        {
+          "id": "A:0",
+          "x": 1,
+          "y": 0
+        },
+        {
+          "id": "Z:0",
+          "x": 2,
+          "y": 0
+        },
+        {
+          "id": "E:0",
+          "x": 3,
+          "y": 0
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "codes": []
+      },
+      "casts": [
+        {
+          "afterSteps": 1,
+          "spellId": 0
+        }
+      ],
+      "castLog": [
+        {
+          "afterSteps": 1,
+          "spellId": 0,
+          "result": "ok"
+        }
+      ],
+      "castWindow": [
+        false,
+        true,
+        false
+      ],
+      "runOutcome": "win",
+      "turns": [
+        [
+          {
+            "type": "spawn",
+            "heroId": 0,
+            "cell": {
+              "x": 7,
+              "y": 2
+            },
+            "roomId": "A:0"
+          },
+          {
+            "type": "enter",
+            "heroId": 0,
+            "roomId": "A:0",
+            "roomType": "A"
+          }
+        ],
+        [
+          {
+            "type": "cast",
+            "spellId": 0,
+            "spellType": "Attack",
+            "heroIds": [
+              0,
+              1
+            ]
+          },
+          {
+            "type": "damage",
+            "heroId": 0,
+            "amount": 1,
+            "hp": 0
+          },
+          {
+            "type": "death",
+            "heroId": 0
+          },
+          {
+            "type": "damage",
+            "heroId": 1,
+            "amount": 1,
+            "hp": 0
+          },
+          {
+            "type": "death",
+            "heroId": 1
+          },
+          {
+            "type": "win"
+          }
+        ]
+      ],
+      "score": {
+        "outcome": "win",
+        "constraints": []
+      }
     }
   ]
 }

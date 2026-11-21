@@ -1,0 +1,30 @@
+{
+  "generatedBy": "packages/engine/scripts/solve-levels.mjs",
+  "levelId": "deluxe-5.5",
+  "source": "packages/engine/fixtures/contracts/5.5-counting-the-riches.txt",
+  "sourceSha256": "2cb4db65214475bc0dcb0d11aeec6c887b01e7deb7b1e801eed2881fc2a75234",
+  "status": "unsolved",
+  "search": {
+    "verdict": "budget",
+    "maxLayoutsPerWorker": 1000000,
+    "deadlineMinutesPerWorker": 40,
+    "orientations": [
+      0,
+      90,
+      180,
+      270
+    ],
+    "solvabilityCaps": {
+      "maxNodes": 256,
+      "maxSteps": 256,
+      "maxBranch": 8
+    },
+    "targetFreeCastCaps": {
+      "maxRuns": 20000,
+      "maxSteps": 200
+    },
+    "layoutsScored": 26000,
+    "castSearchCapped": 4233,
+    "reason": "deadline"
+  }
+}
