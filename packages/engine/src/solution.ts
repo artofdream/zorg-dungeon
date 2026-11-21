@@ -16,7 +16,6 @@ import { scoreLevel } from "./constraints.js";
 import { checkSolvability, type SolvabilityCaps } from "./solvability.js";
 import { canCastNow, castSpell, createRun, simulate, stepRun, type SimulationState } from "./simulation.js";
 import { SpellCastError } from "./spells.js";
-import { cloneRun } from "./solvability.js";
 import type { CastRequest } from "./spells.js";
 
 export interface SolutionPlacement {
@@ -51,8 +50,23 @@ export interface SolutionSearchOptions {
   shard?: { index: number; count: number };
   /** Wall-clock budget (NFR-4); past it the verdict is `budget`. */
   deadlineMs?: number;
+  /**
+   * Resume an interrupted run from its last checkpoint: skip every
+   * (orientation, shape) before this one. `scored`/`capped` carry the
+   * checkpoint's counts so the totals stay right.
+   */
+  resumeAt?: { orientation: number; shape: number; scored: number; capped: number };
   /** Called every 500 scored layouts and at the end (checkpoints). */
-  onProgress?: (p: { scored: number; capped: number; orientation: number; shape: number; shapes: number }) => void;
+  onProgress?: (p: {
+    scored: number;
+    capped: number;
+    orientation: number;
+    shape: number;
+    shapes: number;
+    /** Counts when the current shape began (what a resume restarts from). */
+    shapeStartScored: number;
+    shapeStartCapped: number;
+  }) => void;
 }
 
 export interface SolutionSearchResult {
@@ -162,7 +176,20 @@ function* assignments(groups: number[], n: number): Generator<number[]> {
   yield* place(0);
 }
 
-export const TARGET_FREE_CAST_CAPS = { maxRuns: 20_000, maxSteps: 200 } as const;
+/**
+ * NFR-4 caps for the target-free cast search. `stallSteps`: a run in which
+ * no hero's HP, death or purse and no room's gold changed for that many
+ * actions is cut (counted as capped, so the verdict stays `budget`, never
+ * `exhausted`) — such a run is almost always a damage-free loop.
+ */
+export const TARGET_FREE_CAST_CAPS = { maxRuns: 20_000, maxSteps: 300, stallSteps: 40 } as const;
+
+function progressKey(state: SimulationState): string {
+  let s = "";
+  for (const h of state.heroes) s += `${h.hp},${h.dead ? 1 : 0},${h.gold.length};`;
+  for (const [, g] of state.roomGold) s += `${g},`;
+  return s;
+}
 
 /**
  * FR-46 for target-free spells (Attack, Teleport), NFR-4 bounded: the run
@@ -175,16 +202,33 @@ export const TARGET_FREE_CAST_CAPS = { maxRuns: 20_000, maxSteps: 200 } as const
 export function searchTargetFreeCasts(
   level: LevelDef,
   layout: DungeonLayout,
-  caps: { maxRuns: number; maxSteps: number } = TARGET_FREE_CAST_CAPS,
+  caps: { maxRuns: number; maxSteps: number; stallSteps?: number } = TARGET_FREE_CAST_CAPS,
 ): { sequence?: SolutionCast[]; capped: boolean } {
   let runs = 0;
   let capped = false;
+  // Post-cast states already explored. The run is deterministic and its
+  // future depends only on this state (not on stepCount or the event log),
+  // so casting the same spell at two moments that lead to the same state —
+  // e.g. two steps inside one room before a Teleport — is tried once.
+  const explored = new Set<string>();
   const dfs = (state: SimulationState, seq: SolutionCast[]): SolutionCast[] | undefined => {
+    let progress = progressKey(state);
+    let progressAt = state.stepCount;
     for (;;) {
       if (state.outcome !== "in_progress") return state.outcome === "win" ? seq : undefined;
       if (state.stepCount >= caps.maxSteps) {
         capped = true;
         return undefined;
+      }
+      if (caps.stallSteps !== undefined) {
+        const now = progressKey(state);
+        if (now !== progress) {
+          progress = now;
+          progressAt = state.stepCount;
+        } else if (state.stepCount - progressAt >= caps.stallSteps) {
+          capped = true;
+          return undefined;
+        }
       }
       if (canCastNow(state)) {
         const tried = new Set<string>();
@@ -198,13 +242,16 @@ export function searchTargetFreeCasts(
             return undefined;
           }
           runs += 1;
-          const next = cloneRun(state);
+          const next = cloneForSearch(state);
           try {
             castSpell(next, { spellId: spell.id });
           } catch (err) {
             if (err instanceof SpellCastError) continue;
             throw err;
           }
+          const fp = searchStateKey(next);
+          if (explored.has(fp)) continue;
+          explored.add(fp);
           const found = dfs(next, [...seq, { afterSteps: next.stepCount, cast: { spellId: spell.id } }]);
           if (found) return found;
         }
@@ -216,6 +263,29 @@ export function searchTargetFreeCasts(
   };
   const sequence = dfs(createRun(level, layout), []);
   return { sequence, capped };
+}
+
+/**
+ * Clone a run for a search branch without copying the append-only event log
+ * or the immutable level (both are only read by presenters and scoring; the
+ * winning branch is re-verified from scratch with verifySolution).
+ */
+function cloneForSearch(state: SimulationState): SimulationState {
+  const { events, level, ...rest } = state;
+  const copy = structuredClone(rest) as Omit<SimulationState, "events" | "level">;
+  void events;
+  return { ...copy, level, events: [] };
+}
+
+/** Every field that decides how a run continues (all but stepCount, the event log and the level). */
+export function searchStateKey(state: SimulationState): string {
+  const { events, level, stepCount, ...rest } = state;
+  void events;
+  void level;
+  void stepCount;
+  return JSON.stringify(rest, (_k, v) =>
+    v instanceof Map ? [...v.entries()].sort() : v instanceof Set ? [...v].sort() : v,
+  );
 }
 
 function targetFreeOnly(level: LevelDef): boolean {
@@ -302,8 +372,9 @@ export function searchSolution(level: LevelDef, options?: SolutionSearchOptions)
   const groups = defKeys.map((k) => defKeys.indexOf(k));
   const hasSpells = (level.spells?.length ?? 0) > 0;
   const targetFree = hasSpells && targetFreeOnly(level);
-  let scored = 0;
-  let capped = 0;
+  const resume = options?.resumeAt;
+  let scored = resume?.scored ?? 0;
+  let capped = resume?.capped ?? 0;
 
   const shapes = fixedPolyominoes(n);
   const shard = options?.shard;
@@ -313,6 +384,9 @@ export function searchSolution(level: LevelDef, options?: SolutionSearchOptions)
   for (const [oi, orientation] of orientations.entries()) {
     for (const [si, shape] of shapes.entries()) {
       if (shard && si % shard.count !== shard.index) continue;
+      if (resume && (oi < resume.orientation || (oi === resume.orientation && si < resume.shape))) continue;
+      const shapeStartScored = scored;
+      const shapeStartCapped = capped;
       let ai = -1;
       for (const cells of assignments(groups, n)) {
         ai += 1;
@@ -323,7 +397,7 @@ export function searchSolution(level: LevelDef, options?: SolutionSearchOptions)
         if (!validateLayout(level, layout).ok) continue;
         scored += 1;
         if (scored % 500 === 0) {
-          options?.onProgress?.({ scored, capped, orientation: oi, shape: si, shapes: shapes.length });
+          options?.onProgress?.({ scored, capped, orientation: oi, shape: si, shapes: shapes.length, shapeStartScored, shapeStartCapped });
           if (deadline !== undefined && Date.now() - started > deadline) {
             return { found: false, verdict: "budget", layoutsScored: scored, castSearchCapped: capped, reason: "deadline" };
           }
@@ -333,7 +407,11 @@ export function searchSolution(level: LevelDef, options?: SolutionSearchOptions)
         }
         const rank: [number, number, number] = [oi, si, ai];
         // Cheap pre-check: one plain run; score only a run that wins.
-        if (simulate(hasSpells ? noCasts : level, layout).outcome === "win" && verifySolution(level, candidate).ok) {
+        // With spells, the cast search below also covers the no-cast run, so
+        // this pre-check is bounded like it (a damage-free loop would
+        // otherwise run the full 10,000-action default).
+        const plain = hasSpells ? simulate(noCasts, layout, { maxSteps: TARGET_FREE_CAST_CAPS.maxSteps }) : simulate(level, layout);
+        if (plain.outcome === "win" && verifySolution(level, candidate).ok) {
           return { found: true, verdict: "found", layoutsScored: scored, solution: candidate, rank };
         }
         if (!hasSpells) continue;

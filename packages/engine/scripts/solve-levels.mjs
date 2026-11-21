@@ -57,12 +57,20 @@ function fileText(entry, search, solution) {
 
 async function searchLevel(entry) {
   const count = Math.max(1, Math.min(8, availableParallelism()));
+  // The first verified win ends the search: the other workers are stopped
+  // (their shards are not needed — one solution per level is stored).
+  const workers = [];
   const results = await Promise.all(
     Array.from({ length: count }, (_, index) =>
       new Promise((resolve, reject) => {
         const w = new Worker(fileURLToPath(import.meta.url), { workerData: { id: entry.id, index, count } });
-        w.once("message", resolve);
+        workers.push(w);
+        w.once("message", (r) => {
+          if (r.found) for (const other of workers) if (other !== w) other.terminate();
+          resolve(r);
+        });
         w.once("error", reject);
+        w.once("exit", () => resolve({ found: false, verdict: "budget", layoutsScored: 0, reason: "stopped: another worker found a solution" }));
       }),
     ),
   );
@@ -92,7 +100,15 @@ if (!isMainThread) {
   const { id, index, count } = workerData;
   const entry = shippedLevels().find((e) => e.id === id);
   const ckpt = `/tmp/solve-${id}-${index}.json`;
+  // SOLVE_RESUME=1: continue from this worker's last checkpoint (the shape it
+  // was on is redone; layouts before it are not).
+  let resumeAt;
+  if (process.env.SOLVE_RESUME === "1" && existsSync(ckpt)) {
+    const c = JSON.parse(readFileSync(ckpt, "utf8"));
+    if (!c.done && c.shape !== undefined) resumeAt = { orientation: c.orientation, shape: c.shape, scored: c.shapeStartScored, capped: c.shapeStartCapped };
+  }
   const r = searchSolution(entry.level, {
+    resumeAt,
     maxLayouts: MAX_LAYOUTS,
     shard: { index, count },
     deadlineMs: DEADLINE_MS,
