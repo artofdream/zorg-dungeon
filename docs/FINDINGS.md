@@ -356,3 +356,21 @@ longer leave the warm-up waiting on a freed node. No engine rule changed.
 Recurrence 1. The smoke test checks the layer, the backdrop, that every
 grid button is on screen at 2340×1080 and 360 wide, and real taps on a tray
 tile, Close and a level button.
+
+## CF-017: Shipped level 5.8 has no winning layout under the engine's rules
+- Status: Open
+- Recurrence: 1
+- Linked: PR (this branch, agent/grok/show-solution)
+- Sensor added: packages/engine/src/solution.test.ts
+
+The FR-47 solution search (packages/engine/scripts/solve-levels.mjs) tried
+every legal layout of 5.8 Vault Break — all 216 six-room shapes, every room
+order, all four orientations: 622,080 layouts — and none is a level win.
+5.8 has no spells, so no cast search is involved: this is exhaustive for
+the rules as the engine implements them (FR-16 gold, FR-17 tolls, FR-21
+Elf). Either the source level depends on a rule reading the engine does
+not have, or the transcription is off. The game ships 5.8 anyway; its
+golden leads with a loss case, and Show a solution says "No stored
+solution yet" instead of a made-up answer. The stored file
+(fixtures/solutions/deluxe-5.8.json) records the verdict, and the test
+fails if a solution ever appears without replaying to a win.
