@@ -215,6 +215,11 @@ describe("NFR-4 state-cycle pruning (target-free cast search)", () => {
     expect(historyHorizon(level)).toBe(8);
   });
 
+  it("keeps histories whole when a P formula is not supported (no throw)", () => {
+    const odd = { ...level, rooms: level.rooms.map((r) => (r.room.type === "P" ? { ...r, room: { ...r.room, formula: "x↦??" } } : r)) };
+    expect(historyHorizon(odd as typeof level)).toBeUndefined();
+  });
+
   it("keys a run by what can still change it, not by its step count", () => {
     const layout = layoutFromSolution(level, looping);
     const run = createRun({ ...level, spells: [] }, layout);

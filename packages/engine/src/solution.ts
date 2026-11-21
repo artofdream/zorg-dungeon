@@ -206,7 +206,12 @@ export function historyHorizon(level: LevelDef): number | undefined {
     if (room.type !== "P") continue;
     if (typeof room.entries !== "number" || typeof room.formula !== "string") return undefined;
     for (let i = 1; i <= room.entries; i += 1) {
-      const f = evalPortalIndex(room.formula, i);
+      let f: number;
+      try {
+        f = evalPortalIndex(room.formula, i);
+      } catch {
+        return undefined; // unsupported formula: keep histories whole (the run reports it)
+      }
       if (!Number.isFinite(f)) return undefined;
       k = Math.max(k, f);
     }
