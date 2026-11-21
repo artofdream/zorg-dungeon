@@ -5,9 +5,9 @@
   "sourceSha256": "2cb4db65214475bc0dcb0d11aeec6c887b01e7deb7b1e801eed2881fc2a75234",
   "status": "unsolved",
   "search": {
-    "verdict": "budget",
+    "verdict": "exhausted",
     "maxLayoutsPerWorker": 1000000,
-    "deadlineMinutesPerWorker": 40,
+    "deadlineMinutesPerWorker": 80,
     "orientations": [
       0,
       90,
@@ -21,10 +21,11 @@
     },
     "targetFreeCastCaps": {
       "maxRuns": 20000,
-      "maxSteps": 200
+      "maxSteps": 300,
+      "stallSteps": 40,
+      "cyclePruning": true
     },
-    "layoutsScored": 26000,
-    "castSearchCapped": 4233,
-    "reason": "deadline"
+    "layoutsScored": 622080,
+    "castSearchCapped": 0
   }
 }

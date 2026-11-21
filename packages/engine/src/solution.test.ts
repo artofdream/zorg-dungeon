@@ -210,9 +210,21 @@ describe("NFR-4 state-cycle pruning (target-free cast search)", () => {
     casts: [],
   };
 
+  it("records 5.5 as exhausted with no capped layout (CF-019), not a budget guess", () => {
+    const search = load("deluxe-5.5.json").stored.search as { verdict: string; layoutsScored?: number; castSearchCapped?: number };
+    expect(search.verdict).toBe("exhausted");
+    expect(search.layoutsScored).toBe(622_080);
+    expect(search.castSearchCapped).toBe(0);
+  });
+
   it("reads the history horizon from Teleport(n) and every active P entry", () => {
     // 5.5: Teleport(4); P(2, x↦7x-6) looks back f(1) = 1 and f(2) = 8 visits.
     expect(historyHorizon(level)).toBe(8);
+  });
+
+  it("keeps histories whole when a P formula is not supported (no throw)", () => {
+    const odd = { ...level, rooms: level.rooms.map((r) => (r.room.type === "P" ? { ...r, room: { ...r.room, formula: "x↦??" } } : r)) };
+    expect(historyHorizon(odd as typeof level)).toBeUndefined();
   });
 
   it("keys a run by what can still change it, not by its step count", () => {
