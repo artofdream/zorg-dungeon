@@ -46,6 +46,13 @@ func attach(lvl: Node, plate: ZorgSolutionGuide) -> void:
 func active() -> bool:
 	return phase != ""
 
+## True while this node is dropping rooms or running the heroes, except
+## inside a call it just made. Play, Step and Space must not step the
+## engine then: a cast runs only when stepCount equals afterSteps, and
+## one extra step skips it.
+func owns_run() -> bool:
+	return (phase == "place" or phase == "run") and not driving
+
 func has_solution(level_id: String) -> bool:
 	return String(levels.get(level_id, {}).get("status", "")) == "solved"
 
@@ -185,10 +192,19 @@ func _run_tick() -> void:
 func _check_end() -> void:
 	if not level.engine.over():
 		return
-	while step_i < steps.size() and String(steps[step_i]["kind"]) != "result":
-		step_i += 1
-	if step_i < steps.size():
-		_show(step_i)
+	var won := String(level.engine.score()["outcome"]) == "win"
+	if won:
+		while step_i < steps.size() and String(steps[step_i]["kind"]) != "result":
+			step_i += 1
+		if step_i < steps.size():
+			_show(step_i)
+	else:
+		# The stored result step is the win line from the recording.
+		# This run's banner is the sentence that matches the outcome.
+		var line := String(level.result.text) if level.result else ""
+		if line == "" or line.begins_with("You win"):
+			line = "This replay did not win."
+		guide.show_step("Result", line, [])
 	phase = "done"
 	guide.show_controls(false, false)
-	finished.emit(String(level.engine.score()["outcome"]) == "win")
+	finished.emit(won)

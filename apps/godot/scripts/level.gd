@@ -704,7 +704,9 @@ func back_pressed() -> void:
 		_show_quit()
 
 func popup_open() -> bool:
-	return quit_dlg.visible or help_dlg.visible or level_picker.is_open()
+	# A solution replay owns the run. Space is Step, and a step here skips
+	# a stored cast, so keys wait the way they do behind the other popups.
+	return quit_dlg.visible or help_dlg.visible or level_picker.is_open() or (solution and solution.owns_run())
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and quit_dlg != null:
@@ -1622,6 +1624,10 @@ func camera_settled() -> bool:
 # ------------------------------------------------------------------ play
 
 func _ensure_recording(chunked := false) -> bool:
+	# Show a solution steps and casts itself. Play, Step and a spell tap
+	# must not start this run or they walk stepCount past a stored cast.
+	if solution and solution.owns_run():
+		return false
 	if not recording.is_empty():
 		return true
 	_finish_pending_rooms()
@@ -1647,6 +1653,10 @@ func _ensure_recording(chunked := false) -> bool:
 
 ## Run one hero action live. Returns false once the run is over.
 func _advance() -> bool:
+	# The auto-runner calls this directly. While a solution is replaying,
+	# only that player (it sets solution.driving) may step.
+	if solution and solution.owns_run():
+		return false
 	if recording.is_empty() or engine.over():
 		return false
 	var events: Array = engine.step()
